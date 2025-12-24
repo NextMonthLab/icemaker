@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Home, Play, MessageSquare, BookOpen, Settings, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();

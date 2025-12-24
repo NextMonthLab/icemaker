@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { CheckCircle2, Lock, StickyNote, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
 
 export default function CatchUp() {
   return (
