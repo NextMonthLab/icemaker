@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Play, MessageSquare, List, Settings, User } from "lucide-react";
+import { Home, Play, MessageSquare, BookOpen, Settings, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/today", icon: Play, label: "Today" },
-    { href: "/catch-up", icon: List, label: "Catch Up" },
+    { href: "/catch-up", icon: BookOpen, label: "Journal" },
     { href: "/chat", icon: MessageSquare, label: "Chat" },
     { href: "/profile", icon: User, label: "Profile" },
   ];
