@@ -86,3 +86,7 @@ export const MOCK_CARDS: Card[] = [
     publishDate: "2023-10-26T09:00:00Z",
   },
 ];
+
+export function addMockCard(card: Card) {
+  MOCK_CARDS.push(card);
+}
