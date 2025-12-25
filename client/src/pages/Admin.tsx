@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2 } from "lucide-react";
+import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ export default function Admin() {
   const [showNewUniverseDialog, setShowNewUniverseDialog] = useState(false);
   const [newUniverseName, setNewUniverseName] = useState("");
   const [newUniverseDescription, setNewUniverseDescription] = useState("");
+  const [previewCard, setPreviewCard] = useState<any>(null);
 
   const { data: universes, isLoading: universesLoading } = useQuery({
     queryKey: ["universes"],
@@ -256,6 +257,15 @@ export default function Admin() {
                                  }`}>
                                    {card.status === 'published' ? 'Published' : 'Draft'}
                                  </span>
+                                 <Button 
+                                   variant="outline" 
+                                   size="sm" 
+                                   className="h-8 gap-1"
+                                   onClick={() => setPreviewCard(card)}
+                                   data-testid={`button-view-${card.id}`}
+                                 >
+                                   <Eye className="w-3 h-3" /> View
+                                 </Button>
                                  <Button variant="outline" size="sm" className="h-8">Edit</Button>
                             </div>
                         </div>
@@ -310,6 +320,84 @@ export default function Admin() {
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Create Universe
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Card Preview Dialog */}
+        <Dialog open={!!previewCard} onOpenChange={(open) => !open && setPreviewCard(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="text-primary">Day {previewCard?.dayIndex}:</span> {previewCard?.title}
+              </DialogTitle>
+              <DialogDescription>
+                {previewCard?.status === 'published' ? 'Published' : 'Draft'} 
+                {previewCard?.publishAt && ` • Scheduled: ${new Date(previewCard.publishAt).toLocaleDateString()}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {previewCard && (
+              <div className="space-y-6 py-4">
+                {/* Card Image Preview */}
+                {previewCard.imagePath && (
+                  <div className="aspect-[9/16] max-h-[300px] w-auto mx-auto bg-muted rounded-lg overflow-hidden border">
+                    <img 
+                      src={previewCard.imagePath} 
+                      alt={previewCard.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                {/* Captions */}
+                {previewCard.captionsJson && previewCard.captionsJson.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Captions</h4>
+                    <div className="bg-black/50 p-4 rounded-lg space-y-2">
+                      {previewCard.captionsJson.map((caption: string, i: number) => (
+                        <p key={i} className="text-white/90 italic text-center">"{caption}"</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Scene Text */}
+                {previewCard.sceneText && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Scene Text</h4>
+                    <p className="text-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-lg">
+                      {previewCard.sceneText}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Recap */}
+                {previewCard.recapText && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Journal Recap</h4>
+                    <p className="text-muted-foreground text-sm">{previewCard.recapText}</p>
+                  </div>
+                )}
+                
+                {/* Metadata */}
+                <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+                  <div>
+                    <span className="text-muted-foreground">Effect:</span>{' '}
+                    <span className="font-medium">{previewCard.effectTemplate || 'ken-burns'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Season:</span>{' '}
+                    <span className="font-medium">{previewCard.season || 1}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewCard(null)}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
