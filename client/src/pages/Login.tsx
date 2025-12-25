@@ -1,23 +1,49 @@
-import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useState } from "react";
 import { Flame, Lock, Zap } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, register } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Fake login delay
-    setTimeout(() => {
-        setLocation("/");
-    }, 1000);
+    
+    try {
+      if (isRegister) {
+        await register(username, password);
+        toast({
+          title: "Account created",
+          description: "Welcome to StoryFlix!",
+        });
+      } else {
+        await login(username, password);
+        toast({
+          title: "Welcome back!",
+          description: "Logged in successfully.",
+        });
+      }
+      setLocation("/");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Authentication failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,47 +65,92 @@ export default function Login() {
 
             <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-2xl">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold text-center">Enter the Story</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-center">
+                      {isRegister ? "Join the Story" : "Enter the Story"}
+                    </CardTitle>
                     <CardDescription className="text-center">
-                        Enter your email to resume your progress
+                        {isRegister 
+                          ? "Create an account to begin your journey" 
+                          : "Log in to resume your progress"
+                        }
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="username">Username</Label>
                             <Input 
-                                id="email" 
-                                placeholder="detective@sector7.com" 
-                                type="email" 
+                                id="username"
+                                data-testid="input-username"
+                                placeholder="detective"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required 
                                 className="bg-black/50 border-white/10 h-11"
                             />
                         </div>
-                        <Button className="w-full h-11 font-bold tracking-wide" disabled={isLoading}>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input 
+                                id="password"
+                                data-testid="input-password"
+                                placeholder="••••••••"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required 
+                                className="bg-black/50 border-white/10 h-11"
+                            />
+                        </div>
+                        <Button 
+                          className="w-full h-11 font-bold tracking-wide" 
+                          disabled={isLoading}
+                          data-testid="button-submit"
+                        >
                             {isLoading ? (
                                 <span className="flex items-center gap-2">
                                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Accessing...
+                                    {isRegister ? "Creating..." : "Accessing..."}
                                 </span>
                             ) : (
-                                "CONTINUE"
+                                isRegister ? "CREATE ACCOUNT" : "CONTINUE"
                             )}
                         </Button>
                     </form>
 
-                    <div className="relative my-8">
+                    <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t border-white/10" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-black px-2 text-muted-foreground font-mono">Or join silently</span>
+                            <span className="bg-black px-2 text-muted-foreground font-mono">
+                              {isRegister ? "Already have an account?" : "New here?"}
+                            </span>
                         </div>
                     </div>
 
-                    <Button variant="outline" className="w-full border-white/10 hover:bg-white/5" onClick={() => setLocation("/")}>
-                        Continue as Guest
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-white/10 hover:bg-white/5"
+                      data-testid="button-toggle-mode"
+                      onClick={() => setIsRegister(!isRegister)}
+                      type="button"
+                    >
+                        {isRegister ? "Log In Instead" : "Create Account"}
                     </Button>
+                    
+                    <div className="mt-4">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full text-muted-foreground hover:text-white"
+                        data-testid="button-guest"
+                        onClick={() => setLocation("/")}
+                        type="button"
+                      >
+                          Continue as Guest
+                      </Button>
+                    </div>
                 </CardContent>
             </Card>
 

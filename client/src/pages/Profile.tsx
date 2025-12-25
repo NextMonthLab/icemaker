@@ -6,9 +6,46 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Crown, LogOut, Clock, MessageSquare, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/lib/auth";
+import { useAppContext } from "@/lib/app-context";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
+  const { user, logout } = useAuth();
+  const { universe } = useAppContext();
+
+  const { data: progress } = useQuery({
+    queryKey: ["progress", universe?.id],
+    queryFn: () => api.getProgress(universe!.id),
+    enabled: !!universe && !!user,
+  });
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out",
+        description: "See you next time!",
+      });
+      setLocation("/login");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!user) {
+    setLocation("/login");
+    return null;
+  }
+
+  const initials = user.username.slice(0, 2).toUpperCase();
 
   return (
     <Layout>
@@ -19,35 +56,46 @@ export default function Profile() {
         {/* User Card */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
             <Avatar className="h-16 w-16 border-2 border-primary">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>OP</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold">Detective 7</h2>
-                    <Badge variant="outline" className="border-primary text-primary text-[10px] uppercase">Free Tier</Badge>
+                    <h2 className="text-xl font-bold" data-testid="text-username">{user.username}</h2>
+                    <Badge variant="outline" className="border-primary text-primary text-[10px] uppercase">
+                      {user.isAdmin ? "Admin" : "Free Tier"}
+                    </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">Joined Oct 2023</p>
+                <p className="text-sm text-muted-foreground">{user.email || "No email"}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/login")}>
+            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
                 <LogOut className="w-4 h-4 text-muted-foreground" />
             </Button>
         </div>
+
+        {/* Admin Link */}
+        {user.isAdmin && (
+          <Link href="/admin">
+            <Button className="w-full" variant="outline" data-testid="button-admin">
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Dashboard
+            </Button>
+          </Link>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
             <Card>
                 <CardContent className="p-4 flex flex-col items-center text-center">
                     <Clock className="w-6 h-6 text-primary mb-2" />
-                    <span className="text-2xl font-bold">3</span>
+                    <span className="text-2xl font-bold" data-testid="text-streak">{progress?.currentStreak || 0}</span>
                     <span className="text-xs text-muted-foreground uppercase">Day Streak</span>
                 </CardContent>
             </Card>
             <Card>
                 <CardContent className="p-4 flex flex-col items-center text-center">
                     <MessageSquare className="w-6 h-6 text-primary mb-2" />
-                    <span className="text-2xl font-bold">24</span>
-                    <span className="text-xs text-muted-foreground uppercase">Messages Sent</span>
+                    <span className="text-2xl font-bold" data-testid="text-unlocked">{progress?.unlockedDayIndex || 0}</span>
+                    <span className="text-xs text-muted-foreground uppercase">Cards Unlocked</span>
                 </CardContent>
             </Card>
         </div>
@@ -59,11 +107,11 @@ export default function Profile() {
                     <Zap className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                     Daily Energy
                 </h3>
-                <span className="text-sm font-mono text-muted-foreground">8/10 used</span>
+                <span className="text-sm font-mono text-muted-foreground">∞ Unlimited</span>
             </div>
-            <Progress value={80} className="h-2" />
+            <Progress value={100} className="h-2" />
             <p className="text-xs text-muted-foreground">
-                Free operatives are limited to 10 messages per day. Energy resets in 04:23:12.
+                Full access to all features. Enjoy unlimited chat and story interactions!
             </p>
         </div>
 
@@ -75,19 +123,19 @@ export default function Profile() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                     <Crown className="w-5 h-5 fill-current" />
-                    Upgrade to PRO
+                    StoryFlix PRO
                 </CardTitle>
                 <CardDescription>
-                    Get unlimited access to the universe.
+                    Future premium features will be available here.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-green-500" /> Unlimited Character Chat
+                        <Shield className="w-4 h-4 text-green-500" /> Priority Story Access
                     </li>
                     <li className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-green-500" /> Access Archived Seasons
+                        <Shield className="w-4 h-4 text-green-500" /> Exclusive Universes
                     </li>
                     <li className="flex items-center gap-2">
                         <Shield className="w-4 h-4 text-green-500" /> 4K Video Downloads
