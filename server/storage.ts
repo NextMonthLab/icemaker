@@ -78,6 +78,18 @@ export interface IStorage {
   getCardMessageReactions(messageId: number): Promise<schema.CardMessageReaction[]>;
   addCardMessageReaction(reaction: schema.InsertCardMessageReaction): Promise<schema.CardMessageReaction>;
   removeCardMessageReaction(messageId: number, userId: number | null, anonFingerprint: string | null): Promise<void>;
+  
+  // Audio Tracks
+  getAudioTrack(id: number): Promise<schema.AudioTrack | undefined>;
+  getAllAudioTracks(): Promise<schema.AudioTrack[]>;
+  getAudioTracksByFilter(mood?: string, genre?: string): Promise<schema.AudioTrack[]>;
+  createAudioTrack(track: schema.InsertAudioTrack): Promise<schema.AudioTrack>;
+  updateAudioTrack(id: number, track: Partial<schema.InsertAudioTrack>): Promise<schema.AudioTrack | undefined>;
+  deleteAudioTrack(id: number): Promise<void>;
+  
+  // Universe Audio Settings
+  getUniverseAudioSettings(universeId: number): Promise<schema.UniverseAudioSettings | undefined>;
+  createOrUpdateUniverseAudioSettings(settings: schema.InsertUniverseAudioSettings): Promise<schema.UniverseAudioSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -462,6 +474,72 @@ export class DatabaseStorage implements IStorage {
           eq(schema.cardMessageReactions.anonFingerprint, anonFingerprint)
         )
       );
+    }
+  }
+  
+  // Audio Tracks
+  async getAudioTrack(id: number): Promise<schema.AudioTrack | undefined> {
+    const result = await db.query.audioTracks.findFirst({
+      where: eq(schema.audioTracks.id, id),
+    });
+    return result;
+  }
+  
+  async getAllAudioTracks(): Promise<schema.AudioTrack[]> {
+    return await db.query.audioTracks.findMany({
+      orderBy: [desc(schema.audioTracks.createdAt)],
+    });
+  }
+  
+  async getAudioTracksByFilter(mood?: string, genre?: string): Promise<schema.AudioTrack[]> {
+    // Get all tracks, then filter in JS (JSON array querying is complex in Drizzle)
+    const allTracks = await db.query.audioTracks.findMany({
+      orderBy: [desc(schema.audioTracks.createdAt)],
+    });
+    
+    return allTracks.filter(track => {
+      if (mood && !(track.moodTags as string[] || []).includes(mood)) return false;
+      if (genre && !(track.genreTags as string[] || []).includes(genre)) return false;
+      return true;
+    });
+  }
+  
+  async createAudioTrack(track: schema.InsertAudioTrack): Promise<schema.AudioTrack> {
+    const [result] = await db.insert(schema.audioTracks).values(track).returning();
+    return result;
+  }
+  
+  async updateAudioTrack(id: number, track: Partial<schema.InsertAudioTrack>): Promise<schema.AudioTrack | undefined> {
+    const [result] = await db.update(schema.audioTracks)
+      .set({ ...track, updatedAt: new Date() })
+      .where(eq(schema.audioTracks.id, id))
+      .returning();
+    return result;
+  }
+  
+  async deleteAudioTrack(id: number): Promise<void> {
+    await db.delete(schema.audioTracks).where(eq(schema.audioTracks.id, id));
+  }
+  
+  // Universe Audio Settings
+  async getUniverseAudioSettings(universeId: number): Promise<schema.UniverseAudioSettings | undefined> {
+    const result = await db.query.universeAudioSettings.findFirst({
+      where: eq(schema.universeAudioSettings.universeId, universeId),
+    });
+    return result;
+  }
+  
+  async createOrUpdateUniverseAudioSettings(settings: schema.InsertUniverseAudioSettings): Promise<schema.UniverseAudioSettings> {
+    const existing = await this.getUniverseAudioSettings(settings.universeId);
+    if (existing) {
+      const [result] = await db.update(schema.universeAudioSettings)
+        .set(settings)
+        .where(eq(schema.universeAudioSettings.universeId, settings.universeId))
+        .returning();
+      return result;
+    } else {
+      const [result] = await db.insert(schema.universeAudioSettings).values(settings).returning();
+      return result;
     }
   }
 }

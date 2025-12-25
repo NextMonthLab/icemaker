@@ -1,0 +1,174 @@
+Absolutely. Below is a single, paste-ready Replit prompt that tells Replit exactly what to build:
+	•	Scan your uploaded MP3s (from a known folder), read file names, and auto-categorise them.
+	•	Create DB models for tracks + tags + attribution/licence.
+	•	Add an Admin / Creator UI to:
+	•	import from local uploaded files,
+	•	edit metadata (mood/genre/licence/attribution),
+	•	upload new tracks going forward in the structured format we discussed.
+	•	Add a simple Universe soundtrack picker that filters by mood/genre.
+	•	Set you up for later “host on R2/S3” without rewriting the feature.
+
+Copy/paste this into Replit (Raplet). No long dashes.
+
+⸻
+
+
+ROLE: You are a senior full-stack engineer working inside our Story Engine app (StoryFlix). You will implement creator-friendly soundtrack management.
+
+CONTEXT:
+We already have Universes and Cards. We are adding a small royalty-free audio library feature for MVP.
+User has already uploaded a selection of MP3 files into the Replit workspace.
+
+GOAL:
+1) Scan the server filesystem for uploaded MP3s, read file names, and auto-categorise them (moods, genres).
+2) Store tracks in the database with editable metadata: title, artist, source, licence, attribution text, tags, duration, and file URL.
+3) Provide a Creator/Admin UI to:
+   - Import scanned files into the DB
+   - Edit each track metadata (mood tags, genre tags, licence, attribution)
+   - Upload new tracks (MP3) via the UI
+   - Optionally add a track by external URL (for later CDN use)
+4) Provide Universe audio settings:
+   - audioMode: off | continuous | per_card
+   - defaultTrackId
+   - allowedTrackIds (subset for this universe)
+   - fadeInMs, fadeOutMs, crossfadeMs
+   - duckingDuringVoiceOver boolean + duckDb amount
+5) Add basic filtering UX: pick tracks by mood or genre in the Universe editor.
+
+IMPORTANT CONSTRAINTS:
+- Do NOT commit MP3 binaries into GitHub. Keep them in runtime storage under /uploads/audio for MVP.
+- This must work on Render later. Keep storage abstraction so we can move to S3/R2.
+- Do not break existing Universe/Card functionality.
+- Keep it simple: no waveform editor, no timeline UI. We are just managing tracks + settings.
+
+FILESYSTEM ASSUMPTIONS:
+- Uploaded MP3s are placed somewhere in the repo, likely under one of:
+  - /uploads
+  - /uploads/audio
+  - /public/uploads/audio
+  - /assets/audio
+Implement a safe scan that checks these folders in order, and log what it finds.
+
+AUTO-CATEGORISATION RULES (filename heuristics):
+- Parse filename tokens: split on hyphen, underscore, and spaces.
+- Example filename: "tense_ambient_dark-01.mp3"
+- Map tokens to mood tags:
+  - tense, suspense, thriller, dark => mood: tense
+  - calm, ambient, gentle, soft => mood: calm
+  - hopeful, uplifting, inspiring => mood: uplifting
+  - eerie, mystery, unsettling => mood: eerie
+  - documentary, neutral, factual => mood: documentary
+  - upbeat, fun, happy => mood: upbeat
+- Map tokens to genre tags:
+  - ambient, cinematic, piano, lo-fi, orchestral, electronic, acoustic
+- If nothing matches, tag mood: neutral and genre: ambient.
+- Infer a human title from the filename (Title Case, remove numbers, remove underscores/hyphens).
+
+DATA MODEL:
+Add DB tables (Prisma/Drizzle/SQL depending on our stack):
+- audio_tracks:
+  id (uuid)
+  title
+  artist (nullable)
+  source (enum: upload | external)
+  licence (text)
+  licenceUrl (text nullable)
+  attributionRequired (boolean)
+  attributionText (text nullable)
+  filePath (text)  // for local file storage
+  fileUrl (text)   // served URL
+  durationSeconds (int nullable)
+  moodTags (json array of strings)
+  genreTags (json array of strings)
+  createdByUserId (nullable)  // for creator accounts later
+  createdAt, updatedAt
+
+- universe_audio_settings:
+  universeId (fk)
+  audioMode (off|continuous|per_card)
+  defaultTrackId (fk nullable)
+  allowedTrackIds (json array of ids)  // or a join table if preferred
+  fadeInMs (int default 500)
+  fadeOutMs (int default 500)
+  crossfadeMs (int default 800)
+  duckingDuringVoiceOver (boolean default true)
+  duckDb (int default 12)
+
+API ENDPOINTS:
+- GET /api/audio/scan
+  Scans the filesystem for mp3 files. Returns list of { filename, path, suggestedMetadata } without writing DB.
+
+- POST /api/audio/import
+  Body: { files: [{ path, filename }] }
+  Imports selected scanned files into audio_tracks using suggestedMetadata. Generates fileUrl for serving.
+
+- POST /api/audio/upload
+  Multipart upload. Saves file to /uploads/audio, creates audio_tracks record.
+  Apply filename heuristics to prefill metadata.
+
+- PUT /api/audio/:id
+  Updates metadata fields.
+
+- GET /api/audio
+  List tracks with filtering: ?mood=tense&genre=cinematic
+
+- GET /api/universes/:id/audio-settings
+- PUT /api/universes/:id/audio-settings
+
+STATIC FILE SERVING:
+- Ensure Express (or our server) serves /uploads/audio as public URLs.
+  Example: /uploads/audio/<filename>.mp3
+
+CREATOR / ADMIN UI:
+Add a new Admin section: "Audio Library"
+- Button: "Scan for MP3s"
+  Calls /api/audio/scan and shows results in a table: filename, suggested moods, suggested genres, suggested title.
+- Multi-select and "Import Selected"
+  Calls /api/audio/import.
+- Track list view with search + filters.
+- Track edit drawer/modal:
+  - Title
+  - Artist
+  - Licence
+  - Licence URL
+  - Attribution required toggle
+  - Attribution text
+  - Mood tags multi-select (with ability to add custom)
+  - Genre tags multi-select (with ability to add custom)
+- Upload panel:
+  - Upload MP3
+  - OR add External URL (future CDN usage)
+  - On save, create track and open edit modal.
+
+UNIVERSE UI:
+In Universe edit screen, add "Soundtrack" panel:
+- Audio mode select
+- Default track dropdown (filtered to allowed tracks)
+- Allowed tracks multi-select with filters by mood/genre
+- Fade and ducking settings
+- Preview button: play selected track (simple audio element)
+
+TESTING / ACCEPTANCE:
+- When user scans, system finds MP3s and shows sensible auto tags.
+- Import creates DB records, and the audio file is playable via URL.
+- Creator can upload a new MP3 and edit its metadata.
+- Universe can choose audio mode + default track.
+- No existing pages break.
+- Add clear logs for scan paths used and number of files found.
+
+IMPLEMENTATION NOTES:
+- Keep audio operations server-side. Do not load whole MP3 into memory.
+- DurationSeconds can be optional for MVP. If easy, compute duration using a lightweight library; otherwise leave null.
+- Use defensive coding and meaningful error messages.
+
+DELIVERABLE:
+Implement the full feature end-to-end with database migrations, API routes, and UI components.
+
+
+⸻
+
+Two quick “don’t get bitten later” notes
+	1.	Replit file storage vs Render: for MVP it’s fine. For production, you’ll move those MP3s to R2/S3 and keep the DB records identical (only fileUrl changes). This prompt sets you up for that.
+	2.	Licensing: because you’re using “free commercial” tracks, the UI includes licence + attribution fields so you can keep it clean and publishable.
+
+If you want, paste one or two example MP3 filenames you uploaded and I’ll give you an improved categorisation dictionary (so it tags perfectly on first scan).

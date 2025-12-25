@@ -327,6 +327,48 @@ export const insertCardMessageReactionSchema = createInsertSchema(cardMessageRea
 export type InsertCardMessageReaction = z.infer<typeof insertCardMessageReactionSchema>;
 export type CardMessageReaction = typeof cardMessageReactions.$inferSelect;
 
+// Audio Tracks (royalty-free soundtrack library)
+export const audioTracks = pgTable("audio_tracks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  artist: text("artist"),
+  source: text("source").notNull().default("upload"), // "upload" | "external"
+  licence: text("licence").default("Royalty Free"),
+  licenceUrl: text("licence_url"),
+  attributionRequired: boolean("attribution_required").default(false).notNull(),
+  attributionText: text("attribution_text"),
+  filePath: text("file_path"), // local file path
+  fileUrl: text("file_url").notNull(), // served URL
+  durationSeconds: integer("duration_seconds"),
+  moodTags: jsonb("mood_tags").$type<string[]>().default([]),
+  genreTags: jsonb("genre_tags").$type<string[]>().default([]),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAudioTrackSchema = createInsertSchema(audioTracks).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertAudioTrack = z.infer<typeof insertAudioTrackSchema>;
+export type AudioTrack = typeof audioTracks.$inferSelect;
+
+// Universe Audio Settings
+export const universeAudioSettings = pgTable("universe_audio_settings", {
+  id: serial("id").primaryKey(),
+  universeId: integer("universe_id").references(() => universes.id).notNull().unique(),
+  audioMode: text("audio_mode").notNull().default("off"), // "off" | "continuous" | "per_card"
+  defaultTrackId: integer("default_track_id").references(() => audioTracks.id),
+  allowedTrackIds: jsonb("allowed_track_ids").$type<number[]>().default([]),
+  fadeInMs: integer("fade_in_ms").default(500).notNull(),
+  fadeOutMs: integer("fade_out_ms").default(500).notNull(),
+  crossfadeMs: integer("crossfade_ms").default(800).notNull(),
+  duckingDuringVoiceOver: boolean("ducking_during_voice_over").default(true).notNull(),
+  duckDb: integer("duck_db").default(12).notNull(),
+});
+
+export const insertUniverseAudioSettingsSchema = createInsertSchema(universeAudioSettings).omit({ id: true });
+export type InsertUniverseAudioSettings = z.infer<typeof insertUniverseAudioSettingsSchema>;
+export type UniverseAudioSettings = typeof universeAudioSettings.$inferSelect;
+
 // Manifest validation schemas for ZIP import
 export const manifestVisualStyleSchema = z.object({
   style_preset: z.string().optional(),
