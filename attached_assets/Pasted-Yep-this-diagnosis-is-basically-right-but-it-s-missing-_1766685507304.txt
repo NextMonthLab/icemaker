@@ -1,0 +1,110 @@
+Yep — this diagnosis is basically right, but it’s missing one key thing: you don’t want to “delete stuff” yet, you want deterministic testing. Here’s how to make the admin and front UI show the same cards every time, and how to prove where the mismatch is coming from.
+
+Why it’s showing in Admin but not Front UI
+
+There are only three realistic causes, and your log suggests you’ve got two of them happening at once:
+
+1) Front UI has a stricter filter than Admin
+
+Front UI requires:
+	•	status === "published"
+	•	publishAt exists
+	•	publishAt <= now
+
+Admin often shows everything regardless.
+
+Fix for testing: allow publishAt to be optional, or treat null as “publish immediately”.
+
+Recommended front-end filter for MVP:
+
+.filter(c => c.status === "published" && (!c.publishAt || new Date(c.publishAt) <= now))
+
+2) You have multiple universes with the same name (“Time Spent”)
+
+This is the bigger one. If the front UI selects the universe by name (or “first returned”) you’ll get randomness.
+
+Admin might be showing Universe #10, but the front UI might be loading #4/#6/#7.
+
+Fix for testing: front UI must select by a stable identifier:
+	•	universe.slug (best)
+	•	or universe.id (OK)
+	•	never by name
+
+3) Timezone / timestamp precision edge
+
+Less likely, but it bites: if you’re storing timestamps in UTC and comparing in local time, it can fail depending on how the string is parsed.
+
+Fix for testing: log the values in the browser:
+	•	now.toISOString()
+	•	publishAtRaw
+	•	new Date(publishAt).toISOString()
+
+The best testing approach (do this in order)
+
+This is how you make the system predictable without deleting anything.
+
+Step A: Add a “Universe Selector” to the Front UI (temporary)
+
+For testing only, add a dropdown in the front UI to select a universe by id (or slug), and show which one is currently active.
+
+That instantly proves whether you’re seeing the wrong universe.
+
+Step B: Make the importer refuse duplicate slugs
+
+Right now you can import “Time Spent” ten times.
+
+Rule:
+	•	If universe.slug already exists, either:
+	•	update/replace that universe (safe), or
+	•	fail with: “Universe slug already exists. Choose a new slug or enable overwrite.”
+
+For testing, add a checkbox: Overwrite existing universe.
+
+Step C: Change publish behaviour for MVP
+
+Your pack has publishAt: null. If import is auto-filling publishAt with “now + dayIndex offset”, you’re introducing time complexity during testing.
+
+Two good options:
+
+Option 1 (best for testing): If publishAt is null, don’t set it. Treat null as publish now.
+
+Option 2: If publishAt missing/null, set it to midnight local for the dayIndex:
+	•	Day 1 = today 00:00
+	•	Day 2 = tomorrow 00:00
+
+Concrete changes to ask Replit for (copy/paste)
+
+Use this:
+
+We need deterministic testing between Admin + Front UI.
+
+1) Front UI filter: cards should display if status="published" AND (publishAt is null OR publishAt <= now). Admin can remain unfiltered.
+
+2) Universe selection: Front UI must load universe by stable key (slug or id), NOT by name. Add temporary debug UI to show active universeId/slug and allow selecting.
+
+3) Import safety:
+- Enforce unique universe.slug
+- Add an "Overwrite existing universe with same slug" option (replace cards/characters/locations for that universe).
+
+4) PublishAt behaviour for MVP:
+- If publishAt is null in manifest, do NOT auto-fill with timestamps.
+- Store publishAt as null, and treat it as immediately available in Front UI.
+
+How you can confirm in 30 seconds what’s wrong (no code)
+
+In the Admin panel, find and note:
+	•	Universe ID / slug for the one you’re looking at.
+
+In the Front UI (even without code), check API calls in dev tools:
+	•	is it requesting /api/universes/10 or is it requesting by name?
+	•	what universeId is returned in the response?
+
+If the IDs don’t match, it’s 100% the duplicate universe selection problem.
+
+⸻
+
+If you want, paste:
+	•	the front UI route it calls to fetch universes/cards (just the endpoint paths)
+	•	and the exact filter code block
+
+…and I’ll tell you precisely which line is causing the mismatch.

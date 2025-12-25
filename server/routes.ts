@@ -1034,6 +1034,7 @@ export async function registerRoutes(
       }
       
       const universeId = req.body.universeId ? parseInt(req.body.universeId) : null;
+      const overwrite = req.body.overwrite === "true" || req.body.overwrite === true;
       
       const zip = new AdmZip(req.file.buffer);
       const entries = zip.getEntries();
@@ -1052,6 +1053,10 @@ export async function registerRoutes(
       if (!manifest.universe?.name) {
         return res.status(400).json({ message: "Invalid manifest: universe.name is required" });
       }
+      
+      // Generate slug from manifest (use explicit slug or derive from name)
+      const universeSlug = manifest.universe.slug || 
+        manifest.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
       // Convert visual_style from manifest format to DB format
       const convertVisualStyle = (vs?: VisualStyleManifest): schema.VisualStyle | null => {
@@ -1116,17 +1121,41 @@ export async function registerRoutes(
         };
       };
       
-      // Create or use existing universe
+      // Create or use existing universe (check by slug first)
       let universe: schema.Universe;
+      const existingBySlug = await storage.getUniverseBySlug(universeSlug);
+      
       if (universeId) {
         const existing = await storage.getUniverse(universeId);
         if (!existing) {
           return res.status(400).json({ message: "Universe not found" });
         }
         universe = existing;
+      } else if (existingBySlug) {
+        // Slug already exists
+        if (!overwrite) {
+          return res.status(409).json({ 
+            message: `Universe with slug "${universeSlug}" already exists. Enable "Overwrite existing" to replace it.`,
+            existingUniverseId: existingBySlug.id
+          });
+        }
+        // Overwrite: delete old content and update universe metadata
+        await storage.deleteUniverseContent(existingBySlug.id);
+        const updated = await storage.updateUniverse(existingBySlug.id, {
+          name: manifest.universe.name,
+          slug: universeSlug,
+          description: manifest.universe.description || "",
+          styleNotes: manifest.universe.styleNotes || null,
+          visualMode: manifest.universe.visual_mode || "author_supplied",
+          visualStyle: convertVisualStyle(manifest.universe.visual_style),
+          visualContinuity: convertVisualContinuity(manifest.universe.visual_continuity),
+        });
+        universe = updated!;
+        warnings.push(`Replaced existing universe "${existingBySlug.name}" (ID: ${existingBySlug.id})`);
       } else {
         universe = await storage.createUniverse({
           name: manifest.universe.name,
+          slug: universeSlug,
           description: manifest.universe.description || "",
           styleNotes: manifest.universe.styleNotes || null,
           visualMode: manifest.universe.visual_mode || "author_supplied",
@@ -1172,7 +1201,15 @@ export async function registerRoutes(
       
       // Create cards
       const season = typeof manifest.season === 'string' ? parseInt(manifest.season, 10) : (manifest.season || 1);
-      const startDate = manifest.startDate ? new Date(manifest.startDate) : new Date();
+      
+      // Calculate publishAt: if startDate is specified, calculate date; otherwise leave null (publish immediately)
+      const calculatePublishDate = (dayIndex: number): Date | null => {
+        if (!manifest.startDate) return null; // null = publish immediately
+        const baseDate = new Date(manifest.startDate);
+        baseDate.setHours(0, 0, 0, 0); // Set to midnight for deterministic timing
+        baseDate.setDate(baseDate.getDate() + (dayIndex - 1));
+        return baseDate;
+      };
       
       // Convert image_generation from manifest format to DB format
       const convertImageGeneration = (ig?: ManifestCard['image_generation']): schema.ImageGeneration | null => {
@@ -1188,8 +1225,7 @@ export async function registerRoutes(
       };
       
       for (const cardDef of manifest.cards || []) {
-        const publishDate = new Date(startDate);
-        publishDate.setDate(publishDate.getDate() + (cardDef.dayIndex - 1));
+        const publishDate = calculatePublishDate(cardDef.dayIndex);
         
         // Resolve primary_character_ids to database IDs
         const primaryCharacterIds: number[] = [];

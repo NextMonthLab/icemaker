@@ -20,10 +20,12 @@ export interface IStorage {
   
   // Universe
   getUniverse(id: number): Promise<schema.Universe | undefined>;
+  getUniverseBySlug(slug: string): Promise<schema.Universe | undefined>;
   getAllUniverses(): Promise<schema.Universe[]>;
   createUniverse(universe: schema.InsertUniverse): Promise<schema.Universe>;
   updateUniverse(id: number, universe: Partial<schema.InsertUniverse>): Promise<schema.Universe | undefined>;
   deleteUniverse(id: number): Promise<void>;
+  deleteUniverseContent(id: number): Promise<void>;
   
   // Characters
   getCharacter(id: number): Promise<schema.Character | undefined>;
@@ -107,6 +109,13 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
   
+  async getUniverseBySlug(slug: string): Promise<schema.Universe | undefined> {
+    const result = await db.query.universes.findFirst({
+      where: eq(schema.universes.slug, slug),
+    });
+    return result;
+  }
+  
   async getAllUniverses(): Promise<schema.Universe[]> {
     return await db.query.universes.findMany();
   }
@@ -126,6 +135,17 @@ export class DatabaseStorage implements IStorage {
   
   async deleteUniverse(id: number): Promise<void> {
     await db.delete(schema.universes).where(eq(schema.universes.id, id));
+  }
+  
+  async deleteUniverseContent(id: number): Promise<void> {
+    // Delete all content for a universe (cards, characters, locations) but keep the universe
+    const cards = await db.query.cards.findMany({ where: eq(schema.cards.universeId, id) });
+    for (const card of cards) {
+      await db.delete(schema.cardCharacters).where(eq(schema.cardCharacters.cardId, card.id));
+    }
+    await db.delete(schema.cards).where(eq(schema.cards.universeId, id));
+    await db.delete(schema.characters).where(eq(schema.characters.universeId, id));
+    await db.delete(schema.locations).where(eq(schema.locations.universeId, id));
   }
   
   // Characters

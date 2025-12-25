@@ -42,10 +42,10 @@ export default function Today() {
     );
   }
 
-  // Filter to only published cards with publishAt in the past
+  // Filter to only published cards with publishAt in the past (or null = publish immediately)
   const now = new Date();
   const availableCards = cards
-    .filter(c => c.status === 'published' && c.publishAt && new Date(c.publishAt) <= now)
+    .filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
     .sort((a, b) => a.dayIndex - b.dayIndex);
 
   if (availableCards.length === 0) {
@@ -77,6 +77,11 @@ export default function Today() {
   return (
     <Layout>
       <div className="p-4 pb-24 md:p-8 max-w-md mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+        
+        {/* Debug: Show active universe */}
+        <div className="text-xs text-muted-foreground font-mono" data-testid="text-universe-debug">
+          Universe: {universe.name} | ID: {universe.id} {universe.slug && `| Slug: ${universe.slug}`}
+        </div>
         
         {/* Navigation */}
         {availableCards.length > 1 && (

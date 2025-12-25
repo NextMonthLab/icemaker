@@ -238,11 +238,14 @@ class ApiClient {
     return response.json();
   }
 
-  async executeImport(file: File, universeId?: number): Promise<ImportExecutionResult> {
+  async executeImport(file: File, options?: { universeId?: number; overwrite?: boolean }): Promise<ImportExecutionResult> {
     const formData = new FormData();
     formData.append("file", file);
-    if (universeId) {
-      formData.append("universeId", universeId.toString());
+    if (options?.universeId) {
+      formData.append("universeId", options.universeId.toString());
+    }
+    if (options?.overwrite) {
+      formData.append("overwrite", "true");
     }
     
     const response = await fetch(`${this.baseUrl}/import/execute`, {

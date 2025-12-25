@@ -92,10 +92,10 @@ export default function Home() {
     );
   }
 
-  // Filter to only published cards with publishAt in the past
+  // Filter to only published cards with publishAt in the past (or null = publish immediately)
   const now = new Date();
   const availableCards = cards
-    ?.filter(c => c.status === 'published' && c.publishAt && new Date(c.publishAt) <= now)
+    ?.filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
     .sort((a, b) => a.dayIndex - b.dayIndex) || [];
 
   if (availableCards.length === 0) {
@@ -141,6 +141,9 @@ export default function Home() {
                 <h1 className="text-3xl md:text-5xl font-display font-black text-foreground uppercase tracking-tight" data-testid="text-universe-name">
                   {activeUniverse.name}
                 </h1>
+                <span className="text-xs text-muted-foreground font-mono" data-testid="text-universe-debug">
+                  ID: {activeUniverse.id} {activeUniverse.slug && `| Slug: ${activeUniverse.slug}`}
+                </span>
             </div>
             <div className="flex flex-col items-center bg-card border border-border px-3 py-2 rounded-lg shadow-lg">
                 <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />

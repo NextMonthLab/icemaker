@@ -80,6 +80,7 @@ export type LocationContinuity = z.infer<typeof locationContinuitySchema>;
 // Universe (Story World)
 export const universes = pgTable("universes", {
   id: serial("id").primaryKey(),
+  slug: text("slug").unique(), // Unique identifier for deterministic imports
   name: text("name").notNull(),
   description: text("description").notNull(),
   styleNotes: text("style_notes"),

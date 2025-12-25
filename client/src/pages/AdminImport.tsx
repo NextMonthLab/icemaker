@@ -19,6 +19,7 @@ export default function AdminImport() {
   const queryClient = useQueryClient();
   
   const [isDryRun, setIsDryRun] = useState(true);
+  const [overwriteExisting, setOverwriteExisting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [report, setReport] = useState<ImportValidationResult | null>(null);
   const [importResult, setImportResult] = useState<ImportExecutionResult | null>(null);
@@ -45,7 +46,7 @@ export default function AdminImport() {
   });
 
   const executeMutation = useMutation({
-    mutationFn: (file: File) => api.executeImport(file),
+    mutationFn: (file: File) => api.executeImport(file, { overwrite: overwriteExisting }),
     onSuccess: (data) => {
       setImportResult(data);
       queryClient.invalidateQueries({ queryKey: ["universes"] });
@@ -166,6 +167,20 @@ export default function AdminImport() {
                           checked={isDryRun} 
                           onCheckedChange={setIsDryRun}
                           data-testid="switch-dry-run"
+                        />
+                    </div>
+                    
+                    <div className="flex items-center justify-between space-x-2 border p-3 rounded-lg bg-muted/20">
+                        <Label htmlFor="overwrite" className="flex flex-col gap-1 cursor-pointer">
+                            <span>Overwrite Existing</span>
+                            <span className="font-normal text-xs text-muted-foreground">Replace universe with same slug</span>
+                        </Label>
+                        <Switch 
+                          id="overwrite" 
+                          checked={overwriteExisting} 
+                          onCheckedChange={setOverwriteExisting}
+                          data-testid="switch-overwrite"
+                          disabled={isDryRun}
                         />
                     </div>
 
