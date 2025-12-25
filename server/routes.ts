@@ -1049,6 +1049,7 @@ export async function registerRoutes(
       
       const universeId = req.body.universeId ? parseInt(req.body.universeId) : null;
       const overwrite = req.body.overwrite === "true" || req.body.overwrite === true;
+      const dropImmediately = req.body.dropImmediately === "true" || req.body.dropImmediately === true;
       
       const zip = new AdmZip(req.file.buffer);
       const entries = zip.getEntries();
@@ -1216,8 +1217,9 @@ export async function registerRoutes(
       // Create cards
       const season = typeof manifest.season === 'string' ? parseInt(manifest.season, 10) : (manifest.season || 1);
       
-      // Calculate publishAt: if startDate is specified, calculate date; otherwise leave null (publish immediately)
+      // Calculate publishAt: if dropImmediately is true OR no startDate, return null (publish immediately)
       const calculatePublishDate = (dayIndex: number): Date | null => {
+        if (dropImmediately) return null; // Override: drop all cards immediately
         if (!manifest.startDate) return null; // null = publish immediately
         const baseDate = new Date(manifest.startDate);
         baseDate.setHours(0, 0, 0, 0); // Set to midnight for deterministic timing

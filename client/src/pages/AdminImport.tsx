@@ -20,6 +20,7 @@ export default function AdminImport() {
   
   const [isDryRun, setIsDryRun] = useState(true);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
+  const [dropAllImmediately, setDropAllImmediately] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [report, setReport] = useState<ImportValidationResult | null>(null);
   const [importResult, setImportResult] = useState<ImportExecutionResult | null>(null);
@@ -46,7 +47,7 @@ export default function AdminImport() {
   });
 
   const executeMutation = useMutation({
-    mutationFn: (file: File) => api.executeImport(file, { overwrite: overwriteExisting }),
+    mutationFn: (file: File) => api.executeImport(file, { overwrite: overwriteExisting, dropImmediately: dropAllImmediately }),
     onSuccess: (data) => {
       setImportResult(data);
       queryClient.invalidateQueries({ queryKey: ["universes"] });
@@ -180,6 +181,20 @@ export default function AdminImport() {
                           checked={overwriteExisting} 
                           onCheckedChange={setOverwriteExisting}
                           data-testid="switch-overwrite"
+                          disabled={isDryRun}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between space-x-2 border p-3 rounded-lg bg-muted/20">
+                        <Label htmlFor="drop-immediately" className="flex flex-col gap-1 cursor-pointer">
+                            <span>Drop All Immediately</span>
+                            <span className="font-normal text-xs text-muted-foreground">Ignore publish dates - make all cards available now</span>
+                        </Label>
+                        <Switch 
+                          id="drop-immediately" 
+                          checked={dropAllImmediately} 
+                          onCheckedChange={setDropAllImmediately}
+                          data-testid="switch-drop-immediately"
                           disabled={isDryRun}
                         />
                     </div>
