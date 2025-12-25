@@ -18,7 +18,23 @@ export default function Chat() {
   const characterId = searchParams.get('character');
   const cardId = searchParams.get('card');
   const { user } = useAuth();
-  const { universe } = useAppContext();
+  const { universe, setUniverse } = useAppContext();
+
+  // Fetch universes directly if none is set (handles direct navigation to /chat)
+  const { data: universes } = useQuery({
+    queryKey: ["universes"],
+    queryFn: () => api.getUniverses(),
+    enabled: !universe && !characterId,
+  });
+
+  // Auto-set universe if we have exactly one
+  useEffect(() => {
+    if (!universe && universes && universes.length === 1) {
+      setUniverse(universes[0]);
+    }
+  }, [universe, universes, setUniverse]);
+
+  const activeUniverse = universe || (universes?.length === 1 ? universes[0] : null);
 
   const { data: character, isLoading } = useQuery({
     queryKey: ["character", characterId],
@@ -28,9 +44,9 @@ export default function Chat() {
 
   // Fetch all characters from the universe when no specific character is selected
   const { data: allCharacters, isLoading: charactersLoading } = useQuery({
-    queryKey: ["characters", universe?.id],
-    queryFn: () => api.getCharacters(universe!.id),
-    enabled: !characterId && !!universe,
+    queryKey: ["characters", activeUniverse?.id],
+    queryFn: () => api.getCharacters(activeUniverse!.id),
+    enabled: !characterId && !!activeUniverse,
   });
 
   // Auto-redirect to chat if there's only one character (skip selection screen)

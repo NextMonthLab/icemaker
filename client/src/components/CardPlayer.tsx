@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronUp, Share2, BookOpen } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
 
 interface Character {
@@ -31,6 +31,7 @@ export default function CardPlayer({
   onPhaseChange,
   fullScreen = false
 }: CardPlayerProps) {
+  const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
   const [isPlaying, setIsPlaying] = useState(autoplay);
   const [captionIndex, setCaptionIndex] = useState(0);
@@ -249,17 +250,19 @@ export default function CardPlayer({
                     </div>
                   </div>
 
-                  <Link href={`/chat?character=${primaryCharacter.id}&card=${card.id}`}>
-                    <Button 
-                      size="lg" 
-                      className="w-full gap-2 py-6 text-base font-semibold bg-primary hover:bg-primary/90"
-                      data-testid="button-chat-character"
-                      onClick={() => onChatClick?.(primaryCharacter.id)}
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                      Chat with {primaryCharacter.name}
-                    </Button>
-                  </Link>
+                  <Button 
+                    size="lg" 
+                    className="w-full gap-2 py-6 text-base font-semibold bg-primary hover:bg-primary/90"
+                    data-testid="button-chat-character"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChatClick?.(primaryCharacter.id);
+                      setLocation(`/chat?character=${primaryCharacter.id}&card=${card.id}`);
+                    }}
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    Chat with {primaryCharacter.name}
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
