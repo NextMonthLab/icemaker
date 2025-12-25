@@ -61,6 +61,10 @@ export default function Admin() {
   const [editIntroCardsCount, setEditIntroCardsCount] = useState(3);
   const [editTimezone, setEditTimezone] = useState("UTC");
   const [generatingAllImages, setGeneratingAllImages] = useState(false);
+  const [editAudioMode, setEditAudioMode] = useState<string>("off");
+  const [editDefaultTrackId, setEditDefaultTrackId] = useState<number | null>(null);
+  const [editFadeInMs, setEditFadeInMs] = useState(500);
+  const [editFadeOutMs, setEditFadeOutMs] = useState(500);
 
   const { data: universes, isLoading: universesLoading } = useQuery({
     queryKey: ["universes"],
@@ -73,6 +77,11 @@ export default function Admin() {
     queryKey: ["cards", selectedUniverse?.id],
     queryFn: () => api.getCards(selectedUniverse!.id),
     enabled: !!selectedUniverse,
+  });
+
+  const { data: audioTracks } = useQuery({
+    queryKey: ["audioTracks"],
+    queryFn: () => api.getAudioTracks(),
   });
 
   const createUniverseMutation = useMutation({
@@ -218,18 +227,32 @@ export default function Admin() {
     });
   };
 
-  const handleEditUniverse = () => {
+  const handleEditUniverse = async () => {
     if (selectedUniverse) {
       setEditUniverseName(selectedUniverse.name);
       setEditUniverseDescription(selectedUniverse.description || "");
       setEditReleaseMode(selectedUniverse.releaseMode || "daily");
       setEditIntroCardsCount(selectedUniverse.introCardsCount ?? 3);
       setEditTimezone(selectedUniverse.timezone || "UTC");
+      
+      try {
+        const audioSettings = await api.getUniverseAudioSettings(selectedUniverse.id);
+        setEditAudioMode(audioSettings.audioMode || "off");
+        setEditDefaultTrackId(audioSettings.defaultTrackId);
+        setEditFadeInMs(audioSettings.fadeInMs ?? 500);
+        setEditFadeOutMs(audioSettings.fadeOutMs ?? 500);
+      } catch {
+        setEditAudioMode("off");
+        setEditDefaultTrackId(null);
+        setEditFadeInMs(500);
+        setEditFadeOutMs(500);
+      }
+      
       setShowEditUniverseDialog(true);
     }
   };
 
-  const handleSaveUniverse = () => {
+  const handleSaveUniverse = async () => {
     if (!editUniverseName.trim() || !selectedUniverse) return;
     const dailyStartsAt = editIntroCardsCount + 1;
     updateUniverseMutation.mutate({
@@ -241,6 +264,21 @@ export default function Admin() {
       dailyReleaseStartsAtDayIndex: dailyStartsAt,
       timezone: editTimezone,
     });
+    
+    try {
+      await api.updateUniverseAudioSettings(selectedUniverse.id, {
+        audioMode: editAudioMode,
+        defaultTrackId: editDefaultTrackId,
+        fadeInMs: editFadeInMs,
+        fadeOutMs: editFadeOutMs,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Audio settings update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateUniverse = () => {
@@ -829,6 +867,95 @@ export default function Admin() {
                       Timezone used for publish date comparisons.
                     </p>
                   </div>
+                </div>
+              </div>
+              
+              {/* Soundtrack Settings Section */}
+              <div className="pt-4 border-t">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Music className="w-4 h-4" /> Soundtrack Settings
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-audio-mode">Audio Mode</Label>
+                    <select
+                      id="edit-audio-mode"
+                      className="w-full p-2 border rounded-md bg-background text-foreground"
+                      value={editAudioMode}
+                      onChange={(e) => setEditAudioMode(e.target.value)}
+                      data-testid="select-audio-mode"
+                    >
+                      <option value="off">Off - No background music</option>
+                      <option value="continuous">Continuous - Same track plays throughout</option>
+                      <option value="per_card">Per Card - Each card can have its own track</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      {editAudioMode === 'continuous' 
+                        ? 'One track plays throughout the story viewing experience.'
+                        : editAudioMode === 'per_card'
+                        ? 'Different tracks can play for different story cards.'
+                        : 'Background music is disabled for this universe.'}
+                    </p>
+                  </div>
+                  
+                  {editAudioMode !== 'off' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-default-track">Default Track</Label>
+                        <select
+                          id="edit-default-track"
+                          className="w-full p-2 border rounded-md bg-background text-foreground"
+                          value={editDefaultTrackId ?? ""}
+                          onChange={(e) => setEditDefaultTrackId(e.target.value ? parseInt(e.target.value) : null)}
+                          data-testid="select-default-track"
+                        >
+                          <option value="">No default track</option>
+                          {audioTracks?.map(track => (
+                            <option key={track.id} value={track.id}>
+                              {track.title}{track.artist ? ` - ${track.artist}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        {!audioTracks?.length && (
+                          <p className="text-xs text-muted-foreground">
+                            <Link href="/admin/audio" className="text-primary hover:underline">
+                              Add tracks to your Audio Library
+                            </Link> to enable background music.
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-fade-in">Fade In (ms)</Label>
+                          <Input
+                            id="edit-fade-in"
+                            type="number"
+                            min={0}
+                            max={5000}
+                            step={100}
+                            value={editFadeInMs}
+                            onChange={(e) => setEditFadeInMs(parseInt(e.target.value) || 500)}
+                            data-testid="input-fade-in"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-fade-out">Fade Out (ms)</Label>
+                          <Input
+                            id="edit-fade-out"
+                            type="number"
+                            min={0}
+                            max={5000}
+                            step={100}
+                            value={editFadeOutMs}
+                            onChange={(e) => setEditFadeOutMs(parseInt(e.target.value) || 500)}
+                            data-testid="input-fade-out"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
