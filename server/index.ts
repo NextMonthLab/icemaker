@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -69,6 +70,10 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  // Serve uploads directory in both development and production
+  const uploadsPath = path.resolve(process.cwd(), "uploads");
+  app.use("/uploads", express.static(uploadsPath));
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
