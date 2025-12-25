@@ -666,6 +666,8 @@ export async function registerRoutes(
     status?: string;
     publishDate?: string;
     characters?: string[];
+    primary_character_ids?: string[];
+    location_id?: string;
     scene_description?: string;
     image_generation?: {
       prompt?: string;
@@ -677,12 +679,46 @@ export async function registerRoutes(
     };
   }
   
+  interface ManifestCharacterVisualProfile {
+    continuity_description?: string;
+    age_range?: string;
+    ethnicity_optional?: string;
+    build?: string;
+    face_features?: string;
+    hair?: string;
+    wardrobe?: string;
+    accessories?: string;
+    mannerisms?: string;
+    do_not_change?: string[];
+    reference_image_path?: string;
+  }
+  
   interface ManifestCharacter {
     name: string;
     role?: string;
     avatar?: string;
     personality?: string;
     secretInfo?: string;
+    visual_profile?: ManifestCharacterVisualProfile;
+  }
+  
+  interface ManifestLocation {
+    id: string;
+    name: string;
+    continuity_description?: string;
+    lighting?: string;
+    textures?: string;
+    do_not_change?: string[];
+  }
+  
+  interface VisualContinuityManifest {
+    art_direction?: string;
+    palette?: string;
+    camera_language?: string;
+    lighting_rules?: string;
+    texture_rules?: string;
+    taboo_list?: string[];
+    reference_tags?: string[];
   }
   
   interface VisualStyleManifest {
@@ -709,10 +745,12 @@ export async function registerRoutes(
       styleNotes?: string;
       visual_mode?: "engine_generated" | "author_supplied";
       visual_style?: VisualStyleManifest;
+      visual_continuity?: VisualContinuityManifest;
     };
     season?: number;
     startDate?: string;
     characters?: ManifestCharacter[];
+    locations?: ManifestLocation[];
     cards?: ManifestCard[];
   }
   
@@ -761,8 +799,24 @@ export async function registerRoutes(
         warnings.push("engine_generated mode: universe.visual_style is recommended for consistent image generation");
       }
       
+      // Validate visual_continuity for engine_generated mode
+      if (isEngineGenerated) {
+        if (!manifest.universe?.visual_continuity?.art_direction) {
+          errors.push("engine_generated mode: universe.visual_continuity.art_direction is required");
+        }
+      }
+      
+      // Build character name to id mapping for reference validation
+      const characterNames = new Set((manifest.characters || []).map(c => c.name.toLowerCase()));
+      
+      // Build location id mapping for reference validation
+      const locationIds = new Set((manifest.locations || []).map(l => l.id));
+      
       // Validate characters
       const characters = manifest.characters || [];
+      let charactersWithVisualProfiles = 0;
+      let charactersMissingVisualProfiles = 0;
+      
       for (let i = 0; i < characters.length; i++) {
         const char = characters[i];
         if (!char.name) {
@@ -774,6 +828,28 @@ export async function registerRoutes(
             warnings.push(`Character "${char.name}": avatar file "${char.avatar}" not found in ZIP`);
           }
         }
+        
+        // Check visual profile for engine_generated mode
+        if (isEngineGenerated) {
+          if (char.visual_profile?.continuity_description) {
+            charactersWithVisualProfiles++;
+          } else {
+            charactersMissingVisualProfiles++;
+            errors.push(`characters[${i}] "${char.name}": engine_generated mode requires visual_profile.continuity_description`);
+          }
+        }
+      }
+      
+      // Validate locations
+      const locations = manifest.locations || [];
+      for (let i = 0; i < locations.length; i++) {
+        const loc = locations[i];
+        if (!loc.id) {
+          errors.push(`Location at index ${i} is missing an id`);
+        }
+        if (!loc.name) {
+          errors.push(`Location at index ${i} is missing a name`);
+        }
       }
       
       // Validate cards
@@ -781,6 +857,8 @@ export async function registerRoutes(
       const schedule: { day: number; title: string; date: string; hasImagePrompt: boolean }[] = [];
       let cardsWithImagePrompts = 0;
       let cardsMissingImagePrompts = 0;
+      let cardsWithCharacterRefs = 0;
+      let cardsWithLocationRefs = 0;
       
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
@@ -813,6 +891,24 @@ export async function registerRoutes(
           }
         }
         
+        // Validate primary_character_ids references
+        if (card.primary_character_ids && card.primary_character_ids.length > 0) {
+          cardsWithCharacterRefs++;
+          for (const charName of card.primary_character_ids) {
+            if (!characterNames.has(charName.toLowerCase())) {
+              warnings.push(`Card "${card.title}": primary_character_ids references unknown character "${charName}"`);
+            }
+          }
+        }
+        
+        // Validate location_id reference
+        if (card.location_id) {
+          cardsWithLocationRefs++;
+          if (!locationIds.has(card.location_id)) {
+            warnings.push(`Card "${card.title}": location_id references unknown location "${card.location_id}"`);
+          }
+        }
+        
         // Build schedule
         const publishDate = card.publishDate || manifest.startDate;
         let dateStr = "Not scheduled";
@@ -838,8 +934,13 @@ export async function registerRoutes(
         visualMode,
         createdCards: cards.length,
         createdCharacters: characters.length,
+        createdLocations: locations.length,
         cardsWithImagePrompts,
         cardsMissingImagePrompts,
+        charactersWithVisualProfiles,
+        charactersMissingVisualProfiles,
+        cardsWithCharacterRefs,
+        cardsWithLocationRefs,
         warnings,
         errors,
         schedule,
@@ -897,6 +998,48 @@ export async function registerRoutes(
         };
       };
       
+      // Convert visual_continuity from manifest format to DB format
+      const convertVisualContinuity = (vc?: VisualContinuityManifest): schema.VisualContinuity | null => {
+        if (!vc) return null;
+        return {
+          artDirection: vc.art_direction,
+          palette: vc.palette,
+          cameraLanguage: vc.camera_language,
+          lightingRules: vc.lighting_rules,
+          textureRules: vc.texture_rules,
+          tabooList: vc.taboo_list,
+          referenceTags: vc.reference_tags,
+        };
+      };
+      
+      // Convert character visual_profile from manifest format to DB format
+      const convertVisualProfile = (vp?: ManifestCharacterVisualProfile): schema.CharacterVisualProfile | null => {
+        if (!vp) return null;
+        return {
+          continuityDescription: vp.continuity_description,
+          ageRange: vp.age_range,
+          ethnicityOptional: vp.ethnicity_optional,
+          build: vp.build,
+          faceFeatures: vp.face_features,
+          hair: vp.hair,
+          wardrobe: vp.wardrobe,
+          accessories: vp.accessories,
+          mannerisms: vp.mannerisms,
+          doNotChange: vp.do_not_change,
+          referenceImagePath: vp.reference_image_path,
+        };
+      };
+      
+      // Convert location continuity from manifest format to DB format
+      const convertLocationContinuity = (loc: ManifestLocation): schema.LocationContinuity => {
+        return {
+          continuityDescription: loc.continuity_description,
+          lighting: loc.lighting,
+          textures: loc.textures,
+          doNotChange: loc.do_not_change,
+        };
+      };
+      
       // Create or use existing universe
       let universe: schema.Universe;
       if (universeId) {
@@ -912,13 +1055,13 @@ export async function registerRoutes(
           styleNotes: manifest.universe.styleNotes || null,
           visualMode: manifest.universe.visual_mode || "author_supplied",
           visualStyle: convertVisualStyle(manifest.universe.visual_style),
+          visualContinuity: convertVisualContinuity(manifest.universe.visual_continuity),
         });
       }
       
       // Create characters
       const characterMap = new Map<string, number>();
       for (const charDef of manifest.characters || []) {
-        // Generate slug from name (e.g., "Detective K" -> "detective-k")
         const slug = charDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         
         const character = await storage.createCharacter({
@@ -929,9 +1072,22 @@ export async function registerRoutes(
           avatar: charDef.avatar || null,
           description: charDef.personality || null,
           secretsJson: charDef.secretInfo ? [charDef.secretInfo] : null,
+          visualProfile: convertVisualProfile(charDef.visual_profile),
         });
         characterMap.set(charDef.name.toLowerCase(), character.id);
         createdItems.characters.push(character.id);
+      }
+      
+      // Create locations
+      const locationMap = new Map<string, number>();
+      for (const locDef of manifest.locations || []) {
+        const location = await storage.createLocation({
+          universeId: universe.id,
+          locationSlug: locDef.id,
+          name: locDef.name,
+          continuity: convertLocationContinuity(locDef),
+        });
+        locationMap.set(locDef.id, location.id);
       }
       
       // Create cards
@@ -955,6 +1111,25 @@ export async function registerRoutes(
         const publishDate = new Date(startDate);
         publishDate.setDate(publishDate.getDate() + (cardDef.dayIndex - 1));
         
+        // Resolve primary_character_ids to database IDs
+        const primaryCharacterIds: number[] = [];
+        if (cardDef.primary_character_ids) {
+          for (const charName of cardDef.primary_character_ids) {
+            const charId = characterMap.get(charName.toLowerCase());
+            if (charId) {
+              primaryCharacterIds.push(charId);
+            } else {
+              warnings.push(`Card "${cardDef.title}": primary_character_ids references unknown character "${charName}"`);
+            }
+          }
+        }
+        
+        // Resolve location_id to database ID
+        const locationId = cardDef.location_id ? locationMap.get(cardDef.location_id) : undefined;
+        if (cardDef.location_id && !locationId) {
+          warnings.push(`Card "${cardDef.title}": location_id references unknown location "${cardDef.location_id}"`);
+        }
+        
         const card = await storage.createCard({
           universeId: universe.id,
           season,
@@ -970,6 +1145,8 @@ export async function registerRoutes(
           sceneDescription: cardDef.scene_description || null,
           imageGeneration: convertImageGeneration(cardDef.image_generation),
           imageGenerated: false,
+          primaryCharacterIds: primaryCharacterIds.length > 0 ? primaryCharacterIds : null,
+          locationId: locationId || null,
         });
         createdItems.cards.push(card.id);
         
@@ -1041,23 +1218,58 @@ export async function registerRoutes(
     }
   });
   
-  // Compose prompt for a card (combines universe style + card prompt)
-  const composeImagePrompt = (universe: schema.Universe, card: schema.Card): string => {
+  // Compose prompt for a card (combines universe style + continuity + card prompt)
+  const composeImagePrompt = async (
+    universe: schema.Universe, 
+    card: schema.Card
+  ): Promise<string> => {
     const parts: string[] = [];
     
-    // Add universe base prompt
+    // 1. Universe base prompt
     if (universe.visualStyle?.basePrompt) {
       parts.push(universe.visualStyle.basePrompt);
     }
     
-    // Add card-specific prompt (prefer explicit prompt over scene_description)
+    // 2. Universe visual continuity (art direction, palette, camera language, lighting/texture rules)
+    const vc = universe.visualContinuity;
+    if (vc) {
+      const continuityParts: string[] = [];
+      if (vc.artDirection) continuityParts.push(`Art direction: ${vc.artDirection}`);
+      if (vc.palette) continuityParts.push(`Color palette: ${vc.palette}`);
+      if (vc.cameraLanguage) continuityParts.push(`Camera: ${vc.cameraLanguage}`);
+      if (vc.lightingRules) continuityParts.push(`Lighting rules: ${vc.lightingRules}`);
+      if (vc.textureRules) continuityParts.push(`Textures: ${vc.textureRules}`);
+      if (continuityParts.length > 0) {
+        parts.push(continuityParts.join(". "));
+      }
+    }
+    
+    // 3. Referenced character visual profiles
+    if (card.primaryCharacterIds && card.primaryCharacterIds.length > 0) {
+      for (const charId of card.primaryCharacterIds) {
+        const character = await storage.getCharacter(charId);
+        if (character?.visualProfile?.continuityDescription) {
+          parts.push(`Character "${character.name}": ${character.visualProfile.continuityDescription}`);
+        }
+      }
+    }
+    
+    // 4. Referenced location continuity
+    if (card.locationId) {
+      const location = await storage.getLocation(card.locationId);
+      if (location?.continuity?.continuityDescription) {
+        parts.push(`Location: ${location.continuity.continuityDescription}`);
+      }
+    }
+    
+    // 5. Card-specific prompt (prefer explicit prompt over scene_description)
     if (card.imageGeneration?.prompt) {
       parts.push(card.imageGeneration.prompt);
     } else if (card.sceneDescription) {
       parts.push(card.sceneDescription);
     }
     
-    // Add shot type and lighting if specified
+    // 6. Shot type and lighting overrides
     if (card.imageGeneration?.shotType) {
       parts.push(`Shot type: ${card.imageGeneration.shotType}`);
     }
@@ -1071,10 +1283,17 @@ export async function registerRoutes(
   const composeNegativePrompt = (universe: schema.Universe, card: schema.Card): string => {
     const parts: string[] = [];
     
+    // Universe negative prompt
     if (universe.visualStyle?.negativePrompt) {
       parts.push(universe.visualStyle.negativePrompt);
     }
     
+    // Universe taboo list (from visual continuity)
+    if (universe.visualContinuity?.tabooList && universe.visualContinuity.tabooList.length > 0) {
+      parts.push(...universe.visualContinuity.tabooList);
+    }
+    
+    // Card-specific negative prompt
     if (card.imageGeneration?.negativePrompt) {
       parts.push(card.imageGeneration.negativePrompt);
     }
@@ -1106,7 +1325,7 @@ export async function registerRoutes(
       }
       
       // Compose prompts
-      const prompt = composeImagePrompt(universe, card);
+      const prompt = await composeImagePrompt(universe, card);
       const negativePrompt = composeNegativePrompt(universe, card);
       const aspectRatio = universe.visualStyle?.aspectRatio || "9:16";
       

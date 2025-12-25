@@ -60,6 +60,14 @@ export interface IStorage {
   
   // Events
   logEvent(event: schema.InsertEvent): Promise<void>;
+  
+  // Locations
+  getLocation(id: number): Promise<schema.Location | undefined>;
+  getLocationBySlug(universeId: number, slug: string): Promise<schema.Location | undefined>;
+  getLocationsByUniverse(universeId: number): Promise<schema.Location[]>;
+  createLocation(location: schema.InsertLocation): Promise<schema.Location>;
+  updateLocation(id: number, location: Partial<schema.InsertLocation>): Promise<schema.Location | undefined>;
+  deleteLocation(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -311,6 +319,47 @@ export class DatabaseStorage implements IStorage {
   // Events
   async logEvent(event: schema.InsertEvent): Promise<void> {
     await db.insert(schema.events).values(event);
+  }
+  
+  // Locations
+  async getLocation(id: number): Promise<schema.Location | undefined> {
+    const result = await db.query.locations.findFirst({
+      where: eq(schema.locations.id, id),
+    });
+    return result;
+  }
+  
+  async getLocationBySlug(universeId: number, slug: string): Promise<schema.Location | undefined> {
+    const result = await db.query.locations.findFirst({
+      where: and(
+        eq(schema.locations.universeId, universeId),
+        eq(schema.locations.locationSlug, slug)
+      ),
+    });
+    return result;
+  }
+  
+  async getLocationsByUniverse(universeId: number): Promise<schema.Location[]> {
+    return await db.query.locations.findMany({
+      where: eq(schema.locations.universeId, universeId),
+    });
+  }
+  
+  async createLocation(location: schema.InsertLocation): Promise<schema.Location> {
+    const [result] = await db.insert(schema.locations).values(location).returning();
+    return result;
+  }
+  
+  async updateLocation(id: number, location: Partial<schema.InsertLocation>): Promise<schema.Location | undefined> {
+    const [result] = await db.update(schema.locations)
+      .set(location)
+      .where(eq(schema.locations.id, id))
+      .returning();
+    return result;
+  }
+  
+  async deleteLocation(id: number): Promise<void> {
+    await db.delete(schema.locations).where(eq(schema.locations.id, id));
   }
 }
 

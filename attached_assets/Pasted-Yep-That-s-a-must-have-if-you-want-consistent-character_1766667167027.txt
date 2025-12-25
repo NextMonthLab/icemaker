@@ -1,0 +1,114 @@
+Yep. That’s a must-have if you want consistent characters and not “new face, who dis?” every day.
+
+You don’t need to change ZIP-as-container. You extend manifest.json with continuity blocks at two levels:
+	1.	Universe visual continuity (global DNA)
+	2.	Character visual continuity (per-character look lock)
+	3.	Optional location continuity (helps a lot for stories like Time Spent)
+
+Here’s the updated Replit prompt section you can paste in (it slots straight into what we already asked for).
+
+ADD THIS REQUIREMENT — Visual Continuity Descriptions in the ZIP Manifest
+
+Context
+We generate images inside the Story Engine. To prevent style drift and keep characters consistent across days, the import ZIP (manifest.json) must include explicit visual continuity descriptions at the universe and character level.
+
+Goal
+Extend manifest.json to support:
+- Universe-level visual continuity DNA (style bible)
+- Character-level visual profiles (consistent appearance)
+- Optional location profiles (consistent environments)
+These continuity descriptions must be used as “locked context” when composing image prompts.
+
+A) Manifest Schema Additions (Required)
+
+Top-level:
+universe.visual_continuity: {
+  art_direction: string,         // overall visual language (e.g. social realism, handheld, muted palette)
+  palette: string,               // e.g. "muted greys, off-whites, washed greens"
+  camera_language: string,       // e.g. "documentary framing, imperfect composition"
+  lighting_rules: string,        // e.g. "overcast daylight, sodium streetlight at night"
+  texture_rules: string,         // e.g. "grain, natural skin texture, no glossy CGI"
+  taboo_list: string[],          // e.g. ["neon cyberpunk", "noir", "anime", "super stylised"]
+  reference_tags: string[]       // short tags for internal prompt assembly
+}
+
+characters[] each must support:
+character.visual_profile: {
+  continuity_description: string,   // REQUIRED in engine_generated mode
+  age_range: string,
+  ethnicity_optional: string,        // optional, only if relevant
+  build: string,                     // physique/body language
+  face_features: string,             // distinguishing features
+  hair: string,
+  wardrobe: string,
+  accessories: string,
+  mannerisms: string,                // how they carry themselves
+  do_not_change: string[],           // e.g. ["hair colour", "glasses", "height impression"]
+  reference_image_path: string|null  // optional future: image inside ZIP for strict lock
+}
+
+Optional:
+locations[]: [
+  {
+    id: string,
+    name: string,
+    continuity_description: string,  // e.g. council estate stairwell, broken lift, chipped paint
+    lighting: string,
+    textures: string,
+    do_not_change: string[]
+  }
+]
+
+Per-card:
+cards[] should optionally reference:
+- primary_character_ids: string[]
+- location_id: string|null
+- image_generation: { prompt, shot_type, lighting, seed, ... } as previously specified
+
+B) Validation Rules (Importer)
+If universe.visual_mode === "engine_generated":
+- universe.visual_continuity.art_direction must exist (required)
+- For each character: visual_profile.continuity_description is required
+- If a card references primary_character_ids, those ids must exist in characters[]
+- If a card references location_id, that id must exist in locations[] (if provided)
+Validation output must show:
+- characters_with_visual_profiles
+- characters_missing_visual_profiles
+- cards_with_character_refs
+- cards_with_location_refs
+
+C) Prompt Composition Rules (Engine)
+When generating an image for a card, assemble prompt context in this order:
+1) universe.visual_style.base_prompt (if present)
+2) universe.visual_continuity (art_direction, palette, camera_language, lighting_rules, texture_rules)
+3) referenced character visual_profile.continuity_description (all primary characters, in order)
+4) referenced location continuity_description (if any)
+5) per-card scene_description OR image_generation.prompt (card-specific)
+6) shot_type + lighting overrides (if any)
+Then apply:
+- universe negative prompt + taboo_list
+- per-card negative prompt
+
+D) Admin UI
+In /admin “Edit Universe”:
+- Add a “Visual Continuity” editor with fields above
+In /admin “Edit Character”:
+- Add “Visual Profile” editor
+In /admin “Edit Card”:
+- Character selector (multi-select)
+- Location selector
+- Display a “Prompt Preview” area showing the fully composed prompt text used for generation (read-only)
+
+E) Backwards Compatibility
+- Existing packs without these fields must still import in author_supplied mode.
+- In engine_generated mode, missing required continuity fields must produce a clear validation error with JSON path.
+
+Deliverable
+Update types, validation, and generation pipeline to use continuity descriptions to keep character visuals consistent across all cards.
+
+Quick opinion (so you don’t overbuild it)
+	•	Do NOT make reference images mandatory yet. Keep them optional.
+	•	For now, a strong character continuity_description + do_not_change list will get you 80% of the way there.
+	•	Later you can add “strict lock” using one reference image per character (best done as a Pro feature).
+
+If you want, I can also write you a Time Spent continuity block (universe + Mrs Thompson) that fits the tone perfectly, so your first generated images don’t drift into melodrama or sci-fi.

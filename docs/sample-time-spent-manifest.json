@@ -14,6 +14,15 @@
         "location_lock": true,
         "colour_palette_lock": true
       }
+    },
+    "visual_continuity": {
+      "art_direction": "Social realism, observational documentary style, naturalistic, understated emotional moments",
+      "palette": "Muted greys, off-whites, washed greens, warm skin tones, occasional warmth from interior lighting",
+      "camera_language": "Documentary framing, imperfect composition, slight handheld feel, intimate close-ups, environmental wide shots",
+      "lighting_rules": "Overcast daylight exteriors, sodium streetlight at night, warm tungsten interiors, natural window light",
+      "texture_rules": "Grain, natural skin texture, no glossy CGI look, weathered urban surfaces, lived-in environments",
+      "taboo_list": ["neon cyberpunk", "noir", "anime", "super stylised", "glamorous", "high fashion", "fantasy elements"],
+      "reference_tags": ["social realism", "British kitchen sink", "working class drama", "intimate portrait"]
     }
   },
   "season": 1,
@@ -23,17 +32,66 @@
       "name": "Elena",
       "role": "The Protagonist",
       "personality": "Thoughtful, introspective, carrying the weight of a decision she made years ago",
-      "secretInfo": "She knows why Marcus left, but has never told anyone the truth."
+      "secretInfo": "She knows why Marcus left, but has never told anyone the truth.",
+      "visual_profile": {
+        "continuity_description": "Woman in her late 20s, dark shoulder-length wavy hair, warm olive skin, expressive brown eyes with slight tiredness underneath. Natural beauty without obvious makeup. Often wears soft knits, muted earth tones. Carries herself with quiet composure that occasionally breaks.",
+        "age_range": "27-30",
+        "build": "Average build, slightly slouched posture suggesting internal weight",
+        "face_features": "Warm olive complexion, expressive eyebrows, full lips, slight smile lines",
+        "hair": "Dark brown, shoulder-length, natural waves, often tucked behind one ear",
+        "wardrobe": "Soft knits, earth tones, simple silver necklace, minimal accessories",
+        "mannerisms": "Holds coffee cups with both hands, looks down when thinking, touches her necklace when nervous",
+        "do_not_change": ["hair color", "eye color", "necklace", "age range"]
+      }
     },
     {
       "name": "Marcus",
       "role": "The One Who Left",
-      "personality": "Charismatic but guarded, returned after five years with questions of his own"
+      "personality": "Charismatic but guarded, returned after five years with questions of his own",
+      "visual_profile": {
+        "continuity_description": "Man in his early 30s, tall with an athletic build gone slightly soft. Dark hair with early grey at temples. Warm brown skin, kind eyes that hold something back. Well-groomed stubble. Wears simple quality clothes - oxford shirts, dark jeans. Carries himself with confidence that falters around Elena.",
+        "age_range": "30-33",
+        "build": "Tall, athletic build softened slightly, confident posture",
+        "face_features": "Warm brown skin, strong jaw with stubble, kind but guarded eyes",
+        "hair": "Short dark hair with grey at temples, neatly styled",
+        "wardrobe": "Oxford shirts with sleeves rolled, dark jeans, leather watch, simple but quality",
+        "mannerisms": "Runs hand through hair when nervous, maintains eye contact when truthful, looks away when not",
+        "do_not_change": ["grey at temples", "height", "watch"]
+      }
     },
     {
       "name": "Sophie",
       "role": "The Best Friend",
-      "personality": "Loyal, perceptive, the one person who notices what others miss"
+      "personality": "Loyal, perceptive, the one person who notices what others miss",
+      "visual_profile": {
+        "continuity_description": "Woman in her late 20s, Black British, warm brown skin, natural hair in protective styles (often braids or twists). Bright, observant eyes behind fashionable glasses. Stylish in an effortless way - colorful scarves, interesting earrings. Expressive hands when she talks. Radiates warmth and reliability.",
+        "age_range": "28-31",
+        "build": "Medium build, animated body language",
+        "face_features": "Warm brown skin, bright observant eyes, often smiling or concerned for friend",
+        "hair": "Natural Black hair in protective styles - braids or twists, changes between episodes",
+        "wardrobe": "Colorful scarves, interesting earrings, fashionable but comfortable clothes",
+        "accessories": "Statement glasses, varied earrings, often has a takeaway coffee",
+        "mannerisms": "Talks with hands, tilts head when listening carefully, quick to hug",
+        "do_not_change": ["glasses", "natural hair", "skin tone"]
+      }
+    }
+  ],
+  "locations": [
+    {
+      "id": "coffee-shop",
+      "name": "The Coffee Shop",
+      "continuity_description": "A cozy independent coffee shop with warm wooden interiors, exposed brick wall, mismatched vintage furniture. Morning light streams through large front windows. Worn but loved atmosphere. Their regular table is near the window, slightly scuffed wooden table with two comfortable chairs.",
+      "lighting": "Warm natural light through windows, soft tungsten from pendant lamps",
+      "textures": "Worn wood, exposed brick, ceramic cups, lived-in comfort",
+      "do_not_change": ["brick wall", "window table", "warm wood tones"]
+    },
+    {
+      "id": "city-park",
+      "name": "The Park Bench",
+      "continuity_description": "An urban park with mature trees, well-worn pathways, cast iron benches. Elena and Sophie's regular meeting spot is a bench overlooking a small pond. Peaceful despite being in the city - you can hear traffic faintly.",
+      "lighting": "Dappled light through trees, golden hour in afternoon scenes",
+      "textures": "Cast iron bench, gravel path, autumn leaves, natural greenery",
+      "do_not_change": ["pond view", "mature trees", "cast iron bench style"]
     }
   ],
   "cards": [
@@ -49,6 +107,8 @@
         "shot_type": "close_up",
         "lighting": "natural morning light through window"
       },
+      "primary_character_ids": ["Elena"],
+      "location_id": "coffee-shop",
       "characters": ["Elena", "Marcus"],
       "status": "published"
     },
@@ -64,6 +124,8 @@
         "shot_type": "over_the_shoulder",
         "lighting": "afternoon natural light"
       },
+      "primary_character_ids": ["Elena", "Marcus"],
+      "location_id": "coffee-shop",
       "characters": ["Elena", "Marcus"],
       "status": "published"
     },
@@ -79,6 +141,8 @@
         "shot_type": "wide",
         "lighting": "golden hour"
       },
+      "primary_character_ids": ["Elena", "Sophie"],
+      "location_id": "city-park",
       "characters": ["Elena", "Sophie"],
       "status": "published"
     }
