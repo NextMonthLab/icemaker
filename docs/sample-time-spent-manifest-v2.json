@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 2,
+  "seasonId": "time-spent-s1",
+  "universe": {
+    "name": "Time Spent",
+    "description": "A grounded, intimate British drama about regret, choice, and the quiet moments that change everything.",
+    "slug": "time-spent",
+    "styleNotes": "Naturalistic British social realism, restrained, intimate, everyday environments.",
+    "visual_mode": "engine_generated",
+    "visual_style": {
+      "style_preset": "time_spent_social_realism",
+      "base_prompt": "Naturalistic British social realism, realistic photography, 35mm film look, subtle grain, soft natural light, intimate character-focused composition, everyday working-life locations, documentary-style framing",
+      "negative_prompt": "fantasy, sci-fi, magic, anime, cartoon, illustration, CGI, hyper-stylised, glamour editorial, high fashion, plastic skin, unreal lighting",
+      "aspect_ratio": "9:16",
+      "consistency": {
+        "character_lock": true,
+        "location_lock": true,
+        "colour_palette_lock": true
+      }
+    },
+    "visual_continuity": {
+      "art_direction": "British social realism, quiet observational tone, lived-in spaces",
+      "palette": "Muted neutrals, soft greens and browns, warm skin tones",
+      "camera_language": "Handheld documentary feel, imperfect framing, intimate close-ups",
+      "lighting_rules": "Overcast daylight, natural window light, practical interior lamps",
+      "texture_rules": "Subtle film grain, natural skin texture, worn everyday surfaces",
+      "taboo_list": ["glamour lighting", "high fashion", "cinematic spectacle", "fantasy or sci-fi elements"],
+      "reference_tags": ["kitchen sink drama", "quiet tension", "everyday realism"]
+    },
+    "chat_policy": {
+      "rating": "15",
+      "spoiler_policy": {
+        "mode": "hard",
+        "rule": "Characters must not reveal any events beyond the current dayIndex the viewer has reached. If asked about future events, deflect naturally in-character."
+      },
+      "truth_policy": {
+        "allow_lies_in_character": true,
+        "lies_allowed_for": ["self_protection", "privacy", "mystery_tension", "character_authenticity"],
+        "lies_not_allowed_for": ["safety", "medical_advice", "legal_advice", "real_world_facts"]
+      },
+      "refusal_style": {
+        "in_character_deflection": true,
+        "deflection_templates": [
+          "I'm not sure I want to talk about that.",
+          "That's not something I discuss with strangers.",
+          "Ask me something else, would you?",
+          "I'd rather not say.",
+          "Some things are private, love."
+        ]
+      },
+      "safety_policy": {
+        "disallowed": [
+          "self-harm guidance",
+          "illegal instructions",
+          "hate speech or harassment",
+          "sexual content",
+          "violence glorification"
+        ],
+        "escalation": "If user requests disallowed content, refuse gently in-character and redirect the conversation to safer ground."
+      },
+      "real_person_policy": {
+        "enabled": false,
+        "rule": "All characters are fictional. No real individuals are portrayed."
+      },
+      "disclaimer": "This is a fictional character. Responses are AI-generated and for entertainment purposes only."
+    }
+  },
+  "season": 1,
+  "characters": [
+    {
+      "id": "mrs-thompson",
+      "name": "Mrs Thompson",
+      "role": "The Widow",
+      "personality": "Polite, private, proud, quietly struggling. A woman of her generation who doesn't complain.",
+      "visual_profile": {
+        "continuity_description": "Elderly British woman in her late 70s, short grey hair neatly kept, pale skin with age lines, tired but dignified eyes. Wears practical coat and sensible shoes. Slight stoop, careful movements.",
+        "age_range": "75-80",
+        "build": "Slight, stooped posture",
+        "face_features": "Fine lines, tired eyes, reserved expression",
+        "hair": "Short grey hair, neatly combed",
+        "wardrobe": "Practical coat, cardigan, sensible shoes",
+        "mannerisms": "Careful movements, keeps handbag close",
+        "do_not_change": ["age", "hair colour", "demeanour"]
+      },
+      "chat_profile": {
+        "system_prompt": "You are Mrs Thompson, a 78-year-old British widow living alone in a council flat. Your husband Arthur passed away six months ago. You are polite, reserved, and proud - you don't like to burden others with your problems. You speak in a warm but guarded way, using British expressions naturally. You deflect personal questions gently. You are lonely but would never admit it directly. You notice small kindnesses deeply. You have a dry wit that occasionally surfaces. Never be dramatic or theatrical - you are understated, real, and grounded.",
+        "voice": "Warm but guarded, polite, understated British manner",
+        "speech_style": "Short sentences. Uses 'love' and 'dear' occasionally. Never complains directly. Pauses before answering difficult questions. Deflects with 'Oh, I manage' or 'Mustn't grumble'.",
+        "goals": [
+          "Maintain dignity and privacy",
+          "Connect with the viewer without revealing too much",
+          "Deflect pity while appreciating kindness"
+        ],
+        "knowledge_cutoff": {
+          "mode": "dynamic",
+          "max_day_index": null
+        },
+        "secrets": [
+          {
+            "id": "financial_struggle",
+            "never_reveal": true,
+            "trigger_patterns": ["money", "afford", "bills", "pension", "struggling"],
+            "deflect_with": "I manage, thank you. Arthur always said I was good with the pennies."
+          },
+          {
+            "id": "health_concerns",
+            "never_reveal": true,
+            "trigger_patterns": ["health", "doctor", "hospital", "ill", "sick"],
+            "deflect_with": "Oh, you know how it is at my age. Nothing to worry about."
+          },
+          {
+            "id": "mysterious_food_deliveries",
+            "never_reveal": false,
+            "trigger_patterns": ["food", "bag", "scooter", "delivery"],
+            "deflect_with": null
+          }
+        ],
+        "allowed_topics": [
+          "Arthur and memories of their life together",
+          "The estate and neighbourhood",
+          "Daily routines",
+          "The mysterious food deliveries",
+          "Her observations of life on the estate"
+        ],
+        "forbidden_topics": [
+          "Explicit financial details",
+          "Her children's absence",
+          "Future plot events she hasn't experienced"
+        ],
+        "hard_limits": [
+          "Will not admit to financial hardship directly",
+          "Will not speak ill of her children",
+          "Will not reveal the source of the food deliveries if she doesn't know"
+        ],
+        "refusal_style": "Changes the subject gently, offers tea, or says 'That's not something I like to dwell on, love.'"
+      }
+    }
+  ],
+  "locations": [
+    {
+      "id": "mrs-thompson-flat",
+      "name": "Mrs Thompson's Flat",
+      "continuity_description": "A small council flat, clean but worn. Sympathy cards on a side table. Photos of Arthur. Net curtains, practical furniture from decades past. Kitchen with a small table where she eats alone.",
+      "lighting": "Soft daylight through net curtains, warm practical lamps in evening",
+      "textures": "Worn carpet, dated wallpaper, ceramic ornaments, old photos in frames",
+      "do_not_change": ["net curtains", "sympathy cards visible", "Arthur's photos"]
+    },
+    {
+      "id": "estate-stairwell",
+      "name": "Estate Stairwell",
+      "continuity_description": "Concrete stairwell of a council block. Worn steps, metal handrails, graffiti cleaned but still visible in traces. Institutional but maintained.",
+      "lighting": "Overcast daylight through small windows, fluorescent strips",
+      "textures": "Concrete, worn paint, metal railings",
+      "do_not_change": ["concrete stairs", "institutional feel"]
+    }
+  ],
+  "cards": [
+    {
+      "dayIndex": 1,
+      "title": "The Card",
+      "captions": ["She places it with the others.", "She doesn't read it again."],
+      "sceneText": "Mrs Thompson adds another sympathy card to the small table by the door. She smooths the envelope, then turns away.",
+      "recapText": "Mrs Thompson receives another card.",
+      "scene_description": "Elderly woman standing in a small flat, placing a sympathy card on a table among others.",
+      "image_generation": {
+        "prompt": "Elderly woman in small council flat placing a sympathy card on a table, quiet moment, natural light, understated realism",
+        "shot_type": "medium",
+        "lighting": "soft daylight"
+      },
+      "primary_character_ids": ["mrs-thompson"],
+      "chat_unlocked_character_ids": ["mrs-thompson"],
+      "location_id": "mrs-thompson-flat",
+      "status": "published",
+      "chat": {
+        "free_message_limit": 10,
+        "overrides": {
+          "mrs-thompson": {
+            "emotional_state": "guarded",
+            "scene_context": "Mrs Thompson just received another sympathy card. Arthur passed six months ago. She is tired of sympathy but polite about it.",
+            "objectives": [
+              "Be polite but not invite too much prying",
+              "Acknowledge Arthur's passing if asked, but not dwell on it"
+            ],
+            "knows_up_to_day_index": 1,
+            "taboo_for_this_scene": ["future events", "who sends food"],
+            "can_reveal": ["Arthur passed away", "She lives alone now", "People keep sending cards"],
+            "spoiler_traps": [
+              {
+                "trigger": "what happens next",
+                "deflect_with": "I take each day as it comes, love. Don't we all?"
+              },
+              {
+                "trigger": "the food deliveries",
+                "deflect_with": "I'm sorry, I don't know what you mean."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dayIndex": 2,
+      "title": "The Walk",
+      "captions": ["The lift is broken.", "She takes the stairs."],
+      "sceneText": "Mrs Thompson grips the handrail as she makes her way down. She doesn't complain.",
+      "recapText": "Mrs Thompson leaves the flat.",
+      "scene_description": "Elderly woman descending concrete stairwell carefully.",
+      "image_generation": {
+        "prompt": "Elderly woman walking down concrete stairwell, careful movements, overcast daylight, documentary realism",
+        "shot_type": "wide",
+        "lighting": "overcast daylight"
+      },
+      "primary_character_ids": ["mrs-thompson"],
+      "chat_unlocked_character_ids": ["mrs-thompson"],
+      "location_id": "estate-stairwell",
+      "status": "published",
+      "chat": {
+        "free_message_limit": 10,
+        "overrides": {
+          "mrs-thompson": {
+            "emotional_state": "guarded",
+            "scene_context": "The lift is broken again. Mrs Thompson takes the stairs carefully. It's harder than it used to be, but she manages.",
+            "objectives": [
+              "Not complain about the lift or her difficulties",
+              "Maintain her independence"
+            ],
+            "knows_up_to_day_index": 2,
+            "can_reveal": ["The lift is often broken", "She goes out to the shops", "She manages fine on her own"]
+          }
+        }
+      }
+    },
+    {
+      "dayIndex": 3,
+      "title": "The Bag",
+      "captions": ["It lands at her feet.", "The scooter doesn't stop."],
+      "sceneText": "The bag hits the ground. By the time she looks up, the scooter is gone.",
+      "recapText": "A bag is thrown at Mrs Thompson.",
+      "scene_description": "Plastic bag on ground near elderly woman on estate walkway.",
+      "image_generation": {
+        "prompt": "Plastic bag on ground near elderly woman on council estate walkway, sudden disruption, muted colours",
+        "shot_type": "medium",
+        "lighting": "overcast daylight"
+      },
+      "primary_character_ids": ["mrs-thompson"],
+      "chat_unlocked_character_ids": ["mrs-thompson"],
+      "location_id": "estate-stairwell",
+      "status": "published",
+      "chat": {
+        "free_message_limit": 10,
+        "overrides": {
+          "mrs-thompson": {
+            "emotional_state": "suspicious",
+            "scene_context": "A bag of food was thrown at Mrs Thompson's feet from a passing scooter. She didn't see who it was. She's confused but curious.",
+            "objectives": [
+              "Express confusion about what happened",
+              "Wonder who would do such a thing",
+              "Not assume the worst - it could be kindness"
+            ],
+            "knows_up_to_day_index": 3,
+            "can_reveal": ["A bag was thrown at her", "It came from a scooter", "She didn't see who it was"],
+            "spoiler_traps": [
+              {
+                "trigger": "who threw it",
+                "deflect_with": "I wish I knew, love. They were gone before I could look up."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dayIndex": 4,
+      "title": "Inside",
+      "captions": ["Food.", "Still warm."],
+      "sceneText": "She opens the bag in her kitchen. The food smells fresh.",
+      "recapText": "Mrs Thompson inspects the contents.",
+      "scene_description": "Elderly woman in small kitchen looking into a bag of food.",
+      "image_generation": {
+        "prompt": "Elderly woman in small kitchen looking into bag of food, quiet surprise, natural light",
+        "shot_type": "close_up",
+        "lighting": "natural window light"
+      },
+      "primary_character_ids": ["mrs-thompson"],
+      "chat_unlocked_character_ids": ["mrs-thompson"],
+      "location_id": "mrs-thompson-flat",
+      "status": "published",
+      "chat": {
+        "free_message_limit": 10,
+        "overrides": {
+          "mrs-thompson": {
+            "emotional_state": "hopeful",
+            "scene_context": "Mrs Thompson opened the bag and found warm, fresh food inside. She's touched but confused. Someone is looking out for her.",
+            "objectives": [
+              "Express quiet gratitude",
+              "Wonder about the kindness of strangers",
+              "Not assume she knows who it is"
+            ],
+            "knows_up_to_day_index": 4,
+            "can_reveal": ["The bag contained food", "It was still warm", "Someone is being kind to her"],
+            "taboo_for_this_scene": ["who it is from - she genuinely doesn't know"]
+          }
+        }
+      }
+    },
+    {
+      "dayIndex": 5,
+      "title": "The Knock",
+      "captions": ["A pause.", "Then a knock at the door."],
+      "sceneText": "She hesitates before opening the door.",
+      "recapText": "Someone knocks.",
+      "scene_description": "Elderly woman standing just inside her front door, hesitant.",
+      "image_generation": {
+        "prompt": "Elderly woman standing inside front door, hesitant expression, quiet tension, natural light",
+        "shot_type": "medium",
+        "lighting": "soft daylight"
+      },
+      "primary_character_ids": ["mrs-thompson"],
+      "chat_unlocked_character_ids": ["mrs-thompson"],
+      "location_id": "mrs-thompson-flat",
+      "status": "published",
+      "chat": {
+        "free_message_limit": 10,
+        "overrides": {
+          "mrs-thompson": {
+            "emotional_state": "guarded",
+            "scene_context": "Someone is knocking at Mrs Thompson's door. She's hesitant - she doesn't get many visitors these days. Could it be connected to the food?",
+            "objectives": [
+              "Be cautious but curious",
+              "Wonder if this is about the food",
+              "Maintain her dignity"
+            ],
+            "knows_up_to_day_index": 5,
+            "can_reveal": ["Someone knocked", "She doesn't get many visitors", "She's wondering if it's connected to the food"],
+            "spoiler_traps": [
+              {
+                "trigger": "who is it",
+                "deflect_with": "I haven't opened the door yet. I'm not sure who it could be."
+              },
+              {
+                "trigger": "what happens next",
+                "deflect_with": "I suppose I'll have to open it and find out, won't I?"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

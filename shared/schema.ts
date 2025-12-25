@@ -77,47 +77,90 @@ export const locationContinuitySchema = z.object({
 
 export type LocationContinuity = z.infer<typeof locationContinuitySchema>;
 
-// Chat Policy Schema (universe-level guardrails)
+// Chat Policy Schema v2 (universe-level guardrails with enhanced safety)
 export const chatPolicySchema = z.object({
-  mode: z.enum(["role_gated", "character_only"]).default("character_only"),
-  global_rules: z.array(z.string()).optional(),
-  blocked_personas: z.array(z.string()).optional(),
-  allowed_roles: z.array(z.string()).optional(),
-  safety: z.object({
-    no_harassment: z.boolean().default(true),
-    no_self_harm_guidance: z.boolean().default(true),
-    no_sexual_content: z.boolean().default(true),
-    no_illegal_instructions: z.boolean().default(true),
+  rating: z.enum(["PG", "12", "15", "18"]).optional(),
+  spoiler_policy: z.object({
+    mode: z.enum(["hard", "soft"]).default("hard"),
+    rule: z.string().optional(),
+  }).optional(),
+  truth_policy: z.object({
+    allow_lies_in_character: z.boolean().default(true),
+    lies_allowed_for: z.array(z.string()).optional(),
+    lies_not_allowed_for: z.array(z.string()).optional(),
+  }).optional(),
+  refusal_style: z.object({
+    in_character_deflection: z.boolean().default(true),
+    deflection_templates: z.array(z.string()).optional(),
+  }).optional(),
+  safety_policy: z.object({
+    disallowed: z.array(z.string()).optional(),
+    escalation: z.string().optional(),
+  }).optional(),
+  real_person_policy: z.object({
+    enabled: z.boolean().default(false),
+    rule: z.string().optional(),
   }).optional(),
   disclaimer: z.string().optional(),
 }).optional();
 
 export type ChatPolicy = z.infer<typeof chatPolicySchema>;
 
-// Character Chat Profile Schema (how character speaks + goals + limits)
+// Character Secret Schema (things the character must not reveal)
+export const characterSecretSchema = z.object({
+  id: z.string(),
+  never_reveal: z.boolean().default(true),
+  trigger_patterns: z.array(z.string()).optional(),
+  deflect_with: z.string().optional(),
+});
+
+export type CharacterSecret = z.infer<typeof characterSecretSchema>;
+
+// Character Chat Profile Schema v2 (enhanced with system prompt and secrets)
 export const chatProfileSchema = z.object({
+  system_prompt: z.string().optional(),
   voice: z.string().optional(),
   speech_style: z.string().optional(),
   goals: z.array(z.string()).optional(),
-  knowledge: z.object({
-    knows_up_to_dayIndex: z.union([z.number(), z.literal("dynamic")]).optional(),
-    spoiler_protection: z.boolean().default(true),
+  knowledge_cutoff: z.object({
+    mode: z.enum(["dayIndex", "dynamic"]).default("dynamic"),
+    max_day_index: z.number().optional(),
   }).optional(),
-  hard_limits: z.array(z.string()).optional(),
+  secrets: z.array(characterSecretSchema).optional(),
   allowed_topics: z.array(z.string()).optional(),
-  blocked_topics: z.array(z.string()).optional(),
+  forbidden_topics: z.array(z.string()).optional(),
+  hard_limits: z.array(z.string()).optional(),
   refusal_style: z.string().optional(),
 }).optional();
 
 export type ChatProfile = z.infer<typeof chatProfileSchema>;
 
-// Card Chat Overrides Schema (per-card mood/knowledge changes)
-export const chatOverridesSchema = z.record(z.string(), z.object({
-  mood: z.string().optional(),
-  knows_up_to_dayIndex: z.number().optional(),
-  refuse_topics: z.array(z.string()).optional(),
+// Spoiler Trap Schema (questions and deflections)
+export const spoilerTrapSchema = z.object({
+  trigger: z.string(),
+  deflect_with: z.string(),
+});
+
+export type SpoilerTrap = z.infer<typeof spoilerTrapSchema>;
+
+// Card Chat Override Schema v2 (per-character, per-card context)
+export const cardChatOverrideSchema = z.object({
+  emotional_state: z.enum([
+    "guarded", "warm", "panicked", "confident", "ashamed", 
+    "suspicious", "hopeful", "angry", "sad", "neutral"
+  ]).optional(),
+  scene_context: z.string().optional(),
+  objectives: z.array(z.string()).optional(),
+  knows_up_to_day_index: z.number().optional(),
+  taboo_for_this_scene: z.array(z.string()).optional(),
   can_reveal: z.array(z.string()).optional(),
-})).optional();
+  spoiler_traps: z.array(spoilerTrapSchema).optional(),
+});
+
+export type CardChatOverride = z.infer<typeof cardChatOverrideSchema>;
+
+// Card Chat Overrides Schema (per-card, keyed by character id)
+export const chatOverridesSchema = z.record(z.string(), cardChatOverrideSchema).optional();
 
 export type ChatOverrides = z.infer<typeof chatOverridesSchema>;
 

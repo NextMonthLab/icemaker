@@ -1,0 +1,209 @@
+Yes. That confirmation from Replit is basically the green light: the ZIP manifest can absolutely carry enough prompt + policy to power credible, consistent character chat per card.
+
+What you need now is to make it “iron clad” by defining exactly what fields must exist, how they’re composed, and the non-negotiable guardrails (especially once you move beyond pure fiction into “news-style” or real people roles).
+
+Here’s the practical answer, plus a ready-to-paste Replit prompt to lock it in.
+
+⸻
+
+What “foundations are solid” really means
+
+You have 3 layers that, combined, create a believable character:
+
+1) Universe-level policy (the law of the world)
+
+This is where you define:
+	•	the tone and boundaries for the whole universe
+	•	safety rules
+	•	spoiler rules
+	•	what the AI must do when asked for restricted info
+	•	what model to use (local vs cloud later)
+
+2) Character-level system prompt (the soul of the character)
+
+This is the “actor bible”:
+	•	voice, worldview, mannerisms
+	•	how they react under pressure
+	•	their relationship dynamics
+	•	what they know
+	•	what they must not reveal
+
+3) Card-level overrides (the moment)
+
+This makes the character feel alive “today”:
+	•	emotional state
+	•	what just happened
+	•	what they are currently trying to achieve
+	•	what they will dodge or deflect
+
+If those three exist, you can ship credible chat.
+
+⸻
+
+The missing bits you should add to the manifest
+
+Replit listed systemPrompt + secrets + overrides. Good.
+
+To make it robust, you want a few extra fields that prevent “ChatGPT mush” and prevent spoilers:
+
+Universe.chatPolicy (required)
+	•	rating: PG / 12 / 15 / 18 (so you can gate content)
+	•	spoilerPolicy: hard rule about future cards
+	•	truthPolicy: are characters allowed to lie, and when
+	•	refusalStyle: how to refuse in-character without breaking immersion
+	•	safetyPolicy: what to do if user asks self-harm/illegal/hate content etc
+	•	realPersonPolicy: default “fiction only” unless explicitly enabled
+
+Character.knowledgeCutoffDayIndex (required)
+
+Stops the AI revealing future plot.
+	•	Example: Mrs Thompson only knows up to dayIndex 3 until day 4 unlocks.
+
+Character.allowedTopics + forbiddenTopics (optional but powerful)
+
+Prevents drift into random topics.
+
+Card.chatUnlockRules (recommended)
+	•	free messages per day
+	•	whether this card unlocks new characters
+	•	whether character voice is enabled (later)
+
+Card.chatMemorySummary (optional)
+
+A short summary you can update per card so the AI stays consistent without expensive long context.
+
+⸻
+
+How the prompt composer should work (the “recipe”)
+
+When a user opens chat on Card N with Character X:
+
+SYSTEM message is composed like:
+	1.	Universe.chatPolicy (global rules)
+	2.	Universe premise and tone
+	3.	Character systemPrompt + mannerisms + goals
+	4.	Character knowledge cutoff: “You only know events up to dayIndex N”
+	5.	Card override: “In this scene you are suspicious and you just saw…”
+	6.	Secret handling: “If asked about secret A, deflect with…”
+	7.	Refusal style
+
+DEVELOPER/TOOL rules (optional):
+	•	enforce spoiler filtering before sending to model
+	•	block disallowed topics (policy filter)
+	•	if user asks spoiler, respond with in-world deflection line
+
+That is exactly how you keep it believable.
+
+⸻
+
+Replit prompt to lock this in (paste-ready)
+
+Use this prompt to tell Replit to enhance the manifest schema and enforce it on import.
+
+We need to HARDEN the Season Pack ZIP manifest so it fully powers credible, guardrailed AI character chat per card.
+
+GOALS
+1) Extend the manifest schema to include mandatory Universe chat policy, per-character chat prompts, knowledge cutoffs, and per-card chat overrides.
+2) Update ZIP import validation so missing required chat fields cause a clear error.
+3) Update prompt composer to build the final system prompt deterministically from Universe + Character + Card, including spoiler and safety protections.
+
+MANIFEST CHANGES (schemaVersion 2)
+A) universe.chat_policy (REQUIRED)
+{
+  "rating": "PG|12|15|18",
+  "spoiler_policy": {
+    "mode": "hard",
+    "rule": "Character must not reveal any events beyond the current dayIndex for the user."
+  },
+  "truth_policy": {
+    "allow_lies_in_character": true,
+    "lies_allowed_for": ["misdirection","self_protection","mystery_tension"],
+    "lies_not_allowed_for": ["safety","medical","legal","financial_advice"]
+  },
+  "refusal_style": {
+    "in_character_deflection": true,
+    "deflection_templates": [
+      "I can't talk about that yet.",
+      "You're asking the wrong question.",
+      "Not today. Ask me something else."
+    ]
+  },
+  "safety_policy": {
+    "disallowed": ["self-harm guidance","illegal instructions","hate/harassment","sexual content involving minors"],
+    "escalation": "If user requests disallowed content, refuse and provide safe alternative response."
+  },
+  "real_person_policy": {
+    "enabled": false,
+    "rule": "Default is fictional characters only. If enabled in future, must require additional disclaimers + constraints."
+  }
+}
+
+B) characters[].chat_profile (REQUIRED)
+Add:
+- systemPrompt (string, REQUIRED)
+- secretsJson (array, OPTIONAL) where each item is:
+  { "id": "secret_1", "neverReveal": true, "triggerPatterns": [], "deflectWith": "..." }
+- knowledgeCutoff:
+  { "mode": "dayIndex", "maxDayIndex": 1 }  // updated when user progresses
+- allowedTopics (array string, OPTIONAL)
+- forbiddenTopics (array string, OPTIONAL)
+- voiceStyle (OPTIONAL future)
+
+C) cards[].chat (RECOMMENDED)
+Add:
+{
+  "unlocks": ["characterIds"],
+  "chatUnlockedCharacterIds": ["..."],
+  "chatOverrides": {
+     "emotional_state": "guarded|warm|panicked|confident|ashamed",
+     "scene_context": "Short factual context for this card only",
+     "objectives": ["What the character is trying to achieve in this moment"],
+     "taboo_for_this_scene": ["topics to avoid today"],
+     "spoiler_traps": ["questions likely to cause spoilers, and how to deflect"]
+  },
+  "freeMessageLimit": 10
+}
+
+IMPORT + VALIDATION
+- Bump schemaVersion to 2.
+- Validate presence of universe.chat_policy and each character.chat_profile.systemPrompt.
+- Validate all character ids are unique and that card chatUnlockedCharacterIds reference valid character ids.
+- Store all chat policy fields in DB.
+
+PROMPT COMPOSER
+When chatting with characterId on cardId:
+Compose system prompt in this order:
+1) Universe chat_policy (verbatim rules)
+2) Universe premise + tone
+3) Character chat_profile.systemPrompt
+4) Knowledge cutoff: "You only know events up to dayIndex X, do not reveal beyond."
+5) Card.chatOverrides.scene_context + emotional_state + objectives + taboo
+6) Secrets handling: If user requests secret marked neverReveal, deflect with deflectWith.
+Return a structured prompt payload and also send to OpenAI.
+
+SPOILER ENFORCEMENT
+- If user asks about content beyond current dayIndex, do NOT answer; respond with refusal_style deflection.
+- Add a helper that detects spoiler questions using simple heuristics: "what happens next", "tomorrow", "later", "ending", etc.
+
+DELIVERABLES
+- Updated schema docs: docs/season-pack-schema-v2.json
+- Updated sample manifest: docs/sample-time-spent-manifest.json with rich character systemPrompts + overrides
+- Import validation and clear UI errors
+- Prompt composer updated and tested with 2-3 example chats
+
+
+⸻
+
+My recommendation for next move
+
+Don’t expand to creator marketplace yet. Do this first:
+	1.	Ship schema v2 with enforced chat policy + knowledge cutoffs
+	2.	Run Time Spent cards 1–5 with two characters and test:
+	•	spoiler refusal feels in-world
+	•	character voice stays consistent
+	•	secrets remain hidden
+	3.	Only then add “creator mode” templates.
+
+⸻
+
+If you want, I can also write example systemPrompts for Elena, Marcus, Sophie that feel like real British social realism (not generic AI theatre kid dialogue), plus a “deflection style” that keeps immersion without feeling like a refusal.

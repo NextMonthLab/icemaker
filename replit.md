@@ -25,6 +25,46 @@ For engine-generated universes:
 
 Sample manifest available at: `docs/sample-time-spent-manifest.json`
 
+### Chat System v2 (Schema Version 2)
+
+The platform supports credible, guardrailed AI character chat powered by a three-layer prompt composition system:
+
+**Layer 1: Universe Chat Policy (required for schemaVersion 2)**
+- `rating`: Content rating (PG/12/15/18) for gating
+- `spoiler_policy`: Hard or soft spoiler protection rules
+- `truth_policy`: When characters can lie in-character
+- `refusal_style`: In-character deflection templates
+- `safety_policy`: Disallowed content categories and escalation rules
+- `disclaimer`: AI-generated content notice
+
+**Layer 2: Character Chat Profile (required for schemaVersion 2)**
+- `system_prompt`: Core AI personality and behavior rules (REQUIRED)
+- `voice`: How the character speaks
+- `speech_style`: Verbal patterns and habits
+- `goals`: Conversation objectives
+- `knowledge_cutoff`: Dynamic or fixed dayIndex limit
+- `secrets`: Array with id, trigger_patterns, and deflect_with responses
+- `hard_limits`: Things character will never do or reveal
+- `refusal_style`: How to deflect uncomfortable questions
+
+**Layer 3: Card Chat Overrides (per-card context)**
+- `emotional_state`: guarded, warm, panicked, confident, etc.
+- `scene_context`: What just happened in this card
+- `objectives`: Character's goals in this moment
+- `knows_up_to_day_index`: Override knowledge cutoff
+- `taboo_for_this_scene`: Topics to avoid today
+- `can_reveal`: Things now safe to reveal
+- `spoiler_traps`: Specific trigger/deflection pairs
+
+**Prompt Composer** (server/chat.ts):
+- Combines all three layers deterministically
+- Always enforces knowledge cutoff (hard mode adds stricter rules)
+- Processes secrets with pattern matching and deflections
+- Adds safety policy enforcement
+
+**Schema Documentation**: `docs/season-pack-schema-v2.json`
+**Sample v2 Manifest**: `docs/sample-time-spent-manifest-v2.json`
+
 ### Soundtrack Management System
 
 The platform includes a complete audio management system for background music:

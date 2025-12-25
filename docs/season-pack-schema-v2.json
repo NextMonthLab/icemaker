@@ -1,0 +1,331 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StoryFlix Season Pack Schema v2",
+  "description": "Complete manifest schema for importing seasons with credible, guardrailed AI character chat",
+  "type": "object",
+  "required": ["schemaVersion", "seasonId", "universe", "season", "characters", "cards"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "Schema version. Must be 2 for enhanced chat features."
+    },
+    "seasonId": {
+      "type": "string",
+      "description": "Unique identifier for this season pack"
+    },
+    "universe": {
+      "type": "object",
+      "required": ["name", "description", "slug", "chat_policy"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "styleNotes": { "type": "string" },
+        "visual_mode": { "enum": ["author_supplied", "engine_generated"] },
+        "visual_style": {
+          "type": "object",
+          "properties": {
+            "style_preset": { "type": "string" },
+            "base_prompt": { "type": "string" },
+            "negative_prompt": { "type": "string" },
+            "aspect_ratio": { "type": "string", "default": "9:16" },
+            "consistency": {
+              "type": "object",
+              "properties": {
+                "character_lock": { "type": "boolean" },
+                "location_lock": { "type": "boolean" },
+                "colour_palette_lock": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "visual_continuity": {
+          "type": "object",
+          "properties": {
+            "art_direction": { "type": "string" },
+            "palette": { "type": "string" },
+            "camera_language": { "type": "string" },
+            "lighting_rules": { "type": "string" },
+            "texture_rules": { "type": "string" },
+            "taboo_list": { "type": "array", "items": { "type": "string" } },
+            "reference_tags": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "chat_policy": {
+          "type": "object",
+          "required": ["rating", "spoiler_policy", "safety_policy"],
+          "description": "REQUIRED: Universe-level chat guardrails",
+          "properties": {
+            "rating": {
+              "enum": ["PG", "12", "15", "18"],
+              "description": "Content rating for gating"
+            },
+            "spoiler_policy": {
+              "type": "object",
+              "required": ["mode", "rule"],
+              "properties": {
+                "mode": { "enum": ["hard", "soft"], "default": "hard" },
+                "rule": { 
+                  "type": "string",
+                  "description": "E.g., 'Character must not reveal any events beyond the current dayIndex for the user.'"
+                }
+              }
+            },
+            "truth_policy": {
+              "type": "object",
+              "properties": {
+                "allow_lies_in_character": { "type": "boolean", "default": true },
+                "lies_allowed_for": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "E.g., ['misdirection', 'self_protection', 'mystery_tension']"
+                },
+                "lies_not_allowed_for": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "E.g., ['safety', 'medical', 'legal', 'financial_advice']"
+                }
+              }
+            },
+            "refusal_style": {
+              "type": "object",
+              "properties": {
+                "in_character_deflection": { "type": "boolean", "default": true },
+                "deflection_templates": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "In-character ways to refuse. E.g., ['I can't talk about that yet.', 'You're asking the wrong question.']"
+                }
+              }
+            },
+            "safety_policy": {
+              "type": "object",
+              "required": ["disallowed"],
+              "properties": {
+                "disallowed": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "E.g., ['self-harm guidance', 'illegal instructions', 'hate/harassment']"
+                },
+                "escalation": {
+                  "type": "string",
+                  "description": "What to do if user requests disallowed content"
+                }
+              }
+            },
+            "real_person_policy": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "rule": { "type": "string" }
+              }
+            },
+            "disclaimer": { "type": "string" }
+          }
+        }
+      }
+    },
+    "season": { "type": "integer" },
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "role", "chat_profile"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "personality": { "type": "string" },
+          "visual_profile": {
+            "type": "object",
+            "properties": {
+              "continuity_description": { "type": "string" },
+              "age_range": { "type": "string" },
+              "build": { "type": "string" },
+              "face_features": { "type": "string" },
+              "hair": { "type": "string" },
+              "wardrobe": { "type": "string" },
+              "accessories": { "type": "string" },
+              "mannerisms": { "type": "string" },
+              "do_not_change": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "chat_profile": {
+            "type": "object",
+            "required": ["system_prompt"],
+            "description": "REQUIRED: Character's AI persona configuration",
+            "properties": {
+              "system_prompt": {
+                "type": "string",
+                "description": "REQUIRED: The character's core AI personality prompt. This is the 'soul' of the character."
+              },
+              "voice": { "type": "string", "description": "How the character speaks" },
+              "speech_style": { "type": "string", "description": "Verbal patterns and habits" },
+              "goals": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "What the character is trying to achieve in conversations"
+              },
+              "knowledge_cutoff": {
+                "type": "object",
+                "properties": {
+                  "mode": { "enum": ["dayIndex", "dynamic"], "default": "dynamic" },
+                  "max_day_index": { 
+                    "type": "integer",
+                    "description": "If mode is 'dayIndex', character only knows events up to this day" 
+                  }
+                }
+              },
+              "secrets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "never_reveal"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "never_reveal": { "type": "boolean" },
+                    "trigger_patterns": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Questions/phrases that might probe this secret"
+                    },
+                    "deflect_with": {
+                      "type": "string",
+                      "description": "In-character deflection when secret is probed"
+                    }
+                  }
+                }
+              },
+              "allowed_topics": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "forbidden_topics": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "hard_limits": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Things this character will NEVER do or reveal"
+              },
+              "refusal_style": {
+                "type": "string",
+                "description": "How this character deflects uncomfortable questions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "continuity_description": { "type": "string" },
+          "lighting": { "type": "string" },
+          "textures": { "type": "string" },
+          "do_not_change": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dayIndex", "title", "captions"],
+        "properties": {
+          "dayIndex": { "type": "integer" },
+          "title": { "type": "string" },
+          "captions": { "type": "array", "items": { "type": "string" } },
+          "sceneText": { "type": "string" },
+          "recapText": { "type": "string" },
+          "scene_description": { "type": "string" },
+          "image_generation": {
+            "type": "object",
+            "properties": {
+              "prompt": { "type": "string" },
+              "negative_prompt": { "type": "string" },
+              "shot_type": { "type": "string" },
+              "lighting": { "type": "string" }
+            }
+          },
+          "primary_character_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "chat_unlocked_character_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Characters that become available to chat after viewing this card"
+          },
+          "location_id": { "type": "string" },
+          "status": { "enum": ["draft", "published"] },
+          "publish_at": { "type": "string", "format": "date-time" },
+          "chat": {
+            "type": "object",
+            "description": "Per-card chat configuration and overrides",
+            "properties": {
+              "free_message_limit": {
+                "type": "integer",
+                "default": 10,
+                "description": "Free messages allowed for this card before paywall"
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "emotional_state": {
+                      "enum": ["guarded", "warm", "panicked", "confident", "ashamed", "suspicious", "hopeful", "angry", "sad"],
+                      "description": "Character's emotional state in this card"
+                    },
+                    "scene_context": {
+                      "type": "string",
+                      "description": "Short factual context for this card only"
+                    },
+                    "objectives": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "What the character is trying to achieve in this moment"
+                    },
+                    "knows_up_to_day_index": {
+                      "type": "integer",
+                      "description": "Override knowledge cutoff for this card"
+                    },
+                    "taboo_for_this_scene": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Topics to avoid in this specific scene"
+                    },
+                    "can_reveal": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Things that can now be revealed as of this card"
+                    },
+                    "spoiler_traps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "trigger": { "type": "string" },
+                          "deflect_with": { "type": "string" }
+                        }
+                      },
+                      "description": "Specific questions and how to deflect them"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

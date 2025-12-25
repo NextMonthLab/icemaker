@@ -1010,12 +1010,21 @@ export async function registerRoutes(
       seed?: number;
       notes?: string;
     };
-    chat_overrides?: Record<string, {
-      mood?: string;
-      knows_up_to_dayIndex?: number;
-      refuse_topics?: string[];
-      can_reveal?: string[];
-    }>;
+    chat?: {
+      free_message_limit?: number;
+      overrides?: Record<string, {
+        emotional_state?: string;
+        scene_context?: string;
+        objectives?: string[];
+        knows_up_to_day_index?: number;
+        taboo_for_this_scene?: string[];
+        can_reveal?: string[];
+        spoiler_traps?: Array<{
+          trigger: string;
+          deflect_with: string;
+        }>;
+      }>;
+    };
   }
   
   interface ManifestCharacterVisualProfile {
@@ -1033,16 +1042,23 @@ export async function registerRoutes(
   }
   
   interface ManifestChatProfile {
+    system_prompt?: string;
     voice?: string;
     speech_style?: string;
     goals?: string[];
-    knowledge?: {
-      knows_up_to_dayIndex?: number | "dynamic";
-      spoiler_protection?: boolean;
+    knowledge_cutoff?: {
+      mode?: "dayIndex" | "dynamic";
+      max_day_index?: number;
     };
-    hard_limits?: string[];
+    secrets?: Array<{
+      id: string;
+      never_reveal?: boolean;
+      trigger_patterns?: string[];
+      deflect_with?: string;
+    }>;
     allowed_topics?: string[];
-    blocked_topics?: string[];
+    forbidden_topics?: string[];
+    hard_limits?: string[];
     refusal_style?: string;
   }
 
@@ -1095,15 +1111,27 @@ export async function registerRoutes(
   }
   
   interface ManifestChatPolicy {
-    mode?: "role_gated" | "character_only";
-    global_rules?: string[];
-    blocked_personas?: string[];
-    allowed_roles?: string[];
-    safety?: {
-      no_harassment?: boolean;
-      no_self_harm_guidance?: boolean;
-      no_sexual_content?: boolean;
-      no_illegal_instructions?: boolean;
+    rating?: "PG" | "12" | "15" | "18";
+    spoiler_policy?: {
+      mode?: "hard" | "soft";
+      rule?: string;
+    };
+    truth_policy?: {
+      allow_lies_in_character?: boolean;
+      lies_allowed_for?: string[];
+      lies_not_allowed_for?: string[];
+    };
+    refusal_style?: {
+      in_character_deflection?: boolean;
+      deflection_templates?: string[];
+    };
+    safety_policy?: {
+      disallowed?: string[];
+      escalation?: string;
+    };
+    real_person_policy?: {
+      enabled?: boolean;
+      rule?: string;
     };
     disclaimer?: string;
   }
@@ -1228,6 +1256,25 @@ export async function registerRoutes(
         }
       }
       
+      // Validate v2 chat policy for schemaVersion 2
+      const schemaVersion = manifest.schemaVersion || 1;
+      if (schemaVersion >= 2) {
+        const chatPolicy = manifest.universe?.chat_policy;
+        if (!chatPolicy) {
+          errors.push("schemaVersion 2: universe.chat_policy is required");
+        } else {
+          if (!chatPolicy.rating) {
+            warnings.push("schemaVersion 2: universe.chat_policy.rating is recommended (PG/12/15/18)");
+          }
+          if (!chatPolicy.spoiler_policy) {
+            warnings.push("schemaVersion 2: universe.chat_policy.spoiler_policy is recommended for story-driven content");
+          }
+          if (!chatPolicy.safety_policy) {
+            warnings.push("schemaVersion 2: universe.chat_policy.safety_policy is recommended for content moderation");
+          }
+        }
+      }
+      
       // Build character ID/name mapping for reference validation
       // Characters can be referenced by id (preferred) or by name (fallback)
       const characterIds = new Set<string>();
@@ -1266,6 +1313,13 @@ export async function registerRoutes(
           } else {
             charactersMissingVisualProfiles++;
             errors.push(`characters[${i}] "${char.name}": engine_generated mode requires visual_profile.continuity_description`);
+          }
+        }
+        
+        // Validate v2 chat profile for schemaVersion 2 - system_prompt is required
+        if (schemaVersion >= 2) {
+          if (!char.chat_profile?.system_prompt) {
+            errors.push(`schemaVersion 2: characters[${i}] "${char.name}" requires chat_profile.system_prompt for credible AI chat`);
           }
         }
       }
@@ -1624,7 +1678,7 @@ export async function registerRoutes(
           imageGenerated: false,
           primaryCharacterIds: primaryCharacterIds.length > 0 ? primaryCharacterIds : null,
           locationId: locationId || null,
-          chatOverrides: cardDef.chat_overrides || null,
+          chatOverrides: cardDef.chat?.overrides || null,
         });
         createdItems.cards.push(card.id);
         

@@ -1,4 +1,4 @@
-import { Universe, Character, Card, ChatPolicy, ChatProfile, ChatOverrides } from "@shared/schema";
+import { Universe, Character, Card, ChatPolicy, ChatProfile, CardChatOverride, CharacterSecret } from "@shared/schema";
 
 interface ChatContext {
   universe: Universe;
@@ -12,17 +12,21 @@ export function buildChatSystemPrompt(ctx: ChatContext): string {
   
   const policy = universe.chatPolicy as ChatPolicy | null;
   const profile = character.chatProfile as ChatProfile | null;
-  const overrides = currentCard?.chatOverrides as ChatOverrides | null;
+  const overrides = currentCard?.chatOverrides as Record<string, CardChatOverride> | null;
   const charOverride = overrides?.[character.characterSlug];
 
   const sections: string[] = [];
   
-  sections.push(`You are ${character.name}, a character in the story "${universe.name}".`);
-  if (character.role) {
-    sections.push(`Your role: ${character.role}`);
-  }
-  if (character.description) {
-    sections.push(`About you: ${character.description}`);
+  if (profile?.system_prompt) {
+    sections.push(profile.system_prompt);
+  } else {
+    sections.push(`You are ${character.name}, a character in the story "${universe.name}".`);
+    if (character.role) {
+      sections.push(`Your role: ${character.role}`);
+    }
+    if (character.description) {
+      sections.push(`About you: ${character.description}`);
+    }
   }
   
   if (profile?.voice) {
@@ -31,28 +35,67 @@ export function buildChatSystemPrompt(ctx: ChatContext): string {
   if (profile?.speech_style) {
     sections.push(`SPEECH STYLE: ${profile.speech_style}`);
   }
-  if (charOverride?.mood) {
-    sections.push(`CURRENT MOOD: ${charOverride.mood}`);
+  
+  if (charOverride?.emotional_state) {
+    sections.push(`CURRENT EMOTIONAL STATE: ${charOverride.emotional_state}`);
   }
   
-  if (profile?.goals && profile.goals.length > 0) {
-    sections.push(`\nYOUR GOALS IN THIS CONVERSATION:\n${profile.goals.map(g => `- ${g}`).join('\n')}`);
+  if (charOverride?.scene_context) {
+    sections.push(`SCENE CONTEXT: ${charOverride.scene_context}`);
   }
   
-  const knowsUpTo = charOverride?.knows_up_to_dayIndex ?? 
-    (profile?.knowledge?.knows_up_to_dayIndex === "dynamic" ? userDayIndex : profile?.knowledge?.knows_up_to_dayIndex) ?? 
+  const allObjectives = [
+    ...(profile?.goals || []),
+    ...(charOverride?.objectives || [])
+  ];
+  if (allObjectives.length > 0) {
+    sections.push(`\nYOUR OBJECTIVES IN THIS CONVERSATION:\n${allObjectives.map(g => `- ${g}`).join('\n')}`);
+  }
+  
+  const knowsUpTo = charOverride?.knows_up_to_day_index ?? 
+    (profile?.knowledge_cutoff?.mode === "dynamic" ? userDayIndex : profile?.knowledge_cutoff?.max_day_index) ?? 
     userDayIndex;
   
-  if (profile?.knowledge?.spoiler_protection !== false) {
-    sections.push(`\nKNOWLEDGE LIMIT: You only know events up to day ${knowsUpTo} of the story. Do not reveal or discuss any plot points beyond this day. If asked about future events, respond naturally as the character would - you genuinely don't know what happens next.`);
+  // Always enforce knowledge cutoff to prevent spoilers
+  sections.push(`\nKNOWLEDGE LIMIT: You only know events up to day ${knowsUpTo} of the story. Do not reveal or discuss any plot points beyond this day.`);
+  
+  if (policy?.spoiler_policy?.mode === "hard") {
+    const spoilerRule = policy.spoiler_policy.rule || 
+      `STRICT SPOILER PROTECTION: Never reveal ANY events, outcomes, or character fates beyond day ${knowsUpTo}. This is absolute.`;
+    sections.push(`${spoilerRule}`);
+    sections.push(`If asked about future events, respond naturally as the character would - you genuinely don't know what happens next. Deflect with curiosity or in-character uncertainty.`);
+  } else {
+    sections.push(`If asked about future events, respond naturally as the character would - you don't know what happens next.`);
   }
   
-  const blockedTopics = [
-    ...(profile?.blocked_topics || []),
-    ...(charOverride?.refuse_topics || [])
+  if (charOverride?.spoiler_traps && charOverride.spoiler_traps.length > 0) {
+    sections.push(`\nSPOILER TRAP HANDLING:`);
+    for (const trap of charOverride.spoiler_traps) {
+      sections.push(`- If user asks about "${trap.trigger}", respond with: "${trap.deflect_with}"`);
+    }
+  }
+  
+  const secrets = profile?.secrets as CharacterSecret[] | undefined;
+  if (secrets && secrets.length > 0) {
+    sections.push(`\nYOUR SECRETS (never reveal directly):`);
+    for (const secret of secrets) {
+      if (secret.never_reveal) {
+        sections.push(`- Secret: ${secret.id}`);
+        if (secret.deflect_with) {
+          sections.push(`  If probed, deflect with: "${secret.deflect_with}"`);
+        }
+      }
+    }
+  } else if (character.secretsJson && Array.isArray(character.secretsJson) && character.secretsJson.length > 0) {
+    sections.push(`\nYOUR SECRETS (never reveal directly, but they influence your behavior):\n${character.secretsJson.map((s: string) => `- ${s}`).join('\n')}`);
+  }
+  
+  const tabooTopics = [
+    ...(profile?.forbidden_topics || []),
+    ...(charOverride?.taboo_for_this_scene || [])
   ];
-  if (blockedTopics.length > 0) {
-    sections.push(`\nTOPICS YOU REFUSE TO DISCUSS:\n${blockedTopics.map(t => `- ${t}`).join('\n')}`);
+  if (tabooTopics.length > 0) {
+    sections.push(`\nTOPICS YOU REFUSE TO DISCUSS:\n${tabooTopics.map(t => `- ${t}`).join('\n')}`);
   }
   
   if (profile?.allowed_topics && profile.allowed_topics.length > 0) {
@@ -67,31 +110,32 @@ export function buildChatSystemPrompt(ctx: ChatContext): string {
     sections.push(`\nHARD LIMITS (never break character on these):\n${profile.hard_limits.map(l => `- ${l}`).join('\n')}`);
   }
   
-  if (character.secretsJson && Array.isArray(character.secretsJson) && character.secretsJson.length > 0) {
-    sections.push(`\nYOUR SECRETS (never reveal directly, but they influence your behavior):\n${character.secretsJson.map((s: string) => `- ${s}`).join('\n')}`);
-  }
-  
   if (profile?.refusal_style) {
     sections.push(`\nWhen declining to discuss something, ${profile.refusal_style}`);
+  } else if (policy?.refusal_style?.in_character_deflection && policy.refusal_style.deflection_templates?.length) {
+    sections.push(`\nWhen refusing to answer, use in-character deflections like: ${policy.refusal_style.deflection_templates.slice(0, 3).join(' OR ')}`);
   }
   
-  if (policy?.global_rules && policy.global_rules.length > 0) {
-    sections.push(`\nUNIVERSE RULES (apply to all characters):\n${policy.global_rules.map(r => `- ${r}`).join('\n')}`);
+  if (policy?.truth_policy) {
+    if (policy.truth_policy.allow_lies_in_character) {
+      sections.push(`\nTRUTH POLICY: You may lie or misdirect in-character for: ${policy.truth_policy.lies_allowed_for?.join(', ') || 'self-protection, mystery tension'}`);
+      if (policy.truth_policy.lies_not_allowed_for?.length) {
+        sections.push(`NEVER lie about: ${policy.truth_policy.lies_not_allowed_for.join(', ')}`);
+      }
+    }
   }
   
-  if (policy?.blocked_personas && policy.blocked_personas.length > 0) {
-    sections.push(`\nNEVER pretend to be or roleplay as:\n${policy.blocked_personas.map(p => `- ${p}`).join('\n')}`);
-  }
-  
-  const safetyRules: string[] = [];
-  const safety = policy?.safety ?? { no_harassment: true, no_self_harm_guidance: true, no_sexual_content: true, no_illegal_instructions: true };
-  if (safety.no_harassment) safetyRules.push("Never engage in or encourage harassment, bullying, or personal attacks");
-  if (safety.no_self_harm_guidance) safetyRules.push("Never provide guidance on self-harm or suicide");
-  if (safety.no_sexual_content) safetyRules.push("Keep all content appropriate - no explicit sexual content");
-  if (safety.no_illegal_instructions) safetyRules.push("Never provide instructions for illegal activities");
-  
-  if (safetyRules.length > 0) {
-    sections.push(`\nSAFETY GUIDELINES:\n${safetyRules.map(r => `- ${r}`).join('\n')}`);
+  if (policy?.safety_policy?.disallowed?.length) {
+    sections.push(`\nSAFETY RULES (these apply absolutely):\n${policy.safety_policy.disallowed.map(d => `- Do not: ${d}`).join('\n')}`);
+    if (policy.safety_policy.escalation) {
+      sections.push(policy.safety_policy.escalation);
+    }
+  } else {
+    sections.push(`\nSAFETY GUIDELINES:
+- Never engage in or encourage harassment, bullying, or personal attacks
+- Never provide guidance on self-harm or suicide
+- Keep all content appropriate - no explicit sexual content
+- Never provide instructions for illegal activities`);
   }
   
   sections.push(`\nIMPORTANT: Stay in character at all times. Respond as ${character.name} would, with their personality and knowledge. Keep responses conversational and engaging, typically 2-4 sentences unless the question requires more detail.`);
@@ -102,4 +146,37 @@ export function buildChatSystemPrompt(ctx: ChatContext): string {
 export function getChatDisclaimer(policy: ChatPolicy | null): string | null {
   if (!policy?.disclaimer) return null;
   return policy.disclaimer;
+}
+
+export function detectSpoilerAttempt(message: string): boolean {
+  const spoilerPatterns = [
+    /what happens next/i,
+    /what will happen/i,
+    /tomorrow/i,
+    /later in the story/i,
+    /how does.*(end|finish)/i,
+    /the ending/i,
+    /spoil(er)?/i,
+    /tell me the future/i,
+    /what's going to happen/i,
+    /day \d+ events/i,
+  ];
+  
+  return spoilerPatterns.some(pattern => pattern.test(message));
+}
+
+export function getInCharacterDeflection(policy: ChatPolicy | null, characterName: string): string {
+  const templates = policy?.refusal_style?.deflection_templates;
+  if (templates && templates.length > 0) {
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+  
+  const defaultDeflections = [
+    `I'm afraid I don't know what you mean.`,
+    `That's not something I can talk about right now.`,
+    `Ask me something else, would you?`,
+    `I'd rather not go into that.`,
+  ];
+  
+  return defaultDeflections[Math.floor(Math.random() * defaultDeflections.length)];
 }
