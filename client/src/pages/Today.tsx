@@ -6,8 +6,9 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAppContext } from "@/lib/app-context";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocalProgress } from "@/lib/local-progress";
 
 export default function Today() {
   const { universe } = useAppContext();
@@ -15,6 +16,7 @@ export default function Today() {
   const cardIdFromUrl = params.id ? parseInt(params.id) : null;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(true);
+  const { getNextUnwatchedIndex, markCardWatched, hasWatchedCard } = useLocalProgress();
 
   const { data: cards, isLoading: cardsLoading } = useQuery({
     queryKey: ["cards", universe?.id],
@@ -30,14 +32,19 @@ export default function Today() {
       .sort((a, b) => a.dayIndex - b.dayIndex);
   }, [cards]);
 
+  // Determine starting index: URL param > selected > next unwatched > first card
   const cardIndex = useMemo(() => {
     if (selectedIndex !== null) return selectedIndex;
     if (cardIdFromUrl) {
       const idx = availableCards.findIndex(c => c.id === cardIdFromUrl);
       if (idx !== -1) return idx;
     }
-    return availableCards.length > 0 ? availableCards.length - 1 : 0;
-  }, [selectedIndex, cardIdFromUrl, availableCards]);
+    // Start at next unwatched card (sequential progress)
+    if (universe && availableCards.length > 0) {
+      return getNextUnwatchedIndex(universe.id, availableCards);
+    }
+    return 0;
+  }, [selectedIndex, cardIdFromUrl, availableCards, universe, getNextUnwatchedIndex]);
 
   const currentCard = availableCards[cardIndex];
 
@@ -48,8 +55,11 @@ export default function Today() {
   });
 
   const handlePhaseChange = useCallback((phase: "cinematic" | "context") => {
-    // Keep fullscreen mode on during context phase - user must manually close
-  }, []);
+    // Mark card as watched when reaching context phase
+    if (phase === "context" && universe && currentCard) {
+      markCardWatched(universe.id, currentCard.id);
+    }
+  }, [universe, currentCard, markCardWatched]);
 
   const handleNavigate = useCallback((direction: "prev" | "next") => {
     if (direction === "prev" && cardIndex > 0) {
@@ -95,7 +105,10 @@ export default function Today() {
 
   const card = currentCard;
   const hasPrev = cardIndex > 0;
-  const hasNext = cardIndex < availableCards.length - 1;
+  
+  // Only allow forward navigation if current card has been watched
+  const currentCardWatched = universe && currentCard ? hasWatchedCard(universe.id, currentCard.id) : false;
+  const hasNext = cardIndex < availableCards.length - 1 && currentCardWatched;
 
   return (
     <>
