@@ -28,11 +28,15 @@ export default function CardPlayer({ card, autoplay = true }: CardPlayerProps) {
     <div className="relative w-full aspect-[9/16] overflow-hidden rounded-lg bg-black shadow-2xl group border border-border/50">
       {/* Background Image with Ken Burns Effect */}
       <div className={`absolute inset-0 w-full h-full transition-transform duration-[20s] ease-linear ${isPlaying ? 'scale-125' : 'scale-100'}`}>
-         <img
-            src={card.image}
-            alt={card.title}
-            className="w-full h-full object-cover opacity-80"
-          />
+         {card.image ? (
+           <img
+              src={card.image}
+              alt={card.title}
+              className="w-full h-full object-cover opacity-80"
+            />
+         ) : (
+           <div className="w-full h-full bg-gradient-to-br from-primary/30 via-background to-primary/10" />
+         )}
       </div>
 
       {/* Overlay Gradient */}
