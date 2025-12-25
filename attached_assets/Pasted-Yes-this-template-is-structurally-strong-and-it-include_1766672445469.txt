@@ -1,0 +1,127 @@
+Yes – this template is structurally strong and it includes the continuity blocks you asked for. But there are a few sharp edges in it that will either break imports or cause silent bugs later.
+
+1) Biggest issue: primary_character_ids are not IDs
+
+Your cards use:
+
+"primary_character_ids": ["Elena"]
+
+…but your characters[] don’t have an id field at all. So those aren’t “ids”, they’re names.
+
+You need one of these patterns (pick one and standardise hard):
+
+Best practice (recommended): add id to each character and only reference IDs
+
+{
+  "id": "elena",
+  "name": "Elena",
+  ...
+}
+
+Then cards use:
+
+"primary_character_ids": ["elena", "marcus"]
+
+Same for locations: you already have locations[].id, which is good.
+
+If Replit implemented “match by name” behind the scenes, it’ll work for now, but it’s fragile (case sensitivity, duplicates, renamed characters).
+
+⸻
+
+2) You have two different character reference systems in each card
+
+Each card currently includes all of these:
+	•	primary_character_ids
+	•	characters (array of names)
+	•	location_id
+
+That’s redundant, and redundancy becomes drift.
+
+Recommendation: keep only
+	•	primary_character_ids (IDs)
+	•	location_id
+
+Remove characters entirely unless it’s being used for something distinct (like “characters present” vs “characters chat-unlocked”).
+
+If you need both concepts, make them explicit:
+	•	present_character_ids: who is in the scene
+	•	chat_unlocked_character_ids: who you can chat to from that card
+
+⸻
+
+3) The universe is labelled “Time Spent” but the story content is a different story
+
+Your cards are clearly a relationship drama (Elena/Marcus/Sophie) in a cafe/park. That’s totally fine for a template, but calling it “Time Spent” will confuse everyone (including you in 2 weeks).
+
+Do this instead:
+	•	Template pack universe:
+	•	"name": "Season Pack Template"
+	•	"slug": "season-pack-template"
+	•	Example pack universe:
+	•	"name": "Time Spent (Example)"
+	•	with actual Time Spent opening beats
+
+You’ll avoid constant cross-contamination.
+
+⸻
+
+4) startDate is hard-coded to 2025-01-01
+
+Not wrong, but it’s a footgun.
+
+If your scheduler uses startDate to backfill “DayIndex → publish date”, this will dump a story into the past or force weird catch-up behaviour.
+
+Safer approach:
+	•	allow startDate to be optional
+	•	if missing, set startDate at import-time to “today” (or “tomorrow”)
+	•	or treat it as “season default” but override per card if publishAt exists
+
+⸻
+
+5) Your continuity fields are excellent – one tweak
+
+You’ve got both:
+	•	visual_style.base_prompt / negative_prompt
+	•	visual_continuity.taboo_list
+
+Make sure your prompt composer is doing this predictably:
+	•	Final prompt = base_prompt + continuity + card prompt
+	•	Final negative = negative_prompt + taboo_list + card negative
+
+…and that taboo list gets mapped into negative properly (string join, no weird formatting).
+
+⸻
+
+The clean “gold standard” schema adjustments
+
+If you want this template to be bulletproof, I’d change only this:
+	1.	Add id to each character object
+	2.	Make card references use IDs
+	3.	Remove duplicate characters field in cards (or rename with purpose)
+
+Example patch:
+
+"characters": [
+  { "id": "elena", "name": "Elena", ... },
+  { "id": "marcus", "name": "Marcus", ... },
+  { "id": "sophie", "name": "Sophie", ... }
+],
+"cards": [
+  {
+    "dayIndex": 1,
+    ...
+    "primary_character_ids": ["elena", "marcus"],
+    "location_id": "coffee-shop"
+  }
+]
+
+
+⸻
+
+Bottom line
+	•	Yes, this is the right kind of template (it includes universe + character + location continuity and per-card prompts).
+	•	The only “must-fix” is the ID referencing, otherwise your linking will be brittle or broken.
+
+If you want, I can generate:
+	1.	a Season Pack Template ZIP using this exact schema but with neutral example content, and
+	2.	a Time Spent Example ZIP with canon-faithful Day 1–5 beats (Mrs Thompson → walk → bag → first contact → the offer), using your continuity system correctly.
