@@ -264,6 +264,24 @@ export async function registerRoutes(
       res.status(500).json({ message: "Error fetching characters" });
     }
   });
+
+  // ============ LOCATIONS ROUTES ============
+  
+  app.get("/api/locations", async (req, res) => {
+    try {
+      const universeId = req.query.universeId ? parseInt(req.query.universeId as string) : undefined;
+      
+      if (!universeId) {
+        return res.status(400).json({ message: "universeId query parameter required" });
+      }
+      
+      const locations = await storage.getLocationsByUniverse(universeId);
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      res.status(500).json({ message: "Error fetching locations" });
+    }
+  });
   
   app.get("/api/characters/:id", async (req, res) => {
     try {
@@ -1614,6 +1632,42 @@ export async function registerRoutes(
     }
   });
   
+  // Generate video for a single card (stub - placeholder for future Kling/video AI integration)
+  app.post("/api/cards/:id/generate-video", requireAdmin, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      const card = await storage.getCard(cardId);
+      
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // Check if card has an image to generate video from
+      const sourceImage = card.generatedImageUrl || card.imagePath;
+      if (!sourceImage) {
+        return res.status(400).json({ 
+          message: "Card must have an image before generating video. Generate or upload an image first.",
+        });
+      }
+      
+      // Stub response - video generation not yet implemented
+      // Future: integrate with Kling or other video AI provider
+      return res.status(501).json({
+        cardId: card.id,
+        cardTitle: card.title,
+        status: "not_implemented",
+        message: "Video generation is coming soon. This feature will use the card image and captions to generate a short video clip.",
+      });
+      
+    } catch (error: any) {
+      console.error("Error generating video:", error);
+      res.status(500).json({ 
+        message: "Error generating video",
+        error: error.message || "Unknown error",
+      });
+    }
+  });
+
   // Update card with generated image URL (after external generation)
   app.patch("/api/cards/:id/set-generated-image", requireAdmin, async (req, res) => {
     try {

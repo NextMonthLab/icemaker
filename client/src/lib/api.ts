@@ -1,4 +1,4 @@
-import type { User, Universe, Character, Card, UserProgress, ChatThread, ChatMessage, ImageGeneration } from "@shared/schema";
+import type { User, Universe, Character, Card, UserProgress, ChatThread, ChatMessage, ImageGeneration, Location } from "@shared/schema";
 
 class ApiClient {
   private baseUrl = "/api";
@@ -104,6 +104,11 @@ class ApiClient {
     });
   }
 
+  // Locations
+  async getLocations(universeId: number) {
+    return this.request<Location[]>(`/locations?universeId=${universeId}`);
+  }
+
   // Cards
   async getCards(universeId: number, season?: number) {
     const params = new URLSearchParams({ universeId: universeId.toString() });
@@ -207,6 +212,12 @@ class ApiClient {
 
   async generateCardImage(cardId: number): Promise<GenerateImageResult> {
     return this.request<GenerateImageResult>(`/cards/${cardId}/generate-image`, {
+      method: "POST",
+    });
+  }
+
+  async generateCardVideo(cardId: number): Promise<GenerateVideoResult> {
+    return this.request<GenerateVideoResult>(`/cards/${cardId}/generate-video`, {
       method: "POST",
     });
   }
@@ -319,6 +330,14 @@ export interface GenerateImageResult {
   aspectRatio: string;
   status: string;
   message: string;
+}
+
+export interface GenerateVideoResult {
+  cardId: number;
+  cardTitle: string;
+  status: string;
+  message: string;
+  generatedVideoUrl?: string;
 }
 
 export const api = new ApiClient();

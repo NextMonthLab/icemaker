@@ -162,6 +162,10 @@ export const cards = pgTable("cards", {
   generatedImageUrl: text("generated_image_url"), // URL of engine-generated image
   imageGenerated: boolean("image_generated").default(false), // Whether image has been generated
   
+  // Engine-generated video fields
+  generatedVideoUrl: text("generated_video_url"), // URL of engine-generated video
+  videoGenerated: boolean("video_generated").default(false), // Whether video has been generated
+  
   // Visual continuity references (for prompt composition)
   primaryCharacterIds: jsonb("primary_character_ids").$type<number[]>(), // Characters in this scene
   locationId: integer("location_id").references(() => locations.id), // Location for this scene

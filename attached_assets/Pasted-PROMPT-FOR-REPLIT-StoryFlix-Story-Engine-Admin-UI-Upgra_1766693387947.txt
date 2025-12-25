@@ -1,0 +1,124 @@
+PROMPT FOR REPLIT (StoryFlix / Story Engine Admin UI Upgrade)
+
+Context
+We have an Admin screen that displays a Universe and its associated Cards. Cards are imported via Season Pack ZIP and then shown in the Admin list view. We need to improve editing and make image generation very explicit.
+
+Primary goal
+Turn the Universe admin view into a practical editorial workflow:
+1) quick actions in the list
+2) fast navigation to the card editor
+3) full card editing with free text
+4) clear, obvious Image Generation and Video Generation actions
+
+Non goals
+Do not refactor the entire admin system.
+Do not change front-end card availability logic in this task.
+Do not delete any universes or data as part of this change.
+
+Deliverables
+A) Universe Admin Screen improvements
+B) Card Row actions and deep-linking
+C) Card Detail and Card Edit screens
+D) Rename and redesign AI buttons for clarity
+E) Add video generation action (placeholder wiring acceptable if provider integration is not ready)
+
+A) Universe Admin Screen improvements
+On the Universe view where cards are listed:
+1) Add a clear "Edit Universe" button near the Universe title.
+2) Add a very obvious "Generate Images" action area for the whole universe.
+   - This must not look like a generic AI or magic wand.
+   - Label it clearly as "Generate AI Images".
+   - Include helper text that explains what it does: "Generate missing images for published cards using the composed prompt."
+   - If there is also a per-card button, that is still needed, but the global option should be prominent.
+
+B) Card list row actions and deep-linking
+Each card row in the Universe cards list currently includes an info icon "i".
+We need:
+1) A button or icon next to the "i" that deep-links to the admin page for that card (Card Detail page).
+   - Example label: "Open in Admin" or "Edit Card".
+   - It should take the user directly to /admin/cards/:id (or whatever the route convention is).
+2) Add an explicit edit icon (pencil) which takes the user directly to the full card editor screen.
+3) Make the existing image generation button more obvious:
+   - Rename the button to "Generate AI Image"
+   - Add an icon that communicates image generation (photo icon), not a magic wand.
+   - Add a small status label next to it:
+     - "Image ready" when generatedImageUrl exists
+     - "Needs image" when status is published but generatedImageUrl missing
+     - "No prompt" when prompt composition fails or missing scene_description + image_generation.prompt
+
+C) Card Detail and Card Edit screens
+We need two separate admin views:
+
+1) Card Detail (read + quick actions)
+Route: /admin/cards/:id
+Shows:
+- Card title, dayIndex, status, publishAt
+- Card image (if exists)
+- Captions (list)
+- sceneText, recapText, scene_description
+- Referenced characters (names + ids)
+- Location (name + id)
+Actions:
+- "Edit Card" button (goes to Card Edit screen)
+- "Generate AI Image" button
+- "Generate AI Video" button (see section E)
+
+2) Card Edit (full editable form)
+Route: /admin/cards/:id/edit
+This must be a full form where every component is editable as free text, including:
+- dayIndex (number)
+- title (text)
+- status (select)
+- publishAt (datetime input, optional)
+- captions (editable list of strings, add, remove, reorder)
+- sceneText (multiline)
+- recapText (multiline)
+- scene_description (multiline)
+- image_generation fields:
+  - prompt (multiline)
+  - shot_type (text or select if available)
+  - lighting (text)
+  - negative_prompt (optional multiline)
+- primary_character_ids (multi-select from universe characters)
+- chat_unlocked_character_ids (multi-select from universe characters)
+- location_id (select from universe locations)
+Additionally:
+- Save and Cancel buttons
+- Validate required fields on save
+- Show success toast or message when saved
+- After saving, return to Card Detail screen
+
+D) Button clarity and language
+Replace any vague AI button labelling with specific text:
+- Use "Generate AI Image" instead of "Generate" or "AI"
+- Use "Generate AI Video" for video
+- Use "Compose Prompt" only if that is a separate action from image generation
+Ensure the UI makes it obvious what will be generated and where it will appear (the card image slot).
+
+E) AI video generation support (creator monetisation path)
+Add a "Generate AI Video" button on Card Detail and Card Row.
+For now:
+- If provider integration is not ready, implement the full UI and a backend stub endpoint that returns a clear "not implemented" response.
+- If provider integration is feasible quickly, start with Kling as default, but keep the architecture provider-agnostic.
+
+Video generation requirements:
+1) Each generated video is tied to a specific card
+2) The video generation should use:
+   - the card image (generated or uploaded)
+   - the card captions or sceneText as the basis for motion prompt
+3) Save a generatedVideoUrl on the card record, similar to generatedImageUrl
+4) UI should show "Video ready" or "Needs video" status.
+
+Implementation constraints
+- Keep routing consistent with existing Admin routing patterns
+- Use existing storage layer functions where possible, only add new ones if required
+- Do not break existing import behaviour
+- Do not alter the front UI rendering logic in this task
+
+Definition of Done
+- Universe admin list has new buttons and clearer generation controls
+- Card list rows have "Open in Admin" and an Edit icon
+- Card Detail and Card Edit screens exist and work
+- "Generate AI Image" button is clearly labelled and not generic
+- "Generate AI Video" exists with a clear pathway (stub or real integration)
+- All changes are tested manually in the Replit environment
