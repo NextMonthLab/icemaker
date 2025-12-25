@@ -21,9 +21,11 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   const loadDefaultUniverse = async () => {
     try {
       const universes = await api.getUniverses();
-      if (universes.length > 0) {
+      // Only auto-select if there's exactly one universe
+      if (universes.length === 1) {
         setUniverseState(universes[0]);
       }
+      // If multiple universes, let the Home page show the picker
     } catch (error) {
       console.error("Error loading universe:", error);
     } finally {
