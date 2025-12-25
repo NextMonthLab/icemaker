@@ -232,6 +232,17 @@ export default function Chat() {
       );
     }
 
+    // Single character - show loading while redirect happens
+    if (allCharacters && allCharacters.length === 1) {
+      return (
+        <Layout>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </Layout>
+      );
+    }
+
     // No characters available
     return (
       <Layout>
