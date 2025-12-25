@@ -515,6 +515,134 @@ export async function registerRoutes(
       res.status(500).json({ message: "Error logging event" });
     }
   });
+  
+  // ============ SEED DATA ROUTE ============
+  
+  app.post("/api/seed", async (req, res) => {
+    try {
+      // Check if data already exists
+      const existingUniverses = await storage.getAllUniverses();
+      if (existingUniverses.length > 0) {
+        return res.status(400).json({ message: "Database already seeded" });
+      }
+      
+      // Create universe
+      const universe = await storage.createUniverse({
+        name: "Neon Rain",
+        description: "A detective noir story set in the underbelly of Sector 7.",
+        styleNotes: "Cinematic noir with cyberpunk elements, deep blacks, purple neon accents",
+      });
+      
+      // Create characters
+      const char1 = await storage.createCharacter({
+        universeId: universe.id,
+        characterSlug: "v",
+        name: "V",
+        role: "The Informant",
+        avatar: "/placeholder-avatar-1.png",
+        description: "Knows everything that happens in the lower levels. Doesn't give it up for free.",
+        systemPrompt: "You are V, an informant in Sector 7. You know everything but you're cryptic and sarcastic. You charge for information.",
+        secretsJson: ["The package contains corporate secrets", "You work for both sides"],
+        isActive: true,
+      });
+      
+      const char2 = await storage.createCharacter({
+        universeId: universe.id,
+        characterSlug: "detective-k",
+        name: "Detective K",
+        role: "The Lead",
+        avatar: "/placeholder-avatar-2.png",
+        description: "Burnt out, running on caffeine and synth-stims.",
+        systemPrompt: "You are Detective K, a cynical detective investigating a mystery. You're tired but determined.",
+        secretsJson: ["You suspect someone close to you"],
+        isActive: true,
+      });
+      
+      // Create cards
+      const card1 = await storage.createCard({
+        universeId: universe.id,
+        season: 1,
+        dayIndex: 1,
+        title: "The Drop",
+        imagePath: "/placeholder-card-1.jpg",
+        captionsJson: [
+          "It started with the rain...",
+          "Always the rain in Sector 7.",
+          "Then I saw the package.",
+        ],
+        sceneText: "The package was sitting in a puddle of neon-reflected oil. It didn't belong there. Nothing clean belongs in Sector 7.",
+        recapText: "We found a mysterious package in Sector 7.",
+        effectTemplate: "ken-burns",
+        status: "published",
+        publishAt: new Date(),
+      });
+      
+      const card2 = await storage.createCard({
+        universeId: universe.id,
+        season: 1,
+        dayIndex: 2,
+        title: "The Decryption",
+        imagePath: "/placeholder-card-2.jpg",
+        captionsJson: [
+          "Encrypted. Heavily.",
+          "Corporate grade ICE.",
+          "Someone doesn't want this opened.",
+        ],
+        sceneText: "I took it to V. She laughed when she saw the encryption headers. 'You're playing with fire, detective,' she said. But she took the credits anyway.",
+        recapText: "V is attempting to decrypt the package.",
+        effectTemplate: "ken-burns",
+        status: "published",
+        publishAt: new Date(),
+      });
+      
+      const card3 = await storage.createCard({
+        universeId: universe.id,
+        season: 1,
+        dayIndex: 3,
+        title: "The Shadow",
+        imagePath: "/placeholder-card-3.jpg",
+        captionsJson: [
+          "I'm being followed.",
+          "Just a shadow in the reflection.",
+          "They know I have it.",
+        ],
+        sceneText: "Walking back from V's place, I felt eyes on me. A black sedan with tinted windows. Arasaka? Militech? Or something worse?",
+        recapText: "Someone is following the detective.",
+        effectTemplate: "ken-burns",
+        status: "published",
+        publishAt: new Date(),
+      });
+      
+      // Link characters to cards
+      await storage.linkCardCharacter(card1.id, char1.id);
+      await storage.linkCardCharacter(card1.id, char2.id);
+      await storage.linkCardCharacter(card2.id, char1.id);
+      await storage.linkCardCharacter(card2.id, char2.id);
+      await storage.linkCardCharacter(card3.id, char1.id);
+      await storage.linkCardCharacter(card3.id, char2.id);
+      
+      // Create admin user
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      await storage.createUser({
+        username: "admin",
+        password: hashedPassword,
+        email: "admin@storyflix.com",
+        isAdmin: true,
+      });
+      
+      res.json({ 
+        message: "Database seeded successfully",
+        data: {
+          universe: universe.id,
+          characters: [char1.id, char2.id],
+          cards: [card1.id, card2.id, card3.id],
+        }
+      });
+    } catch (error) {
+      console.error("Error seeding database:", error);
+      res.status(500).json({ message: "Error seeding database" });
+    }
+  });
 
   return httpServer;
 }
