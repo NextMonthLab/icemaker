@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import type { Universe } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -160,8 +161,8 @@ export default function Admin() {
   });
 
   const updateUniverseMutation = useMutation({
-    mutationFn: (data: { id: number; name: string; description: string }) => 
-      api.updateUniverse(data.id, { name: data.name, description: data.description }),
+    mutationFn: (data: { id: number } & Partial<Universe>) => 
+      api.updateUniverse(data.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["universes"] });
       setShowEditUniverseDialog(false);
