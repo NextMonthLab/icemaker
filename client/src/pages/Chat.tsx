@@ -13,8 +13,9 @@ import { useAuth } from "@/lib/auth";
 import { useAppContext } from "@/lib/app-context";
 
 export default function Chat() {
-  const [location, setLocation] = useLocation();
-  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const [, setLocation] = useLocation();
+  // Use window.location.search directly since wouter's useLocation only returns pathname
+  const searchParams = new URLSearchParams(window.location.search);
   const characterId = searchParams.get('character');
   const cardId = searchParams.get('card');
   const { user } = useAuth();
