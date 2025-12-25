@@ -665,7 +665,7 @@ export async function registerRoutes(
     effectTemplate?: string;
     status?: string;
     publishDate?: string;
-    characters?: string[];
+    chat_unlocked_character_ids?: string[];
     primary_character_ids?: string[];
     location_id?: string;
     scene_description?: string;
@@ -694,6 +694,7 @@ export async function registerRoutes(
   }
   
   interface ManifestCharacter {
+    id?: string;
     name: string;
     role?: string;
     avatar?: string;
@@ -824,8 +825,16 @@ export async function registerRoutes(
         }
       }
       
-      // Build character name to id mapping for reference validation
-      const characterNames = new Set((manifest.characters || []).map(c => c.name.toLowerCase()));
+      // Build character ID/name mapping for reference validation
+      // Characters can be referenced by id (preferred) or by name (fallback)
+      const characterIds = new Set<string>();
+      const characterNames = new Set<string>();
+      for (const c of manifest.characters || []) {
+        if (c.id) {
+          characterIds.add(c.id.toLowerCase());
+        }
+        characterNames.add(c.name.toLowerCase());
+      }
       
       // Build location id mapping for reference validation
       const locationIds = new Set((manifest.locations || []).map(l => l.id));
@@ -909,12 +918,13 @@ export async function registerRoutes(
           }
         }
         
-        // Validate primary_character_ids references
+        // Validate primary_character_ids references (can be ID or name)
         if (card.primary_character_ids && card.primary_character_ids.length > 0) {
           cardsWithCharacterRefs++;
-          for (const charName of card.primary_character_ids) {
-            if (!characterNames.has(charName.toLowerCase())) {
-              warnings.push(`Card "${card.title}": primary_character_ids references unknown character "${charName}"`);
+          for (const charRef of card.primary_character_ids) {
+            const refLower = charRef.toLowerCase();
+            if (!characterIds.has(refLower) && !characterNames.has(refLower)) {
+              warnings.push(`Card "${card.title}": primary_character_ids references unknown character "${charRef}"`);
             }
           }
         }
@@ -1077,10 +1087,10 @@ export async function registerRoutes(
         });
       }
       
-      // Create characters
+      // Create characters - map by ID (preferred) and name (fallback)
       const characterMap = new Map<string, number>();
       for (const charDef of manifest.characters || []) {
-        const slug = charDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const slug = charDef.id || charDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         
         const character = await storage.createCharacter({
           universeId: universe.id,
@@ -1092,6 +1102,10 @@ export async function registerRoutes(
           secretsJson: charDef.secretInfo ? [charDef.secretInfo] : null,
           visualProfile: convertVisualProfile(charDef.visual_profile),
         });
+        // Store by ID if present, and always by name for fallback
+        if (charDef.id) {
+          characterMap.set(charDef.id.toLowerCase(), character.id);
+        }
         characterMap.set(charDef.name.toLowerCase(), character.id);
         createdItems.characters.push(character.id);
       }
@@ -1168,15 +1182,15 @@ export async function registerRoutes(
         });
         createdItems.cards.push(card.id);
         
-        // Link characters to card (case-insensitive matching)
-        if (cardDef.characters) {
-          for (const charName of cardDef.characters) {
-            const charId = characterMap.get(charName.toLowerCase());
-            if (charId) {
-              await storage.linkCardCharacter(card.id, charId);
-            } else {
-              warnings.push(`Card "${cardDef.title}": character "${charName}" not found in manifest`);
-            }
+        // Link characters to card for chat unlocking (case-insensitive, accepts ID or name)
+        // Supports both chat_unlocked_character_ids (new) and characters (legacy)
+        const chatCharRefs = cardDef.chat_unlocked_character_ids || (cardDef as any).characters || [];
+        for (const charRef of chatCharRefs) {
+          const charId = characterMap.get(charRef.toLowerCase());
+          if (charId) {
+            await storage.linkCardCharacter(card.id, charId);
+          } else {
+            warnings.push(`Card "${cardDef.title}": chat character references unknown character "${charRef}"`);
           }
         }
       }

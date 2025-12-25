@@ -1,11 +1,11 @@
 {
   "universe": {
-    "name": "Time Spent",
-    "description": "A story about choices, regrets, and the moments that define us.",
+    "name": "Season Pack Template",
+    "description": "A template showing all available fields for StoryFlix season packs. Replace with your own story content.",
     "styleNotes": "Warm colors, social realism, intimate character moments",
     "visual_mode": "engine_generated",
     "visual_style": {
-      "style_preset": "time_spent_social_realism",
+      "style_preset": "social_realism",
       "base_prompt": "Realistic photography style, warm natural lighting, intimate character-focused composition, subtle emotional depth, contemporary urban setting, 35mm film aesthetic",
       "negative_prompt": "neon lights, cyberpunk, sci-fi, fantasy, anime, cartoon, digital art, oversaturated, cold colors, dark moody lighting",
       "aspect_ratio": "9:16",
@@ -26,9 +26,9 @@
     }
   },
   "season": 1,
-  "startDate": "2025-01-01",
   "characters": [
     {
+      "id": "elena",
       "name": "Elena",
       "role": "The Protagonist",
       "personality": "Thoughtful, introspective, carrying the weight of a decision she made years ago",
@@ -45,6 +45,7 @@
       }
     },
     {
+      "id": "marcus",
       "name": "Marcus",
       "role": "The One Who Left",
       "personality": "Charismatic but guarded, returned after five years with questions of his own",
@@ -60,6 +61,7 @@
       }
     },
     {
+      "id": "sophie",
       "name": "Sophie",
       "role": "The Best Friend",
       "personality": "Loyal, perceptive, the one person who notices what others miss",
@@ -107,9 +109,9 @@
         "shot_type": "close_up",
         "lighting": "natural morning light through window"
       },
-      "primary_character_ids": ["Elena"],
+      "primary_character_ids": ["elena"],
+      "chat_unlocked_character_ids": ["elena"],
       "location_id": "coffee-shop",
-      "characters": ["Elena", "Marcus"],
       "status": "published"
     },
     {
@@ -124,9 +126,9 @@
         "shot_type": "over_the_shoulder",
         "lighting": "afternoon natural light"
       },
-      "primary_character_ids": ["Elena", "Marcus"],
+      "primary_character_ids": ["elena", "marcus"],
+      "chat_unlocked_character_ids": ["elena", "marcus"],
       "location_id": "coffee-shop",
-      "characters": ["Elena", "Marcus"],
       "status": "published"
     },
     {
@@ -141,9 +143,9 @@
         "shot_type": "wide",
         "lighting": "golden hour"
       },
-      "primary_character_ids": ["Elena", "Sophie"],
+      "primary_character_ids": ["elena", "sophie"],
+      "chat_unlocked_character_ids": ["elena", "sophie"],
       "location_id": "city-park",
-      "characters": ["Elena", "Sophie"],
       "status": "published"
     }
   ]
