@@ -48,7 +48,7 @@ export default function Today() {
   });
 
   const handlePhaseChange = useCallback((phase: "cinematic" | "context") => {
-    setIsFullScreen(phase === "cinematic");
+    // Keep fullscreen mode on during context phase - user must manually close
   }, []);
 
   const handleNavigate = useCallback((direction: "prev" | "next") => {

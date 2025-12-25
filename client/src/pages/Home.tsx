@@ -8,6 +8,7 @@ import { useAppContext } from "@/lib/app-context";
 import { useAuth } from "@/lib/auth";
 import type { Universe, Card } from "@shared/schema";
 import { format } from "date-fns";
+import { useEffect } from "react";
 
 export default function Home() {
   const { universe, setUniverse } = useAppContext();
@@ -17,6 +18,13 @@ export default function Home() {
     queryKey: ["universes"],
     queryFn: () => api.getUniverses(),
   });
+
+  // Auto-select first universe if only one available
+  useEffect(() => {
+    if (universes && universes.length === 1 && !universe) {
+      setUniverse(universes[0]);
+    }
+  }, [universes, universe, setUniverse]);
 
   const { data: feed, isLoading: feedLoading } = useQuery({
     queryKey: ["feed", universe?.id],
@@ -78,9 +86,6 @@ export default function Home() {
 
   // Auto-select first universe if none selected
   const activeUniverse = universe || universes[0];
-  if (!universe && activeUniverse) {
-    setUniverse(activeUniverse);
-  }
 
   // Loading feed for selected universe
   if (feedLoading) {
