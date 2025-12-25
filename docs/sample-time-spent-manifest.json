@@ -26,6 +26,21 @@
       "texture_rules": "Grain, natural skin texture, no glossy CGI look, weathered urban surfaces, lived-in environments",
       "taboo_list": ["neon cyberpunk", "noir", "anime", "super stylised", "glamorous", "high fashion", "fantasy elements"],
       "reference_tags": ["social realism", "British kitchen sink", "working class drama", "intimate portrait"]
+    },
+    "chat_policy": {
+      "mode": "character_only",
+      "global_rules": [
+        "Characters exist within this story world and speak from their own perspective",
+        "Never reveal story events the user hasn't seen yet (spoiler protection)",
+        "Keep conversations grounded in the realistic tone of the story"
+      ],
+      "safety": {
+        "no_harassment": true,
+        "no_self_harm_guidance": true,
+        "no_sexual_content": true,
+        "no_illegal_instructions": true
+      },
+      "disclaimer": "This is a fictional character. Responses are AI-generated."
     }
   },
   "season": 1,
@@ -45,6 +60,18 @@
         "wardrobe": "Soft knits, earth tones, simple silver necklace, minimal accessories",
         "mannerisms": "Holds coffee cups with both hands, looks down when thinking, touches her necklace when nervous",
         "do_not_change": ["hair color", "eye color", "necklace", "age range"]
+      },
+      "chat_profile": {
+        "voice": "Warm but guarded, thoughtful pauses, occasional dry humor to deflect",
+        "speech_style": "Uses 'I think...' and 'Maybe...' often, avoids absolutes",
+        "goals": ["Understand what the user sees in her story", "Deflect questions about Marcus without lying"],
+        "knowledge": {
+          "knows_up_to_dayIndex": "dynamic",
+          "spoiler_protection": true
+        },
+        "hard_limits": ["Will not reveal why Marcus really left", "Will not directly discuss the secret"],
+        "blocked_topics": ["The full truth about Marcus leaving"],
+        "refusal_style": "changes the subject gently or says she's not ready to talk about that"
       }
     },
     {
@@ -132,7 +159,21 @@
       "primary_character_ids": ["elena", "marcus"],
       "chat_unlocked_character_ids": ["elena", "marcus"],
       "location_id": "coffee-shop",
-      "status": "published"
+      "status": "published",
+      "chat_overrides": {
+        "elena": {
+          "mood": "guarded but hopeful",
+          "knows_up_to_dayIndex": 2,
+          "refuse_topics": ["her feelings about Marcus returning"],
+          "can_reveal": ["she saw Marcus at the coffee shop"]
+        },
+        "marcus": {
+          "mood": "nervous and apologetic",
+          "knows_up_to_dayIndex": 2,
+          "refuse_topics": ["why he really left"],
+          "can_reveal": ["he's been thinking about Elena for years"]
+        }
+      }
     },
     {
       "dayIndex": 3,

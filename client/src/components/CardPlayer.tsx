@@ -4,6 +4,7 @@ import { Card } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronUp, Share2, BookOpen } from "lucide-react";
 import { Link } from "wouter";
+import MessageBoard from "@/components/MessageBoard";
 
 interface Character {
   id: number;
@@ -248,7 +249,7 @@ export default function CardPlayer({
                     </div>
                   </div>
 
-                  <Link href={`/chat?character=${primaryCharacter.id}`}>
+                  <Link href={`/chat?character=${primaryCharacter.id}&card=${card.id}`}>
                     <Button 
                       size="lg" 
                       className="w-full gap-2 py-6 text-base font-semibold bg-primary hover:bg-primary/90"
@@ -275,6 +276,8 @@ export default function CardPlayer({
                   </Link>
                 </div>
               )}
+              
+              <MessageBoard cardId={card.id} compact={true} />
             </div>
           </motion.div>
         )}

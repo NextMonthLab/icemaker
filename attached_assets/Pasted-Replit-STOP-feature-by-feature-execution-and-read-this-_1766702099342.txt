@@ -1,0 +1,174 @@
+Replit — STOP feature-by-feature execution and read this carefully.
+This message defines the canonical product model going forward.
+
+===========================
+WHAT WE ARE ACTUALLY BUILDING
+===========================
+
+We are NOT building:
+- a social media app
+- an AI storytelling toy
+- a Netflix clone
+- a TikTok-style feed
+- a generic creator platform
+
+We ARE building:
+A new portable media format based on “Story Cards”.
+
+A Story Card is:
+- a cinematic moment (image/video)
+- experienced fullscreen
+- followed by a context layer (reflection, chat, discussion)
+- intentionally entered (not passively scrolled)
+- able to live inside an app, an embed, or a shared capsule
+
+Cards are not clips.
+Cards are not posts.
+Cards are not scenes.
+Cards are lived moments.
+
+===========================
+FORMAT > FEATURES
+===========================
+
+This product succeeds or fails on FORMAT, not features.
+
+The format must:
+- work for fiction
+- work for news
+- work for brands
+- work for education
+- work as a standalone experience
+- work as an embedded experience on other websites
+- generate video for social distribution
+- allow interaction INSIDE the moment
+
+Everything you build must preserve this.
+
+===========================
+PLAYBACK MODES (CRITICAL)
+===========================
+
+Cards are format.
+Cadence is configuration.
+
+Each universe/story declares a playback mode:
+
+1) SERIAL
+   - fiction, mystery, drama
+   - initial 2–3 cards unlocked
+   - then timed release (daily, weekly)
+   - anticipation is intentional
+
+2) INSTANT
+   - news, explainers, journalism
+   - all cards available immediately
+   - no waiting, no gating
+
+3) CAMPAIGN
+   - commercials, brands
+   - fixed sequence
+   - bingeable
+   - conversion-focused
+
+4) HYBRID
+   - live events, investigations
+   - core story available
+   - new cards added over time
+
+DO NOT hard-code waiting.
+DO NOT assume daily cadence.
+
+===========================
+CARD EXPERIENCE (LOCK THIS)
+===========================
+
+Each card has TWO PHASES:
+
+PHASE 1 — CINEMATIC
+- fullscreen
+- slow zoom / motion
+- captions
+- no chat
+- no comments
+- no UI noise
+- presence > interaction
+
+PHASE 2 — CONTEXT
+- reflection
+- AI character chat (role-based, guarded)
+- micro message board (card-specific)
+- optional prompts
+- discussion anchored to the moment
+
+Do not collapse these phases.
+Do not overload Phase 1.
+
+===========================
+DISCOVERY (HOMEPAGE)
+===========================
+
+The homepage is NOT a social feed.
+
+It is a vertical, curated discovery surface.
+Think: a gallery of doors.
+
+Rules:
+- finite lists by default
+- editorial curation
+- clear intent-based filters
+- no infinite scroll
+- no autoplay
+- no dopamine optimisation
+
+Users should feel:
+“This looks worth stepping into.”
+
+Not:
+“I’ll scroll for a bit.”
+
+===========================
+ASSETS & STORAGE
+===========================
+
+Assets have tiers:
+- local / cached (drafts)
+- temporary (TTL)
+- permanent (paid upgrade)
+
+Fiction defaults to engine-generated visuals.
+News & brands may upload assets with clear labels.
+Uploads must never silently replace canon visuals.
+
+===========================
+AI CHAT (NON-NEGOTIABLE)
+===========================
+
+AI never speaks as:
+- victims
+- minors
+- private individuals
+
+AI speaks as:
+- fictional characters
+- role-based experts (journalist, doctor, analyst, politician)
+
+Spoiler protection is mandatory.
+Knowledge is capped by card dayIndex.
+
+===========================
+YOUR ROLE GOING FORWARD
+===========================
+
+When implementing anything, ask:
+- Does this preserve the card as a sacred unit?
+- Does this reinforce intentional entry?
+- Does this avoid feed-like consumption?
+- Does this work across fiction, news, and brands?
+
+If unsure:
+PAUSE AND ASK.
+Do not optimise locally.
+Do not assume intent.
+
+This context supersedes all previous assumptions.
