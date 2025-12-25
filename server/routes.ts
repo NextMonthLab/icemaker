@@ -408,6 +408,109 @@ export async function registerRoutes(
     }
   });
   
+  // ============ CARD FEED (with visibility resolver) ============
+  
+  // Helper to compute card visibility based on universe release settings
+  function computeCardVisibility(
+    card: schema.Card,
+    universe: schema.Universe,
+    now: Date = new Date()
+  ): { isVisible: boolean; isLocked: boolean; unlockAt: Date | null; isIntroCard: boolean } {
+    const releaseMode = universe.releaseMode || 'daily';
+    const introCardsCount = universe.introCardsCount || 3;
+    const dailyStartsAt = universe.dailyReleaseStartsAtDayIndex || (introCardsCount + 1);
+    
+    // Card must be published to be visible
+    if (card.status !== 'published') {
+      return { isVisible: false, isLocked: true, unlockAt: null, isIntroCard: false };
+    }
+    
+    const isIntroCard = card.dayIndex <= introCardsCount;
+    
+    switch (releaseMode) {
+      case 'all_at_once':
+        // All published cards are immediately visible
+        return { isVisible: true, isLocked: false, unlockAt: null, isIntroCard };
+        
+      case 'hybrid_intro_then_daily':
+        // Intro cards (1 to introCardsCount) are always visible when published
+        if (isIntroCard) {
+          return { isVisible: true, isLocked: false, unlockAt: null, isIntroCard: true };
+        }
+        // Cards at dailyStartsAt and beyond follow publishAt gating
+        if (card.dayIndex >= dailyStartsAt) {
+          if (!card.publishAt || card.publishAt <= now) {
+            return { isVisible: true, isLocked: false, unlockAt: null, isIntroCard: false };
+          } else {
+            return { isVisible: false, isLocked: true, unlockAt: card.publishAt, isIntroCard: false };
+          }
+        }
+        // Cards between introCardsCount and dailyStartsAt (edge case) - treat as daily
+        if (!card.publishAt || card.publishAt <= now) {
+          return { isVisible: true, isLocked: false, unlockAt: null, isIntroCard: false };
+        }
+        return { isVisible: false, isLocked: true, unlockAt: card.publishAt, isIntroCard: false };
+        
+      case 'daily':
+      default:
+        // Traditional daily gating - all cards follow publishAt
+        if (!card.publishAt || card.publishAt <= now) {
+          return { isVisible: true, isLocked: false, unlockAt: null, isIntroCard: false };
+        }
+        return { isVisible: false, isLocked: true, unlockAt: card.publishAt, isIntroCard: false };
+    }
+  }
+  
+  // Get card feed with visibility info (for user-facing UI)
+  app.get("/api/feed/:universeId", async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.universeId);
+      const season = req.query.season ? parseInt(req.query.season as string) : 1;
+      
+      const universe = await storage.getUniverse(universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Universe not found" });
+      }
+      
+      const cards = await storage.getCardsBySeason(universeId, season);
+      const now = new Date();
+      
+      // Compute visibility for each card
+      const feedCards = cards.map(card => {
+        const visibility = computeCardVisibility(card, universe, now);
+        return {
+          ...card,
+          ...visibility,
+        };
+      });
+      
+      // Sort by dayIndex
+      feedCards.sort((a, b) => a.dayIndex - b.dayIndex);
+      
+      // Separate visible and locked cards
+      const visibleCards = feedCards.filter(c => c.isVisible);
+      const lockedCards = feedCards.filter(c => c.isLocked);
+      
+      res.json({
+        universe: {
+          id: universe.id,
+          name: universe.name,
+          slug: universe.slug,
+          releaseMode: universe.releaseMode || 'daily',
+          introCardsCount: universe.introCardsCount || 3,
+          dailyReleaseStartsAtDayIndex: universe.dailyReleaseStartsAtDayIndex || 4,
+        },
+        cards: feedCards,
+        visibleCount: visibleCards.length,
+        lockedCount: lockedCards.length,
+        nextUnlock: lockedCards.length > 0 ? lockedCards[0].unlockAt : null,
+      });
+    } catch (error) {
+      console.error("Error fetching feed:", error);
+      res.status(500).json({ message: "Error fetching feed" });
+    }
+  });
+  
   // Delete all cards for a universe
   app.delete("/api/universes/:id/cards", requireAdmin, async (req, res) => {
     try {
