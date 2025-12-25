@@ -205,6 +205,12 @@ class ApiClient {
     });
   }
 
+  // Feed (with visibility resolver)
+  async getFeed(universeId: number, season?: number): Promise<FeedResponse> {
+    const params = season ? `?season=${season}` : '';
+    return this.request<FeedResponse>(`/feed/${universeId}${params}`);
+  }
+
   // Image Generation
   async getPendingImages(universeId: number): Promise<PendingImagesResult> {
     return this.request<PendingImagesResult>(`/universes/${universeId}/cards/pending-images`);
@@ -338,6 +344,28 @@ export interface GenerateVideoResult {
   status: string;
   message: string;
   generatedVideoUrl?: string;
+}
+
+export interface FeedCard extends Card {
+  isVisible: boolean;
+  isLocked: boolean;
+  unlockAt: string | null;
+  isIntroCard: boolean;
+}
+
+export interface FeedResponse {
+  universe: {
+    id: number;
+    name: string;
+    slug: string | null;
+    releaseMode: string;
+    introCardsCount: number;
+    dailyReleaseStartsAtDayIndex: number;
+  };
+  cards: FeedCard[];
+  visibleCount: number;
+  lockedCount: number;
+  nextUnlock: string | null;
 }
 
 export const api = new ApiClient();

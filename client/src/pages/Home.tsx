@@ -1,12 +1,13 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Play, ArrowRight, Flame, Loader2, BookOpen } from "lucide-react";
+import { Play, ArrowRight, Flame, Loader2, BookOpen, Lock, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, type FeedCard, type FeedResponse } from "@/lib/api";
 import { useAppContext } from "@/lib/app-context";
 import { useAuth } from "@/lib/auth";
 import type { Universe, Card } from "@shared/schema";
+import { format } from "date-fns";
 
 export default function Home() {
   const { universe, setUniverse } = useAppContext();
@@ -17,9 +18,9 @@ export default function Home() {
     queryFn: () => api.getUniverses(),
   });
 
-  const { data: cards, isLoading: cardsLoading } = useQuery({
-    queryKey: ["cards", universe?.id],
-    queryFn: () => api.getCards(universe!.id),
+  const { data: feed, isLoading: feedLoading } = useQuery({
+    queryKey: ["feed", universe?.id],
+    queryFn: () => api.getFeed(universe!.id),
     enabled: !!universe,
   });
 
@@ -81,8 +82,8 @@ export default function Home() {
     setUniverse(activeUniverse);
   }
 
-  // Loading cards for selected universe
-  if (cardsLoading) {
+  // Loading feed for selected universe
+  if (feedLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -92,24 +93,29 @@ export default function Home() {
     );
   }
 
-  // Filter to only published cards with publishAt in the past (or null = publish immediately)
-  const now = new Date();
-  const availableCards = cards
-    ?.filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
-    .sort((a, b) => a.dayIndex - b.dayIndex) || [];
+  // Get visible and locked cards from feed
+  const visibleCards = feed?.cards.filter(c => c.isVisible) || [];
+  const lockedCards = feed?.cards.filter(c => c.isLocked) || [];
+  const isHybridMode = feed?.universe.releaseMode === 'hybrid_intro_then_daily';
+  const introCardsCount = feed?.universe.introCardsCount || 3;
 
-  if (availableCards.length === 0) {
+  if (visibleCards.length === 0) {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
           <h2 className="text-2xl font-display font-bold mb-4">
-            {cards && cards.length > 0 ? "Coming Soon" : "No Story Available"}
+            {feed?.cards && feed.cards.length > 0 ? "Coming Soon" : "No Story Available"}
           </h2>
           <p className="text-muted-foreground mb-6">
-            {cards && cards.length > 0 
+            {feed?.cards && feed.cards.length > 0 
               ? "The first story drop hasn't been released yet. Check back soon!"
               : "There are no story cards for this universe yet."}
           </p>
+          {feed?.nextUnlock && (
+            <p className="text-sm text-muted-foreground mb-4">
+              Next unlock: {format(new Date(feed.nextUnlock), "MMMM d, yyyy 'at' h:mm a")}
+            </p>
+          )}
           {universes.length > 1 && (
             <Button variant="outline" onClick={() => setUniverse(null as any)} className="mb-4">
               Choose Another Story
@@ -126,8 +132,8 @@ export default function Home() {
   }
 
   // Latest available card (highest day index that's been published)
-  const todayCard = availableCards[availableCards.length - 1];
-  const totalAvailable = availableCards.length;
+  const todayCard = visibleCards[visibleCards.length - 1];
+  const totalAvailable = visibleCards.length;
   const catchUpCount = Math.max(0, totalAvailable - 1);
 
   return (
@@ -213,24 +219,65 @@ export default function Home() {
             )}
         </div>
 
+        {/* Upcoming Locked Cards - Daily Drop Preview */}
+        {lockedCards.length > 0 && (
+          <div className="max-w-sm mx-auto pt-4 space-y-3">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-wider font-bold">Daily Drops Coming</span>
+            </div>
+            <div className="space-y-2">
+              {lockedCards.slice(0, 3).map((card) => (
+                <div 
+                  key={card.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50"
+                >
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">Day {card.dayIndex}: {card.title}</p>
+                    {card.unlockAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Unlocks {format(new Date(card.unlockAt), "MMM d 'at' h:mm a")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {lockedCards.length > 3 && (
+                <p className="text-xs text-center text-muted-foreground">
+                  +{lockedCards.length - 3} more cards coming
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Hybrid Mode Info */}
+        {isHybridMode && visibleCards.length === introCardsCount && lockedCards.length > 0 && (
+          <div className="max-w-sm mx-auto mt-6 p-4 rounded-lg bg-primary/10 border border-primary/30 text-center">
+            <h3 className="font-display font-bold text-lg mb-1">Daily Drop Starts Tomorrow</h3>
+            <p className="text-sm text-muted-foreground">
+              You've unlocked the opening {introCardsCount} cards. New cards will release daily from Day {feed?.universe.dailyReleaseStartsAtDayIndex}.
+            </p>
+          </div>
+        )}
+
       </div>
     </Layout>
   );
 }
 
 function UniverseCard({ universe, onSelect }: { universe: Universe; onSelect: () => void }) {
-  const { data: cards } = useQuery({
-    queryKey: ["cards", universe.id],
-    queryFn: () => api.getCards(universe.id),
+  const { data: feed } = useQuery({
+    queryKey: ["feed", universe.id],
+    queryFn: () => api.getFeed(universe.id),
   });
 
-  const now = new Date();
-  const availableCards = cards
-    ?.filter(c => c.status === 'published' && c.publishAt && new Date(c.publishAt) <= now)
-    .sort((a, b) => a.dayIndex - b.dayIndex) || [];
-
-  const latestCard = availableCards[availableCards.length - 1];
-  const totalDays = availableCards.length;
+  const visibleCards = feed?.cards.filter(c => c.isVisible) || [];
+  const latestCard = visibleCards[visibleCards.length - 1];
+  const totalDays = visibleCards.length;
 
   return (
     <div 
