@@ -836,8 +836,12 @@ export async function registerRoutes(
       // Create characters
       const characterMap = new Map<string, number>();
       for (const charDef of manifest.characters || []) {
+        // Generate slug from name (e.g., "Detective K" -> "detective-k")
+        const slug = charDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        
         const character = await storage.createCharacter({
           universeId: universe.id,
+          characterSlug: slug,
           name: charDef.name,
           role: charDef.role || "Character",
           avatarPath: charDef.avatar || null,
