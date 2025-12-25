@@ -389,6 +389,18 @@ export async function registerRoutes(
     }
   });
   
+  // Delete all cards for a universe
+  app.delete("/api/universes/:id/cards", requireAdmin, async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const deletedCount = await storage.deleteAllCardsByUniverse(universeId);
+      res.json({ message: `Deleted ${deletedCount} cards`, deletedCount });
+    } catch (error) {
+      console.error("Error deleting all cards:", error);
+      res.status(500).json({ message: "Error deleting cards" });
+    }
+  });
+  
   // Card-Character relationships
   app.post("/api/cards/:cardId/characters/:characterId", requireAdmin, async (req, res) => {
     try {

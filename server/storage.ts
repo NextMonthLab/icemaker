@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
 const { Pool } = pg;
@@ -43,6 +43,7 @@ export interface IStorage {
   createCard(card: schema.InsertCard): Promise<schema.Card>;
   updateCard(id: number, card: Partial<schema.InsertCard>): Promise<schema.Card | undefined>;
   deleteCard(id: number): Promise<void>;
+  deleteAllCardsByUniverse(universeId: number): Promise<number>;
   
   // Card-Character relationships
   linkCardCharacter(cardId: number, characterId: number): Promise<void>;
@@ -138,14 +139,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteUniverseContent(id: number): Promise<void> {
-    // Delete all content for a universe (cards, characters, locations) but keep the universe
-    const cards = await db.query.cards.findMany({ where: eq(schema.cards.universeId, id) });
-    for (const card of cards) {
-      await db.delete(schema.cardCharacters).where(eq(schema.cardCharacters.cardId, card.id));
-    }
-    await db.delete(schema.cards).where(eq(schema.cards.universeId, id));
-    await db.delete(schema.characters).where(eq(schema.characters.universeId, id));
-    await db.delete(schema.locations).where(eq(schema.locations.universeId, id));
+    await db.transaction(async (tx) => {
+      // Get all card IDs for this universe
+      const cards = await tx.query.cards.findMany({ 
+        where: eq(schema.cards.universeId, id),
+        columns: { id: true }
+      });
+      const cardIds = cards.map(c => c.id);
+      
+      // Delete all card-character links in one query
+      if (cardIds.length > 0) {
+        await tx.delete(schema.cardCharacters).where(inArray(schema.cardCharacters.cardId, cardIds));
+      }
+      
+      // Delete all cards, characters, and locations for this universe
+      await tx.delete(schema.cards).where(eq(schema.cards.universeId, id));
+      await tx.delete(schema.characters).where(eq(schema.characters.universeId, id));
+      await tx.delete(schema.locations).where(eq(schema.locations.universeId, id));
+    });
   }
   
   // Characters
@@ -239,7 +250,28 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteCard(id: number): Promise<void> {
+    await db.delete(schema.cardCharacters).where(eq(schema.cardCharacters.cardId, id));
     await db.delete(schema.cards).where(eq(schema.cards.id, id));
+  }
+  
+  async deleteAllCardsByUniverse(universeId: number): Promise<number> {
+    return await db.transaction(async (tx) => {
+      // Get all card IDs for this universe
+      const cards = await tx.query.cards.findMany({ 
+        where: eq(schema.cards.universeId, universeId),
+        columns: { id: true }
+      });
+      const cardIds = cards.map(c => c.id);
+      
+      // Delete all card-character links in one query (if there are cards)
+      if (cardIds.length > 0) {
+        await tx.delete(schema.cardCharacters).where(inArray(schema.cardCharacters.cardId, cardIds));
+      }
+      
+      // Delete all cards for this universe
+      const result = await tx.delete(schema.cards).where(eq(schema.cards.universeId, universeId)).returning();
+      return result.length;
+    });
   }
   
   // Card-Character relationships

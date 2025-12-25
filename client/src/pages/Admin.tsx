@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, Wand2, ImageIcon, CheckCircle } from "lucide-react";
+import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, Wand2, ImageIcon, CheckCircle, Trash2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +28,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Admin() {
   const [, setLocation] = useLocation();
@@ -40,6 +51,7 @@ export default function Admin() {
   const [newUniverseDescription, setNewUniverseDescription] = useState("");
   const [previewCard, setPreviewCard] = useState<any>(null);
   const [generatingCardId, setGeneratingCardId] = useState<number | null>(null);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const { data: universes, isLoading: universesLoading } = useQuery({
     queryKey: ["universes"],
@@ -72,6 +84,25 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to create universe",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAllCardsMutation = useMutation({
+    mutationFn: (universeId: number) => api.deleteAllCards(universeId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["cards", selectedUniverse?.id] });
+      setShowDeleteAllDialog(false);
+      toast({
+        title: "Cards deleted",
+        description: data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete cards",
         variant: "destructive",
       });
     },
@@ -197,6 +228,39 @@ export default function Admin() {
                         <Upload className="w-4 h-4" /> Import Season Pack
                     </Button>
                 </Link>
+                <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+                    <AlertDialogTrigger asChild>
+                        <Button 
+                          className="gap-2" 
+                          variant="destructive" 
+                          data-testid="button-delete-all-cards" 
+                          disabled={!selectedUniverse || !cards?.length}
+                        >
+                            <Trash2 className="w-4 h-4" /> Delete All Cards
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete All Cards?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all {cards?.length || 0} cards from "{selectedUniverse?.name}". 
+                                This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => selectedUniverse && deleteAllCardsMutation.mutate(selectedUniverse.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                                {deleteAllCardsMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                ) : null}
+                                Delete All Cards
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
         

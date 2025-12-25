@@ -135,6 +135,12 @@ class ApiClient {
     });
   }
 
+  async deleteAllCards(universeId: number) {
+    return this.request<{ message: string; deletedCount: number }>(`/universes/${universeId}/cards`, {
+      method: "DELETE",
+    });
+  }
+
   async linkCardCharacter(cardId: number, characterId: number) {
     return this.request<{ message: string }>(`/cards/${cardId}/characters/${characterId}`, {
       method: "POST",
