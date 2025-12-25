@@ -17,18 +17,52 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true, creat
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// Visual Style Schema (for universe-level style constraints)
+export const visualStyleSchema = z.object({
+  stylePreset: z.string().optional(),
+  basePrompt: z.string().optional(),
+  negativePrompt: z.string().optional(),
+  aspectRatio: z.string().default("9:16"),
+  renderModel: z.string().optional(),
+  guidanceScale: z.number().optional(),
+  steps: z.number().optional(),
+  sampler: z.string().optional(),
+  consistency: z.object({
+    characterLock: z.boolean().optional(),
+    locationLock: z.boolean().optional(),
+    colourPaletteLock: z.boolean().optional(),
+    referenceImages: z.array(z.string()).optional(),
+  }).optional(),
+}).optional();
+
+export type VisualStyle = z.infer<typeof visualStyleSchema>;
+
 // Universe (Story World)
 export const universes = pgTable("universes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
   styleNotes: text("style_notes"),
+  visualMode: text("visual_mode").default("author_supplied"), // "engine_generated" | "author_supplied"
+  visualStyle: jsonb("visual_style").$type<VisualStyle>(), // Universe-level style constraints
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUniverseSchema = createInsertSchema(universes).omit({ id: true, createdAt: true });
 export type InsertUniverse = z.infer<typeof insertUniverseSchema>;
 export type Universe = typeof universes.$inferSelect;
+
+// Image Generation Schema (for per-card image generation)
+export const imageGenerationSchema = z.object({
+  prompt: z.string().optional(),
+  negativePrompt: z.string().optional(),
+  shotType: z.string().optional(), // "wide", "close_up", "handheld", "over_the_shoulder"
+  lighting: z.string().optional(), // "natural overcast", "fluorescent clinical"
+  seed: z.number().optional(),
+  notes: z.string().optional(),
+}).optional();
+
+export type ImageGeneration = z.infer<typeof imageGenerationSchema>;
 
 // Characters
 export const characters = pgTable("characters", {
@@ -56,7 +90,7 @@ export const cards = pgTable("cards", {
   season: integer("season").default(1).notNull(),
   dayIndex: integer("day_index").notNull(), // Unique within universe/season
   title: text("title").notNull(),
-  imagePath: text("image_path"), // URL or path to card image
+  imagePath: text("image_path"), // URL or path to card image (author_supplied or generated)
   captionsJson: jsonb("captions_json").$type<string[]>().notNull(), // Array of caption lines
   sceneText: text("scene_text").notNull(),
   recapText: text("recap_text").notNull(),
@@ -64,6 +98,13 @@ export const cards = pgTable("cards", {
   status: text("status").default("draft").notNull(), // "draft", "scheduled", "published"
   publishAt: timestamp("publish_at"),
   videoPath: text("video_path"), // Generated MP4 path
+  
+  // Engine-generated image fields
+  sceneDescription: text("scene_description"), // Plain English description for image generation
+  imageGeneration: jsonb("image_generation").$type<ImageGeneration>(), // Prompt settings
+  generatedImageUrl: text("generated_image_url"), // URL of engine-generated image
+  imageGenerated: boolean("image_generated").default(false), // Whether image has been generated
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -134,3 +175,70 @@ export const events = pgTable("events", {
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+
+// Manifest validation schemas for ZIP import
+export const manifestVisualStyleSchema = z.object({
+  style_preset: z.string().optional(),
+  base_prompt: z.string().optional(),
+  negative_prompt: z.string().optional(),
+  aspect_ratio: z.string().default("9:16"),
+  render_model: z.string().optional(),
+  guidance_scale: z.number().optional(),
+  steps: z.number().optional(),
+  sampler: z.string().optional(),
+  consistency: z.object({
+    character_lock: z.boolean().optional(),
+    location_lock: z.boolean().optional(),
+    colour_palette_lock: z.boolean().optional(),
+    reference_images: z.array(z.string()).optional(),
+  }).optional(),
+}).optional();
+
+export const manifestCardImageGenerationSchema = z.object({
+  prompt: z.string().optional(),
+  negative_prompt: z.string().optional(),
+  shot_type: z.string().optional(),
+  lighting: z.string().optional(),
+  seed: z.number().optional(),
+  notes: z.string().optional(),
+}).optional();
+
+export const manifestUniverseSchema = z.object({
+  name: z.string(),
+  description: z.string().default(""),
+  styleNotes: z.string().optional(),
+  visual_mode: z.enum(["engine_generated", "author_supplied"]).default("author_supplied"),
+  visual_style: manifestVisualStyleSchema,
+});
+
+export const manifestCharacterSchema = z.object({
+  name: z.string(),
+  role: z.string().default("Character"),
+  personality: z.string().optional(),
+  secretInfo: z.string().optional(),
+  avatar: z.string().optional(),
+});
+
+export const manifestCardSchema = z.object({
+  dayIndex: z.number(),
+  title: z.string(),
+  captions: z.array(z.string()).default([]),
+  sceneText: z.string().default(""),
+  recapText: z.string().default(""),
+  effectTemplate: z.string().optional(),
+  characters: z.array(z.string()).default([]),
+  status: z.enum(["draft", "published"]).default("draft"),
+  imagePath: z.string().optional(),
+  scene_description: z.string().optional(),
+  image_generation: manifestCardImageGenerationSchema,
+});
+
+export const manifestSchema = z.object({
+  universe: manifestUniverseSchema,
+  season: z.number().default(1),
+  startDate: z.string().optional(),
+  characters: z.array(manifestCharacterSchema).default([]),
+  cards: z.array(manifestCardSchema).default([]),
+});
+
+export type ManifestData = z.infer<typeof manifestSchema>;

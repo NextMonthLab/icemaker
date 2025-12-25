@@ -1,0 +1,127 @@
+Yep. And you’re thinking about it the right way: don’t change the container (ZIP), just extend the manifest schema so every card can carry the info the engine needs to generate images consistently.
+
+CSV will feel tidy, but it becomes a pain the moment you add nested stuff (style locks, negative prompts, character continuity, shot types, seed hints). JSON inside a ZIP is the right shape for this.
+
+Here’s a kick-ass Replit prompt you can paste to Repl.net to implement it cleanly.
+
+PROMPT FOR REPLIT (Repl.net) — Extend Import Format to Support Engine-Generated Images
+
+Context
+We have a Story Engine with a bulk “Import Season Pack” feature that accepts a ZIP archive containing a manifest.json.
+This system currently supports cards + characters, but we now need to support ENGINE-GENERATED IMAGES for each card.
+
+Goal
+Extend the existing manifest.json schema (within the same ZIP upload mechanism) so each card can include:
+1) a human-readable scene description (for editing)
+2) an image_generation object containing: prompt, negative_prompt, style_preset, shot_type, and optional seed
+3) optional per-card “visual overrides” while still respecting universe-level style constraints
+
+Important constraints
+- Keep ZIP import as the container. Do NOT replace with CSV as the primary input.
+- Ensure backwards compatibility: old manifest.json packs without these new fields must still validate and import.
+- The importer’s “Dry Run Mode” must validate these new fields and show clear errors when missing/invalid.
+- The engine must be able to generate images AFTER import, one-by-one, and cache results (generate once, reuse for all users).
+- Do NOT introduce Neon Rain / cyberpunk defaults. Images must be governed by universe “DNA” and tone constraints.
+
+What to build
+
+A) Manifest schema updates
+Add / support the following structure:
+
+Top-level:
+- universe.visual_mode: "engine_generated" | "author_supplied" (default = "author_supplied" for backwards compatibility)
+- universe.visual_style: object (style lock for the whole universe)
+  - style_preset: string (e.g. "time_spent_social_realism")
+  - base_prompt: string (always prepended to every card prompt)
+  - negative_prompt: string (always appended as negative)
+  - aspect_ratio: "9:16" default
+  - render_model: string (optional, e.g. "sdxl" or "dalle")
+  - guidance_scale, steps, sampler (optional advanced controls)
+  - consistency: object
+    - character_lock: boolean
+    - location_lock: boolean
+    - colour_palette_lock: boolean
+    - reference_images: array (optional future)
+
+Per-card:
+Each card in cards[] should optionally include:
+- scene_description: string (plain English)
+- image_generation: object
+  - prompt: string (card-specific prompt body)
+  - negative_prompt: string (optional per-card)
+  - shot_type: string (e.g. "wide", "close_up", "handheld", "over_the_shoulder")
+  - lighting: string (e.g. "natural overcast", "fluorescent clinical")
+  - seed: number (optional)
+  - notes: string (optional)
+
+If universe.visual_mode === "engine_generated":
+- Every card must have either scene_description OR image_generation.prompt
+- If both are present, prompt takes priority.
+
+If universe.visual_mode === "author_supplied":
+- Existing behaviour: images can be referenced as assets paths in the ZIP (optional), no changes required.
+
+B) Import validation updates
+Update validation so it:
+- detects visual_mode and validates requirements above
+- returns a count of:
+  - cards_found
+  - characters_found
+  - cards_with_image_prompts (new)
+  - cards_missing_image_prompts (new)
+- shows helpful error messages with the exact JSON path (e.g. cards[0].image_generation.prompt missing)
+
+C) Post-import image generation pipeline (server-side)
+Add a queued pipeline:
+- After import, for each card without a generated image:
+  - compose_final_prompt = universe.visual_style.base_prompt + card.image_generation.prompt (or scene_description if no prompt)
+  - apply universe negative prompt + card negative prompt
+  - call our existing image generation mechanism (local or cloud)
+  - store the generated image in persistent storage (db record + file storage path)
+  - mark the card as image_generated=true with generated_image_url
+- Must be idempotent: re-running generation should not duplicate images.
+- Provide an admin action:
+  - “Generate Images for Season” (runs sequentially, shows progress)
+  - “Generate Image for This Card” (single card)
+
+D) Admin UI updates
+On /admin card editor:
+- Add fields to edit:
+  - scene_description
+  - image_generation.prompt
+  - image_generation.negative_prompt
+  - shot_type, lighting, seed
+- Add a “Generate Preview Image” button for the card (writes result to DB)
+- Add a “Regenerate” button (requires confirmation + optionally increments version)
+
+E) Engine rendering updates
+On /today and timeline views:
+- Prefer generated_image_url if present
+- Fallback to placeholder image if not generated yet
+- Never block card viewing if image not ready
+
+F) Provide a sample manifest
+Create a minimal Time Spent sample pack with:
+- universe.visual_mode="engine_generated"
+- universe.visual_style tuned for social realism (no neon/cyberpunk)
+- 3 cards with scene_description + prompt bodies
+
+Deliverables
+- Updated TypeScript types / Zod schema (or equivalent) for manifest validation
+- Updated importer validation logic and UI report
+- New DB fields / migrations if needed for storing prompts and generated images
+- New API routes for generating images for a season and for a single card
+- Updated admin UI for editing prompts and triggering generation
+- A sample ZIP file generator script or example manifest.json in /docs
+
+Non-negotiables
+- Backwards compatible
+- Clear validation errors
+- Engine-generated images are cached (generate once)
+- Universe DNA prevents style drift (no accidental Neon Rain defaults)
+
+Proceed to implement now.
+
+If you paste that in, Repl.net has everything it needs to extend the format properly without you having to rebuild the importer again later.
+
+If you want the even cleaner version: we can also add a single field per card called image_prompt_body and let the server assemble the rest. But the schema above gives you proper control and future-proofs the creator economy.
