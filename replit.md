@@ -25,6 +25,41 @@ For engine-generated universes:
 
 Sample manifest available at: `docs/sample-time-spent-manifest.json`
 
+### Soundtrack Management System
+
+The platform includes a complete audio management system for background music:
+
+**Audio Library (`/admin/audio`):**
+- Scan `/uploads/audio/` folder for MP3 files
+- Batch import discovered tracks with automatic metadata extraction
+- Single file upload with drag-and-drop support
+- Edit track metadata: title, artist, mood tags, genre tags, licensing info, attribution
+- Delete tracks from library
+
+**Audio Modes (per-universe):**
+- `off`: No background music
+- `continuous`: Same track plays throughout the story experience
+- `per_card`: Each card can have its own track (future enhancement)
+
+**Audio Settings:**
+- Default track selection for the universe
+- Fade in/out timings (ms)
+- Mood tags: tense, upbeat, mysterious, romantic, sad, action, calm, epic, playful, dark
+- Genre tags: cinematic, electronic, ambient, pop, orchestral, rock, jazz, hip-hop, acoustic, thriller
+
+**Database Tables:**
+- `audio_tracks`: Stores track metadata, file paths, and tags
+- `universe_audio_settings`: Per-universe audio configuration
+
+**API Endpoints:**
+- `GET /api/audio/tracks`: List all tracks (optional mood/genre filtering)
+- `POST /api/audio/scan`: Scan folder for new files
+- `POST /api/audio/import`: Batch import scanned tracks
+- `POST /api/audio/upload`: Single file upload
+- `PATCH /api/audio/tracks/:id`: Update track metadata
+- `DELETE /api/audio/tracks/:id`: Delete track
+- `GET/PATCH /api/universes/:id/audio-settings`: Universe audio configuration
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
