@@ -129,6 +129,10 @@ export interface IStorage {
   
   // Credit Events
   logCreditEvent(event: schema.InsertCreditEvent): Promise<schema.CreditEvent>;
+  
+  // User Onboarding Profiles
+  getUserOnboardingProfile(userId: number): Promise<schema.UserOnboardingProfile | undefined>;
+  upsertUserOnboardingProfile(profile: schema.InsertUserOnboardingProfile): Promise<schema.UserOnboardingProfile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -862,6 +866,30 @@ export class DatabaseStorage implements IStorage {
   async logTtsUsage(usage: schema.InsertTtsUsage): Promise<schema.TtsUsage> {
     const [result] = await db.insert(schema.ttsUsage).values(usage as any).returning();
     return result;
+  }
+  
+  // User Onboarding Profiles
+  async getUserOnboardingProfile(userId: number): Promise<schema.UserOnboardingProfile | undefined> {
+    const result = await db.query.userOnboardingProfiles.findFirst({
+      where: eq(schema.userOnboardingProfiles.userId, userId),
+    });
+    return result;
+  }
+  
+  async upsertUserOnboardingProfile(profile: schema.InsertUserOnboardingProfile): Promise<schema.UserOnboardingProfile> {
+    const existing = await this.getUserOnboardingProfile(profile.userId);
+    if (existing) {
+      const [result] = await db.update(schema.userOnboardingProfiles)
+        .set({ ...profile, updatedAt: new Date() })
+        .where(eq(schema.userOnboardingProfiles.userId, profile.userId))
+        .returning();
+      return result;
+    } else {
+      const [result] = await db.insert(schema.userOnboardingProfiles)
+        .values(profile as any)
+        .returning();
+      return result;
+    }
   }
 }
 

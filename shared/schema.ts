@@ -877,5 +877,30 @@ export const insertTtsUsageSchema = createInsertSchema(ttsUsage).omit({ id: true
 export type InsertTtsUsage = z.infer<typeof insertTtsUsageSchema>;
 export type TtsUsage = typeof ttsUsage.$inferSelect;
 
+// ============ USER ONBOARDING PROFILES ============
+
+// Persona types for customized onboarding
+export type UserPersona = 'news_outlet' | 'business' | 'influencer' | 'educator' | 'creator' | 'other';
+export type UserIndustry = 'media' | 'technology' | 'healthcare' | 'finance' | 'entertainment' | 'education' | 'retail' | 'travel' | 'food' | 'sports' | 'real_estate' | 'nonprofit' | 'government' | 'other';
+
+export const userOnboardingProfiles = pgTable("user_onboarding_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  persona: text("persona").$type<UserPersona>().notNull(),
+  industry: text("industry").$type<UserIndustry>(),
+  companyName: text("company_name"),
+  teamSize: text("team_size"), // 'solo', '2-10', '11-50', '51-200', '200+'
+  goals: text("goals").array(), // e.g., ['brand_awareness', 'audience_engagement', 'lead_generation']
+  targetAudience: text("target_audience"),
+  contentFrequency: text("content_frequency"), // 'daily', 'weekly', 'monthly', 'occasional'
+  onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserOnboardingProfileSchema = createInsertSchema(userOnboardingProfiles).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertUserOnboardingProfile = z.infer<typeof insertUserOnboardingProfileSchema>;
+export type UserOnboardingProfile = typeof userOnboardingProfiles.$inferSelect;
+
 // Export chat models for AI integrations
 export * from "./models/chat";
