@@ -83,7 +83,7 @@ export default function ForBrands() {
 
       <main>
         {/* Hero */}
-        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
+        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-32">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-black to-black" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
           
