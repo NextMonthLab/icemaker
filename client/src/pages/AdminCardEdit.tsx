@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Save, X, Plus, Trash2, Loader2, Volume2, Play, Pause, RefreshCw, Video, Image } from "lucide-react";
+import { ArrowLeft, Save, X, Plus, Trash2, Loader2, Volume2, Play, Pause, RefreshCw, Video, Image, Upload, Crown } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -47,6 +48,9 @@ export default function AdminCardEdit() {
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [videoGenStartTime, setVideoGenStartTime] = useState<number | null>(null);
   const [videoGenElapsed, setVideoGenElapsed] = useState(0);
+  const [uploadingMedia, setUploadingMedia] = useState<'image' | 'video' | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: card, isLoading: cardLoading } = useQuery({
     queryKey: ["card", cardId],
@@ -73,6 +77,27 @@ export default function AdminCardEdit() {
       if (!res.ok) return { configured: false, voices: [] };
       return res.json();
     },
+  });
+  
+  // Storage usage for media uploads
+  const { data: storageUsage } = useQuery({
+    queryKey: ["storage-usage"],
+    queryFn: async () => {
+      const res = await fetch("/api/storage/usage", { credentials: "include" });
+      if (!res.ok) return { bytesUsed: 0, quotaBytes: 0, canUploadMedia: false, imageCount: 0, videoCount: 0 };
+      return res.json();
+    },
+  });
+  
+  // Card media assets
+  const { data: cardMedia, refetch: refetchCardMedia } = useQuery({
+    queryKey: ["card-media", cardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/media`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: cardId > 0,
   });
   
   const { data: videoConfig } = useQuery({
@@ -386,6 +411,108 @@ export default function AdminCardEdit() {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
     },
   });
+  
+  // Delete uploaded media asset
+  const deleteMediaMutation = useMutation({
+    mutationFn: async (assetId: number) => {
+      const res = await fetch(`/api/cards/${cardId}/media/${assetId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to delete media");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchCardMedia();
+      queryClient.invalidateQueries({ queryKey: ["storage-usage"] });
+      toast({ title: "Media deleted" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  // Handle file upload
+  const handleMediaUpload = async (file: File, mediaType: 'image' | 'video') => {
+    if (!storageUsage?.canUploadMedia) {
+      toast({ 
+        title: "Upgrade required", 
+        description: "Media uploads are available on Pro and Business plans",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setUploadingMedia(mediaType);
+    setUploadProgress(10);
+    
+    try {
+      // Step 1: Request presigned URL
+      const requestRes = await fetch(`/api/cards/${cardId}/media/request-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+          mediaType,
+        }),
+      });
+      
+      if (!requestRes.ok) {
+        const err = await requestRes.json();
+        throw new Error(err.message || "Failed to get upload URL");
+      }
+      
+      const { uploadURL, objectPath } = await requestRes.json();
+      setUploadProgress(30);
+      
+      // Step 2: Upload file to presigned URL
+      const uploadRes = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file");
+      }
+      setUploadProgress(70);
+      
+      // Step 3: Complete upload (record in database)
+      const completeRes = await fetch(`/api/cards/${cardId}/media/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          objectPath,
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+          mediaType,
+        }),
+      });
+      
+      if (!completeRes.ok) {
+        const err = await completeRes.json();
+        throw new Error(err.message || "Failed to record upload");
+      }
+      
+      setUploadProgress(100);
+      refetchCardMedia();
+      queryClient.invalidateQueries({ queryKey: ["storage-usage"] });
+      toast({ title: `${mediaType === 'image' ? 'Image' : 'Video'} uploaded successfully` });
+    } catch (error: any) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingMedia(null);
+      setUploadProgress(0);
+    }
+  };
 
   if (!user?.isAdmin) {
     return (
@@ -806,6 +933,181 @@ export default function AdminCardEdit() {
                     </>
                   )}
                 </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Custom Media Upload Card */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Custom Media
+                {!storageUsage?.canUploadMedia && (
+                  <span className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 flex items-center gap-1">
+                    <Crown className="w-3 h-3" /> Pro
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!storageUsage?.canUploadMedia ? (
+                <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                  <Crown className="w-8 h-8 mx-auto text-amber-500" />
+                  <div>
+                    <h4 className="font-medium">Upload Your Own Media</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Pro and Business subscribers can upload custom images and videos to use in their stories.
+                    </p>
+                  </div>
+                  <Link href="/pricing">
+                    <Button size="sm" className="gap-2">
+                      <Crown className="w-4 h-4" />
+                      Upgrade to Pro
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Storage quota indicator */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Storage used</span>
+                      <span className="font-medium">
+                        {((storageUsage?.bytesUsed || 0) / (1024 * 1024 * 1024)).toFixed(2)} GB
+                        {" / "}
+                        {((storageUsage?.quotaBytes || 0) / (1024 * 1024 * 1024)).toFixed(0)} GB
+                      </span>
+                    </div>
+                    <Progress 
+                      value={storageUsage?.quotaBytes ? (storageUsage.bytesUsed / storageUsage.quotaBytes) * 100 : 0} 
+                      className="h-2"
+                    />
+                  </div>
+                  
+                  {/* Upload buttons */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        className="hidden"
+                        id="image-upload"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleMediaUpload(file, 'image');
+                          e.target.value = '';
+                        }}
+                        data-testid="input-upload-image"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full gap-2"
+                        disabled={!!uploadingMedia}
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        data-testid="button-upload-image"
+                      >
+                        {uploadingMedia === 'image' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Image className="w-4 h-4" />
+                        )}
+                        Upload Image
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">Max 10 MB</p>
+                    </div>
+                    
+                    <div>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        className="hidden"
+                        id="video-upload"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleMediaUpload(file, 'video');
+                          e.target.value = '';
+                        }}
+                        data-testid="input-upload-video"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full gap-2"
+                        disabled={!!uploadingMedia}
+                        onClick={() => document.getElementById('video-upload')?.click()}
+                        data-testid="button-upload-video"
+                      >
+                        {uploadingMedia === 'video' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Video className="w-4 h-4" />
+                        )}
+                        Upload Video
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">Max 200 MB</p>
+                    </div>
+                  </div>
+                  
+                  {/* Upload progress */}
+                  {uploadingMedia && (
+                    <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span className="text-sm">Uploading {uploadingMedia}...</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-2" />
+                    </div>
+                  )}
+                  
+                  {/* Uploaded media list */}
+                  {cardMedia && cardMedia.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Uploaded Media</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {cardMedia.map((asset: any) => (
+                          <div 
+                            key={asset.id} 
+                            className="relative group rounded-lg overflow-hidden border bg-muted aspect-video"
+                            data-testid={`media-asset-${asset.id}`}
+                          >
+                            {asset.mediaType === 'image' ? (
+                              <img 
+                                src={asset.storageKey} 
+                                alt={asset.originalFilename || 'Uploaded image'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <video 
+                                src={asset.storageKey}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteMediaMutation.mutate(asset.id)}
+                                disabled={deleteMediaMutation.isPending}
+                                className="gap-1"
+                                data-testid={`button-delete-media-${asset.id}`}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Delete
+                              </Button>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1">
+                              <p className="text-xs text-white truncate">{asset.originalFilename}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
