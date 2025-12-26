@@ -82,7 +82,7 @@ export default function AdminCardEdit() {
     },
   });
   
-  const [videoModel, setVideoModel] = useState("kling-v2");
+  const [videoModel, setVideoModel] = useState("kling-v1-6");
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
   const [videoMode, setVideoMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
 

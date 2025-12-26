@@ -2453,7 +2453,7 @@ export async function registerRoutes(
         prompt,
         aspectRatio: "9:16",
         duration: 5,
-        model: "kling-v2",
+        model: "kling-v1-6",
       });
       
       console.log(`Video generation task started: ${taskId}`);
@@ -3726,7 +3726,7 @@ Output only the narration paragraph, nothing else.`;
       // Skip credit check for admin users (they use their own Kling API subscription)
       if (!req.user?.isAdmin) {
         const wallet = await storage.getCreditWallet(req.user.id);
-        const creditsNeeded = estimateVideoCredits(duration || 5, model || "kling-v2");
+        const creditsNeeded = estimateVideoCredits(duration || 5, model || "kling-v1-6");
         
         if (!wallet || wallet.videoCredits < creditsNeeded) {
           return res.status(402).json({ 
@@ -3741,7 +3741,7 @@ Output only the narration paragraph, nothing else.`;
       await storage.updateCard(cardId, {
         videoGenerationStatus: "pending",
         videoGenerationError: null,
-        videoGenerationModel: model || "kling-v2",
+        videoGenerationModel: model || "kling-v1-6",
       });
       
       let taskId: string;
@@ -3755,7 +3755,7 @@ Output only the narration paragraph, nothing else.`;
             negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
             aspectRatio: aspectRatio || "9:16",
             duration: duration || 5,
-            model: model || "kling-v2",
+            model: model || "kling-v1-6",
           });
         } else {
           // Use text-to-video
@@ -3765,7 +3765,7 @@ Output only the narration paragraph, nothing else.`;
             negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
             aspectRatio: aspectRatio || "9:16",
             duration: duration || 5,
-            model: model || "kling-v2",
+            model: model || "kling-v1-6",
           });
         }
         

@@ -13,7 +13,7 @@ export interface TextToVideoRequest {
   negativePrompt?: string;
   aspectRatio?: "16:9" | "9:16" | "1:1";
   duration?: 5 | 10;
-  model?: "kling-v1" | "kling-v1-5" | "kling-v2" | "kling-v2-master";
+  model?: "kling-v1-5" | "kling-v1-6" | "kling-v2-0";
   cfgScale?: number;
 }
 
@@ -23,7 +23,7 @@ export interface ImageToVideoRequest {
   negativePrompt?: string;
   aspectRatio?: "16:9" | "9:16" | "1:1";
   duration?: 5 | 10;
-  model?: "kling-v1" | "kling-v1-5" | "kling-v2" | "kling-v2-master";
+  model?: "kling-v1-5" | "kling-v1-6" | "kling-v2-0";
   cfgScale?: number;
 }
 
@@ -121,7 +121,7 @@ export async function startTextToVideoGeneration(
   request: TextToVideoRequest
 ): Promise<string> {
   const payload = {
-    model_name: request.model || "kling-v2",
+    model_name: request.model || "kling-v1-6",
     prompt: request.prompt,
     negative_prompt: request.negativePrompt || "blurry, low quality, distorted",
     aspect_ratio: request.aspectRatio || "9:16",
@@ -172,7 +172,7 @@ export async function startImageToVideoGeneration(
   }
   
   const payload = {
-    model_name: request.model || "kling-v2",
+    model_name: request.model || "kling-v1-6",
     image: imageData,
     prompt: request.prompt || "",
     negative_prompt: request.negativePrompt || "blurry, low quality, distorted",
@@ -269,21 +269,19 @@ export async function waitForVideoCompletion(
 
 export function getKlingModels() {
   return [
-    { id: "kling-v1", name: "Kling 1.0", description: "Standard quality, fast generation" },
-    { id: "kling-v1-5", name: "Kling 1.5", description: "Improved quality and motion" },
-    { id: "kling-v2", name: "Kling 2.0", description: "High quality, realistic motion" },
-    { id: "kling-v2-master", name: "Kling 2.0 Master", description: "Highest quality, hyper-realistic" },
+    { id: "kling-v1-5", name: "Kling 1.5", description: "Standard quality, fast generation" },
+    { id: "kling-v1-6", name: "Kling 1.6", description: "Default model, good quality" },
+    { id: "kling-v2-0", name: "Kling 2.0", description: "High quality, realistic motion" },
   ];
 }
 
 export function estimateVideoCredits(duration: number, model: string): number {
   const baseCredits: Record<string, number> = {
-    "kling-v1": 1,
-    "kling-v1-5": 2,
-    "kling-v2": 3,
-    "kling-v2-master": 5,
+    "kling-v1-5": 1,
+    "kling-v1-6": 2,
+    "kling-v2-0": 3,
   };
   
-  const base = baseCredits[model] || 3;
+  const base = baseCredits[model] || 2;
   return duration === 10 ? base * 2 : base;
 }
