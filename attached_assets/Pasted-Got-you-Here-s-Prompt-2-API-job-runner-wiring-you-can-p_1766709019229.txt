@@ -1,0 +1,190 @@
+Got you. Here’s Prompt 2 (API + job runner wiring) you can paste straight into Replit. It assumes we already agreed the 6-stage pipeline + the TransformationTimeline UI from Prompt 0/1.
+
+⸻
+
+Replit Prompt 2: Implement Transformation Jobs API + Stage Runner (0–5) + Persist Artifacts
+
+Goal
+Make the “Universal Story Engine” pipeline real by adding a persistent transformation job that runs stages 0–5 sequentially, stores safe artifacts per stage, and ends by creating a Universe + Characters + Locations + Cards in Postgres. The UI polls the job and renders progress via TransformationTimeline.
+
+Hard constraints
+	•	Deployment target is Render + Postgres. Persist everything in Postgres.
+	•	Do not store job state only in memory.
+	•	Do not expose raw prompts or model reasoning to end users.
+	•	Support re-run/retry safely.
+	•	Keep it simple: sequential stage execution is fine for MVP.
+
+⸻
+
+1) Database / Storage
+
+Create a transformation_jobs table (or Prisma model / Drizzle schema)
+
+Fields (minimum):
+	•	id (uuid, pk)
+	•	user_id (nullable if anonymous is allowed)
+	•	source_filename
+	•	source_mime
+	•	source_type enum: script | pdf | pptx | article | transcript | unknown
+	•	status enum: queued | running | completed | failed
+	•	current_stage int (0–5)
+	•	stage_statuses json (keys "0".."5", each: pending|running|done|failed)
+	•	artifacts json (safe summaries to display in UI)
+	•	config json (contains settings like hook_pack_count=3, release_mode=daily|binge|hybrid)
+	•	output_universe_id (nullable, fk)
+	•	error_message_user (nullable)
+	•	error_message_dev (nullable)
+	•	created_at, updated_at
+
+Artifacts JSON shape (example)
+Store only safe preview data:
+
+{
+  "0": { "detectedType":"pdf", "parseConfidence":0.82, "outlineSections":12 },
+  "1": { "structureSummary":"Three-act personal drama told through short scenes.", "voiceNotes":"Intimate, restrained, observational." },
+  "2": { "theme":"Choices echo longer than we expect.", "toneTags":["warm","reflective","grounded"], "genre":"social realism" },
+  "3": { "characters":[{"id":"elena","name":"Elena"},{"id":"marcus","name":"Marcus"}], "locations":[{"id":"coffee-shop","name":"The Coffee Shop"}] },
+  "4": { "cardsPlanned": 5, "hookPack": 3, "releaseMode":"hybrid" },
+  "5": { "cardsDrafted": 5, "imagePromptsReady": true, "chatPromptsReady": true, "discussionReady": true }
+}
+
+
+⸻
+
+2) API Endpoints
+
+POST /api/transformations
+
+Creates a job and returns { jobId }.
+
+Request:
+	•	source can be:
+	•	uploaded file (preferred), OR
+	•	text payload (for testing)
+	•	optional config:
+	•	hookPackCount default 3
+	•	releaseMode default hybrid (3 upfront then daily)
+	•	startDate default now (server time)
+
+Response:
+	•	{ jobId }
+
+GET /api/transformations/:id
+
+Returns job status for polling. Must include:
+	•	status, currentStage, stageStatuses, artifacts
+	•	outputUniverseId if completed
+	•	errorMessageUser if failed
+
+POST /api/transformations/:id/retry
+	•	Allowed only if job is failed
+	•	Resets failed stage and later stages to pending
+	•	Clears errors
+	•	Restarts runner
+
+⸻
+
+3) Runner architecture (simple and reliable)
+
+Implement a server-side runner that:
+	•	Runs sequentially from stage 0 to 5
+	•	After each stage:
+	•	writes artifacts[stage]
+	•	sets stage_statuses[stage]=done
+	•	increments current_stage
+	•	If any stage fails:
+	•	sets job status=failed
+	•	sets stage_statuses[stage]=failed
+	•	writes error_message_user and error_message_dev
+
+Important: don’t rely on in-memory queue
+
+Use one of these MVP-safe approaches:
+
+Option A (MVP simplest): “fire-and-forget” + persistence
+	•	When POST /api/transformations is called:
+	•	create job row in DB
+	•	return jobId immediately
+	•	start runJob(jobId) async on the server
+	•	If server restarts mid-job, job might stall. Add a “job watchdog”:
+	•	On server startup, find jobs with status=running updated > N minutes ago and mark failed with a helpful message OR resume.
+
+Option B (better): polling worker
+	•	Add /api/transformations/worker-tick internal route or a cron-like interval in the server that:
+	•	finds next queued job and processes it
+	•	ensures only one worker runs at a time (DB lock / “claim” job with update where status=queued)
+
+Pick one and implement fully. Prefer Option B if straightforward.
+
+⸻
+
+4) Stage functions (what each stage does)
+
+Create functions:
+	•	stage0_normalise(job, input)
+	•	stage1_read(job, normalized)
+	•	stage2_identifyStory(job, normalized)
+	•	stage3_extractWorld(job, normalized)
+	•	stage4_shapeMoments(job, normalized, world)
+	•	stage5_craftExperience(job, plan, world, storyMeta)
+
+For MVP, you may stub the AI calls but must wire the pipeline
+	•	Use the existing LLM infrastructure if it exists
+	•	If not, implement placeholder deterministic outputs for a demo, but structure must support real model calls later.
+
+Stage 0 must detect content type
+	•	Determine source_type and store it.
+	•	Store parseConfidence and a basic outline count if possible.
+
+Stage 4 must implement the hook pack rule
+	•	Default hookPackCount = 3
+	•	Store in job.config and artifacts[4]
+	•	Later when creating cards, apply publish scheduling:
+	•	first N cards: publish immediately
+	•	remaining: publish daily (or based on config)
+
+⸻
+
+5) Final output creation (DB writes)
+
+At completion of Stage 5:
+	•	Create universe record
+	•	Create characters and locations records
+	•	Create cards records (with:
+	•	dayIndex
+	•	title, captions, sceneText, recapText
+	•	scene_description
+	•	image_generation object
+	•	primary_character_ids, chat_unlocked_character_ids, location_id
+	•	status="published" by default
+	•	publishAt computed using hook pack + daily scheduling)
+	•	Set transformation_jobs.output_universe_id = universe.id
+	•	Mark job status=completed
+
+⸻
+
+6) Security and safety (minimum viable)
+	•	Jobs should be readable only by the creator user (or admin).
+	•	Artifacts returned to users must exclude:
+	•	raw prompts
+	•	secretInfo fields
+	•	any private moderation details
+	•	error_message_user must be friendly and actionable.
+	•	error_message_dev can include stack traces but only visible in admin/dev mode.
+
+⸻
+
+7) Acceptance tests (must pass)
+	1.	Create job -> UI polls -> stages progress from 0 to 5 -> job completes -> universe created -> front UI shows Card 1 immediately (hook pack).
+	2.	Simulate a failure in stage 2 -> job shows failed -> retry works and completes.
+	3.	Import the existing “Time Spent cards 1–5” test pack through the same pipeline (use it as deterministic seed data if needed) and verify:
+	•	universe created once
+	•	no duplicate universes with same slug unless user explicitly re-imports
+	•	publishAt is correct and front UI filtering shows the expected cards.
+
+⸻
+
+If you want, after this we do Prompt 3 which adds:
+	•	de-duplication rules (slug uniqueness, “replace existing universe” toggle)
+	•	a creator-facing “Transformation Dashboard”
+	•	and the “visceral” animations (tasteful, not gimmicky).

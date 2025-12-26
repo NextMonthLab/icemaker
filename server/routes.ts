@@ -2370,5 +2370,173 @@ export async function registerRoutes(
     }
   });
 
+  // ============ TRANSFORMATION PIPELINE ROUTES ============
+  
+  const { runPipeline, resumeStaleJobs } = await import("./pipeline/runner");
+  
+  // Resume any stale jobs on server start
+  resumeStaleJobs().catch(console.error);
+  
+  // Create a new transformation job
+  app.post("/api/transformations", requireAuth, upload.single("file"), async (req, res) => {
+    try {
+      const { text, hookPackCount, releaseMode, startDate } = req.body;
+      
+      let sourceText = text || "";
+      let sourceFileName = "text-input.txt";
+      let sourceFilePath: string | null = null;
+      
+      if (req.file) {
+        sourceFileName = req.file.originalname;
+        sourceText = req.file.buffer.toString("utf8");
+        
+        // Save file for later reference
+        const uploadDir = path.join(process.cwd(), "uploads", "transformations");
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        sourceFilePath = path.join(uploadDir, `${Date.now()}-${sourceFileName}`);
+        fs.writeFileSync(sourceFilePath, req.file.buffer);
+      }
+      
+      if (!sourceText || sourceText.trim().length === 0) {
+        return res.status(400).json({ message: "No content provided. Upload a file or provide text." });
+      }
+      
+      const job = await storage.createTransformationJob({
+        userId: req.user!.id,
+        sourceType: "unknown",
+        sourceFileName,
+        sourceFilePath,
+        status: "queued",
+        currentStage: 0,
+        stageStatuses: {
+          stage0: "pending",
+          stage1: "pending",
+          stage2: "pending",
+          stage3: "pending",
+          stage4: "pending",
+          stage5: "pending",
+        },
+        artifacts: {},
+      });
+      
+      // Fire and forget - start pipeline async
+      runPipeline(job.id, sourceText).catch((err) => {
+        console.error(`Pipeline error for job ${job.id}:`, err);
+      });
+      
+      res.json({ jobId: job.id });
+    } catch (error) {
+      console.error("Error creating transformation job:", error);
+      res.status(500).json({ message: "Error creating transformation job" });
+    }
+  });
+  
+  // Get transformation job status (for polling)
+  app.get("/api/transformations/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const job = await storage.getTransformationJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ message: "Transformation job not found" });
+      }
+      
+      // Security: only allow owner or admin to view
+      if (job.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Return safe response (no internal data)
+      res.json({
+        id: job.id,
+        status: job.status,
+        currentStage: job.currentStage,
+        stageStatuses: job.stageStatuses,
+        artifacts: job.artifacts,
+        outputUniverseId: job.outputUniverseId,
+        errorMessageUser: job.errorMessageUser,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+      });
+    } catch (error) {
+      console.error("Error fetching transformation job:", error);
+      res.status(500).json({ message: "Error fetching transformation job" });
+    }
+  });
+  
+  // Retry a failed transformation job
+  app.post("/api/transformations/:id/retry", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const job = await storage.getTransformationJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ message: "Transformation job not found" });
+      }
+      
+      if (job.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      if (job.status !== "failed") {
+        return res.status(400).json({ message: "Only failed jobs can be retried" });
+      }
+      
+      // Reset stages from the failed one onwards
+      const failedStage = job.currentStage;
+      const stageStatuses = { ...(job.stageStatuses as any) };
+      for (let i = failedStage; i <= 5; i++) {
+        stageStatuses[`stage${i}`] = "pending";
+      }
+      
+      await storage.updateTransformationJob(id, {
+        status: "queued",
+        stageStatuses,
+        errorCode: null,
+        errorMessageUser: null,
+        errorMessageDev: null,
+      });
+      
+      // Re-read source and restart pipeline
+      let sourceText = "";
+      if (job.sourceFilePath && fs.existsSync(job.sourceFilePath)) {
+        sourceText = fs.readFileSync(job.sourceFilePath, "utf8");
+      }
+      
+      if (sourceText) {
+        runPipeline(id, sourceText).catch((err) => {
+          console.error(`Pipeline retry error for job ${id}:`, err);
+        });
+      }
+      
+      res.json({ success: true, message: "Job retry started" });
+    } catch (error) {
+      console.error("Error retrying transformation job:", error);
+      res.status(500).json({ message: "Error retrying transformation job" });
+    }
+  });
+  
+  // Get user's transformation jobs
+  app.get("/api/transformations", requireAuth, async (req, res) => {
+    try {
+      const jobs = await storage.getTransformationJobsByUser(req.user!.id);
+      
+      // Return safe response
+      res.json(jobs.map(job => ({
+        id: job.id,
+        status: job.status,
+        currentStage: job.currentStage,
+        sourceFileName: job.sourceFileName,
+        outputUniverseId: job.outputUniverseId,
+        createdAt: job.createdAt,
+      })));
+    } catch (error) {
+      console.error("Error fetching transformation jobs:", error);
+      res.status(500).json({ message: "Error fetching transformation jobs" });
+    }
+  });
+
   return httpServer;
 }

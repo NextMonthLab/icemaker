@@ -1,0 +1,157 @@
+Best way: give Replit a single “Prompt 0” spec that reads like a product brief + implementation contract, then a Prompt 1 that’s purely UI/UX for the “Transformation Timeline” component.
+
+Replit gets confused when we mix vision + code changes + edge cases in one blob. So we’ll do it like a film shoot:
+	•	Prompt 0 = the script (what this is, why it exists, rules of the world)
+	•	Prompt 1 = the shot list (exact screens/components/states)
+	•	Prompt 2 = wiring (API endpoints + job state model)
+	•	Prompt 3 = polish (microcopy, animations, skip/retry, errors)
+
+Below is the Prompt 0 + Prompt 1 you can paste in right now. It’s written to force Replit to build the right thing without inventing its own interpretation.
+
+⸻
+
+Replit Prompt 0: Universal Story Engine Pipeline + Visceral Progress UI (Ground Truth Spec)
+
+Context
+We are building a Universal Story Engine inside StoryFlix/Story Engine Builder. Users upload media (script, article, PDF, deck, transcript, etc.) and the system converts it into a sequence of Story Cards (cinematic moment + context + optional chat/discussion). This process must be visible to users as a calm, editorial “Transformation Timeline” that makes the engine legible and trustworthy.
+
+Critical principle
+Do NOT expose raw prompts, chain-of-thought, or technical internals.
+We show artifacts and outcomes per stage, not how the model reasoned.
+
+Pipeline Stages (6 stages including Step 0)
+
+Step 0: Normalise Input (Computer-Readable)
+	•	Goal: convert source media into a clean internal representation (text + structure + metadata).
+	•	Outputs: normalized_text, detected_content_type, source_outline (headings/sections), extracted_assets (optional), warnings (if parsing quality low).
+
+Step 1: Read the Material
+	•	Goal: understand structure, voice, basic narrative shape.
+	•	Outputs: structure_summary, voice_notes, key_sections.
+
+Step 2: Identify the Story
+	•	Goal: infer theme, tone, genre, emotional promise, intended audience.
+	•	Outputs: theme_statement, tone_tags, genre_guess, audience_guess.
+
+Step 3: Extract the World
+	•	Goal: extract characters, locations, entities, and POVs; build continuity stubs.
+	•	Outputs: characters[], locations[], world_rules (optional), constraints[] (DOs/DONTs).
+
+Step 4: Shape the Moments
+	•	Goal: propose the card sequence (beats), including the “hook set”.
+	•	Outputs: card_plan[] (dayIndex/title/intent), and a rule: stories may optionally release 3 cards upfront as a hook pack, then go daily (configurable per universe).
+
+Step 5: Craft the Experience
+	•	Goal: write final card copy + captions + scene_description + image_generation prompts; prepare interaction hooks (chat overrides, message board seed prompt).
+	•	Outputs: cards[] (full fields), image_prompts_ready, chat_prompts_ready, discussion_prompts_ready.
+
+UI requirement: Transformation Timeline must be visceral but simple
+	•	Must not look like a developer pipeline.
+	•	Must feel like an editorial, cinematic “engine at work”.
+	•	Each stage shows:
+	1.	Stage name (human wording)
+	2.	One-line subtext
+	3.	A small “artifact preview” (not prompts) relevant to that stage:
+	•	e.g. theme sentence, character chips, location pins, card stack count, etc.
+
+Non-negotiable UX rules
+	•	Users must always know:
+	•	what stage it is on
+	•	what has been completed
+	•	what the next stage is
+	•	Provide “Skip animation” but NOT “skip stages”.
+	•	If a stage fails, show a calm error card with:
+	•	what failed (in user language)
+	•	suggested fix (e.g. “PDF is scanned, try exporting as text PDF”)
+	•	Retry button
+	•	Never show raw JSON to end users. (Admin can see JSON in a developer panel only.)
+
+Data model requirement (for implementation)
+
+We need a persistent job record so the UI can poll and render progress.
+
+Create a transformation_jobs (or equivalent) model/table with fields like:
+	•	id, created_at, updated_at
+	•	user_id
+	•	source_type (script/pdf/ppt/article/transcript/unknown)
+	•	status (queued/running/completed/failed)
+	•	current_stage (0-5)
+	•	stage_statuses (per-stage: pending/running/done/failed)
+	•	artifacts (safe-to-display summaries per stage)
+	•	output_universe_id (when created)
+	•	error_code, error_message_user, error_message_dev
+
+Deliverables for this task
+	1.	Implement the transformation job model and API to support stage-by-stage progress.
+	2.	Build the Transformation Timeline UI component and integrate it into the upload-to-generate flow.
+	3.	Ensure the UI uses the safe artifact summaries and never shows raw prompt text.
+
+Important constraint
+We are deploying on Render with Postgres. Use the existing Postgres database for storing jobs and outputs. Do NOT rely on local filesystem persistence for anything that must survive restarts.
+
+⸻
+
+Replit Prompt 1: Build the Transformation Timeline UI Component (Exact UI Behaviour)
+
+Where it lives
+	•	After upload, user is taken to a “Transforming…” screen.
+	•	This screen is the default while the job runs.
+	•	Once completed, show a “Your story is ready” reveal, then take them into the first card.
+
+Component: <TransformationTimeline jobId="..." />
+It polls GET /api/transformations/:id every ~1s-2s while running.
+
+Stage display copy (use exactly these names)
+	0.	Normalising your input
+Subtext: “Turning your upload into a clean, readable format.”
+	1.	Reading the material
+Subtext: “Understanding structure, voice, and intent.”
+	2.	Identifying the story
+Subtext: “Theme, tone, genre, and emotional promise.”
+	3.	Extracting the world
+Subtext: “Characters, locations, and continuity anchors.”
+	4.	Shaping the moments
+Subtext: “Building the card sequence and the opening hook.”
+	5.	Crafting the experience
+Subtext: “Writing cards, visuals, and interaction prompts.”
+
+Artifact previews per stage (safe summaries)
+	•	Stage 0: detected type + parse confidence + outline count
+	•	Stage 1: 1–2 line structure summary
+	•	Stage 2: theme sentence + 2-3 tone tags
+	•	Stage 3: character chips + location chips
+	•	Stage 4: card count + “3-card hook enabled” indicator
+	•	Stage 5: “Cards drafted” + “Image prompts ready” + “Chat prompts ready”
+
+Visual behaviour
+	•	Current stage gently animates (pulse/glow) but keep it tasteful.
+	•	Completed stages show a tick.
+	•	Allow “Skip animation” to jump to the static view of the timeline, but still show current stage updates.
+	•	Keep UI mobile-first, vertical list is fine.
+
+Completion reveal
+
+When status=completed:
+	•	Show “Your story is ready.”
+	•	Show a large preview of Card 1 (title + first caption line)
+	•	CTA: “Enter story”
+	•	Also provide “Edit in Admin” for creators (if logged in as creator/admin)
+
+Failure state
+
+When status=failed:
+	•	Show: “We couldn’t transform this yet.”
+	•	Show error_message_user
+	•	Buttons: Retry / Upload a different file
+	•	Dev-only: expandable “Debug details” showing error_message_dev
+
+⸻
+
+If you paste those two prompts to Replit, it will finally “get” the big picture: the product intent, the stages, what to show, what not to show, and the storage model.
+
+If you want the cleanest execution, your next move is to ask Replit for Prompt 2 (API + job runner) which defines:
+	•	how stages run sequentially
+	•	how artifacts are written after each stage
+	•	and how universes/cards are created at the end
+
+But the above is the best possible way to make Replit understand the build without going off-road.

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 2,
+  "universe": {
+    "slug": "your-story-slug",
+    "name": "Your Story Name",
+    "description": "A brief description of your story.",
+    "styleNotes": "Visual style notes for the story.",
+    "releaseMode": "hybrid_intro_then_daily",
+    "introCardsCount": 3,
+    "timezone": "UTC",
+    "visualMode": "engine_generated",
+    "visualStyle": {
+      "basePrompt": "Your base visual style prompt for AI image generation",
+      "negativePrompt": "Elements to avoid in generated images",
+      "aspectRatio": "9:16",
+      "stylePreset": "your_style_name"
+    },
+    "chatPolicy": {
+      "rating": "PG",
+      "spoiler_policy": {
+        "mode": "hard",
+        "dayIndex_lag": 1
+      },
+      "truth_policy": {
+        "characters_may_lie": true,
+        "lie_scope": "in-character only"
+      },
+      "refusal_style": {
+        "template": "I'd rather not talk about that right now..."
+      },
+      "safety_policy": {
+        "disallowed_categories": ["explicit_content", "real_person_impersonation"],
+        "escalation": "deflect_in_character"
+      },
+      "disclaimer": "This is an AI-generated character. Responses are fictional."
+    }
+  },
+  "characters": [
+    {
+      "slug": "protagonist",
+      "name": "The Protagonist",
+      "role": "Main Character",
+      "description": "Description of the main character.",
+      "chatProfile": {
+        "system_prompt": "You are [Character Name], [brief character description]. Speak naturally and stay in character.",
+        "voice": "Warm and thoughtful",
+        "speech_style": "Uses measured pauses, rarely raises voice",
+        "goals": ["Help users understand the story", "Stay true to character motivations"],
+        "knowledge_cutoff": "dynamic",
+        "secrets": [
+          {
+            "id": "secret_1",
+            "trigger_patterns": ["what happened", "tell me the truth"],
+            "deflect_with": "Some things are better left unsaid..."
+          }
+        ],
+        "hard_limits": ["Never break character", "Never reveal future plot points"],
+        "refusal_style": "Gently deflects uncomfortable topics"
+      }
+    }
+  ],
+  "locations": [
+    {
+      "slug": "main-location",
+      "name": "The Main Location",
+      "description": "Description of this location.",
+      "visualHints": "Visual details for image generation"
+    }
+  ],
+  "cards": [
+    {
+      "dayIndex": 1,
+      "title": "The Beginning",
+      "captionsJson": ["First caption line.", "Second caption line."],
+      "sceneText": "Detailed scene description for this card.",
+      "recapText": "Brief recap of this moment.",
+      "effectTemplate": "ken-burns",
+      "sceneDescription": "Visual scene description for image generation.",
+      "imageGeneration": {
+        "prompt": "Detailed image prompt for AI generation",
+        "shotType": "medium",
+        "lighting": "natural"
+      },
+      "primaryCharacterIds": ["protagonist"],
+      "chatUnlockedCharacterIds": ["protagonist"],
+      "locationId": "main-location",
+      "chatOverrides": {
+        "emotional_state": "contemplative",
+        "scene_context": "What just happened in this scene",
+        "objectives": ["Character's goal in this moment"]
+      }
+    },
+    {
+      "dayIndex": 2,
+      "title": "The Development",
+      "captionsJson": ["Caption for day 2."],
+      "sceneText": "Scene description for day 2.",
+      "recapText": "Day 2 recap.",
+      "effectTemplate": "ken-burns",
+      "sceneDescription": "Visual description for day 2.",
+      "imageGeneration": {
+        "prompt": "Image prompt for day 2",
+        "shotType": "wide",
+        "lighting": "overcast"
+      },
+      "primaryCharacterIds": ["protagonist"],
+      "locationId": "main-location"
+    }
+  ]
+}

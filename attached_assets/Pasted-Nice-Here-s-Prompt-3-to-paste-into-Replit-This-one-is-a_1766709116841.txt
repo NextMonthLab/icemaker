@@ -1,0 +1,184 @@
+Nice. Here’s Prompt 3 to paste into Replit. This one is all about: no duplicates, clear creator controls, and that visceral but simple “it’s working” visual.
+
+⸻
+
+Replit Prompt 3: Transformation Dashboard + De-duplication + Visceral Step Visualisation
+
+Context
+We now have Prompt 2: Postgres-backed transformation jobs (stages 0–5), polling endpoint, and final Universe creation.
+
+Goal
+Add a creator-facing dashboard that:
+	1.	Shows all transformation jobs and their progress
+	2.	Prevents “4 universes called Time Spent” problems with proper de-duplication rules
+	3.	Makes the 0–5 pipeline feel alive via a clean progress visual (no exposing prompts, no over-complex UI)
+	4.	Adds creator controls for hook pack (3 cards upfront), release mode, and start date
+	5.	Adds a “Download Template” button next to ZIP upload (static sample manifest)
+
+⸻
+
+1) De-duplication and “replace vs new” rules
+
+A) Universe uniqueness rules (server-side)
+
+Implement a deterministic universe identity:
+	•	universe.slug must be unique per user (or globally if app is single-tenant).
+	•	If a new import/transformation creates a universe with the same slug, you must follow a clear policy.
+
+B) Add import policy config to transformation job creation
+
+When POST /api/transformations is called, accept:
+	•	importPolicy: "create_new" | "replace_existing" | "versioned"
+Default: "replace_existing" (for testing and sanity).
+
+Behaviour:
+	•	replace_existing: if slug exists, delete or archive existing universe + its cards + assets, then recreate using same slug.
+	•	versioned: if slug exists, auto-suffix slug: time-spent-s1-v2, v3, etc.
+	•	create_new: always create new universe with random suffix.
+
+C) Implement archive not hard delete (preferred)
+
+Add isArchived boolean to universes.
+	•	When replacing: set old one to archived and hide it everywhere except admin.
+	•	Also archive related cards or mark them status="archived".
+
+D) Prevent front UI selecting the wrong universe
+
+Front UI should not “auto-pick first universe with name”.
+Update selection logic:
+	•	Use a stable universeId route param (or a stored “active universe id”).
+	•	Only show non-archived universes.
+	•	In admin, show duplicates clearly if they exist (with IDs and created dates).
+
+⸻
+
+2) Transformation Dashboard (Admin)
+
+Create a new admin page: /admin/transformations
+
+Features:
+	•	Table/list of jobs:
+	•	Created time
+	•	Source filename/type
+	•	Status (queued/running/completed/failed)
+	•	Current stage (0–5)
+	•	A simple progress bar (0–100%)
+	•	“Open” (job detail)
+	•	“Retry” if failed
+	•	“View Universe” if completed
+	•	Default sort: newest first
+
+Job detail view: /admin/transformations/:id
+
+Must show:
+	•	Timeline component: Stage 0–5 with:
+	•	stage name
+	•	status icon (pending/running/done/failed)
+	•	short safe artifact summary (eg “Detected: PDF (0.82 confidence)”)
+	•	A “Reveal more detail” accordion per stage that shows only safe fields from artifacts
+	•	“View created Universe” button if completed
+	•	“Retry from failed stage” button if failed
+
+Do not show raw model prompts, taboo lists can be shown only as tags, not full internal prompt strings.
+
+⸻
+
+3) Visceral step visualisation (simple but cinematic)
+
+Add a reusable component: TransformationTimeline
+
+Design:
+	•	Vertical timeline with 6 nodes (0–5)
+	•	Current stage has a subtle animated pulse
+	•	Completed stages have a tick
+	•	Failed stage has a warning icon and “tap for details”
+	•	Progress bar at top shows percent complete
+	•	Small microcopy below:
+	•	“Reading your media…”
+	•	“Finding the theme…”
+	•	“Extracting characters and locations…”
+	•	“Shaping moments into cards…”
+	•	“Final polish and safety checks…”
+
+Keep it clean, fast, and readable.
+
+Animation rules:
+	•	Only animate the current stage (pulse)
+	•	Avoid flashy spinners everywhere
+	•	Must work on mobile
+
+⸻
+
+4) Creator controls for “Hook Pack” + Release behaviour
+
+Add controls on the upload/create screen (admin):
+	•	Hook Pack Count (default 3)
+	•	Release Mode:
+	•	binge (all cards available immediately)
+	•	daily (1 per day from start date)
+	•	hybrid (hook pack now, then daily)
+	•	Start date/time (default now)
+
+Save these into transformation_jobs.config.
+
+When creating cards in stage 5:
+	•	binge: set publishAt = now for all
+	•	daily: publishAt = startDate + (dayIndex-1) days
+	•	hybrid: first N cards publishAt = now, rest publishAt = startDate + (dayIndex-1) days
+
+Also update front UI filter:
+	•	Treat publishAt=null as “immediately visible” OR ensure it is always set during creation to avoid confusion.
+
+⸻
+
+5) Fix the card UX feedback loop (admin quality workflow)
+
+In the Universe admin view (cards list):
+	•	Add obvious buttons:
+	•	“Generate Image” (label must say image)
+	•	“Generate Video” (stub if not ready)
+	•	Add “Edit card” icon that opens /admin/cards/:id/edit
+	•	In the front UI card “i” info panel, add “Edit in Admin” link (admin-only or hidden behind admin auth)
+
+Card edit page must include all fields editable:
+	•	title, captions, sceneText, recapText
+	•	scene_description
+	•	image_generation.prompt / shot_type / lighting
+	•	primary_character_ids, chat_unlocked_character_ids, location_id
+	•	status, publishAt
+
+⸻
+
+6) Template downloads next to ZIP upload
+
+Next to ZIP upload, add:
+	•	Secondary button: “Download Season Pack Template”
+Implementation choices:
+	•	Serve a static JSON file from server /public/templates/season-pack-template.json
+OR
+	•	Add endpoint /api/templates/season-pack that returns the template JSON
+
+⸻
+
+7) Acceptance criteria
+	1.	Upload/import “Time Spent” twice with replace_existing:
+
+	•	Only one active universe with that slug is visible on front UI
+	•	Previous one is archived and visible only in admin
+
+	2.	Transformation dashboard shows job progress with timeline animation
+	3.	Hook pack behaviour works:
+
+	•	first 3 cards visible immediately
+	•	rest follow daily release
+
+	4.	Universe admin page has clear “Generate Image” + “Edit card” + “Edit in Admin” pathways
+	5.	“Download Template” button works
+
+⸻
+
+If you want the next one after this, Prompt 4 will add the “portable shareable card experience”:
+	•	embed widget mode
+	•	share links
+	•	OG images
+	•	basic analytics per card (drop-off + replays)

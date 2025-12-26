@@ -90,6 +90,13 @@ export interface IStorage {
   // Universe Audio Settings
   getUniverseAudioSettings(universeId: number): Promise<schema.UniverseAudioSettings | undefined>;
   createOrUpdateUniverseAudioSettings(settings: schema.InsertUniverseAudioSettings): Promise<schema.UniverseAudioSettings>;
+  
+  // Transformation Jobs (Universal Story Engine Pipeline)
+  getTransformationJob(id: number): Promise<schema.TransformationJob | undefined>;
+  getTransformationJobsByUser(userId: number): Promise<schema.TransformationJob[]>;
+  createTransformationJob(job: schema.InsertTransformationJob): Promise<schema.TransformationJob>;
+  updateTransformationJob(id: number, job: Partial<schema.InsertTransformationJob>): Promise<schema.TransformationJob | undefined>;
+  deleteTransformationJob(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -541,6 +548,50 @@ export class DatabaseStorage implements IStorage {
       const [result] = await db.insert(schema.universeAudioSettings).values(settings).returning();
       return result;
     }
+  }
+  
+  // Transformation Jobs (Universal Story Engine Pipeline)
+  async getTransformationJob(id: number): Promise<schema.TransformationJob | undefined> {
+    const result = await db.query.transformationJobs.findFirst({
+      where: eq(schema.transformationJobs.id, id),
+    });
+    return result;
+  }
+  
+  async getTransformationJobsByUser(userId: number): Promise<schema.TransformationJob[]> {
+    return await db.query.transformationJobs.findMany({
+      where: eq(schema.transformationJobs.userId, userId),
+      orderBy: [desc(schema.transformationJobs.createdAt)],
+    });
+  }
+  
+  async createTransformationJob(job: schema.InsertTransformationJob): Promise<schema.TransformationJob> {
+    const defaultStageStatuses: schema.StageStatuses = {
+      stage0: 'pending',
+      stage1: 'pending',
+      stage2: 'pending',
+      stage3: 'pending',
+      stage4: 'pending',
+      stage5: 'pending',
+    };
+    const [result] = await db.insert(schema.transformationJobs).values({
+      ...job,
+      stageStatuses: job.stageStatuses || defaultStageStatuses,
+      artifacts: job.artifacts || {},
+    } as any).returning();
+    return result;
+  }
+  
+  async updateTransformationJob(id: number, job: Partial<schema.InsertTransformationJob>): Promise<schema.TransformationJob | undefined> {
+    const [result] = await db.update(schema.transformationJobs)
+      .set({ ...job, updatedAt: new Date() } as any)
+      .where(eq(schema.transformationJobs.id, id))
+      .returning();
+    return result;
+  }
+  
+  async deleteTransformationJob(id: number): Promise<void> {
+    await db.delete(schema.transformationJobs).where(eq(schema.transformationJobs.id, id));
   }
 }
 

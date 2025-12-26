@@ -560,5 +560,91 @@ export const manifestSchema = z.object({
 
 export type ManifestData = z.infer<typeof manifestSchema>;
 
+// ============ TRANSFORMATION JOBS (Universal Story Engine Pipeline) ============
+
+export type TransformationStatus = 'queued' | 'running' | 'completed' | 'failed';
+export type StageStatus = 'pending' | 'running' | 'done' | 'failed';
+export type SourceType = 'script' | 'pdf' | 'ppt' | 'article' | 'transcript' | 'unknown';
+
+export const stageArtifactsSchema = z.object({
+  stage0: z.object({
+    detected_type: z.string().optional(),
+    parse_confidence: z.number().optional(),
+    outline_count: z.number().optional(),
+    warnings: z.array(z.string()).optional(),
+  }).optional(),
+  stage1: z.object({
+    structure_summary: z.string().optional(),
+    voice_notes: z.string().optional(),
+    key_sections: z.array(z.string()).optional(),
+  }).optional(),
+  stage2: z.object({
+    theme_statement: z.string().optional(),
+    tone_tags: z.array(z.string()).optional(),
+    genre_guess: z.string().optional(),
+    audience_guess: z.string().optional(),
+  }).optional(),
+  stage3: z.object({
+    characters: z.array(z.object({
+      name: z.string(),
+      role: z.string().optional(),
+    })).optional(),
+    locations: z.array(z.object({
+      name: z.string(),
+    })).optional(),
+    world_rules: z.array(z.string()).optional(),
+  }).optional(),
+  stage4: z.object({
+    card_count: z.number().optional(),
+    hook_enabled: z.boolean().optional(),
+    card_plan: z.array(z.object({
+      dayIndex: z.number(),
+      title: z.string(),
+      intent: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  stage5: z.object({
+    cards_drafted: z.boolean().optional(),
+    image_prompts_ready: z.boolean().optional(),
+    chat_prompts_ready: z.boolean().optional(),
+    discussion_prompts_ready: z.boolean().optional(),
+  }).optional(),
+});
+
+export type StageArtifacts = z.infer<typeof stageArtifactsSchema>;
+
+export const stageStatusesSchema = z.object({
+  stage0: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+  stage1: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+  stage2: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+  stage3: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+  stage4: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+  stage5: z.enum(['pending', 'running', 'done', 'failed']).default('pending'),
+});
+
+export type StageStatuses = z.infer<typeof stageStatusesSchema>;
+
+export const transformationJobs = pgTable("transformation_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  sourceType: text("source_type").$type<SourceType>().default("unknown"),
+  sourceFileName: text("source_file_name"),
+  sourceFilePath: text("source_file_path"),
+  status: text("status").$type<TransformationStatus>().default("queued").notNull(),
+  currentStage: integer("current_stage").default(0).notNull(),
+  stageStatuses: jsonb("stage_statuses").$type<StageStatuses>(),
+  artifacts: jsonb("artifacts").$type<StageArtifacts>(),
+  outputUniverseId: integer("output_universe_id").references(() => universes.id),
+  errorCode: text("error_code"),
+  errorMessageUser: text("error_message_user"),
+  errorMessageDev: text("error_message_dev"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertTransformationJobSchema = createInsertSchema(transformationJobs).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertTransformationJob = z.infer<typeof insertTransformationJobSchema>;
+export type TransformationJob = typeof transformationJobs.$inferSelect;
+
 // Export chat models for AI integrations
 export * from "./models/chat";
