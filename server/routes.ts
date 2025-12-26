@@ -113,7 +113,135 @@ export async function registerRoutes(
     }
     res.status(403).json({ message: "Forbidden - Admin access required" });
   };
-  
+
+  // Helper function to validate URLs for SSRF protection
+  async function validateUrlSafety(url: string): Promise<{ safe: boolean; error?: string }> {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return { safe: false, error: "Invalid URL format" };
+    }
+
+    // Only allow https
+    if (parsedUrl.protocol !== "https:") {
+      return { safe: false, error: "Only HTTPS URLs are allowed for security" };
+    }
+
+    // Block internal/private hostnames and IPs
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const blockedPatterns = [
+      /^localhost$/i,
+      /^127\./,
+      /^10\./,
+      /^192\.168\./,
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+      /^169\.254\./,
+      /^0\./,
+      /\.local$/i,
+      /\.internal$/i,
+      /\.localhost$/i,
+      /^metadata\./i,
+      /^169\.254\.169\.254$/,
+    ];
+
+    if (blockedPatterns.some(pattern => pattern.test(hostname))) {
+      return { safe: false, error: "URLs to internal or private networks are not allowed" };
+    }
+
+    // Block IPv4 address literals
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+      return { safe: false, error: "Direct IP addresses are not allowed. Please use a domain name." };
+    }
+
+    // Block IPv6 address literals (URLs use [::1] format)
+    if (hostname.startsWith('[') || /^[0-9a-f:]+$/i.test(hostname)) {
+      return { safe: false, error: "IPv6 addresses are not allowed. Please use a domain name." };
+    }
+
+    // DNS resolution check - verify the resolved IP is public (prevents DNS rebinding)
+    try {
+      const addresses = await dns.lookup(hostname, { all: true });
+      for (const addr of addresses) {
+        const ip = addr.address;
+        // Check IPv4 private/internal ranges
+        if (addr.family === 4) {
+          if (
+            ip.startsWith('127.') ||
+            ip.startsWith('10.') ||
+            ip.startsWith('192.168.') ||
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) ||
+            ip.startsWith('169.254.') ||
+            ip.startsWith('0.') ||
+            ip === '255.255.255.255'
+          ) {
+            return { safe: false, error: "URL resolves to a private or internal network address" };
+          }
+        }
+        // Check IPv6 loopback, private ranges, and IPv4-mapped/translated addresses
+        if (addr.family === 6) {
+          const ipLower = ip.toLowerCase();
+
+          // Helper to check if an IPv4 address is private/internal
+          const isPrivateIPv4 = (ipv4: string): boolean => {
+            return (
+              ipv4.startsWith('127.') ||
+              ipv4.startsWith('10.') ||
+              ipv4.startsWith('192.168.') ||
+              /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ipv4) ||
+              ipv4.startsWith('169.254.') ||
+              ipv4.startsWith('0.') ||
+              ipv4 === '255.255.255.255'
+            );
+          };
+
+          // Extract IPv4 from various mapped/translated formats
+          const ipv4Patterns = [
+            /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+            /^::ffff:0:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+            /^64:ff9b::(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+            /^::ffff:0:0:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+          ];
+
+          for (const pattern of ipv4Patterns) {
+            const match = ipLower.match(pattern);
+            if (match && isPrivateIPv4(match[1])) {
+              return { safe: false, error: "URL resolves to a private or internal network address" };
+            }
+          }
+
+          // Also check if IPv4 is embedded as hex octets
+          const hexMappedMatch = ipLower.match(/^::ffff:([0-9a-f]+):([0-9a-f]+)$/i);
+          if (hexMappedMatch) {
+            const high = parseInt(hexMappedMatch[1], 16);
+            const low = parseInt(hexMappedMatch[2], 16);
+            const embeddedIpv4 = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+            if (isPrivateIPv4(embeddedIpv4)) {
+              return { safe: false, error: "URL resolves to a private or internal network address" };
+            }
+          }
+
+          // Block pure IPv6 private/loopback/link-local
+          const isLinkLocal = /^fe[89ab][0-9a-f]:/i.test(ipLower);
+          if (
+            ipLower === '::1' ||
+            ipLower === '::' ||
+            ipLower.startsWith('fc') ||
+            ipLower.startsWith('fd') ||
+            isLinkLocal
+          ) {
+            return { safe: false, error: "URL resolves to a private or internal network address" };
+          }
+        }
+      }
+    } catch (dnsError: any) {
+      console.error("DNS lookup error:", dnsError);
+      return { safe: false, error: "Could not resolve URL hostname" };
+    }
+
+    return { safe: true };
+  }
+
   // ============ AUTH ROUTES ============
   
   app.post("/api/auth/register", async (req, res) => {
@@ -3042,134 +3170,12 @@ export async function registerRoutes(
       
       // Handle URL-based transformation
       if (sourceUrl && typeof sourceUrl === "string" && sourceUrl.trim()) {
-        // URL validation and SSRF protection
-        let parsedUrl: URL;
-        try {
-          parsedUrl = new URL(sourceUrl.trim());
-        } catch {
-          return res.status(400).json({ message: "Invalid URL format" });
+        // Validate initial URL
+        const initialValidation = await validateUrlSafety(sourceUrl.trim());
+        if (!initialValidation.safe) {
+          return res.status(400).json({ message: initialValidation.error });
         }
-        
-        // Only allow https
-        if (parsedUrl.protocol !== "https:") {
-          return res.status(400).json({ message: "Only HTTPS URLs are allowed for security" });
-        }
-        
-        // Block internal/private hostnames and IPs
-        const hostname = parsedUrl.hostname.toLowerCase();
-        const blockedPatterns = [
-          /^localhost$/i,
-          /^127\./,
-          /^10\./,
-          /^192\.168\./,
-          /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-          /^169\.254\./,
-          /^0\./,
-          /\.local$/i,
-          /\.internal$/i,
-          /\.localhost$/i,
-          /^metadata\./i,
-          /^169\.254\.169\.254$/,
-        ];
-        
-        if (blockedPatterns.some(pattern => pattern.test(hostname))) {
-          return res.status(400).json({ message: "URLs to internal or private networks are not allowed" });
-        }
-        
-        // Block IPv4 address literals
-        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
-          return res.status(400).json({ message: "Direct IP addresses are not allowed. Please use a domain name." });
-        }
-        
-        // Block IPv6 address literals (URLs use [::1] format)
-        if (hostname.startsWith('[') || /^[0-9a-f:]+$/i.test(hostname)) {
-          return res.status(400).json({ message: "IPv6 addresses are not allowed. Please use a domain name." });
-        }
-        
-        // DNS resolution check - verify the resolved IP is public (prevents DNS rebinding)
-        try {
-          const addresses = await dns.lookup(hostname, { all: true });
-          for (const addr of addresses) {
-            const ip = addr.address;
-            // Check IPv4 private/internal ranges
-            if (addr.family === 4) {
-              if (
-                ip.startsWith('127.') ||
-                ip.startsWith('10.') ||
-                ip.startsWith('192.168.') ||
-                /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) ||
-                ip.startsWith('169.254.') ||
-                ip.startsWith('0.') ||
-                ip === '255.255.255.255'
-              ) {
-                return res.status(400).json({ message: "URL resolves to a private or internal network address" });
-              }
-            }
-            // Check IPv6 loopback, private ranges, and IPv4-mapped/translated addresses
-            if (addr.family === 6) {
-              const ipLower = ip.toLowerCase();
-              
-              // Helper to check if an IPv4 address is private/internal
-              const isPrivateIPv4 = (ipv4: string): boolean => {
-                return (
-                  ipv4.startsWith('127.') ||
-                  ipv4.startsWith('10.') ||
-                  ipv4.startsWith('192.168.') ||
-                  /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ipv4) ||
-                  ipv4.startsWith('169.254.') ||
-                  ipv4.startsWith('0.') ||
-                  ipv4 === '255.255.255.255'
-                );
-              };
-              
-              // Extract IPv4 from various mapped/translated formats:
-              // - ::ffff:a.b.c.d (IPv4-mapped)
-              // - ::ffff:0:a.b.c.d (IPv4-translated)
-              // - 64:ff9b::a.b.c.d (NAT64)
-              const ipv4Patterns = [
-                /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-                /^::ffff:0:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-                /^64:ff9b::(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-                /^::ffff:0:0:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-              ];
-              
-              for (const pattern of ipv4Patterns) {
-                const match = ipLower.match(pattern);
-                if (match && isPrivateIPv4(match[1])) {
-                  return res.status(400).json({ message: "URL resolves to a private or internal network address" });
-                }
-              }
-              
-              // Also check if IPv4 is embedded as hex octets (::ffff:7f00:1 = 127.0.0.1)
-              const hexMappedMatch = ipLower.match(/^::ffff:([0-9a-f]+):([0-9a-f]+)$/i);
-              if (hexMappedMatch) {
-                const high = parseInt(hexMappedMatch[1], 16);
-                const low = parseInt(hexMappedMatch[2], 16);
-                const embeddedIpv4 = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
-                if (isPrivateIPv4(embeddedIpv4)) {
-                  return res.status(400).json({ message: "URL resolves to a private or internal network address" });
-                }
-              }
-              
-              // Block pure IPv6 private/loopback/link-local
-              // fe80::/10 range check (link-local: fe80::-febf::)
-              const isLinkLocal = /^fe[89ab][0-9a-f]:/i.test(ipLower);
-              if (
-                ipLower === '::1' ||
-                ipLower === '::' ||
-                ipLower.startsWith('fc') ||
-                ipLower.startsWith('fd') ||
-                isLinkLocal
-              ) {
-                return res.status(400).json({ message: "URL resolves to a private or internal network address" });
-              }
-            }
-          }
-        } catch (dnsError: any) {
-          console.error("DNS lookup error:", dnsError);
-          return res.status(400).json({ message: "Could not resolve URL hostname" });
-        }
-        
+
         // Validate metadata fields against enums
         if (contentSourceType && !VALID_CONTENT_SOURCE_TYPES.includes(contentSourceType)) {
           return res.status(400).json({ message: "Invalid content source type" });
@@ -3183,29 +3189,72 @@ export async function registerRoutes(
         if (contentGoal && !VALID_CONTENT_GOALS.includes(contentGoal)) {
           return res.status(400).json({ message: "Invalid content goal" });
         }
-        
+
         try {
-          const urlResponse = await fetch(parsedUrl.toString(), {
-            headers: {
-              "User-Agent": "StoryFlix-Bot/1.0 (Content Transformer)",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            },
-            signal: AbortSignal.timeout(30000), // 30s timeout
-            redirect: "manual", // Block redirects to prevent SSRF via redirect to internal networks
-          });
-          
-          // Reject redirects - they could point to internal resources
-          if (urlResponse.status >= 300 && urlResponse.status < 400) {
-            return res.status(400).json({ message: "URL redirects are not supported. Please provide the final destination URL." });
+          // Follow redirects safely (max 5 redirects)
+          let currentUrl = sourceUrl.trim();
+          let redirectCount = 0;
+          const maxRedirects = 5;
+          let finalResponse: Response | null = null;
+
+          while (redirectCount <= maxRedirects) {
+            const urlResponse = await fetch(currentUrl, {
+              headers: {
+                "User-Agent": "StoryFlix-Bot/1.0 (Content Transformer)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              },
+              signal: AbortSignal.timeout(30000), // 30s timeout
+              redirect: "manual", // Handle redirects manually for security
+            });
+
+            // Check if this is a redirect
+            if (urlResponse.status >= 300 && urlResponse.status < 400) {
+              const redirectLocation = urlResponse.headers.get("location");
+              if (!redirectLocation) {
+                return res.status(400).json({ message: "Server returned a redirect without a Location header" });
+              }
+
+              // Resolve relative redirects
+              let redirectUrl: string;
+              try {
+                redirectUrl = new URL(redirectLocation, currentUrl).toString();
+              } catch {
+                return res.status(400).json({ message: "Invalid redirect URL" });
+              }
+
+              // Validate the redirect destination
+              const redirectValidation = await validateUrlSafety(redirectUrl);
+              if (!redirectValidation.safe) {
+                return res.status(400).json({
+                  message: `Redirect blocked for security: ${redirectValidation.error}. Original URL redirects to: ${redirectUrl}`
+                });
+              }
+
+              redirectCount++;
+              if (redirectCount > maxRedirects) {
+                return res.status(400).json({ message: "Too many redirects (maximum 5 allowed)" });
+              }
+
+              console.log(`Following redirect ${redirectCount}: ${currentUrl} -> ${redirectUrl}`);
+              currentUrl = redirectUrl;
+              continue;
+            }
+
+            // Not a redirect, this is our final response
+            if (!urlResponse.ok) {
+              return res.status(400).json({ message: `Failed to fetch URL: ${urlResponse.status} ${urlResponse.statusText}` });
+            }
+
+            finalResponse = urlResponse;
+            break;
           }
-          
-          if (!urlResponse.ok) {
-            return res.status(400).json({ message: `Failed to fetch URL: ${urlResponse.status} ${urlResponse.statusText}` });
+
+          if (!finalResponse) {
+            return res.status(400).json({ message: "Failed to fetch URL after following redirects" });
           }
-          
-          const contentType = urlResponse.headers.get("content-type") || "";
-          const htmlContent = await urlResponse.text();
-          
+
+          const htmlContent = await finalResponse.text();
+
           // Basic HTML to text extraction (strip tags, normalize whitespace)
           sourceText = htmlContent
             .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -3222,9 +3271,9 @@ export async function registerRoutes(
             .replace(/&#39;/g, "'")
             .replace(/\s+/g, " ")
             .trim();
-          
+
           detectedSourceType = "url";
-          sourceFileName = parsedUrl.hostname;
+          sourceFileName = new URL(currentUrl).hostname;
         } catch (fetchError: any) {
           console.error("URL fetch error:", fetchError);
           return res.status(400).json({ message: `Failed to fetch URL: ${fetchError.message || "Network error"}` });
