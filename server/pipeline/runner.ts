@@ -36,10 +36,10 @@ export interface PipelineContext {
   characters?: Array<{ id: string; name: string; role?: string; description?: string }>;
   locations?: Array<{ id: string; name: string; description?: string }>;
   worldRules?: string[];
-  cardPlan?: Array<{ 
-    dayIndex: number; 
-    title: string; 
-    intent?: string; 
+  cardPlan?: Array<{
+    dayIndex: number;
+    title: string;
+    intent?: string;
     sceneText?: string;
     captions?: string[];
     imagePrompt?: string;
@@ -48,6 +48,14 @@ export interface PipelineContext {
   releaseMode?: string;
   storyTitle?: string;
   storyLength?: "short" | "medium" | "long";
+  // Business/marketing metadata
+  contentSourceType?: string | null;
+  contentIndustry?: string | null;
+  contentCategory?: string | null;
+  contentGoal?: string | null;
+  sourceUrl?: string | null;
+  // Derived flag
+  isBusinessContent?: boolean;
 }
 
 const STAGE_NAMES = [
@@ -261,8 +269,59 @@ export async function stage3_extractWorld(ctx: PipelineContext): Promise<void> {
 
   try {
     const text = ctx.normalizedText || "";
-    
-    const systemPrompt = `You are a story analyst. Extract all characters and locations from this story.
+
+    if (ctx.isBusinessContent) {
+      // For business/marketing content, create a brand persona
+      const systemPrompt = `You are a brand strategist. Extract the brand identity and create a brand persona.
+Return a JSON object with these fields:
+- characters: An array with ONE object representing the brand as a persona:
+  - id: "brand" (always use this slug)
+  - name: The company/brand name
+  - role: "Brand" (always use this)
+  - description: A brief brand identity description (what they do, their personality)
+  - value_proposition: What value they provide to customers
+  - target_audience: Who they serve
+  - brand_personality: How they communicate (e.g., "professional and trustworthy", "friendly and approachable")
+- locations: An array of physical locations/offices if mentioned (can be empty)
+- world_rules: An array of 2-4 brand facts (industry, services, values, etc.)`;
+
+      const userPrompt = `Extract the brand persona from this ${ctx.contentIndustry || 'business'} ${ctx.contentSourceType || 'website'}.
+Industry: ${ctx.contentIndustry || 'Not specified'}
+Goal: ${ctx.contentGoal || 'Not specified'}
+
+Content:
+${text.substring(0, 15000)}`;
+
+      const response = await callAI(systemPrompt, userPrompt);
+      const parsed = JSON.parse(response);
+
+      // Ensure we have a brand character
+      if (!parsed.characters || parsed.characters.length === 0) {
+        // Extract brand name from title or create generic one
+        const brandName = ctx.storyTitle || "Our Brand";
+        parsed.characters = [{
+          id: "brand",
+          name: brandName,
+          role: "Brand",
+          description: `${brandName} - ${ctx.themeStatement || 'A trusted business'}`,
+        }];
+      }
+
+      ctx.characters = parsed.characters || [];
+      ctx.locations = parsed.locations || [];
+      ctx.worldRules = parsed.world_rules || ["Professional business environment"];
+
+      await updateJobStage(ctx.jobId, 3, "done", {
+        stage3: {
+          characters: ctx.characters,
+          locations: ctx.locations,
+          world_rules: ctx.worldRules,
+          brand_persona: ctx.characters[0],
+        },
+      });
+    } else {
+      // Original narrative story extraction
+      const systemPrompt = `You are a story analyst. Extract all characters and locations from this story.
 Return a JSON object with these fields:
 - characters: An array of character objects, each with:
   - id: A slug-friendly ID (lowercase, hyphens)
@@ -275,25 +334,26 @@ Return a JSON object with these fields:
   - description: A brief visual description
 - world_rules: An array of 2-4 rules about this story world (e.g., "Set in modern-day London")`;
 
-    const userPrompt = `Extract characters and locations from this ${ctx.genreGuess} story:\n\n${text.substring(0, 15000)}`;
-    
-    const response = await callAI(systemPrompt, userPrompt);
-    const parsed = JSON.parse(response);
+      const userPrompt = `Extract characters and locations from this ${ctx.genreGuess} story:\n\n${text.substring(0, 15000)}`;
 
-    ctx.characters = parsed.characters || [];
-    ctx.locations = parsed.locations || [];
-    ctx.worldRules = parsed.world_rules || ["Grounded in reality"];
+      const response = await callAI(systemPrompt, userPrompt);
+      const parsed = JSON.parse(response);
 
-    await updateJobStage(ctx.jobId, 3, "done", {
-      stage3: {
-        characters: ctx.characters,
-        locations: ctx.locations,
-        world_rules: ctx.worldRules,
-      },
-    });
+      ctx.characters = parsed.characters || [];
+      ctx.locations = parsed.locations || [];
+      ctx.worldRules = parsed.world_rules || ["Grounded in reality"];
+
+      await updateJobStage(ctx.jobId, 3, "done", {
+        stage3: {
+          characters: ctx.characters,
+          locations: ctx.locations,
+          world_rules: ctx.worldRules,
+        },
+      });
+    }
   } catch (err: any) {
     await updateJobStage(ctx.jobId, 3, "failed", undefined, {
-      user: "We had trouble extracting characters and locations.",
+      user: "We had trouble extracting brand identity.",
       dev: err.message || String(err),
     });
     throw err;
@@ -307,8 +367,59 @@ export async function stage4_shapeMoments(ctx: PipelineContext): Promise<void> {
     const text = ctx.normalizedText || "";
     const characterNames = ctx.characters?.map(c => c.name).join(", ") || "Unknown";
     const guardrails = ctx.guardrails;
-    
-    const guardrailsConstraints = guardrails ? `
+
+    const cardCountTarget = ctx.storyLength === "short" ? "6-10" : ctx.storyLength === "long" ? "20-28" : "14-18";
+    const cardCountDescription = ctx.storyLength === "short" ? "short (~8 cards, ~1 week)" : ctx.storyLength === "long" ? "long (~24 cards, ~3-4 weeks)" : "medium (~16 cards, ~2 weeks)";
+
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    if (ctx.isBusinessContent) {
+      // Business/marketing content: Create engaging brand messaging
+      systemPrompt = `You are a brand storytelling expert. Transform this business content into ${cardCountTarget} engaging "message cards" for a ${cardCountDescription} experience.
+
+Each card should:
+- Focus on a specific value proposition, benefit, or brand message
+- Use conversational, human language (not corporate jargon)
+- Feel like helpful advice or insights, not advertisements
+- Build trust and connection with the audience
+
+CRITICAL: Use CONVERSATIONAL language, not image descriptions. Write as if you're talking TO someone, not describing a scene.
+
+Return a JSON object with these fields:
+- hook_pack_count: Number of cards to release immediately (usually 3)
+- release_mode: Either "hybrid" (hook pack + daily) or "daily" (all daily)
+- card_plan: An array of card objects, each with:
+  - dayIndex: The day number (1, 2, 3, etc.)
+  - title: A benefit-focused title (2-5 words, conversational)
+  - intent: What value or insight this card provides
+  - sceneText: A helpful, conversational explanation (1-2 sentences addressing the viewer directly)
+  - captions: An array of 2-3 conversational text lines (use "you" and "we", speak directly to the viewer)
+  - imagePrompt: A prompt for an on-brand, professional image (not a scene description)
+
+Examples of GOOD captions (conversational, direct):
+- "Feeling overwhelmed by tax season?"
+- "We help you take control"
+- "So you can focus on what matters"
+
+Examples of BAD captions (image descriptions - DO NOT use this style):
+- "A business owner sits at their desk overwhelmed"
+- "They look stressed and uncertain"`;
+
+      userPrompt = `Create engaging message cards for "${characterNames}".
+
+Industry: ${ctx.contentIndustry || 'Business'}
+Goal: ${ctx.contentGoal || 'brand_awareness'}
+Theme: ${ctx.themeStatement}
+Key sections: ${ctx.keySections?.join(", ")}
+${guardrails ? `\nGrounding: ${guardrails.groundingStatement}` : ""}
+
+Website content:
+${text.substring(0, 12000)}`;
+
+    } else {
+      // Original narrative story content
+      const guardrailsConstraints = guardrails ? `
 GROUNDING CONSTRAINTS (CRITICAL - MUST FOLLOW):
 - Creative latitude: ${guardrails.creativeLatitude || "moderate"} (${guardrails.creativeLatitude === "strict" ? "stay purely factual - only use what's explicitly in the source" : guardrails.creativeLatitude === "moderate" ? "interpret but don't invent new facts" : "allow creative interpretation while staying true to themes"})
 - ONLY reference themes from the source: ${(guardrails.coreThemes || []).join(", ") || "none specified"}
@@ -320,10 +431,7 @@ GROUNDING CONSTRAINTS (CRITICAL - MUST FOLLOW):
 
 DO NOT invent new plot points, characters, or facts not in the source material.` : "";
 
-    const cardCountTarget = ctx.storyLength === "short" ? "6-10" : ctx.storyLength === "long" ? "20-28" : "14-18";
-    const cardCountDescription = ctx.storyLength === "short" ? "short (~8 cards, ~1 week)" : ctx.storyLength === "long" ? "long (~24 cards, ~3-4 weeks)" : "medium (~16 cards, ~2 weeks)";
-    
-    const systemPrompt = `You are a story designer for a vertical video story platform. 
+      systemPrompt = `You are a story designer for a vertical video story platform.
 Break this story into ${cardCountTarget} "story cards" for a ${cardCountDescription} story - each card is a dramatic moment that will be shown as a vertical video with captions.
 ${guardrailsConstraints}
 
@@ -338,7 +446,7 @@ Return a JSON object with these fields:
   - captions: An array of 2-3 short caption lines shown during the video (dramatic, punchy)
   - imagePrompt: A detailed prompt for generating a vertical cinematic image of this moment`;
 
-    const userPrompt = `Design story cards for "${ctx.storyTitle}".
+      userPrompt = `Design story cards for "${ctx.storyTitle}".
 Theme: ${ctx.themeStatement}
 Genre: ${ctx.genreGuess}
 Characters: ${characterNames}
@@ -347,14 +455,15 @@ ${guardrails ? `\nGrounding statement: ${guardrails.groundingStatement}` : ""}
 
 Full script:
 ${text.substring(0, 12000)}`;
-    
+    }
+
     const response = await callAI(systemPrompt, userPrompt);
     const parsed = JSON.parse(response);
 
     const hookPackCount = parsed.hook_pack_count || 3;
     const releaseMode = parsed.release_mode || "hybrid";
     const cardPlan = parsed.card_plan || [];
-    
+
     ctx.hookPackCount = hookPackCount;
     ctx.releaseMode = releaseMode;
     ctx.cardPlan = cardPlan;
@@ -368,7 +477,7 @@ ${text.substring(0, 12000)}`;
     });
   } catch (err: any) {
     await updateJobStage(ctx.jobId, 4, "failed", undefined, {
-      user: "We couldn't shape the story into moments.",
+      user: "We couldn't shape the content into engaging moments.",
       dev: err.message || String(err),
     });
     throw err;
@@ -583,9 +692,28 @@ function detectContentType(text: string): SourceType {
 export async function runPipeline(jobId: number, sourceText: string): Promise<number> {
   const job = await storage.getTransformationJob(jobId);
   const storyLength = (job?.storyLength as "short" | "medium" | "long") || "medium";
-  const ctx: PipelineContext = { jobId, storyLength };
 
-  console.log(`[Pipeline] Starting job ${jobId} with ${sourceText.length} chars, storyLength=${storyLength}`);
+  // Detect if this is business/marketing content
+  const isBusinessContent =
+    job?.contentCategory === "marketing" ||
+    job?.contentCategory === "promotional" ||
+    job?.contentGoal === "brand_awareness" ||
+    job?.contentGoal === "lead_generation" ||
+    job?.contentGoal === "product_launch" ||
+    job?.contentSourceType === "website";
+
+  const ctx: PipelineContext = {
+    jobId,
+    storyLength,
+    contentSourceType: job?.contentSourceType,
+    contentIndustry: job?.contentIndustry,
+    contentCategory: job?.contentCategory,
+    contentGoal: job?.contentGoal,
+    sourceUrl: job?.sourceUrl,
+    isBusinessContent,
+  };
+
+  console.log(`[Pipeline] Starting job ${jobId} with ${sourceText.length} chars, storyLength=${storyLength}, isBusinessContent=${isBusinessContent}`);
 
   await stage0_normalise(ctx, sourceText);
   await stage1_read(ctx);
@@ -593,7 +721,7 @@ export async function runPipeline(jobId: number, sourceText: string): Promise<nu
   await stage3_extractWorld(ctx);
   await stage4_shapeMoments(ctx);
   const universeId = await stage5_craftExperience(ctx);
-  
+
   // Harvest images from source URL if available
   if (job?.sourceUrl && universeId && job.userId) {
     await harvestAndAssignImages(job.sourceUrl, universeId, job.userId, ctx.cardPlan || []);
