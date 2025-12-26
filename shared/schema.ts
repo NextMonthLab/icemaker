@@ -662,5 +662,110 @@ export const insertTransformationJobSchema = createInsertSchema(transformationJo
 export type InsertTransformationJob = z.infer<typeof insertTransformationJobSchema>;
 export type TransformationJob = typeof transformationJobs.$inferSelect;
 
+// ============ SUBSCRIPTION & ENTITLEMENTS ============
+
+// Plans table (Free, Pro, Business)
+export const plans = pgTable("plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  monthlyPrice: integer("monthly_price").default(0).notNull(),
+  yearlyPrice: integer("yearly_price"),
+  stripePriceIdMonthly: text("stripe_price_id_monthly"),
+  stripePriceIdYearly: text("stripe_price_id_yearly"),
+  features: jsonb("features").$type<PlanFeatures>(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const planFeaturesSchema = z.object({
+  maxCardsPerStory: z.number().default(5),
+  storageDays: z.number().default(7),
+  canUseCloudLlm: z.boolean().default(false),
+  canGenerateImages: z.boolean().default(false),
+  canExport: z.boolean().default(false),
+  canUseCharacterChat: z.boolean().default(false),
+  monthlyVideoCredits: z.number().default(0),
+  monthlyVoiceCredits: z.number().default(0),
+  collaborationRoles: z.boolean().default(false),
+});
+
+export type PlanFeatures = z.infer<typeof planFeaturesSchema>;
+
+export const insertPlanSchema = createInsertSchema(plans).omit({ id: true, createdAt: true });
+export type InsertPlan = z.infer<typeof insertPlanSchema>;
+export type Plan = typeof plans.$inferSelect;
+
+// Subscriptions table
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  planId: integer("plan_id").references(() => plans.id).notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  status: text("status").$type<SubscriptionStatus>().default("active").notNull(),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing" | "paused";
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+
+// Entitlements table (computed from subscription + plan)
+export const entitlements = pgTable("entitlements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  canUseCloudLlm: boolean("can_use_cloud_llm").default(false).notNull(),
+  canGenerateImages: boolean("can_generate_images").default(false).notNull(),
+  canExport: boolean("can_export").default(false).notNull(),
+  canUseCharacterChat: boolean("can_use_character_chat").default(false).notNull(),
+  maxCardsPerStory: integer("max_cards_per_story").default(5).notNull(),
+  storageDays: integer("storage_days").default(7).notNull(),
+  collaborationRoles: boolean("collaboration_roles").default(false).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertEntitlementSchema = createInsertSchema(entitlements).omit({ id: true, updatedAt: true });
+export type InsertEntitlement = z.infer<typeof insertEntitlementSchema>;
+export type Entitlement = typeof entitlements.$inferSelect;
+
+// Credit Wallets table
+export const creditWallets = pgTable("credit_wallets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  videoCredits: integer("video_credits").default(0).notNull(),
+  voiceCredits: integer("voice_credits").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCreditWalletSchema = createInsertSchema(creditWallets).omit({ id: true, updatedAt: true });
+export type InsertCreditWallet = z.infer<typeof insertCreditWalletSchema>;
+export type CreditWallet = typeof creditWallets.$inferSelect;
+
+// Credit Events table (audit log)
+export const creditEvents = pgTable("credit_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  eventType: text("event_type").$type<CreditEventType>().notNull(),
+  creditType: text("credit_type").$type<CreditType>().notNull(),
+  amount: integer("amount").notNull(),
+  balanceAfter: integer("balance_after").notNull(),
+  meta: jsonb("meta").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type CreditEventType = "purchase" | "spend" | "refund" | "monthly_grant" | "admin_adjustment";
+export type CreditType = "video" | "voice";
+
+export const insertCreditEventSchema = createInsertSchema(creditEvents).omit({ id: true, createdAt: true });
+export type InsertCreditEvent = z.infer<typeof insertCreditEventSchema>;
+export type CreditEvent = typeof creditEvents.$inferSelect;
+
 // Export chat models for AI integrations
 export * from "./models/chat";

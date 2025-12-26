@@ -97,6 +97,32 @@ export interface IStorage {
   createTransformationJob(job: schema.InsertTransformationJob): Promise<schema.TransformationJob>;
   updateTransformationJob(id: number, job: Partial<schema.InsertTransformationJob>): Promise<schema.TransformationJob | undefined>;
   deleteTransformationJob(id: number): Promise<void>;
+  
+  // Plans & Subscriptions
+  getPlan(id: number): Promise<schema.Plan | undefined>;
+  getPlanByName(name: string): Promise<schema.Plan | undefined>;
+  getPlanByStripePriceId(priceId: string): Promise<schema.Plan | undefined>;
+  getAllPlans(): Promise<schema.Plan[]>;
+  createPlan(plan: schema.InsertPlan): Promise<schema.Plan>;
+  
+  getSubscription(userId: number): Promise<schema.Subscription | undefined>;
+  getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<schema.Subscription | undefined>;
+  createSubscription(subscription: schema.InsertSubscription): Promise<schema.Subscription>;
+  updateSubscription(id: number, data: Partial<schema.InsertSubscription>): Promise<schema.Subscription | undefined>;
+  
+  // Entitlements
+  getEntitlements(userId: number): Promise<schema.Entitlement | undefined>;
+  upsertEntitlements(userId: number, entitlements: Partial<schema.InsertEntitlement>): Promise<schema.Entitlement>;
+  
+  // Credit Wallets
+  getCreditWallet(userId: number): Promise<schema.CreditWallet | undefined>;
+  getOrCreateCreditWallet(userId: number): Promise<schema.CreditWallet>;
+  addCredits(userId: number, videoCredits: number, voiceCredits: number): Promise<schema.CreditWallet>;
+  spendCredits(userId: number, creditType: 'video' | 'voice', amount: number): Promise<schema.CreditWallet>;
+  grantMonthlyCredits(userId: number, videoCredits: number, voiceCredits: number): Promise<void>;
+  
+  // Credit Events
+  logCreditEvent(event: schema.InsertCreditEvent): Promise<schema.CreditEvent>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -592,6 +618,184 @@ export class DatabaseStorage implements IStorage {
   
   async deleteTransformationJob(id: number): Promise<void> {
     await db.delete(schema.transformationJobs).where(eq(schema.transformationJobs.id, id));
+  }
+  
+  // Plans & Subscriptions
+  async getPlan(id: number): Promise<schema.Plan | undefined> {
+    const result = await db.query.plans.findFirst({
+      where: eq(schema.plans.id, id),
+    });
+    return result;
+  }
+  
+  async getPlanByName(name: string): Promise<schema.Plan | undefined> {
+    const result = await db.query.plans.findFirst({
+      where: eq(schema.plans.name, name),
+    });
+    return result;
+  }
+  
+  async getPlanByStripePriceId(priceId: string): Promise<schema.Plan | undefined> {
+    const result = await db.query.plans.findFirst({
+      where: (plans, { or, eq }) => or(
+        eq(plans.stripePriceIdMonthly, priceId),
+        eq(plans.stripePriceIdYearly, priceId)
+      ),
+    });
+    return result;
+  }
+  
+  async getAllPlans(): Promise<schema.Plan[]> {
+    return await db.query.plans.findMany({
+      where: eq(schema.plans.isActive, true),
+    });
+  }
+  
+  async createPlan(plan: schema.InsertPlan): Promise<schema.Plan> {
+    const [result] = await db.insert(schema.plans).values(plan).returning();
+    return result;
+  }
+  
+  async getSubscription(userId: number): Promise<schema.Subscription | undefined> {
+    const result = await db.query.subscriptions.findFirst({
+      where: eq(schema.subscriptions.userId, userId),
+    });
+    return result;
+  }
+  
+  async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<schema.Subscription | undefined> {
+    const result = await db.query.subscriptions.findFirst({
+      where: eq(schema.subscriptions.stripeSubscriptionId, stripeSubscriptionId),
+    });
+    return result;
+  }
+  
+  async createSubscription(subscription: schema.InsertSubscription): Promise<schema.Subscription> {
+    const [result] = await db.insert(schema.subscriptions).values(subscription as any).returning();
+    return result;
+  }
+  
+  async updateSubscription(id: number, data: Partial<schema.InsertSubscription>): Promise<schema.Subscription | undefined> {
+    const [result] = await db.update(schema.subscriptions)
+      .set({ ...data, updatedAt: new Date() } as any)
+      .where(eq(schema.subscriptions.id, id))
+      .returning();
+    return result;
+  }
+  
+  // Entitlements
+  async getEntitlements(userId: number): Promise<schema.Entitlement | undefined> {
+    const result = await db.query.entitlements.findFirst({
+      where: eq(schema.entitlements.userId, userId),
+    });
+    return result;
+  }
+  
+  async upsertEntitlements(userId: number, entitlementData: Partial<schema.InsertEntitlement>): Promise<schema.Entitlement> {
+    const existing = await this.getEntitlements(userId);
+    
+    if (existing) {
+      const [result] = await db.update(schema.entitlements)
+        .set({ ...entitlementData, updatedAt: new Date() })
+        .where(eq(schema.entitlements.userId, userId))
+        .returning();
+      return result;
+    }
+    
+    const [result] = await db.insert(schema.entitlements)
+      .values({ userId, ...entitlementData } as schema.InsertEntitlement)
+      .returning();
+    return result;
+  }
+  
+  // Credit Wallets
+  async getCreditWallet(userId: number): Promise<schema.CreditWallet | undefined> {
+    const result = await db.query.creditWallets.findFirst({
+      where: eq(schema.creditWallets.userId, userId),
+    });
+    return result;
+  }
+  
+  async getOrCreateCreditWallet(userId: number): Promise<schema.CreditWallet> {
+    const existing = await this.getCreditWallet(userId);
+    if (existing) return existing;
+    
+    const [result] = await db.insert(schema.creditWallets)
+      .values({ userId, videoCredits: 0, voiceCredits: 0 })
+      .returning();
+    return result;
+  }
+  
+  async addCredits(userId: number, videoCredits: number, voiceCredits: number): Promise<schema.CreditWallet> {
+    const wallet = await this.getOrCreateCreditWallet(userId);
+    
+    const [result] = await db.update(schema.creditWallets)
+      .set({
+        videoCredits: wallet.videoCredits + videoCredits,
+        voiceCredits: wallet.voiceCredits + voiceCredits,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.creditWallets.userId, userId))
+      .returning();
+    return result;
+  }
+  
+  async spendCredits(userId: number, creditType: 'video' | 'voice', amount: number): Promise<schema.CreditWallet> {
+    const wallet = await this.getOrCreateCreditWallet(userId);
+    const currentBalance = creditType === 'video' ? wallet.videoCredits : wallet.voiceCredits;
+    
+    if (currentBalance < amount) {
+      throw new Error(`Insufficient ${creditType} credits`);
+    }
+    
+    const update = creditType === 'video'
+      ? { videoCredits: wallet.videoCredits - amount }
+      : { voiceCredits: wallet.voiceCredits - amount };
+    
+    const [result] = await db.update(schema.creditWallets)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(schema.creditWallets.userId, userId))
+      .returning();
+    
+    await this.logCreditEvent({
+      userId,
+      eventType: 'spend',
+      creditType,
+      amount: -amount,
+      balanceAfter: creditType === 'video' ? result.videoCredits : result.voiceCredits,
+    });
+    
+    return result;
+  }
+  
+  async grantMonthlyCredits(userId: number, videoCredits: number, voiceCredits: number): Promise<void> {
+    const wallet = await this.addCredits(userId, videoCredits, voiceCredits);
+    
+    if (videoCredits > 0) {
+      await this.logCreditEvent({
+        userId,
+        eventType: 'monthly_grant',
+        creditType: 'video',
+        amount: videoCredits,
+        balanceAfter: wallet.videoCredits,
+      });
+    }
+    
+    if (voiceCredits > 0) {
+      await this.logCreditEvent({
+        userId,
+        eventType: 'monthly_grant',
+        creditType: 'voice',
+        amount: voiceCredits,
+        balanceAfter: wallet.voiceCredits,
+      });
+    }
+  }
+  
+  // Credit Events
+  async logCreditEvent(event: schema.InsertCreditEvent): Promise<schema.CreditEvent> {
+    const [result] = await db.insert(schema.creditEvents).values(event as any).returning();
+    return result;
   }
 }
 

@@ -2577,5 +2577,198 @@ export async function registerRoutes(
     }
   });
 
+  // ============ STRIPE & SUBSCRIPTION ROUTES ============
+  
+  // Get all plans
+  app.get("/api/plans", async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ message: "Error fetching plans" });
+    }
+  });
+  
+  // Get user's subscription
+  app.get("/api/subscription", requireAuth, async (req, res) => {
+    try {
+      const subscription = await storage.getSubscription(req.user!.id);
+      if (!subscription) {
+        const freePlan = await storage.getPlanByName("free");
+        return res.json({ subscription: null, plan: freePlan });
+      }
+      const plan = await storage.getPlan(subscription.planId);
+      res.json({ subscription, plan });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ message: "Error fetching subscription" });
+    }
+  });
+  
+  // Get user's entitlements
+  app.get("/api/entitlements", requireAuth, async (req, res) => {
+    try {
+      let entitlements = await storage.getEntitlements(req.user!.id);
+      if (!entitlements) {
+        entitlements = await storage.upsertEntitlements(req.user!.id, {
+          canUseCloudLlm: false,
+          canGenerateImages: false,
+          canExport: false,
+          canUseCharacterChat: false,
+          maxCardsPerStory: 5,
+          storageDays: 7,
+          collaborationRoles: false,
+        });
+      }
+      res.json(entitlements);
+    } catch (error) {
+      console.error("Error fetching entitlements:", error);
+      res.status(500).json({ message: "Error fetching entitlements" });
+    }
+  });
+  
+  // Get user's credit wallet
+  app.get("/api/credits", requireAuth, async (req, res) => {
+    try {
+      const wallet = await storage.getOrCreateCreditWallet(req.user!.id);
+      res.json(wallet);
+    } catch (error) {
+      console.error("Error fetching credits:", error);
+      res.status(500).json({ message: "Error fetching credits" });
+    }
+  });
+  
+  // Create checkout session for subscription
+  app.post("/api/checkout", requireAuth, async (req, res) => {
+    try {
+      const { priceId, planName } = req.body;
+      
+      const { getUncachableStripeClient, getStripePublishableKey } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+      
+      const plan = await storage.getPlanByName(planName);
+      if (!plan) {
+        return res.status(400).json({ message: "Invalid plan" });
+      }
+      
+      let customerId: string | undefined;
+      const subscription = await storage.getSubscription(req.user!.id);
+      if (subscription?.stripeCustomerId) {
+        customerId = subscription.stripeCustomerId;
+      } else {
+        const customer = await stripe.customers.create({
+          email: req.user!.email || undefined,
+          metadata: { userId: String(req.user!.id) },
+        });
+        customerId = customer.id;
+      }
+      
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: "subscription",
+        success_url: `${req.protocol}://${req.get("host")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get("host")}/checkout/cancel`,
+        metadata: {
+          userId: String(req.user!.id),
+          planId: String(plan.id),
+        },
+      });
+      
+      res.json({ url: session.url, publishableKey: await getStripePublishableKey() });
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: "Error creating checkout session" });
+    }
+  });
+  
+  // Create customer portal session
+  app.post("/api/billing-portal", requireAuth, async (req, res) => {
+    try {
+      const subscription = await storage.getSubscription(req.user!.id);
+      if (!subscription?.stripeCustomerId) {
+        return res.status(400).json({ message: "No active subscription" });
+      }
+      
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+      
+      const session = await stripe.billingPortal.sessions.create({
+        customer: subscription.stripeCustomerId,
+        return_url: `${req.protocol}://${req.get("host")}/settings`,
+      });
+      
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Error creating billing portal session:", error);
+      res.status(500).json({ message: "Error creating billing portal session" });
+    }
+  });
+  
+  // Buy credit pack
+  app.post("/api/buy-credits", requireAuth, async (req, res) => {
+    try {
+      const { creditType, packSize } = req.body;
+      
+      const { getUncachableStripeClient, getStripePublishableKey } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+      
+      const packs: Record<string, { amount: number; price: number }> = {
+        "video_10": { amount: 10, price: 999 },
+        "video_50": { amount: 50, price: 3999 },
+        "voice_50": { amount: 50, price: 499 },
+        "voice_200": { amount: 200, price: 1499 },
+      };
+      
+      const packKey = `${creditType}_${packSize}`;
+      const pack = packs[packKey];
+      if (!pack) {
+        return res.status(400).json({ message: "Invalid credit pack" });
+      }
+      
+      let customerId: string | undefined;
+      const subscription = await storage.getSubscription(req.user!.id);
+      if (subscription?.stripeCustomerId) {
+        customerId = subscription.stripeCustomerId;
+      } else {
+        const customer = await stripe.customers.create({
+          email: req.user!.email || undefined,
+          metadata: { userId: String(req.user!.id) },
+        });
+        customerId = customer.id;
+      }
+      
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${pack.amount} ${creditType === "video" ? "Video" : "Voice"} Credits`,
+            },
+            unit_amount: pack.price,
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        success_url: `${req.protocol}://${req.get("host")}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get("host")}/credits/cancel`,
+        metadata: {
+          userId: String(req.user!.id),
+          creditType,
+          amount: String(pack.amount),
+        },
+      });
+      
+      res.json({ url: session.url, publishableKey: await getStripePublishableKey() });
+    } catch (error) {
+      console.error("Error creating credit checkout session:", error);
+      res.status(500).json({ message: "Error creating credit checkout session" });
+    }
+  });
+
   return httpServer;
 }
