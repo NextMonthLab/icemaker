@@ -497,9 +497,16 @@ export default function Admin() {
                   <h3 className="font-semibold text-lg">{selectedUniverse.name}</h3>
                   <p className="text-sm text-muted-foreground">{selectedUniverse.description || 'No description'}</p>
                 </div>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={handleEditUniverse} data-testid="button-edit-universe">
-                  <Settings className="w-3.5 h-3.5" /> Edit Universe
-                </Button>
+                <div className="flex gap-2">
+                  <Link href={`/admin/universes/${selectedUniverse.id}/visual-bible`} className="contents">
+                    <Button variant="outline" size="sm" className="gap-1.5" data-testid="button-visual-bible">
+                      <PhotoIcon className="w-3.5 h-3.5" /> Visual Bible
+                    </Button>
+                  </Link>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={handleEditUniverse} data-testid="button-edit-universe">
+                    <Settings className="w-3.5 h-3.5" /> Edit Universe
+                  </Button>
+                </div>
               </div>
               
               {/* Generate AI Content - Prominent actions for engine-generated universes */}

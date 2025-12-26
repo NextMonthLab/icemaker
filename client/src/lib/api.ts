@@ -1,4 +1,6 @@
-import type { User, Universe, Character, Card, UserProgress, ChatThread, ChatMessage, ImageGeneration, Location } from "@shared/schema";
+import type { User, Universe, Character, Card, UserProgress, ChatThread, ChatMessage, ImageGeneration, Location, DesignGuide, UniverseReferenceAsset } from "@shared/schema";
+
+export type ReferenceAsset = UniverseReferenceAsset;
 
 class ApiClient {
   private baseUrl = "/api";
@@ -80,6 +82,44 @@ class ApiClient {
 
   async deleteUniverse(id: number) {
     return this.request<{ message: string }>(`/universes/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Visual Bible (Design Guide & Reference Assets)
+  async updateDesignGuide(universeId: number, designGuide: DesignGuide) {
+    return this.request<{ designGuide: DesignGuide }>(`/universes/${universeId}/design-guide`, {
+      method: "PUT",
+      body: JSON.stringify(designGuide),
+    });
+  }
+
+  async getReferenceAssets(universeId: number) {
+    return this.request<ReferenceAsset[]>(`/universes/${universeId}/reference-assets`);
+  }
+
+  async createReferenceAsset(universeId: number, data: FormData) {
+    const response = await fetch(`${this.baseUrl}/universes/${universeId}/reference-assets`, {
+      method: "POST",
+      credentials: "include",
+      body: data,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(error.message || "Request failed");
+    }
+    return response.json() as Promise<ReferenceAsset>;
+  }
+
+  async updateReferenceAsset(id: number, data: Partial<ReferenceAsset>) {
+    return this.request<ReferenceAsset>(`/reference-assets/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteReferenceAsset(id: number) {
+    return this.request<{ message: string }>(`/reference-assets/${id}`, {
       method: "DELETE",
     });
   }

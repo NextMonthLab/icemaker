@@ -27,6 +27,7 @@ import TransformationsPage from "@/pages/admin/TransformationsPage";
 import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
 import AdminUniverseDetail from "@/pages/AdminUniverseDetail";
+import VisualBible from "@/pages/VisualBible";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import Experience from "@/pages/Experience";
@@ -64,6 +65,7 @@ const ProtectedTransformationsPage = withAuth(TransformationsPage);
 const ProtectedTransformationDetailPage = withAuth(TransformationDetailPage);
 const ProtectedCharacterCreatorPage = withAuth(CharacterCreatorPage);
 const ProtectedAdminUniverseDetail = withAuth(AdminUniverseDetail);
+const ProtectedVisualBible = withAuth(VisualBible);
 const ProtectedExportPage = withAuth(ExportPage);
 const ProtectedOnboarding = withAuth(Onboarding);
 
@@ -107,6 +109,7 @@ function Router() {
       <Route path="/admin/transformations/:id" component={ProtectedTransformationDetailPage} />
       <Route path="/admin/characters/new" component={ProtectedCharacterCreatorPage} />
       <Route path="/admin/universes/:id" component={ProtectedAdminUniverseDetail} />
+      <Route path="/admin/universes/:id/visual-bible" component={ProtectedVisualBible} />
       <Route path="/admin/universes/:id/export" component={ProtectedExportPage} />
       <Route component={NotFound} />
     </Switch>
