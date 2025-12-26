@@ -36,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row max-w-md mx-auto md:max-w-2xl lg:max-w-5xl border-x border-border shadow-2xl relative">
       {/* Desktop Sidebar (Hidden on Mobile and Tablet) */}
       <aside className="hidden lg:flex w-56 flex-col border-r border-border p-5 shrink-0 bg-background/95 backdrop-blur-sm">
-        <img src="https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png" alt="NextScene" className="h-6 mb-6" />
+        <img src="/nextscene-logo.png" alt="NextScene" className="h-6 mb-6" />
         <nav className="space-y-3 flex-1">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>

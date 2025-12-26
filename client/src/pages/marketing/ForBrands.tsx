@@ -59,10 +59,10 @@ export default function ForBrands() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black via-black/90 to-transparent">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/">
-            <img 
-              src="https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png" 
-              alt="NextScene" 
-              className="h-[75px] cursor-pointer" 
+            <img
+              src="/nextscene-logo.png"
+              alt="NextScene"
+              className="h-[75px] cursor-pointer"
               data-testid="link-logo"
             />
           </Link>
@@ -245,9 +245,9 @@ export default function ForBrands() {
         <footer className="py-12 px-6 border-t border-white/10 bg-black">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-              <img 
-                src="https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png" 
-                alt="NextScene" 
+              <img
+                src="/nextscene-logo.png"
+                alt="NextScene"
                 className="h-[60px]"
               />
               <div className="flex items-center gap-8">
