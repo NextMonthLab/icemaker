@@ -51,23 +51,35 @@ interface TransformationJobDetail {
   updatedAt: string;
 }
 
+function AiThinkingAnimation() {
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex gap-0.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+      </div>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: TransformationJob["status"] }) {
   const styles = {
     queued: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    running: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    running: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-700",
     completed: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
     failed: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
   };
   
   const icons = {
     queued: <Clock className="w-3 h-3" />,
-    running: <Loader2 className="w-3 h-3 animate-spin" />,
+    running: <AiThinkingAnimation />,
     completed: <Check className="w-3 h-3" />,
     failed: <AlertCircle className="w-3 h-3" />,
   };
   
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
       {icons[status]}
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
@@ -265,37 +277,38 @@ function JobsList({ jobs, isLoading }: { jobs: TransformationJob[]; isLoading: b
         
         return (
           <Card key={job.id} className="hover:bg-muted/50 transition-colors" data-testid={`job-row-${job.id}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium truncate">{job.sourceFileName}</span>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="font-medium text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">{job.sourceFileName}</span>
                       <StatusBadge status={job.status} />
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <span>{format(new Date(job.createdAt), "MMM d, h:mm a")}</span>
                       {job.status === "running" && (
-                        <span>Stage {job.currentStage + 1}/6</span>
+                        <span className="font-medium text-purple-600 dark:text-purple-400">Stage {job.currentStage + 1}/6</span>
                       )}
                     </div>
-                    {(job.status === "running" || job.status === "queued") && (
-                      <Progress value={progress} className="h-1.5 mt-2 w-48" />
-                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Link href={`/admin/transformations/${job.id}`}>
-                    <Button variant="outline" size="sm" data-testid={`button-view-${job.id}`}>
+                {(job.status === "running" || job.status === "queued") && (
+                  <Progress value={progress} className="h-1.5 w-full" />
+                )}
+                
+                <div className="flex items-center gap-2 pt-1">
+                  <Link href={`/admin/transformations/${job.id}`} className="flex-1 sm:flex-initial">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs sm:text-sm" data-testid={`button-view-${job.id}`}>
                       View Details
                     </Button>
                   </Link>
                   {job.outputUniverseId && (
-                    <Link href={`/admin/universes/${job.outputUniverseId}`}>
-                      <Button variant="secondary" size="sm" data-testid={`button-universe-${job.id}`}>
-                        <ExternalLink className="w-4 h-4 mr-1" />
+                    <Link href={`/admin/universes/${job.outputUniverseId}`} className="flex-1 sm:flex-initial">
+                      <Button variant="secondary" size="sm" className="w-full sm:w-auto text-xs sm:text-sm" data-testid={`button-universe-${job.id}`}>
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
                         Universe
                       </Button>
                     </Link>
@@ -325,15 +338,15 @@ export default function TransformationsPage() {
   
   return (
     <AdminLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold" data-testid="page-title">Story Transformations</h1>
-            <p className="text-muted-foreground">
-              Transform scripts, PDFs, and text into interactive StoryFlix universes
+            <h1 className="text-xl sm:text-2xl font-bold" data-testid="page-title">Story Transformations</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Transform scripts and text into StoryFlix universes
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} data-testid="button-refresh">
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="self-start sm:self-auto" data-testid="button-refresh">
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
