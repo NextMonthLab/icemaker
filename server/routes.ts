@@ -248,6 +248,53 @@ export async function registerRoutes(
     }
   });
   
+  // Get user onboarding profile
+  app.get("/api/me/onboarding", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getUserOnboardingProfile(req.user!.id);
+      res.json(profile || null);
+    } catch (error) {
+      console.error("Error fetching onboarding profile:", error);
+      res.status(500).json({ message: "Error fetching onboarding profile" });
+    }
+  });
+  
+  // Create or update user onboarding profile
+  app.post("/api/me/onboarding", requireAuth, async (req, res) => {
+    try {
+      const { persona, industry, companyName, teamSize, goals, targetAudience, contentFrequency, onboardingCompleted } = req.body;
+      
+      // Validate persona (required)
+      const validPersonas = ['news_outlet', 'business', 'influencer', 'educator', 'creator', 'other'];
+      if (!persona || !validPersonas.includes(persona)) {
+        return res.status(400).json({ message: "Invalid persona type" });
+      }
+      
+      // Validate industry if provided
+      const validIndustries = ['media', 'technology', 'healthcare', 'finance', 'entertainment', 'education', 'retail', 'travel', 'food', 'sports', 'real_estate', 'nonprofit', 'government', 'other'];
+      if (industry && !validIndustries.includes(industry)) {
+        return res.status(400).json({ message: "Invalid industry" });
+      }
+      
+      const profile = await storage.upsertUserOnboardingProfile({
+        userId: req.user!.id,
+        persona,
+        industry: industry || null,
+        companyName: companyName || null,
+        teamSize: teamSize || null,
+        goals: goals || null,
+        targetAudience: targetAudience || null,
+        contentFrequency: contentFrequency || null,
+        onboardingCompleted: onboardingCompleted ?? false,
+      });
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error updating onboarding profile:", error);
+      res.status(500).json({ message: "Error updating onboarding profile" });
+    }
+  });
+  
   // Get engagement metrics for universes (creators/admins only)
   app.get("/api/engagement", requireAuth, async (req, res) => {
     try {
