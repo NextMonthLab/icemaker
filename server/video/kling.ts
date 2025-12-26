@@ -1,6 +1,9 @@
+import jwt from "jsonwebtoken";
+
 export interface KlingConfig {
-  apiKey: string;
-  baseUrl?: string;
+  accessKey: string;
+  secretKey: string;
+  baseUrl: string;
 }
 
 export interface TextToVideoRequest {
@@ -44,17 +47,37 @@ const POLL_INTERVAL_MS = 10000;
 const MAX_POLL_ATTEMPTS = 120;
 
 export function isKlingConfigured(): boolean {
-  return !!process.env.KLING_API_KEY;
+  return !!(process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY);
 }
 
 export function getKlingConfig(): KlingConfig | null {
-  const apiKey = process.env.KLING_API_KEY;
-  if (!apiKey) return null;
+  const accessKey = process.env.KLING_ACCESS_KEY;
+  const secretKey = process.env.KLING_SECRET_KEY;
+  if (!accessKey || !secretKey) return null;
   
   return {
-    apiKey,
+    accessKey,
+    secretKey,
     baseUrl: process.env.KLING_API_BASE || KLING_API_BASE,
   };
+}
+
+function generateJwtToken(accessKey: string, secretKey: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  
+  const payload = {
+    iss: accessKey,
+    exp: now + 1800,
+    nbf: now - 5,
+  };
+  
+  return jwt.sign(payload, secretKey, {
+    algorithm: "HS256",
+    header: {
+      alg: "HS256",
+      typ: "JWT",
+    },
+  });
 }
 
 async function makeKlingRequest(
@@ -63,11 +86,13 @@ async function makeKlingRequest(
   body?: any
 ): Promise<any> {
   const config = getKlingConfig();
-  if (!config) throw new Error("Kling API not configured");
+  if (!config) throw new Error("Kling API not configured: KLING_ACCESS_KEY and KLING_SECRET_KEY are required");
+  
+  const token = generateJwtToken(config.accessKey, config.secretKey);
   
   const url = `${config.baseUrl}${endpoint}`;
   const headers: Record<string, string> = {
-    "Authorization": `Bearer ${config.apiKey}`,
+    "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json",
   };
   
