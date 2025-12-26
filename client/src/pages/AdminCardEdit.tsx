@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Save, X, Plus, Trash2, Loader2, Volume2, Play, Pause, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, X, Plus, Trash2, Loader2, Volume2, Play, Pause, RefreshCw, Video, Image } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -72,6 +72,19 @@ export default function AdminCardEdit() {
       return res.json();
     },
   });
+  
+  const { data: videoConfig } = useQuery({
+    queryKey: ["video-config"],
+    queryFn: async () => {
+      const res = await fetch("/api/video/config");
+      if (!res.ok) return { configured: false, models: [] };
+      return res.json();
+    },
+  });
+  
+  const [videoModel, setVideoModel] = useState("kling-v2");
+  const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
+  const [videoMode, setVideoMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
 
   useEffect(() => {
     if (card) {
@@ -271,6 +284,79 @@ export default function AdminCardEdit() {
       toast({ title: "Preview failed", description: error.message, variant: "destructive" });
     }
   };
+  
+  const generateVideoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/video/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          mode: videoMode,
+          model: videoModel,
+          duration: videoDuration,
+          aspectRatio: "9:16",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to start video generation");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      toast({ title: "Video generation started!", description: `Task ID: ${data.taskId}` });
+    },
+    onError: (error: any) => {
+      toast({ title: "Video generation failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const checkVideoStatusMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/video/status`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to check status");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      if (data.status === "completed") {
+        toast({ title: "Video ready!", description: "Your video has been generated successfully." });
+      } else if (data.status === "failed") {
+        toast({ title: "Video failed", description: data.error || "Generation failed", variant: "destructive" });
+      }
+    },
+    onError: (error: any) => {
+      toast({ title: "Status check failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const deleteVideoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/video`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to delete video");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      toast({ title: "Video deleted" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    },
+  });
 
   if (!user?.isAdmin) {
     return (
@@ -689,6 +775,182 @@ export default function AdminCardEdit() {
                         </div>
                       )}
                     </>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Video className="w-5 h-5" />
+                Video Generation (Kling AI)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!videoConfig?.configured ? (
+                <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+                  Video generation is not configured. Set up KLING_API_KEY to enable AI video generation.
+                </div>
+              ) : (
+                <>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Mode</Label>
+                      <Select value={videoMode} onValueChange={(v) => setVideoMode(v as "text-to-video" | "image-to-video")}>
+                        <SelectTrigger data-testid="select-video-mode">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text-to-video">
+                            <div className="flex items-center gap-2">
+                              Text to Video
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="image-to-video" disabled={!card?.generatedImageUrl}>
+                            <div className="flex items-center gap-2">
+                              <Image className="w-4 h-4" />
+                              Image to Video
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {videoMode === "image-to-video" && !card?.generatedImageUrl && (
+                        <p className="text-xs text-muted-foreground">Generate an image first</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Model</Label>
+                      <Select value={videoModel} onValueChange={setVideoModel}>
+                        <SelectTrigger data-testid="select-video-model">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {videoConfig?.models?.map((m: { id: string; name: string; description: string }) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Duration</Label>
+                      <Select value={String(videoDuration)} onValueChange={(v) => setVideoDuration(parseInt(v) as 5 | 10)}>
+                        <SelectTrigger data-testid="select-video-duration">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5 seconds</SelectItem>
+                          <SelectItem value="10">10 seconds</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-muted rounded-lg text-sm">
+                    <p className="font-medium mb-1">Prompt Preview:</p>
+                    <p className="text-muted-foreground">
+                      {card?.sceneDescription || `${card?.title}. ${card?.sceneText}`}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      onClick={() => generateVideoMutation.mutate()}
+                      disabled={generateVideoMutation.isPending || (card?.videoGenerationStatus === "processing")}
+                      className="gap-2"
+                      data-testid="button-generate-video"
+                    >
+                      {generateVideoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                      Generate Video
+                    </Button>
+
+                    {(card?.videoGenerationStatus === "processing" || card?.videoGenerationStatus === "pending") && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => checkVideoStatusMutation.mutate()}
+                        disabled={checkVideoStatusMutation.isPending}
+                        className="gap-2"
+                        data-testid="button-check-video-status"
+                      >
+                        {checkVideoStatusMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        Check Status
+                      </Button>
+                    )}
+                  </div>
+
+                  {card?.videoGenerationStatus && card.videoGenerationStatus !== "none" && (
+                    <div className="p-3 bg-muted rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Video Status</span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          card.videoGenerationStatus === "completed" ? "bg-green-500/20 text-green-600" :
+                          card.videoGenerationStatus === "processing" ? "bg-yellow-500/20 text-yellow-600" :
+                          card.videoGenerationStatus === "pending" ? "bg-blue-500/20 text-blue-600" :
+                          card.videoGenerationStatus === "failed" ? "bg-red-500/20 text-red-600" :
+                          "bg-muted-foreground/20"
+                        }`}>
+                          {card.videoGenerationStatus}
+                        </span>
+                      </div>
+
+                      {card.videoGenerationModel && (
+                        <p className="text-xs text-muted-foreground">Model: {card.videoGenerationModel}</p>
+                      )}
+
+                      {card.videoGenerationStatus === "completed" && card.generatedVideoUrl && (
+                        <div className="space-y-2">
+                          <video 
+                            controls 
+                            className="w-full max-w-md rounded-lg" 
+                            src={card.generatedVideoUrl}
+                            poster={card.videoThumbnailUrl || undefined}
+                            data-testid="video-generated"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={card.generatedVideoUrl} download target="_blank" rel="noopener noreferrer">
+                                Download
+                              </a>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteVideoMutation.mutate()}
+                              disabled={deleteVideoMutation.isPending}
+                              className="gap-2"
+                              data-testid="button-delete-video"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {card.videoGenerationStatus === "failed" && card.videoGenerationError && (
+                        <p className="text-sm text-destructive">{card.videoGenerationError}</p>
+                      )}
+
+                      {card.videoGenerationStatus === "processing" && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Video is being generated... This typically takes 5-14 minutes.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </>
               )}
