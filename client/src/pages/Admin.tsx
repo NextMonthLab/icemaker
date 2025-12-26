@@ -401,86 +401,6 @@ export default function Admin() {
                     </Button>
                 </Link>
             </div>
-
-            {/* Danger Zone - Collapsible on Mobile */}
-            {selectedUniverse && (
-              <div className="border border-destructive/30 rounded-lg p-3 bg-destructive/5">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="text-sm">
-                    <span className="font-medium text-destructive">Danger Zone</span>
-                    <p className="text-muted-foreground text-xs mt-0.5">Destructive actions for "{selectedUniverse.name}"</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          size="sm"
-                          variant="outline" 
-                          className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground flex-1 sm:flex-initial"
-                          data-testid="button-delete-all-cards" 
-                          disabled={!cards?.length}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Cards
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete All Cards?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete all {cards?.length || 0} cards from "{selectedUniverse?.name}". 
-                            This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => selectedUniverse && deleteAllCardsMutation.mutate(selectedUniverse.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {deleteAllCardsMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            ) : null}
-                            Delete All Cards
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                    <AlertDialog open={showDeleteUniverseDialog} onOpenChange={setShowDeleteUniverseDialog}>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          size="sm"
-                          variant="destructive" 
-                          className="gap-1.5 flex-1 sm:flex-initial"
-                          data-testid="button-delete-universe"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Universe
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Universe?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete "{selectedUniverse?.name}" and all its content including cards, characters, and locations. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => selectedUniverse && deleteUniverseMutation.mutate(selectedUniverse.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {deleteUniverseMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            ) : null}
-                            Delete Universe
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </div>
-            )}
         </div>
         
         {!selectedUniverse ? (
@@ -720,6 +640,84 @@ export default function Admin() {
                       );})
                     )}
                 </div>
+            </div>
+
+            {/* Danger Zone - At bottom for sensitive actions */}
+            <div className="border border-destructive/30 rounded-lg p-3 bg-destructive/5 mt-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-sm">
+                  <span className="font-medium text-destructive">Danger Zone</span>
+                  <p className="text-muted-foreground text-xs mt-0.5">Destructive actions for "{selectedUniverse.name}"</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm"
+                        variant="outline" 
+                        className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground flex-1 sm:flex-initial"
+                        data-testid="button-delete-all-cards" 
+                        disabled={!cards?.length}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete Cards
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete All Cards?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete all {cards?.length || 0} cards from "{selectedUniverse?.name}". 
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => selectedUniverse && deleteAllCardsMutation.mutate(selectedUniverse.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleteAllCardsMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : null}
+                          Delete All Cards
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <AlertDialog open={showDeleteUniverseDialog} onOpenChange={setShowDeleteUniverseDialog}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm"
+                        variant="destructive" 
+                        className="gap-1.5 flex-1 sm:flex-initial"
+                        data-testid="button-delete-universe"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete Universe
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Universe?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete "{selectedUniverse?.name}" and all its content including cards, characters, and locations. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => selectedUniverse && deleteUniverseMutation.mutate(selectedUniverse.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleteUniverseMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : null}
+                          Delete Universe
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
             </div>
           </>
         )}
