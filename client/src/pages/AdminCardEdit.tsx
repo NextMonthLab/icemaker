@@ -805,6 +805,50 @@ export default function AdminCardEdit() {
                 </div>
               ) : (
                 <>
+                  {/* Show generated video at the top if available */}
+                  {card?.videoGenerationStatus === "completed" && card.generatedVideoUrl && (
+                    <div className="p-4 border-2 border-green-500/30 bg-green-500/5 rounded-lg space-y-3">
+                      <div className="flex items-center gap-2 text-green-600">
+                        <Video className="w-5 h-5" />
+                        <span className="font-medium">Generated Video</span>
+                      </div>
+                      <video 
+                        controls 
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full rounded-lg bg-black" 
+                        src={card.generatedVideoUrl}
+                        poster={card.videoThumbnailUrl || undefined}
+                        data-testid="video-generated-main"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          asChild
+                        >
+                          <a href={card.generatedVideoUrl} download target="_blank" rel="noopener noreferrer">
+                            Download Video
+                          </a>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteVideoMutation.mutate()}
+                          disabled={deleteVideoMutation.isPending}
+                          className="gap-2"
+                          data-testid="button-delete-video-main"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Mode</Label>
