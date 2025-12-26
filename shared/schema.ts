@@ -849,6 +849,8 @@ export const planFeaturesSchema = z.object({
   monthlyVideoCredits: z.number().default(0),
   monthlyVoiceCredits: z.number().default(0),
   collaborationRoles: z.boolean().default(false),
+  canUploadMedia: z.boolean().default(false),
+  storageQuotaBytes: z.number().default(0), // 0 = no uploads, Pro = 2GB, Business = 10GB
 });
 
 export type PlanFeatures = z.infer<typeof planFeaturesSchema>;
@@ -889,6 +891,8 @@ export const entitlements = pgTable("entitlements", {
   maxCardsPerStory: integer("max_cards_per_story").default(5).notNull(),
   storageDays: integer("storage_days").default(7).notNull(),
   collaborationRoles: boolean("collaboration_roles").default(false).notNull(),
+  canUploadMedia: boolean("can_upload_media").default(false).notNull(),
+  storageQuotaBytes: integer("storage_quota_bytes").default(0).notNull(), // 0 = no uploads
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -942,6 +946,65 @@ export const ttsUsage = pgTable("tts_usage", {
 export const insertTtsUsageSchema = createInsertSchema(ttsUsage).omit({ id: true, createdAt: true });
 export type InsertTtsUsage = z.infer<typeof insertTtsUsageSchema>;
 export type TtsUsage = typeof ttsUsage.$inferSelect;
+
+// ============ USER MEDIA UPLOADS ============
+
+// Media asset types
+export type MediaAssetType = 'image' | 'video';
+
+// Card media assets (user-uploaded images/videos for cards)
+export const cardMediaAssets = pgTable("card_media_assets", {
+  id: serial("id").primaryKey(),
+  cardId: integer("card_id").references(() => cards.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(), // Owner
+  mediaType: text("media_type").$type<MediaAssetType>().notNull(),
+  storageKey: text("storage_key").notNull(), // Object storage path
+  originalFilename: text("original_filename"),
+  mimeType: text("mime_type"),
+  sizeBytes: integer("size_bytes").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  duration: integer("duration"), // For videos, in seconds
+  isActive: boolean("is_active").default(true).notNull(), // Soft delete for quota reclaim
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCardMediaAssetSchema = createInsertSchema(cardMediaAssets).omit({ id: true, createdAt: true });
+export type InsertCardMediaAsset = z.infer<typeof insertCardMediaAssetSchema>;
+export type CardMediaAsset = typeof cardMediaAssets.$inferSelect;
+
+// User storage usage (aggregated storage tracking for quota enforcement)
+export const userStorageUsage = pgTable("user_storage_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  totalBytesUsed: integer("total_bytes_used").default(0).notNull(),
+  imageCount: integer("image_count").default(0).notNull(),
+  videoCount: integer("video_count").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserStorageUsageSchema = createInsertSchema(userStorageUsage).omit({ id: true, updatedAt: true });
+export type InsertUserStorageUsage = z.infer<typeof insertUserStorageUsageSchema>;
+export type UserStorageUsage = typeof userStorageUsage.$inferSelect;
+
+// File size limits (in bytes)
+export const MEDIA_SIZE_LIMITS = {
+  image: 10 * 1024 * 1024, // 10 MB max for images
+  video: 200 * 1024 * 1024, // 200 MB max for videos
+} as const;
+
+// Storage quotas by tier (in bytes)
+export const STORAGE_QUOTAS = {
+  free: 0, // No uploads for free tier
+  pro: 2 * 1024 * 1024 * 1024, // 2 GB
+  business: 10 * 1024 * 1024 * 1024, // 10 GB
+} as const;
+
+// Allowed MIME types
+export const ALLOWED_MEDIA_TYPES = {
+  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  video: ['video/mp4', 'video/webm', 'video/quicktime'],
+} as const;
 
 // ============ USER ONBOARDING PROFILES ============
 
