@@ -2852,6 +2852,123 @@ export async function registerRoutes(
     }
   });
 
+  // ============ DESIGN GUIDE & REFERENCE ASSETS ROUTES ============
+  
+  // Update universe design guide
+  app.put("/api/universes/:id/design-guide", requireAdmin, async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const designGuide = req.body;
+      
+      const updated = await storage.updateUniverse(universeId, { designGuide });
+      if (!updated) {
+        return res.status(404).json({ message: "Universe not found" });
+      }
+      
+      res.json({ designGuide: updated.designGuide });
+    } catch (error) {
+      console.error("Error updating design guide:", error);
+      res.status(500).json({ message: "Error updating design guide" });
+    }
+  });
+  
+  // Get reference assets for a universe
+  app.get("/api/universes/:id/reference-assets", async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const assetType = req.query.type as string | undefined;
+      
+      let assets;
+      if (assetType) {
+        assets = await storage.getReferenceAssetsByType(universeId, assetType as any);
+      } else {
+        assets = await storage.getReferenceAssetsByUniverse(universeId);
+      }
+      
+      res.json(assets);
+    } catch (error) {
+      console.error("Error fetching reference assets:", error);
+      res.status(500).json({ message: "Error fetching reference assets" });
+    }
+  });
+  
+  // Create a reference asset
+  app.post("/api/universes/:id/reference-assets", requireAdmin, upload.single("image"), async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const { name, description, assetType, promptNotes, characterId, locationId, priority, imagePath } = req.body;
+      
+      // Handle file upload or provided imagePath
+      let finalImagePath = imagePath;
+      if (req.file) {
+        // Store the uploaded file (assuming base64 for simplicity)
+        finalImagePath = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      }
+      
+      if (!finalImagePath) {
+        return res.status(400).json({ message: "Image is required" });
+      }
+      
+      const asset = await storage.createReferenceAsset({
+        universeId,
+        name,
+        description: description || null,
+        assetType: assetType || 'style',
+        imagePath: finalImagePath,
+        promptNotes: promptNotes || null,
+        characterId: characterId ? parseInt(characterId) : null,
+        locationId: locationId ? parseInt(locationId) : null,
+        priority: priority ? parseInt(priority) : 0,
+        isActive: true,
+      });
+      
+      res.json(asset);
+    } catch (error) {
+      console.error("Error creating reference asset:", error);
+      res.status(500).json({ message: "Error creating reference asset" });
+    }
+  });
+  
+  // Update a reference asset
+  app.put("/api/reference-assets/:id", requireAdmin, async (req, res) => {
+    try {
+      const assetId = parseInt(req.params.id);
+      const { name, description, assetType, promptNotes, characterId, locationId, priority, isActive } = req.body;
+      
+      const updated = await storage.updateReferenceAsset(assetId, {
+        name,
+        description,
+        assetType,
+        promptNotes,
+        characterId: characterId ?? undefined,
+        locationId: locationId ?? undefined,
+        priority: priority !== undefined ? parseInt(priority) : undefined,
+        isActive: isActive !== undefined ? isActive : undefined,
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ message: "Reference asset not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating reference asset:", error);
+      res.status(500).json({ message: "Error updating reference asset" });
+    }
+  });
+  
+  // Delete a reference asset
+  app.delete("/api/reference-assets/:id", requireAdmin, async (req, res) => {
+    try {
+      const assetId = parseInt(req.params.id);
+      await storage.deleteReferenceAsset(assetId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting reference asset:", error);
+      res.status(500).json({ message: "Error deleting reference asset" });
+    }
+  });
+
   // ============ TRANSFORMATION PIPELINE ROUTES ============
   
   const { runPipeline, resumeStaleJobs, extractTextFromFile } = await import("./pipeline/runner");
