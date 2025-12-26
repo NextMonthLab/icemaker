@@ -199,6 +199,29 @@ export class DatabaseStorage implements IStorage {
       });
       const cardIds = cards.map(c => c.id);
       
+      // Get all character IDs for this universe
+      const characters = await tx.query.characters.findMany({
+        where: eq(schema.characters.universeId, id),
+        columns: { id: true }
+      });
+      const characterIds = characters.map(c => c.id);
+      
+      // Delete chat messages and threads for characters in this universe
+      if (characterIds.length > 0) {
+        // Get all thread IDs for these characters
+        const threads = await tx.query.chatThreads.findMany({
+          where: inArray(schema.chatThreads.characterId, characterIds),
+          columns: { id: true }
+        });
+        const threadIds = threads.map(t => t.id);
+        
+        // Delete messages first, then threads
+        if (threadIds.length > 0) {
+          await tx.delete(schema.chatMessages).where(inArray(schema.chatMessages.threadId, threadIds));
+        }
+        await tx.delete(schema.chatThreads).where(inArray(schema.chatThreads.characterId, characterIds));
+      }
+      
       // Delete all card-character links in one query
       if (cardIds.length > 0) {
         await tx.delete(schema.cardCharacters).where(inArray(schema.cardCharacters.cardId, cardIds));
