@@ -71,28 +71,9 @@ export async function generateVideoWithReplicate(
     if (request.imageUrl) {
       if (request.imageUrl.startsWith("http://") || request.imageUrl.startsWith("https://")) {
         input.image = request.imageUrl;
-      } else if (request.imageUrl.startsWith("data:")) {
-        input.image = request.imageUrl;
+        console.log(`[Replicate] Using image URL: ${request.imageUrl}`);
       } else {
-        const fs = await import("fs");
-        const path = await import("path");
-        
-        let filePath = request.imageUrl;
-        if (request.imageUrl.startsWith("/uploads/")) {
-          filePath = path.join(process.cwd(), request.imageUrl.substring(1));
-        } else if (!path.isAbsolute(request.imageUrl)) {
-          filePath = path.join(process.cwd(), request.imageUrl);
-        }
-        
-        if (fs.existsSync(filePath)) {
-          const fileBuffer = fs.readFileSync(filePath);
-          const ext = path.extname(filePath).toLowerCase();
-          const mimeType = ext === ".png" ? "image/png" : "image/jpeg";
-          input.image = `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
-          console.log(`[Replicate] Converted local image to data URI`);
-        } else {
-          console.log(`[Replicate] Image file not found: ${filePath}, proceeding without image`);
-        }
+        console.log(`[Replicate] Skipping local image (use text-to-video mode instead)`);
       }
     }
 
