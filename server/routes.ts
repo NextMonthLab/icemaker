@@ -3026,7 +3026,7 @@ export async function registerRoutes(
   // Create a new transformation job
   app.post("/api/transformations", requireAuth, upload.single("file"), async (req, res) => {
     try {
-      const { text, hookPackCount, releaseMode, startDate, sourceUrl, contentSourceType, contentIndustry, contentCategory, contentGoal } = req.body;
+      const { text, hookPackCount, releaseMode, startDate, sourceUrl, contentSourceType, contentIndustry, contentCategory, contentGoal, storyLength } = req.body;
       
       let sourceText = text || "";
       let sourceFileName = "text-input.txt";
@@ -3263,6 +3263,7 @@ export async function registerRoutes(
         contentIndustry: contentIndustry || null,
         contentCategory: contentCategory || null,
         contentGoal: contentGoal || null,
+        storyLength: ['short', 'medium', 'long'].includes(storyLength) ? storyLength : 'medium',
         status: "queued",
         currentStage: 0,
         stageStatuses: {

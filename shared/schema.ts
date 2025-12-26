@@ -719,6 +719,14 @@ export type ManifestData = z.infer<typeof manifestSchema>;
 // ============ TRANSFORMATION JOBS (Universal Story Engine Pipeline) ============
 
 export type TransformationStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+// Story length controls how many cards are generated
+export type StoryLength = 'short' | 'medium' | 'long';
+export const STORY_LENGTH_CARD_TARGETS = {
+  short: 8,    // ~1 week of daily content
+  medium: 16,  // ~2 weeks of daily content
+  long: 24,    // ~3-4 weeks of daily content
+} as const;
 export type StageStatus = 'pending' | 'running' | 'done' | 'failed';
 export type SourceType = 'script' | 'pdf' | 'ppt' | 'article' | 'transcript' | 'url' | 'unknown';
 
@@ -798,6 +806,7 @@ export const transformationJobs = pgTable("transformation_jobs", {
   contentIndustry: text("content_industry").$type<ContentIndustry>(),
   contentCategory: text("content_category").$type<ContentCategory>(),
   contentGoal: text("content_goal").$type<ContentGoal>(),
+  storyLength: text("story_length").$type<StoryLength>().default("medium"),
   status: text("status").$type<TransformationStatus>().default("queued").notNull(),
   currentStage: integer("current_stage").default(0).notNull(),
   stageStatuses: jsonb("stage_statuses").$type<StageStatuses>(),

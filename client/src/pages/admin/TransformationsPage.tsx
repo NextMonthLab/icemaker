@@ -97,6 +97,7 @@ function CreateTransformationForm({ onSuccess }: { onSuccess: () => void }) {
   const [contentGoal, setContentGoal] = useState("");
   const [hookPackCount, setHookPackCount] = useState("3");
   const [releaseMode, setReleaseMode] = useState("hybrid");
+  const [storyLength, setStoryLength] = useState("medium");
   const { toast } = useToast();
   
   const createMutation = useMutation({
@@ -149,6 +150,7 @@ function CreateTransformationForm({ onSuccess }: { onSuccess: () => void }) {
     
     formData.append("hookPackCount", hookPackCount);
     formData.append("releaseMode", releaseMode);
+    formData.append("storyLength", storyLength);
     
     createMutation.mutate(formData);
   };
@@ -348,6 +350,23 @@ function CreateTransformationForm({ onSuccess }: { onSuccess: () => void }) {
                 How cards are released to viewers
               </p>
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="storyLength">Story Length</Label>
+            <Select value={storyLength} onValueChange={setStoryLength}>
+              <SelectTrigger data-testid="select-story-length">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="short">Short (~8 cards, ~1 week)</SelectItem>
+                <SelectItem value="medium">Medium (~16 cards, ~2 weeks)</SelectItem>
+                <SelectItem value="long">Long (~24 cards, ~3-4 weeks)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Controls how many story cards are generated from your content
+            </p>
           </div>
           
           <Button
