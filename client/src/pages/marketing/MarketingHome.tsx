@@ -170,7 +170,7 @@ export default function MarketingHome() {
                 <span className="text-white/80">This is how stories are experienced now</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-semibold tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
                 <span className="block text-white">Turn any content into an</span>
                 <span className="block bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   interactive cinematic experience
