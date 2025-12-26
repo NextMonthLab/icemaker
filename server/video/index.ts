@@ -12,3 +12,11 @@ export {
   type KlingVideoResult,
   type VideoGenerationTask,
 } from "./kling";
+
+export {
+  isReplicateConfigured,
+  getReplicateModels,
+  generateVideoWithReplicate,
+  type ReplicateVideoRequest,
+  type ReplicateVideoResult,
+} from "./replicate";

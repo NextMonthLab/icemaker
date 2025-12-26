@@ -3685,15 +3685,30 @@ Output only the narration paragraph, nothing else.`;
     }
   });
 
-  // ============ VIDEO GENERATION (KLING) ROUTES ============
+  // ============ VIDEO GENERATION ROUTES ============
   
-  // Check if Kling is configured
+  // Check video providers configuration
   app.get("/api/video/config", async (req, res) => {
     try {
-      const { isKlingConfigured, getKlingModels } = await import("./video");
+      const { isKlingConfigured, getKlingModels, isReplicateConfigured, getReplicateModels } = await import("./video");
+      
+      const models: any[] = [];
+      const providers: string[] = [];
+      
+      if (isReplicateConfigured()) {
+        providers.push("replicate");
+        models.push(...getReplicateModels());
+      }
+      
+      if (isKlingConfigured()) {
+        providers.push("kling");
+        models.push(...getKlingModels().map(m => ({ ...m, provider: "kling" })));
+      }
+      
       res.json({
-        configured: isKlingConfigured(),
-        models: isKlingConfigured() ? getKlingModels() : [],
+        configured: providers.length > 0,
+        providers,
+        models,
       });
     } catch (error) {
       console.error("Error checking video config:", error);
@@ -3705,88 +3720,106 @@ Output only the narration paragraph, nothing else.`;
   app.post("/api/cards/:id/video/generate", requireAuth, async (req, res) => {
     try {
       const cardId = parseInt(req.params.id);
-      const { mode, model, duration, aspectRatio } = req.body;
+      const { mode, model, duration, aspectRatio, provider } = req.body;
       
       const card = await storage.getCard(cardId);
       if (!card) {
         return res.status(404).json({ message: "Card not found" });
       }
       
-      // Check admin permission
       if (!req.user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const { isKlingConfigured, startTextToVideoGeneration, startImageToVideoGeneration, estimateVideoCredits } = await import("./video");
+      const { 
+        isKlingConfigured, startTextToVideoGeneration, startImageToVideoGeneration,
+        isReplicateConfigured, generateVideoWithReplicate, getReplicateModels
+      } = await import("./video");
       
-      if (!isKlingConfigured()) {
-        return res.status(503).json({ message: "Video generation not configured: KLING_API_KEY is missing" });
+      const useReplicate = provider === "replicate" || 
+        (isReplicateConfigured() && getReplicateModels().some(m => m.id === model));
+      
+      if (!useReplicate && !isKlingConfigured()) {
+        return res.status(503).json({ message: "No video generation provider configured" });
       }
       
-      // Skip credit check for admin users (they use their own Kling API subscription)
-      if (!req.user?.isAdmin) {
-        const wallet = await storage.getCreditWallet(req.user.id);
-        const creditsNeeded = estimateVideoCredits(duration || 5, model || "kling-v1-6");
-        
-        if (!wallet || wallet.videoCredits < creditsNeeded) {
-          return res.status(402).json({ 
-            message: `Insufficient video credits. Need ${creditsNeeded}, have ${wallet?.videoCredits || 0}`,
-            creditsNeeded,
-            creditsAvailable: wallet?.videoCredits || 0,
-          });
-        }
+      if (useReplicate && !isReplicateConfigured()) {
+        return res.status(503).json({ message: "Replicate not configured: REPLICATE_API_TOKEN is missing" });
       }
       
-      // Set status to pending
       await storage.updateCard(cardId, {
         videoGenerationStatus: "pending",
         videoGenerationError: null,
-        videoGenerationModel: model || "kling-v1-6",
+        videoGenerationModel: model || "kling-v1.6-standard",
       });
       
-      let taskId: string;
-      
       try {
-        if (mode === "image-to-video" && card.generatedImageUrl) {
-          // Use image-to-video if card has a generated image
-          taskId = await startImageToVideoGeneration({
-            imageUrl: card.generatedImageUrl,
-            prompt: card.sceneDescription || card.title,
-            negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
-            aspectRatio: aspectRatio || "9:16",
-            duration: duration || 5,
-            model: model || "kling-v1-6",
-          });
-        } else {
-          // Use text-to-video
-          const prompt = card.sceneDescription || `${card.title}. ${card.sceneText}`;
-          taskId = await startTextToVideoGeneration({
+        const prompt = card.sceneDescription || `${card.title}. ${card.sceneText}`;
+        const imageUrl = (mode === "image-to-video" && card.generatedImageUrl) ? card.generatedImageUrl : undefined;
+        
+        if (useReplicate) {
+          console.log(`[Video] Using Replicate provider with model: ${model}`);
+          
+          const result = await generateVideoWithReplicate({
             prompt,
+            imageUrl,
             negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
             aspectRatio: aspectRatio || "9:16",
             duration: duration || 5,
-            model: model || "kling-v1-6",
+            model: model || "kling-v1.6-standard",
           });
+          
+          if (result.status === "completed" && result.videoUrl) {
+            const updatedCard = await storage.updateCard(cardId, {
+              generatedVideoUrl: result.videoUrl,
+              videoGenerated: true,
+              videoGenerationStatus: "completed",
+              videoGenerationMode: imageUrl ? "image-to-video" : "text-to-video",
+              videoGeneratedAt: new Date(),
+            });
+            
+            return res.json({
+              status: "completed",
+              videoUrl: result.videoUrl,
+              card: updatedCard,
+            });
+          } else {
+            await storage.updateCard(cardId, {
+              videoGenerationStatus: "failed",
+              videoGenerationError: result.error || "Video generation failed",
+            });
+            return res.status(500).json({ message: result.error || "Video generation failed" });
+          }
+        } else {
+          let taskId: string;
+          if (imageUrl) {
+            taskId = await startImageToVideoGeneration({
+              imageUrl,
+              prompt,
+              negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+              aspectRatio: aspectRatio || "9:16",
+              duration: duration || 5,
+              model: model || "kling-v1-6",
+            });
+          } else {
+            taskId = await startTextToVideoGeneration({
+              prompt,
+              negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+              aspectRatio: aspectRatio || "9:16",
+              duration: duration || 5,
+              model: model || "kling-v1-6",
+            });
+          }
+          
+          const actualMode = imageUrl ? "image-to-video" : "text-to-video";
+          const updatedCard = await storage.updateCard(cardId, {
+            videoGenerationTaskId: taskId,
+            videoGenerationMode: actualMode,
+            videoGenerationStatus: "processing",
+          });
+          
+          res.json({ taskId, card: updatedCard });
         }
-        
-        // Determine actual mode used
-        const actualMode = (mode === "image-to-video" && card.generatedImageUrl) ? "image-to-video" : "text-to-video";
-        
-        // Update card with task ID and mode
-        const updatedCard = await storage.updateCard(cardId, {
-          videoGenerationTaskId: taskId,
-          videoGenerationMode: actualMode,
-          videoGenerationStatus: "processing",
-        });
-        
-        // Deduct credits
-        await storage.spendCredits(req.user.id, "video", creditsNeeded);
-        
-        res.json({
-          taskId,
-          card: updatedCard,
-          creditsUsed: creditsNeeded,
-        });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to start video generation";
         await storage.updateCard(cardId, {
@@ -3795,9 +3828,9 @@ Output only the narration paragraph, nothing else.`;
         });
         throw err;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting video generation:", error);
-      res.status(500).json({ message: "Error starting video generation" });
+      res.status(500).json({ message: error.message || "Error starting video generation" });
     }
   });
   

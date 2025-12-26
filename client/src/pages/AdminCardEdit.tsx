@@ -82,9 +82,15 @@ export default function AdminCardEdit() {
     },
   });
   
-  const [videoModel, setVideoModel] = useState("kling-v1-6");
+  const [videoModel, setVideoModel] = useState("");
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
   const [videoMode, setVideoMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
+
+  useEffect(() => {
+    if (videoConfig?.models?.length > 0 && !videoModel) {
+      setVideoModel(videoConfig.models[0].id);
+    }
+  }, [videoConfig, videoModel]);
 
   useEffect(() => {
     if (card) {
@@ -306,7 +312,11 @@ export default function AdminCardEdit() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["card", cardId] });
-      toast({ title: "Video generation started!", description: `Task ID: ${data.taskId}` });
+      if (data.status === "completed") {
+        toast({ title: "Video ready!", description: "Your video has been generated successfully." });
+      } else {
+        toast({ title: "Video generation started!", description: data.taskId ? `Task ID: ${data.taskId}` : "Processing..." });
+      }
     },
     onError: (error: any) => {
       toast({ title: "Video generation failed", description: error.message, variant: "destructive" });
@@ -785,13 +795,13 @@ export default function AdminCardEdit() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Video className="w-5 h-5" />
-                Video Generation (Kling AI)
+                Video Generation
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {!videoConfig?.configured ? (
                 <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
-                  Video generation is not configured. Set up KLING_API_KEY to enable AI video generation.
+                  Video generation is not configured. Set up REPLICATE_API_TOKEN or KLING_API_KEY to enable AI video generation.
                 </div>
               ) : (
                 <>
@@ -828,9 +838,12 @@ export default function AdminCardEdit() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {videoConfig?.models?.map((m: { id: string; name: string; description: string }) => (
+                          {videoConfig?.models?.map((m: { id: string; name: string; description: string; provider?: string }) => (
                             <SelectItem key={m.id} value={m.id}>
-                              {m.name}
+                              <div className="flex flex-col">
+                                <span>{m.name}</span>
+                                <span className="text-xs text-muted-foreground">{m.description}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
