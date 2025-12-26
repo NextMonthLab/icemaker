@@ -435,10 +435,12 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
   const ext = path.extname(filePath).toLowerCase();
   
   if (ext === ".pdf") {
-    const pdfParse = require("pdf-parse");
+    const { PDFParse } = await import("pdf-parse");
     const buffer = fs.readFileSync(filePath);
-    const data = await pdfParse(buffer);
-    return data.text;
+    const parser = new PDFParse({ data: buffer });
+    const textResult = await parser.getText();
+    await parser.destroy();
+    return textResult.text;
   }
   
   if ([".txt", ".md", ".fountain"].includes(ext)) {
