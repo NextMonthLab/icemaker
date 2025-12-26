@@ -3,6 +3,7 @@ import { StageArtifacts, StageStatuses, TransformationJob, SourceType } from "@s
 import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
+import { harvestImagesFromUrl, DownloadedImage } from "../imageExtractor";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -592,9 +593,79 @@ export async function runPipeline(jobId: number, sourceText: string): Promise<nu
   await stage3_extractWorld(ctx);
   await stage4_shapeMoments(ctx);
   const universeId = await stage5_craftExperience(ctx);
+  
+  // Harvest images from source URL if available
+  if (job?.sourceUrl && universeId && job.userId) {
+    await harvestAndAssignImages(job.sourceUrl, universeId, job.userId, ctx.cardPlan || []);
+  }
 
   console.log(`[Pipeline] Job ${jobId} completed, created universe ${universeId}`);
   return universeId;
+}
+
+async function harvestAndAssignImages(
+  sourceUrl: string,
+  universeId: number,
+  userId: number,
+  cardPlan: Array<{ dayIndex: number; title: string; intent?: string; sceneText?: string; captions?: string[]; imagePrompt?: string; }>
+): Promise<void> {
+  try {
+    console.log(`[Pipeline] Harvesting images from ${sourceUrl}`);
+    
+    const harvestedImages = await harvestImagesFromUrl(sourceUrl, universeId, 15);
+    
+    if (harvestedImages.length === 0) {
+      console.log(`[Pipeline] No images found at source URL`);
+      return;
+    }
+    
+    console.log(`[Pipeline] Harvested ${harvestedImages.length} images, assigning to cards`);
+    
+    const cards = await storage.getCardsByUniverse(universeId);
+    
+    for (let i = 0; i < cards.length && i < harvestedImages.length; i++) {
+      const card = cards[i];
+      const image = harvestedImages[i];
+      
+      let relevanceScore = image.relevanceScore;
+      
+      const cardText = `${card.title} ${card.sceneText || ''} ${(card.captions || []).join(' ')}`.toLowerCase();
+      const imageText = `${image.altText || ''} ${image.caption || ''}`.toLowerCase();
+      
+      if (imageText && cardText) {
+        const cardWords = cardText.split(/\s+/).filter(w => w.length > 3);
+        const imageWords = imageText.split(/\s+/).filter(w => w.length > 3);
+        const overlap = cardWords.filter(w => imageWords.includes(w)).length;
+        if (overlap > 0) {
+          relevanceScore = Math.min(100, relevanceScore + overlap * 5);
+        }
+      }
+      
+      await storage.createCardMediaAsset({
+        cardId: card.id,
+        userId,
+        mediaType: 'image',
+        storageKey: image.storageKey,
+        originalFilename: image.originalUrl.split('/').pop() || 'scraped-image',
+        mimeType: image.mimeType,
+        sizeBytes: image.sizeBytes,
+        width: image.width,
+        height: image.height,
+        isActive: true,
+        source: 'scraped',
+        sourceUrl: image.originalUrl,
+        altText: image.altText,
+        caption: image.caption,
+        relevanceScore,
+      });
+      
+      await storage.updateStorageUsage(userId, image.sizeBytes, 1, 0);
+    }
+    
+    console.log(`[Pipeline] Assigned ${Math.min(cards.length, harvestedImages.length)} images to cards`);
+  } catch (error) {
+    console.error(`[Pipeline] Error harvesting images:`, error);
+  }
 }
 
 export async function extractTextFromFile(filePath: string): Promise<string> {
