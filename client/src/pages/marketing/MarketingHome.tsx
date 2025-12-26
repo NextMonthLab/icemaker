@@ -140,11 +140,11 @@ export default function MarketingHome() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/login?signup=true">
+            <a href="#how-it-works">
               <Button className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20" data-testid="button-signup">
                 Get Started
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </header>
@@ -220,7 +220,7 @@ export default function MarketingHome() {
         </section>
 
         {/* What is NextScene - Pipeline Visualization */}
-        <section className="py-24 px-6 relative">
+        <section id="how-it-works" className="py-24 px-6 relative scroll-mt-24">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-neutral-950 to-black" />
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">

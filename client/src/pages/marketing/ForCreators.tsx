@@ -54,11 +54,11 @@ export default function ForCreators() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/login?signup=true">
+            <a href="#features">
               <Button className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white border-0 shadow-lg shadow-purple-500/25" data-testid="button-signup">
                 Get Started
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </header>
@@ -103,7 +103,7 @@ export default function ForCreators() {
         </section>
 
         {/* Features */}
-        <section className="py-24 px-6 relative">
+        <section id="features" className="py-24 px-6 relative scroll-mt-24">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-neutral-950 to-black" />
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
