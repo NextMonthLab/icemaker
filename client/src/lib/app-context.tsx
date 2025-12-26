@@ -21,6 +21,23 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   const loadDefaultUniverse = async () => {
     try {
       const universes = await api.getUniverses();
+      
+      // Check for universe query param in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const universeParam = urlParams.get("universe");
+      
+      if (universeParam) {
+        // Try to match by ID or slug
+        const matchedUniverse = universes.find(
+          u => u.id.toString() === universeParam || u.slug === universeParam
+        );
+        if (matchedUniverse) {
+          setUniverseState(matchedUniverse);
+          setLoading(false);
+          return;
+        }
+      }
+      
       // Only auto-select if there's exactly one universe
       if (universes.length === 1) {
         setUniverseState(universes[0]);
@@ -35,6 +52,12 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
   const setUniverse = (newUniverse: Universe | null) => {
     setUniverseState(newUniverse);
+    // Update URL when universe changes
+    if (newUniverse) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("universe", newUniverse.slug || newUniverse.id.toString());
+      window.history.replaceState({}, "", url.toString());
+    }
   };
 
   return (
