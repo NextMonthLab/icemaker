@@ -2129,21 +2129,45 @@ export async function registerRoutes(
     }
   });
   
-  // Compose prompt for a card (combines universe style + continuity + card prompt)
+  // Compose prompt for a card (combines universe style + design guide + continuity + card prompt)
   const composeImagePrompt = async (
     universe: schema.Universe, 
     card: schema.Card
   ): Promise<string> => {
     const parts: string[] = [];
+    const dg = universe.designGuide as schema.DesignGuide | null;
     
-    // 1. Universe base prompt
-    if (universe.visualStyle?.basePrompt) {
+    // 1. Design Guide base prompt (new system - takes priority)
+    if (dg?.basePrompt) {
+      parts.push(dg.basePrompt);
+    } else if (universe.visualStyle?.basePrompt) {
       parts.push(universe.visualStyle.basePrompt);
     }
     
-    // 2. Universe visual continuity (art direction, palette, camera language, lighting/texture rules)
+    // 2. Design Guide style elements
+    if (dg) {
+      const styleParts: string[] = [];
+      if (dg.artStyle) styleParts.push(`Style: ${dg.artStyle}`);
+      if (dg.colorPalette) styleParts.push(`Colors: ${dg.colorPalette}`);
+      if (dg.moodTone) styleParts.push(`Mood: ${dg.moodTone}`);
+      if (dg.cameraStyle) styleParts.push(`Camera: ${dg.cameraStyle}`);
+      if (dg.lightingNotes) styleParts.push(`Lighting: ${dg.lightingNotes}`);
+      if (styleParts.length > 0) {
+        parts.push(styleParts.join(". "));
+      }
+      // Style keywords
+      if (dg.styleKeywords?.length) {
+        parts.push(dg.styleKeywords.join(", "));
+      }
+      // Required elements
+      if (dg.requiredElements?.length) {
+        parts.push(`Include: ${dg.requiredElements.join(", ")}`);
+      }
+    }
+    
+    // 3. Fallback to legacy visual continuity (art direction, palette, camera language, lighting/texture rules)
     const vc = universe.visualContinuity;
-    if (vc) {
+    if (vc && !dg) {
       const continuityParts: string[] = [];
       if (vc.artDirection) continuityParts.push(`Art direction: ${vc.artDirection}`);
       if (vc.palette) continuityParts.push(`Color palette: ${vc.palette}`);
@@ -2155,7 +2179,7 @@ export async function registerRoutes(
       }
     }
     
-    // 3. Referenced character visual profiles
+    // 4. Referenced character visual profiles
     if (card.primaryCharacterIds && card.primaryCharacterIds.length > 0) {
       for (const charId of card.primaryCharacterIds) {
         const character = await storage.getCharacter(charId);
@@ -2165,7 +2189,7 @@ export async function registerRoutes(
       }
     }
     
-    // 4. Referenced location continuity
+    // 5. Referenced location continuity
     if (card.locationId) {
       const location = await storage.getLocation(card.locationId);
       if (location?.continuity?.continuityDescription) {
@@ -2173,14 +2197,14 @@ export async function registerRoutes(
       }
     }
     
-    // 5. Card-specific prompt (prefer explicit prompt over scene_description)
+    // 6. Card-specific prompt (prefer explicit prompt over scene_description)
     if (card.imageGeneration?.prompt) {
       parts.push(card.imageGeneration.prompt);
     } else if (card.sceneDescription) {
       parts.push(card.sceneDescription);
     }
     
-    // 6. Shot type and lighting overrides
+    // 7. Shot type and lighting overrides
     if (card.imageGeneration?.shotType) {
       parts.push(`Shot type: ${card.imageGeneration.shotType}`);
     }
@@ -2188,18 +2212,36 @@ export async function registerRoutes(
       parts.push(`Lighting: ${card.imageGeneration.lighting}`);
     }
     
-    return parts.join(". ");
+    // 8. Add minimum quality enhancers if prompt is sparse
+    let prompt = parts.join(". ");
+    if (prompt.length < 100) {
+      const qualityTerms = ["high quality", "detailed", "professional"];
+      const hasQuality = qualityTerms.some(t => prompt.toLowerCase().includes(t));
+      if (!hasQuality) {
+        prompt += ". High quality, detailed, professional lighting";
+      }
+    }
+    
+    return prompt;
   };
   
   const composeNegativePrompt = (universe: schema.Universe, card: schema.Card): string => {
     const parts: string[] = [];
+    const dg = universe.designGuide as schema.DesignGuide | null;
     
-    // Universe negative prompt
-    if (universe.visualStyle?.negativePrompt) {
+    // Design Guide negative prompt (takes priority)
+    if (dg?.negativePrompt) {
+      parts.push(dg.negativePrompt);
+    } else if (universe.visualStyle?.negativePrompt) {
       parts.push(universe.visualStyle.negativePrompt);
     }
     
-    // Universe taboo list (from visual continuity)
+    // Design Guide avoid list
+    if (dg?.avoidList?.length) {
+      parts.push(...dg.avoidList);
+    }
+    
+    // Universe taboo list (from visual continuity - legacy)
     if (universe.visualContinuity?.tabooList && universe.visualContinuity.tabooList.length > 0) {
       parts.push(...universe.visualContinuity.tabooList);
     }
@@ -2207,6 +2249,11 @@ export async function registerRoutes(
     // Card-specific negative prompt
     if (card.imageGeneration?.negativePrompt) {
       parts.push(card.imageGeneration.negativePrompt);
+    }
+    
+    // Always include baseline quality negatives
+    if (parts.length === 0) {
+      parts.push("blurry", "low quality", "distorted", "ugly", "deformed");
     }
     
     return parts.join(", ");
