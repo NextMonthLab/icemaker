@@ -4129,5 +4129,196 @@ Output only the narration paragraph, nothing else.`;
     }
   });
 
+  // ============ CARD MEDIA UPLOADS ============
+  
+  // Get user storage usage and quota
+  app.get("/api/storage/usage", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const usage = await storage.getOrCreateUserStorageUsage(userId);
+      const entitlements = await storage.getEntitlements(userId);
+      
+      res.json({
+        bytesUsed: usage.totalBytesUsed,
+        quotaBytes: entitlements?.storageQuotaBytes || 0,
+        canUploadMedia: entitlements?.canUploadMedia || false,
+        imageCount: usage.imageCount,
+        videoCount: usage.videoCount,
+      });
+    } catch (error) {
+      console.error("Error getting storage usage:", error);
+      res.status(500).json({ message: "Error getting storage usage" });
+    }
+  });
+  
+  // Request presigned upload URL (with tier/quota validation)
+  app.post("/api/cards/:cardId/media/request-upload", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.cardId);
+      const userId = req.user!.id;
+      const { name, size, contentType, mediaType } = req.body;
+      
+      // Validate card exists
+      const card = await storage.getCard(cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // Check admin access
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Check tier allows uploads
+      const entitlements = await storage.getEntitlements(userId);
+      if (!entitlements?.canUploadMedia) {
+        return res.status(403).json({ 
+          message: "Media uploads require a Pro or Business subscription",
+          code: "UPGRADE_REQUIRED",
+        });
+      }
+      
+      // Validate media type
+      const type = mediaType as 'image' | 'video';
+      if (!['image', 'video'].includes(type)) {
+        return res.status(400).json({ message: "Invalid media type" });
+      }
+      
+      // Check file size limits
+      const { MEDIA_SIZE_LIMITS, ALLOWED_MEDIA_TYPES } = await import("@shared/schema");
+      if (size > MEDIA_SIZE_LIMITS[type]) {
+        const limitMB = MEDIA_SIZE_LIMITS[type] / (1024 * 1024);
+        return res.status(400).json({ 
+          message: `File too large. Maximum ${type} size is ${limitMB} MB`,
+          code: "FILE_TOO_LARGE",
+        });
+      }
+      
+      // Validate MIME type
+      if (!ALLOWED_MEDIA_TYPES[type].includes(contentType)) {
+        return res.status(400).json({ 
+          message: `Invalid file type. Allowed: ${ALLOWED_MEDIA_TYPES[type].join(', ')}`,
+          code: "INVALID_FILE_TYPE",
+        });
+      }
+      
+      // Check quota
+      const usage = await storage.getOrCreateUserStorageUsage(userId);
+      const quotaBytes = entitlements.storageQuotaBytes || 0;
+      if (usage.totalBytesUsed + size > quotaBytes) {
+        const usedGB = (usage.totalBytesUsed / (1024 * 1024 * 1024)).toFixed(2);
+        const quotaGB = (quotaBytes / (1024 * 1024 * 1024)).toFixed(2);
+        return res.status(403).json({ 
+          message: `Storage quota exceeded. Used ${usedGB} GB of ${quotaGB} GB`,
+          code: "QUOTA_EXCEEDED",
+        });
+      }
+      
+      // Get presigned upload URL
+      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
+      const objectStorage = new ObjectStorageService();
+      const uploadURL = await objectStorage.getObjectEntityUploadURL();
+      const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+      
+      res.json({
+        uploadURL,
+        objectPath,
+        metadata: { name, size, contentType, mediaType },
+      });
+    } catch (error) {
+      console.error("Error requesting upload URL:", error);
+      res.status(500).json({ message: "Error generating upload URL" });
+    }
+  });
+  
+  // Complete upload - record in database
+  app.post("/api/cards/:cardId/media/complete", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.cardId);
+      const userId = req.user!.id;
+      const { objectPath, name, size, contentType, mediaType, width, height, duration } = req.body;
+      
+      // Validate card exists
+      const card = await storage.getCard(cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // Check admin access
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Create media asset record
+      const asset = await storage.createCardMediaAsset({
+        cardId,
+        userId,
+        mediaType: mediaType as 'image' | 'video',
+        storageKey: objectPath,
+        originalFilename: name,
+        mimeType: contentType,
+        sizeBytes: size,
+        width,
+        height,
+        duration,
+        isActive: true,
+      });
+      
+      // Update storage usage
+      const deltaImages = mediaType === 'image' ? 1 : 0;
+      const deltaVideos = mediaType === 'video' ? 1 : 0;
+      await storage.updateStorageUsage(userId, size, deltaImages, deltaVideos);
+      
+      res.json(asset);
+    } catch (error) {
+      console.error("Error completing upload:", error);
+      res.status(500).json({ message: "Error recording upload" });
+    }
+  });
+  
+  // Get media assets for a card
+  app.get("/api/cards/:cardId/media", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.cardId);
+      const assets = await storage.getCardMediaAssets(cardId);
+      res.json(assets);
+    } catch (error) {
+      console.error("Error getting card media:", error);
+      res.status(500).json({ message: "Error getting card media" });
+    }
+  });
+  
+  // Delete media asset
+  app.delete("/api/cards/:cardId/media/:assetId", requireAuth, async (req, res) => {
+    try {
+      const assetId = parseInt(req.params.assetId);
+      const userId = req.user!.id;
+      
+      // Check admin access
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Get asset
+      const asset = await storage.getCardMediaAsset(assetId);
+      if (!asset) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+      
+      // Soft delete asset
+      await storage.softDeleteCardMediaAsset(assetId);
+      
+      // Update storage usage (reclaim space)
+      const deltaImages = asset.mediaType === 'image' ? -1 : 0;
+      const deltaVideos = asset.mediaType === 'video' ? -1 : 0;
+      await storage.updateStorageUsage(asset.userId, -asset.sizeBytes, deltaImages, deltaVideos);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting media:", error);
+      res.status(500).json({ message: "Error deleting media" });
+    }
+  });
+
   return httpServer;
 }
