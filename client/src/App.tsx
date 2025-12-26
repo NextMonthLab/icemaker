@@ -3,9 +3,15 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { AppContextProvider } from "@/lib/app-context";
 import NotFound from "@/pages/not-found";
+
+import MarketingHome from "@/pages/marketing/MarketingHome";
+import ForNews from "@/pages/marketing/ForNews";
+import ForBusiness from "@/pages/marketing/ForBusiness";
+import ForInfluencer from "@/pages/marketing/ForInfluencer";
+import ForEducator from "@/pages/marketing/ForEducator";
 
 import Home from "@/pages/Home";
 import Today from "@/pages/Today";
@@ -27,31 +33,78 @@ import Experience from "@/pages/Experience";
 import ExportPage from "@/pages/ExportPage";
 import Journal from "@/pages/Journal";
 import BecomeCreator from "@/pages/BecomeCreator";
+import Onboarding from "@/pages/Onboarding";
+import RequireAuth from "@/components/RequireAuth";
+
+function withAuth<P extends object>(Component: React.ComponentType<P>) {
+  return function ProtectedRoute(props: P) {
+    return (
+      <RequireAuth>
+        <Component {...props} />
+      </RequireAuth>
+    );
+  };
+}
+
+const ProtectedHome = withAuth(Home);
+const ProtectedToday = withAuth(Today);
+const ProtectedCatchUp = withAuth(CatchUp);
+const ProtectedChat = withAuth(Chat);
+const ProtectedJournal = withAuth(Journal);
+const ProtectedProfile = withAuth(Profile);
+const ProtectedBecomeCreator = withAuth(BecomeCreator);
+const ProtectedAdmin = withAuth(Admin);
+const ProtectedAdminCreate = withAuth(AdminCreate);
+const ProtectedAdminImport = withAuth(AdminImport);
+const ProtectedAdminAudio = withAuth(AdminAudio);
+const ProtectedAdminCardDetail = withAuth(AdminCardDetail);
+const ProtectedAdminCardEdit = withAuth(AdminCardEdit);
+const ProtectedTransformationsPage = withAuth(TransformationsPage);
+const ProtectedTransformationDetailPage = withAuth(TransformationDetailPage);
+const ProtectedCharacterCreatorPage = withAuth(CharacterCreatorPage);
+const ProtectedAdminUniverseDetail = withAuth(AdminUniverseDetail);
+const ProtectedExportPage = withAuth(ExportPage);
 
 function Router() {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={user ? ProtectedHome : MarketingHome} />
+      <Route path="/for/news" component={ForNews} />
+      <Route path="/for/business" component={ForBusiness} />
+      <Route path="/for/influencer" component={ForInfluencer} />
+      <Route path="/for/educator" component={ForEducator} />
+      <Route path="/app" component={ProtectedHome} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route path="/login" component={Login} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/today" component={Today} />
-      <Route path="/card/:id" component={Today} />
-      <Route path="/catch-up" component={CatchUp} />
-      <Route path="/chat" component={Chat} />
-      <Route path="/journal" component={Journal} />
+      <Route path="/profile" component={ProtectedProfile} />
+      <Route path="/today" component={ProtectedToday} />
+      <Route path="/card/:id" component={ProtectedToday} />
+      <Route path="/catch-up" component={ProtectedCatchUp} />
+      <Route path="/chat" component={ProtectedChat} />
+      <Route path="/journal" component={ProtectedJournal} />
       <Route path="/story/:slug" component={Experience} />
-      <Route path="/become-creator" component={BecomeCreator} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/admin/create" component={AdminCreate} />
-      <Route path="/admin/import" component={AdminImport} />
-      <Route path="/admin/audio" component={AdminAudio} />
-      <Route path="/admin/cards/:id" component={AdminCardDetail} />
-      <Route path="/admin/cards/:id/edit" component={AdminCardEdit} />
-      <Route path="/admin/transformations" component={TransformationsPage} />
-      <Route path="/admin/transformations/:id" component={TransformationDetailPage} />
-      <Route path="/admin/characters/new" component={CharacterCreatorPage} />
-      <Route path="/admin/universes/:id" component={AdminUniverseDetail} />
-      <Route path="/admin/universes/:id/export" component={ExportPage} />
+      <Route path="/become-creator" component={ProtectedBecomeCreator} />
+      <Route path="/admin" component={ProtectedAdmin} />
+      <Route path="/admin/create" component={ProtectedAdminCreate} />
+      <Route path="/admin/import" component={ProtectedAdminImport} />
+      <Route path="/admin/audio" component={ProtectedAdminAudio} />
+      <Route path="/admin/cards/:id" component={ProtectedAdminCardDetail} />
+      <Route path="/admin/cards/:id/edit" component={ProtectedAdminCardEdit} />
+      <Route path="/admin/transformations" component={ProtectedTransformationsPage} />
+      <Route path="/admin/transformations/:id" component={ProtectedTransformationDetailPage} />
+      <Route path="/admin/characters/new" component={ProtectedCharacterCreatorPage} />
+      <Route path="/admin/universes/:id" component={ProtectedAdminUniverseDetail} />
+      <Route path="/admin/universes/:id/export" component={ProtectedExportPage} />
       <Route component={NotFound} />
     </Switch>
   );

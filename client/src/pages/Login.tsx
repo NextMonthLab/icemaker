@@ -27,14 +27,15 @@ export default function Login() {
           title: "Account created",
           description: "Welcome to StoryFlix!",
         });
+        setLocation("/onboarding");
       } else {
         await login(username, password);
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
+        setLocation("/");
       }
-      setLocation("/");
     } catch (error: any) {
       toast({
         title: "Error",
