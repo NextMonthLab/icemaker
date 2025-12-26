@@ -952,6 +952,9 @@ export type TtsUsage = typeof ttsUsage.$inferSelect;
 // Media asset types
 export type MediaAssetType = 'image' | 'video';
 
+// Media asset source type
+export type MediaAssetSource = 'uploaded' | 'scraped' | 'ai_generated';
+
 // Card media assets (user-uploaded images/videos for cards)
 export const cardMediaAssets = pgTable("card_media_assets", {
   id: serial("id").primaryKey(),
@@ -966,6 +969,13 @@ export const cardMediaAssets = pgTable("card_media_assets", {
   height: integer("height"),
   duration: integer("duration"), // For videos, in seconds
   isActive: boolean("is_active").default(true).notNull(), // Soft delete for quota reclaim
+  // Source tracking for scraped images
+  source: text("source").$type<MediaAssetSource>().default('uploaded').notNull(),
+  sourceUrl: text("source_url"), // Original URL for scraped images
+  attribution: text("attribution"), // Credit/source text
+  altText: text("alt_text"), // Alt text from original image
+  caption: text("caption"), // Caption or nearby text context
+  relevanceScore: integer("relevance_score"), // 0-100 matching score for auto-assignment
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
