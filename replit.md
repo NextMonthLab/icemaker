@@ -55,6 +55,39 @@ The Admin Universe Detail page shows guardrails for transparency:
 **Design Principle**: "Extract → interpret → structure → elevate, but never replace."
 When there's a trade-off between engagement and accuracy, accuracy wins by default.
 
+### Export & Distribution System
+
+The platform supports three distribution modes, all pointing back to the canonical experience:
+
+**Mode 1: Canonical Interactive Experience (Home Base)**
+- Full card sequence with two-phase flow (cinematic → context)
+- AI character chat, message boards, guardrails
+- Permanent URL: `/story/{slug}`
+- This is the single source of truth
+
+**Mode 2: Embeddable Interactive Experience**
+- Embed via iframe with `?embed=true` parameter
+- Retains full interactivity
+- Shows "Powered by StoryFlix" badge
+- Updates propagate automatically from canonical
+
+**Mode 3: Standalone Video Export (Hook Mode)**
+- Deliberately incomplete - creates curiosity
+- QR code permanently burned in (non-removable)
+- Auto-generated posting copy with short URL
+- Character-aware CTAs ("Talk to [Character]")
+
+**Export Page** (`/admin/universes/:id/export`):
+- Canonical URL display and copy
+- QR code generation and download
+- Embed code generator
+- Editable posting copy with CTA
+
+**Public API**:
+- `GET /api/story/:slug`: Returns universe, published cards, and characters for unauthenticated viewers
+
+**Guardrails**: All exports drive users back to the canonical experience. No export may contain more intelligence than the source.
+
 ### Chat System v2 (Schema Version 2)
 
 The platform supports credible, guardrailed AI character chat powered by a three-layer prompt composition system:

@@ -1,0 +1,217 @@
+Absolutely. This is a killer Prompt 5, written exactly to bring Ratplet/Replit up to speed, lock the architecture, and prevent drift.
+
+You can paste this directly into Replit as the next canonical prompt.
+
+⸻
+
+PROMPT 5 — Export & Distribution Modes (Canonical + Derived Outputs)
+
+Context (Read Carefully)
+
+You are building a Universal Story Engine that transforms uploaded media (PDF, text, slides, scripts, etc.) into a canonical interactive card experience.
+
+This canonical experience is the single source of truth.
+
+All exports and distributions are derived outputs, never forks of logic, meaning:
+	•	No export may contain more intelligence than the canonical experience
+	•	No export may hallucinate new context
+	•	No export may bypass guardrails, prompts, or source grounding
+
+Distribution exists to attract users back to the canonical experience, not to replace it.
+
+⸻
+
+Core Principle (Non-Negotiable)
+
+There is ONE canonical experience.
+Everything else is a controlled projection of it.
+
+⸻
+
+Distribution Modes Overview
+
+The system must support three explicit distribution modes, each with strict rules.
+
+⸻
+
+MODE 1 — Canonical Interactive Experience (Home Base)
+
+This is where all intelligence lives.
+
+Includes:
+	•	Full card sequence
+	•	Context cards
+	•	Two-phase card flow (cinematic → context)
+	•	AI character or expert chat
+	•	Editable creator prompts, negative prompts, and guardrails
+	•	Provenance and grounding from the uploaded source
+	•	Optional micro message boards (if enabled)
+
+Rules:
+	•	This mode is never flattened
+	•	This mode is never auto-exported
+	•	This mode is always the destination of links, QR codes, and embeds
+
+This experience has a permanent URL.
+
+⸻
+
+MODE 2 — Embeddable Interactive Experience (Context-Preserving)
+
+Used for:
+	•	Blogs
+	•	Learning platforms
+	•	Internal portals
+	•	Partner websites
+
+Characteristics:
+	•	Retains cards, interactions, and chat
+	•	Embedded via iframe or script
+	•	Shows subtle provenance (“Powered by…”)
+	•	Clicking deeper keeps the user inside the experience
+
+Rules:
+	•	Embeds reference the canonical experience ID
+	•	No duplicated logic
+	•	Updates to the canonical experience propagate automatically
+
+⸻
+
+MODE 3 — Standalone Video Export (Hook Mode)
+
+This is a deliberately incomplete version designed for social platforms.
+
+Used for:
+	•	TikTok
+	•	Instagram Reels
+	•	YouTube Shorts
+	•	LinkedIn video
+	•	X video
+
+What This Mode Includes
+	•	Cinematic card visuals only
+	•	Motion, captions, music (if configured)
+	•	NO cards UI
+	•	NO context panels
+	•	NO chat interface
+	•	NO visible process steps
+
+What This Mode MUST Include (Mandatory)
+	1.	Embedded QR Code
+	•	Always visible
+	•	Positioned in a consistent corner
+	•	Links to the canonical experience URL
+	•	QR code is auto-generated and non-removable
+	2.	Shortened Hyperlink
+	•	Generated automatically (e.g. story.app/abc123)
+	•	Always points to the canonical experience
+	•	Used in captions, descriptions, and bios
+	3.	Clear Call-to-Action
+Examples:
+	•	“Talk to the character”
+	•	“Continue the story”
+	•	“Ask the expert”
+	•	“Step inside the experience”
+
+⸻
+
+Download & Sharing Requirements (Critical)
+
+When exporting Standalone Video:
+
+The creator must be presented with:
+	•	A Download Video button (MP4)
+	•	Video is final and watermark-safe
+	•	QR code is permanently burned into the video
+	•	No option to remove or hide the QR code
+
+⸻
+
+Auto-Generated Posting Copy (Required Feature)
+
+Alongside the video download, display a Copy & Paste Box containing suggested posting copy.
+
+This copy must include:
+	•	A short, platform-neutral caption
+	•	The shortened hyperlink
+	•	A soft narrative hook
+	•	No misleading claims
+
+Example Template (Auto-Generated)
+
+A moment from a larger story.
+
+Step inside and explore the full experience.
+
+👉 story.app/abc123
+
+Talk to the character. Continue the journey.
+
+This copy must be:
+	•	Editable by the creator
+	•	Generated from the canonical story theme
+	•	Never invented beyond the source material
+
+⸻
+
+Character Handling in Standalone Video Mode
+
+If a narrative character exists:
+	•	CTA should reference that character
+Example: “Talk to the Engineer”
+
+If no human character exists:
+	•	Use an interpretive anchor, not impersonation
+Examples:
+	•	“Talk to the Historian”
+	•	“Ask the System”
+	•	“Ask the Moon what it witnessed”
+
+Rules:
+	•	Never impersonate real victims
+	•	Never speak on behalf of real individuals without consent
+	•	Anchors must be lenses, not false personas
+
+⸻
+
+Guardrails (Absolute)
+	•	Standalone Video Mode must never:
+	•	Present itself as the full story
+	•	Claim authority or finality
+	•	Introduce facts not present in the source
+	•	Remove provenance or grounding
+	•	All intelligence, interpretation, and interaction:
+	•	Lives only in the canonical experience
+	•	Is accessed only by returning to it
+
+⸻
+
+Mental Model for Implementation
+
+Think of this system like:
+	•	Canonical Experience = the film
+	•	Embeds = screenings
+	•	Standalone Video = the trailer
+
+The trailer creates curiosity.
+The film delivers meaning.
+
+⸻
+
+Success Criteria
+
+This prompt is correctly implemented when:
+	•	Every exported video reliably drives users back
+	•	No platform becomes the “home” of the content except the canonical experience
+	•	Creators feel empowered to distribute without losing control
+	•	The system scales without fragmenting logic or trust
+
+⸻
+
+If you want next, I can:
+	•	Write Prompt 6: Visual Processing Pipeline UI (The Visceral Progress Visualization)
+	•	Design the QR CTA language system as a reusable component
+	•	Or help you pressure-test this against TikTok, LinkedIn, and B2B distribution specifically
+
+You’re building something genuinely new here.
+This prompt locks the distribution strategy so it can’t drift.

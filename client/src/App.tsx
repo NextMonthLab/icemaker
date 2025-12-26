@@ -22,6 +22,8 @@ import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import AdminUniverseDetail from "@/pages/AdminUniverseDetail";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
+import Experience from "@/pages/Experience";
+import ExportPage from "@/pages/ExportPage";
 
 function Router() {
   return (
@@ -33,6 +35,7 @@ function Router() {
       <Route path="/card/:id" component={Today} />
       <Route path="/catch-up" component={CatchUp} />
       <Route path="/chat" component={Chat} />
+      <Route path="/story/:slug" component={Experience} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/create" component={AdminCreate} />
       <Route path="/admin/import" component={AdminImport} />
@@ -42,6 +45,7 @@ function Router() {
       <Route path="/admin/transformations" component={TransformationsPage} />
       <Route path="/admin/transformations/:id" component={TransformationDetailPage} />
       <Route path="/admin/universes/:id" component={AdminUniverseDetail} />
+      <Route path="/admin/universes/:id/export" component={ExportPage} />
       <Route component={NotFound} />
     </Switch>
   );

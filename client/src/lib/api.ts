@@ -55,6 +55,10 @@ class ApiClient {
     return this.request<Universe>(`/universes/${id}`);
   }
 
+  async getStoryBySlug(slug: string) {
+    return this.request<{ universe: Universe; cards: Card[]; characters: Character[] }>(`/story/${slug}`);
+  }
+
   async createUniverse(data: Partial<Universe>) {
     return this.request<Universe>("/universes", {
       method: "POST",

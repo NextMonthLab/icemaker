@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Eye, ImageIcon, Loader2, Plus, Video, Shield, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, Eye, ImageIcon, Loader2, Plus, Video, Shield, AlertTriangle, Share2 } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -81,12 +81,20 @@ export default function AdminUniverseDetail() {
             <h1 className="text-2xl font-bold" data-testid="text-universe-name">{universe.name}</h1>
             <p className="text-muted-foreground text-sm">{universe.description}</p>
           </div>
-          <Link href="/">
-            <Button variant="outline" className="gap-2">
-              <Eye className="w-4 h-4" />
-              View Story
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href={`/admin/universes/${universeId}/export`}>
+              <Button variant="outline" className="gap-2" data-testid="button-export">
+                <Share2 className="w-4 h-4" />
+                Export
+              </Button>
+            </Link>
+            <Link href={universe?.slug ? `/story/${universe.slug}` : "/"}>
+              <Button variant="outline" className="gap-2">
+                <Eye className="w-4 h-4" />
+                View Story
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

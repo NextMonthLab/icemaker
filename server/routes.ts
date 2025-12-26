@@ -209,6 +209,33 @@ export async function registerRoutes(
     }
   });
   
+  app.get("/api/story/:slug", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const universe = await storage.getUniverseBySlug(slug);
+      if (!universe) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      const cards = await storage.getCardsByUniverse(universe.id);
+      const characters = await storage.getCharactersByUniverse(universe.id);
+      
+      const now = new Date();
+      const publishedCards = cards
+        .filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
+        .sort((a, b) => a.dayIndex - b.dayIndex);
+      
+      res.json({
+        universe,
+        cards: publishedCards,
+        characters,
+      });
+    } catch (error) {
+      console.error("Error fetching story by slug:", error);
+      res.status(500).json({ message: "Error fetching story" });
+    }
+  });
+  
   app.post("/api/universes", requireAdmin, async (req, res) => {
     try {
       const validated = schema.insertUniverseSchema.parse(req.body);
