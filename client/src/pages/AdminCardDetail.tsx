@@ -2,12 +2,13 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Image as ImageIcon, Video, Loader2, CheckCircle, Clock, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Edit, Image as ImageIcon, Video, Loader2, CheckCircle, Clock, MapPin, Users, Film } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 export default function AdminCardDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export default function AdminCardDetail() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const cardId = parseInt(id || "0");
+  const [showVideo, setShowVideo] = useState(false);
 
   const { data: card, isLoading: cardLoading } = useQuery({
     queryKey: ["card", cardId],
@@ -99,6 +101,9 @@ export default function AdminCardDetail() {
   const hasPrompt = !!(card.sceneDescription || card.imageGeneration?.prompt);
   const primaryChars = characters?.filter(c => card.primaryCharacterIds?.includes(c.id)) || [];
   const location = locations?.find(l => l.id === card.locationId);
+  const hasVideo = card.videoGenerated && card.generatedVideoUrl && card.videoGenerationStatus === "completed";
+  const hasImage = !!displayImage;
+  const hasBothMediaTypes = hasImage && hasVideo;
 
   return (
     <Layout>
@@ -123,20 +128,62 @@ export default function AdminCardDetail() {
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Card Image</CardTitle>
+              <CardTitle className="text-lg">Card Media</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Media Toggle Buttons */}
+              {hasBothMediaTypes && (
+                <div className="flex gap-2">
+                  <Button
+                    variant={!showVideo ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowVideo(false)}
+                    className="flex-1 gap-2"
+                    data-testid="button-show-image"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Image
+                  </Button>
+                  <Button
+                    variant={showVideo ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowVideo(true)}
+                    className="flex-1 gap-2"
+                    data-testid="button-show-video"
+                  >
+                    <Film className="w-4 h-4" />
+                    Video
+                  </Button>
+                </div>
+              )}
+
               <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden relative">
-                {displayImage ? (
+                {showVideo && hasVideo ? (
+                  <video 
+                    src={card.generatedVideoUrl!} 
+                    className="w-full h-full object-cover" 
+                    controls 
+                    autoPlay 
+                    loop
+                    muted
+                    playsInline
+                    data-testid="video-preview"
+                  />
+                ) : displayImage ? (
                   <img src={displayImage} className="w-full h-full object-cover" alt={card.title} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
                   </div>
                 )}
-                {card.imageGenerated && (
+                {!showVideo && card.imageGenerated && (
                   <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" /> Image ready
+                  </div>
+                )}
+                {showVideo && hasVideo && (
+                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Video ready
                   </div>
                 )}
               </div>
