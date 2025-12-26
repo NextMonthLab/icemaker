@@ -1,0 +1,196 @@
+Perfect. Here’s a clean, decisive Replit prompt, rewritten to lock in the name NextScene and bring Ratplet fully up to speed on what it’s building, why it exists, and how the homepage + sub-pages should work.
+
+You can paste this straight into Replit.
+
+⸻
+
+🔹 REPLIT PROMPT: NextScene Homepage + Positioning Refinement
+
+Project Name
+
+NextScene
+
+Core Definition (read this first)
+
+NextScene is a meaning-to-experience engine.
+
+It transforms any structured content (scripts, PDFs, websites, decks, documents) into cinematic, interactive story cards, enhanced with:
+	•	AI-generated visuals (image/video)
+	•	Guardrailed AI character chat
+	•	Optional voice and music
+	•	Exportable and embeddable experiences
+
+The system is content-agnostic:
+	•	It works equally for creative storytelling and commercial/brand storytelling
+	•	The same engine powers both, with different presets and guardrails
+
+⸻
+
+1. Homepage Strategy (Universal Entry Point)
+
+Goal
+
+Create one universal homepage that explains the core value of NextScene clearly and emotionally, then routes users into three focused sub-pages.
+
+The homepage should not feel like SaaS.
+It should feel like:
+
+“This is how stories, knowledge, and brands are experienced now.”
+
+⸻
+
+Homepage Hero (proposed copy)
+
+Headline:
+Turn any content into an interactive cinematic experience
+
+Subheading:
+NextScene transforms scripts, documents, and websites into visual story cards your audience can explore, feel, and interact with.
+
+Primary CTA:
+Create a NextScene
+
+Secondary CTA:
+See how it works
+
+⸻
+
+Homepage Sections
+
+Section 1 – What is NextScene?
+Short, visual explanation of the pipeline (no technical jargon):
+	1.	Upload content (script, PDF, website, deck)
+	2.	NextScene extracts meaning, themes, and boundaries
+	3.	It builds a visual story with cards
+	4.	Characters can be spoken to, safely and in-context
+	5.	Experiences can be shared, embedded, or exported
+
+Use a simple step visualisation, not text-heavy.
+
+⸻
+
+Section 2 – Three Ways to Use NextScene
+Introduce three tiles that link to sub-pages:
+	1.	For Brands & Businesses
+“Turn your website into a story that sells itself.”
+	2.	For Creators & Filmmakers
+“Bring scripts and ideas to life, one moment at a time.”
+	3.	For Knowledge & Learning
+“Transform dense information into experiences people remember.”
+
+Each tile should link to its own page.
+
+⸻
+
+Section 3 – Why NextScene is Different
+Bulleted, punchy, non-hype:
+	•	Not just video. Interactive moments
+	•	Not generic AI. Guardrailed and grounded
+	•	Not passive content. Audiences can talk back
+	•	Not locked in. Export, embed, share
+
+⸻
+
+Section 4 – Trust & Control
+Important for credibility:
+	•	Creator-editable prompts
+	•	Explicit guardrails to prevent hallucination
+	•	Source-grounded AI chat
+	•	Human review before publishing (where required)
+
+⸻
+
+2. Sub-Pages (Three Focused Pages)
+
+A. NextScene for Brands & Businesses
+
+Hero copy:
+Turn your website into a cinematic story customers can explore
+
+Key points:
+	•	Enter a URL or upload documents
+	•	NextScene builds a visual product or brand story
+	•	Visitors can “talk to the brand” via AI character chat
+	•	Export as:
+	•	Embeddable experience
+	•	Shareable link
+	•	Standalone video with QR code back to the experience
+
+CTA:
+Create a Brand Story
+
+⸻
+
+B. NextScene for Creators & Filmmakers
+
+Hero copy:
+Your story, one moment at a time
+
+Key points:
+	•	Scripts become story cards (scenes or beats)
+	•	Cinematic visuals per card
+	•	Optional AI character interaction
+	•	Daily release or full-drop modes
+	•	Perfect for short films, trailers, and experimental storytelling
+
+CTA:
+Create a Story
+
+⸻
+
+C. NextScene for Knowledge & Learning
+
+Hero copy:
+Make information unforgettable
+
+Key points:
+	•	PDFs, decks, and documents → story cards
+	•	Designed for onboarding, training, explainers
+	•	Built-in interaction and recall
+	•	Exportable for LMS, intranet, or sharing
+
+CTA:
+Transform a Document
+
+⸻
+
+3. Naming & Language Rules
+	•	Always refer to the product as NextScene
+	•	Avoid:
+	•	“AI video generator”
+	•	“Content automation”
+	•	Prefer:
+	•	“Interactive story”
+	•	“Cinematic experience”
+	•	“Story cards”
+	•	“Guardrailed AI”
+
+⸻
+
+4. What Not to Build Yet
+
+Do NOT add:
+	•	News positioning
+	•	Real-time journalism claims
+	•	Social feed language
+
+This is a creation engine, not a social network.
+
+⸻
+
+5. Success Criteria
+
+You’ve succeeded if:
+	•	A first-time visitor understands NextScene in under 10 seconds
+	•	Different audiences feel “this is for me”
+	•	The homepage feels cinematic, calm, and confident
+	•	The name NextScene feels inevitable by the end
+
+⸻
+
+If you want, next we can:
+	•	Write final polished homepage copy
+	•	Or design the visual stepper animation for the transformation pipeline
+	•	Or define pricing language per page
+
+You’re building something genuinely new here. This prompt sets the foundation properly.

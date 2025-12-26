@@ -1,7 +1,11 @@
-# StoryFlix - Interactive Narrative Platform
+# NextScene - Meaning-to-Experience Engine
 
 ## Overview
-StoryFlix is an interactive narrative platform offering daily "story cards" and monetizing through AI character chat. Its purpose is to deliver engaging, serialized narratives. The core loop involves daily story drops, interactive character chat, clue tracking, sharing short video clips, and returning for the next installment. The platform supports AI-driven image and video generation, ensuring narrative consistency through source-guardrails, and offers flexible content distribution.
+NextScene is a meaning-to-experience engine that transforms any structured content (scripts, PDFs, websites, decks, documents) into cinematic, interactive story cards. The platform is content-agnostic, working equally for creative storytelling and commercial/brand storytelling. Key features include AI-generated visuals (image/video), guardrailed AI character chat, optional voice and music, and exportable/embeddable experiences.
+
+**Primary positioning:** Brand Storytelling Engine for businesses
+**Secondary expansion:** Creative/Entertainment for filmmakers and creators
+**Deferred:** News/Real-time content
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

@@ -23,7 +23,7 @@ export default function MessageBoard({ cardId, compact = true }: MessageBoardPro
   const [isExpanded, setIsExpanded] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [displayName, setDisplayName] = useState(() => 
-    localStorage.getItem("storyflix_display_name") || ""
+    localStorage.getItem("nextscene_display_name") || ""
   );
   const queryClient = useQueryClient();
 
@@ -38,7 +38,7 @@ export default function MessageBoard({ cardId, compact = true }: MessageBoardPro
 
   const postMutation = useMutation({
     mutationFn: async ({ body, displayName }: { body: string; displayName: string }) => {
-      localStorage.setItem("storyflix_display_name", displayName);
+      localStorage.setItem("nextscene_display_name", displayName);
       const response = await fetch(`/api/cards/${cardId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

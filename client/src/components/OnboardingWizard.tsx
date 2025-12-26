@@ -186,7 +186,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-3xl font-display font-bold mb-2" data-testid="text-step-title">
-                    What brings you to StoryFlix?
+                    What brings you to NextScene?
                   </h1>
                   <p className="text-muted-foreground">
                     Help us personalize your experience

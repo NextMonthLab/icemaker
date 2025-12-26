@@ -145,7 +145,7 @@ export default function Experience() {
       
       {embedMode && (
         <div className="fixed bottom-2 right-2 text-xs text-white/50 bg-black/50 px-2 py-1 rounded z-50">
-          Powered by StoryFlix
+          Powered by NextScene
         </div>
       )}
       

@@ -6,7 +6,7 @@ const businessPersona = {
   title: "Businesses",
   heroTitle: "Turn Your Brand Story Into An Experience",
   heroSubtitle: "Transform product launches, case studies, and company updates into engaging visual narratives your audience will remember.",
-  description: "Businesses use StoryFlix to create compelling brand narratives that capture attention and drive engagement across channels.",
+  description: "Businesses use NextScene to create compelling brand narratives that capture attention and drive engagement across channels.",
   icon: Building2,
   color: "from-blue-500/10 via-transparent to-cyan-500/10",
   useCases: [

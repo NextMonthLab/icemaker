@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-const STORAGE_KEY = "storyflix_progress";
+const STORAGE_KEY = "nextscene_progress";
 
 interface ProgressData {
   [universeId: number]: {

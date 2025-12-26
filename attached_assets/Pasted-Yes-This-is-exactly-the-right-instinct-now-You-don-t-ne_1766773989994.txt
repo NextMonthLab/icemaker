@@ -1,0 +1,192 @@
+Yes. This is exactly the right instinct now.
+
+You don’t need more features.
+You need clarity about what you’ve actually built so you can name it, frame it, and sell it without confusion.
+
+What you want is not hype, and not validation.
+You want forensic truth from Replit.
+
+Below is a single, sharp interrogation prompt you can paste directly into Replit/Ratplet.
+It is designed to surface what the system truly is, what it’s best at, where it stretches, and where hidden opportunities live.
+
+⸻
+
+🔍 REPLIT STRATEGIC INTERROGATION PROMPT
+
+(Capability + Market Fit Audit)
+
+Context
+
+You are embedded inside an application that has evolved into a card-based Story Engine capable of:
+	•	Transforming scripts, PDFs, URLs, and documents into cinematic, interactive card experiences
+	•	Generating images, video, voice, and AI character chat
+	•	Applying strong guardrails to prevent hallucination and maintain fidelity to source material
+	•	Exporting content as interactive experiences, embeddables, or standalone media
+
+The founder needs absolute clarity on what this system actually is, not what it could be.
+
+⸻
+
+Your Task
+
+Conduct a neutral, evidence-based capability audit of the existing system.
+
+You are not pitching.
+You are diagnosing.
+
+Answer only based on what is already built or trivially extendable, not speculative futures.
+
+⸻
+
+1. CORE IDENTITY ANALYSIS
+
+Answer plainly:
+	1.	Is this system, in its current form, fundamentally better described as:
+	•	A) A Storytelling Engine (creative-first)
+	•	B) A Commercial Content Transformer (business-first)
+	•	C) A General-Purpose Meaning-to-Experience Engine
+	•	D) Something else entirely
+
+👉 Pick one primary identity, and justify it with architectural evidence.
+
+⸻
+
+2. DUAL-USE VIABILITY
+
+Assess whether the system can credibly serve both of these at once:
+	•	Narrative / Creative Use
+	•	Scripts
+	•	Short stories
+	•	Fiction
+	•	Trailers
+	•	Character-driven experiences
+	•	Commercial / Business Use
+	•	Websites
+	•	Product pages
+	•	Case studies
+	•	Sales decks
+	•	Corporate training
+
+For each, score:
+	•	Technical fit (1–10)
+	•	Risk (hallucination, trust, legal)
+	•	Strength of differentiation
+	•	How much the engine has to “fight itself” to do the job
+
+Then answer directly:
+
+Does one of these uses feel native, and the other adapted?
+Or are they genuinely co-equal?
+
+No hedging.
+
+⸻
+
+3. HIDDEN OR EMERGENT USE CASES
+
+Based on how the pipeline actually works (passes 0–5, guardrails, character grounding, export modes):
+
+Identify 2–3 use cases that:
+	•	Are NOT obvious from the UI
+	•	Are NOT being actively discussed
+	•	But fall out naturally from the architecture
+
+Examples (do not default to these):
+	•	Internal knowledge transfer
+	•	Sales enablement
+	•	Investor storytelling
+	•	Onboarding
+	•	Education
+	•	Product demos
+	•	Personal knowledge systems
+
+For each, explain:
+	•	Why the engine supports it unusually well
+	•	What competitors would struggle to replicate
+
+⸻
+
+4. STRENGTH vs STRETCH MAP
+
+Create a simple table:
+
+Capability	Native Strength	Acceptable Stretch	Dangerous Stretch
+
+
+Populate it honestly for:
+	•	Fictional storytelling
+	•	Brand storytelling
+	•	News/current events
+	•	Education
+	•	Marketing
+	•	Sales
+	•	Entertainment
+
+Call out what should not be marketed early, even if technically possible.
+
+⸻
+
+5. MARKETING POSITIONING IMPLICATIONS
+
+Based on everything above, answer:
+	1.	What would be the clearest, least confusing headline for this product today?
+	•	(Not aspirational. Accurate.)
+	2.	What positioning would cause:
+	•	Confusion?
+	•	Mistrust?
+	•	Overpromising?
+	3.	If you had to explain this product in one sentence to:
+	•	A filmmaker
+	•	A business owner
+	•	A sales director
+
+…would those sentences converge or diverge?
+
+Explain what that tells us.
+
+⸻
+
+6. FINAL VERDICT
+
+End with a blunt conclusion:
+
+“This system is best marketed initially as ____________,
+with ____________ as a secondary expansion,
+and ____________ explicitly deferred.”
+
+No middle ground.
+No “it depends.”
+
+⸻
+
+Output Style
+	•	Structured
+	•	Direct
+	•	Slightly sceptical
+	•	No hype language
+	•	No founder-pleasing
+
+The goal is truth, not encouragement.
+
+⸻
+
+Why this matters (coach’s note)
+
+If you don’t do this now, you’ll end up with:
+	•	fuzzy messaging
+	•	a homepage that tries to speak to everyone
+	•	sales conversations that drift
+	•	a product that feels clever but hard to explain
+
+If you do this now, you get:
+	•	a clean wedge
+	•	confidence in saying “not yet” to features
+	•	a story the market can actually repeat back to you
+
+You’re doing the right thing by slowing down strategically, not creatively.
+
+When Replit responds, paste it back here.
+I’ll help you interpret it and turn it into:
+	•	positioning
+	•	pricing emphasis
+	•	and a launch narrative that actually lands.

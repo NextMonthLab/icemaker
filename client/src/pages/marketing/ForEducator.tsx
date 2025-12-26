@@ -6,7 +6,7 @@ const educatorPersona = {
   title: "Educators",
   heroTitle: "Make Learning Unforgettable With Story-Driven Lessons",
   heroSubtitle: "Transform educational content into immersive narratives that students can't wait to continue.",
-  description: "Educators use StoryFlix to create engaging learning experiences through serialized lessons, interactive characters, and visual storytelling.",
+  description: "Educators use NextScene to create engaging learning experiences through serialized lessons, interactive characters, and visual storytelling.",
   icon: GraduationCap,
   color: "from-green-500/10 via-transparent to-emerald-500/10",
   useCases: [

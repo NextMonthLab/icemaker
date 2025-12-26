@@ -12,6 +12,9 @@ import ForNews from "@/pages/marketing/ForNews";
 import ForBusiness from "@/pages/marketing/ForBusiness";
 import ForInfluencer from "@/pages/marketing/ForInfluencer";
 import ForEducator from "@/pages/marketing/ForEducator";
+import ForBrands from "@/pages/marketing/ForBrands";
+import ForCreators from "@/pages/marketing/ForCreators";
+import ForKnowledge from "@/pages/marketing/ForKnowledge";
 
 import Home from "@/pages/Home";
 import Today from "@/pages/Today";
@@ -87,6 +90,9 @@ function Router() {
       <Route path="/for/business" component={ForBusiness} />
       <Route path="/for/influencer" component={ForInfluencer} />
       <Route path="/for/educator" component={ForEducator} />
+      <Route path="/for/brands" component={ForBrands} />
+      <Route path="/for/creators" component={ForCreators} />
+      <Route path="/for/knowledge" component={ForKnowledge} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />

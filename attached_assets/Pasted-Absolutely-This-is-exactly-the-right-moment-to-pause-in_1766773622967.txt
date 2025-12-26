@@ -1,0 +1,205 @@
+Absolutely. This is exactly the right moment to pause, interrogate the build, and surface truth before momentum locks you into assumptions.
+
+Below is a single, high-leverage “Interrogation Prompt” you can paste directly into Replit (Ratplet).
+It is designed to:
+	•	Audit what is already baked in
+	•	Expose implicit capabilities you may be underestimating
+	•	Identify gaps vs pivots
+	•	Clarify whether the Business URL → Cinematic Experience opportunity is a small extension or a material pivot
+	•	Output actionable next steps, not vague commentary
+
+It is written in a way that forces Replit to reason from the codebase and architecture, not from aspiration.
+
+⸻
+
+🔍 Replit Interrogation Prompt: Commercial Opportunity & Capability Audit
+
+Context for Replit (read carefully):
+
+You are analysing an existing app that implements a multi-step “Story Engine” pipeline which transforms user-provided media (PDFs, text, images, etc.) into a card-based cinematic experience with optional AI character chat, export modes, and creator-editable guardrails.
+
+A new, potentially major commercial opportunity has been identified:
+
+Allowing business users to input a URL or owned website content, from which the system builds:
+	•	A cinematic, card-based interactive story of the business
+	•	A constrained, editable “business persona” or expert character
+	•	A conversational experience grounded strictly in that source material
+	•	A shareable / embeddable output that acts as marketing, sales, or education
+
+Before deciding whether this is:
+	•	a small extension,
+	•	a moderate refactor,
+	•	or a true pivot,
+
+we need a forensic audit of what is already present in the app.
+
+⸻
+
+🔹 Your Task
+
+Conduct a capability and architecture interrogation of the current app and respond in the structure below.
+
+Do not speculate.
+Base your answers on:
+	•	Existing data models
+	•	Pipeline steps
+	•	UI patterns
+	•	Prompt architecture
+	•	Guardrails
+	•	Export logic
+	•	Admin controls
+	•	Any existing scraping, ingestion, or normalization mechanisms
+
+If something is partially present, say so clearly.
+
+⸻
+
+1. Pipeline Alignment Audit
+
+For each step below, answer:
+	•	✅ Fully implemented
+	•	🟡 Partially implemented
+	•	❌ Not implemented
+
+And explain why.
+
+Steps to assess:
+	1.	Prompt 0: Input normalization into machine-readable structure
+	2.	Concept / theme extraction from source material
+	3.	Guardrail generation based on source content
+	4.	Card sequencing logic
+	5.	Card rendering (text + image/video)
+	6.	AI character / expert chat grounded in source
+	7.	Creator-editable prompts, negative prompts, and constraints
+	8.	QA / hallucination prevention mechanisms
+	9.	Export modes (video, embed, shareable link)
+
+Then answer:
+
+If the input were a business website instead of a PDF, which of these steps would break, and which would still function?
+
+⸻
+
+2. Input Source Flexibility Assessment
+
+Analyse the system’s input assumptions.
+
+Answer explicitly:
+	•	Is the system already designed to accept arbitrary structured text?
+	•	Does it assume a single file, or could it accept multiple sources combined?
+	•	Are there any technical blockers to treating a scraped website as:
+	•	a collection of documents
+	•	with a unified source-of-truth layer?
+
+Then conclude:
+
+Would URL ingestion be a new capability, or just a new input adapter?
+
+⸻
+
+3. Brand / Character Persona Readiness
+
+Assess whether the current AI character system can support a Business Persona.
+
+Answer:
+	•	Does the system already support:
+	•	fixed knowledge boundaries?
+	•	role-based system prompts?
+	•	editable character definitions?
+	•	Is there already a mechanism to prevent the character from answering beyond supplied context?
+
+Then answer:
+
+What would be required to convert an existing “story character” into a “business expert / brand voice” safely?
+
+⸻
+
+4. Hallucination & Trust Controls
+
+Evaluate:
+	•	How the app currently prevents drift away from source material
+	•	Where hallucination risk still exists
+	•	Whether guardrails are enforced at:
+	•	generation time
+	•	chat time
+	•	export time
+
+Then answer:
+
+On a scale of 1–10, how safe is the current system for commercial / business use, and what are the top 3 risks?
+
+⸻
+
+5. Admin & Creator Control Surface
+
+Assess whether the admin UI already supports:
+	•	Editing prompts
+	•	Editing negative prompts
+	•	Editing guardrails
+	•	Approving or rejecting AI-generated interpretations
+	•	Locking personas to source content
+
+Then answer:
+
+What minimum additions would be required to make this enterprise-ready?
+
+⸻
+
+6. Distribution & Monetisation Compatibility
+
+Analyse:
+	•	Whether current export/share mechanisms could already support:
+	•	Lead-gen experiences
+	•	Embedded sales stories
+	•	QR-driven traffic loops
+	•	Whether existing account tiers map naturally to:
+	•	Free (manual upload, limited cards)
+	•	Pro (full story engine)
+	•	Business (URL ingestion, persona chat, branding)
+
+Then answer:
+
+Does this opportunity fit the current monetisation architecture, or would pricing logic need re-thinking?
+
+⸻
+
+7. Pivot Impact Summary
+
+Finally, answer clearly:
+	1.	Is this opportunity:
+	•	A) A configuration change
+	•	B) A feature extension
+	•	C) A strategic pivot
+	2.	What percentage of the existing system can be reused?
+	3.	What is the fastest credible path to validate this commercially with minimal rebuild?
+
+⸻
+
+Output Format (Mandatory)
+
+Please output:
+	1.	Executive Summary (plain English)
+	2.	Capability Matrix (table)
+	3.	Risk & Trust Assessment
+	4.	Pivot Severity Verdict
+	5.	Recommended Next Actions (prioritised, concrete)
+
+⸻
+
+Guiding Principle
+
+This interrogation is not about ambition.
+
+It is about:
+	•	truth
+	•	leverage
+	•	speed to validation
+
+Assume the goal is to capitalise on the opportunity without breaking the soul of the product.
+
+⸻
+
+If you want, next I can:
+	•	Help you interpret Replit’s response
+	•	Turn the findings into a decision memo
+	•	Or translate the opportunity into a clean positioning statement for business users
