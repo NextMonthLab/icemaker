@@ -70,20 +70,22 @@ export async function generateVideoWithReplicate(
 
     if (request.imageUrl) {
       if (request.imageUrl.startsWith("http://") || request.imageUrl.startsWith("https://")) {
-        input.image = request.imageUrl;
-        console.log(`[Replicate] Using image URL: ${request.imageUrl}`);
+        input.start_image = request.imageUrl;
+        console.log(`[Replicate] Using start_image URL: ${request.imageUrl}`);
       } else {
         console.log(`[Replicate] Skipping local image (use text-to-video mode instead)`);
       }
     }
 
-    console.log(`[Replicate] Running prediction...`);
+    input.cfg_scale = 0.5;
+
+    console.log(`[Replicate] Running prediction with input:`, JSON.stringify(input, null, 2).substring(0, 500));
 
     const output = await replicate.run(modelId as `${string}/${string}`, { input });
 
     console.log(`[Replicate] Prediction completed`);
     console.log(`[Replicate] Output type:`, typeof output);
-    console.log(`[Replicate] Output:`, JSON.stringify(output, null, 2).substring(0, 500));
+    console.log(`[Replicate] Output:`, JSON.stringify(output, null, 2).substring(0, 1000));
 
     let videoUrl: string | undefined;
     
@@ -98,7 +100,11 @@ export async function generateVideoWithReplicate(
       }
     } else if (output && typeof output === "object") {
       const obj = output as Record<string, any>;
-      videoUrl = obj.url || obj.video_url || obj.output || obj.video;
+      if (obj.video && typeof obj.video === "object" && obj.video.url) {
+        videoUrl = obj.video.url;
+      } else {
+        videoUrl = obj.url || obj.video_url || obj.output || obj.video;
+      }
       if (Array.isArray(videoUrl)) {
         videoUrl = videoUrl[0];
       }
