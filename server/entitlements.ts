@@ -58,7 +58,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canUseCharacterChat: false,
     canUseCloudLlm: false,
     canViewAnalytics: false,
-    canViewEngagement: true,
+    canViewEngagement: false, // Engagement metrics require Pro or Business
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,
@@ -127,7 +127,7 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
           canUseCharacterChat: features.canUseCharacterChat ?? tierDefaults.canUseCharacterChat ?? false,
           canUseCloudLlm: features.canUseCloudLlm ?? tierDefaults.canUseCloudLlm ?? false,
           canViewAnalytics: features.canViewAnalytics ?? tierDefaults.canViewAnalytics ?? false,
-          canViewEngagement: true,
+          canViewEngagement: features.canViewEngagement ?? tierDefaults.canViewEngagement ?? false,
           maxUniverses: features.maxUniverses ?? tierDefaults.maxUniverses ?? 1,
           maxCardsPerStory: features.maxCardsPerStory ?? tierDefaults.maxCardsPerStory ?? 5,
           monthlyVideoCredits: features.monthlyVideoCredits ?? tierDefaults.monthlyVideoCredits ?? 0,
@@ -177,7 +177,7 @@ function getCreatorFreeEntitlements(): FullEntitlements {
     canUseCharacterChat: false,
     canUseCloudLlm: false,
     canViewAnalytics: false,
-    canViewEngagement: true,
+    canViewEngagement: false, // Engagement metrics require Pro or Business
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,

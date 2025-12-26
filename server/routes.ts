@@ -247,6 +247,51 @@ export async function registerRoutes(
     }
   });
   
+  // Get engagement metrics for universes (creators/admins only)
+  app.get("/api/engagement", requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { getFullEntitlements } = await import("./entitlements");
+      const entitlements = await getFullEntitlements(user.id);
+      
+      if (!entitlements.canViewEngagement && !entitlements.isAdmin) {
+        return res.status(403).json({ 
+          message: "Engagement metrics require a creator account",
+          upgradeRequired: true 
+        });
+      }
+      
+      // Get all universes for now (in future, filter by ownership)
+      const universes = await storage.getAllUniverses();
+      
+      // Get engagement counts from user progress table
+      const engagementData = await Promise.all(
+        universes.map(async (universe) => {
+          const cards = await storage.getCardsByUniverse(universe.id);
+          const publishedCards = cards.filter(c => c.status === 'published');
+          
+          return {
+            universeId: universe.id,
+            universeName: universe.name,
+            totalCards: publishedCards.length,
+            publishedCards: publishedCards.length,
+          };
+        })
+      );
+      
+      res.json({
+        universes: engagementData,
+        summary: {
+          totalUniverses: universes.length,
+          totalCards: engagementData.reduce((sum, u) => sum + u.totalCards, 0),
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching engagement metrics:", error);
+      res.status(500).json({ message: "Error fetching engagement metrics" });
+    }
+  });
+  
   // ============ UNIVERSE ROUTES ============
   
   app.get("/api/universes", async (req, res) => {
