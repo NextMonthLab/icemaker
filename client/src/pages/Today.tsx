@@ -169,6 +169,10 @@ export default function Today() {
                   sceneText: card.sceneText,
                   recapText: card.recapText,
                   publishDate: card.publishAt ? String(card.publishAt) : new Date().toISOString(),
+                  generatedVideoUrl: card.generatedVideoUrl,
+                  videoGenerated: card.videoGenerated ?? undefined,
+                  videoGenerationStatus: card.videoGenerationStatus,
+                  preferredMediaType: card.preferredMediaType as 'image' | 'video' | undefined,
                 }} 
                 characters={cardCharacters || []}
                 onPhaseChange={handlePhaseChange}
@@ -225,6 +229,10 @@ export default function Today() {
                 sceneText: card.sceneText,
                 recapText: card.recapText,
                 publishDate: card.publishAt ? String(card.publishAt) : new Date().toISOString(),
+                generatedVideoUrl: card.generatedVideoUrl,
+                videoGenerated: card.videoGenerated ?? undefined,
+                videoGenerationStatus: card.videoGenerationStatus,
+                preferredMediaType: card.preferredMediaType as 'image' | 'video' | undefined,
               }} 
               characters={cardCharacters || []}
               autoplay={false}
