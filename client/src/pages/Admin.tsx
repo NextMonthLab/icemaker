@@ -956,6 +956,33 @@ export default function Admin() {
                   <Music className="w-4 h-4" /> Soundtrack Settings
                 </h4>
                 
+                {/* Quick Auto-Select Option */}
+                {editAudioMode === 'off' && audioTracks && audioTracks.length > 0 && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Add background music instantly</p>
+                        <p className="text-xs text-muted-foreground">We'll pick a track for you - you can change it later</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setEditAudioMode('continuous');
+                          if (audioTracks.length > 0) {
+                            const randomTrack = audioTracks[Math.floor(Math.random() * audioTracks.length)];
+                            setEditDefaultTrackId(randomTrack.id);
+                          }
+                        }}
+                        data-testid="button-auto-select-music"
+                      >
+                        <Music className="w-4 h-4 mr-2" />
+                        Auto-select
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-audio-mode">Audio Mode</Label>
