@@ -3313,6 +3313,7 @@ export async function registerRoutes(
         artifacts: job.artifacts,
         outputUniverseId: job.outputUniverseId,
         errorMessageUser: job.errorMessageUser,
+        storyLength: job.storyLength,
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
       });
