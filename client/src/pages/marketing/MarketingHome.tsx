@@ -12,7 +12,7 @@ const useCases = [
     description: "Turn your website into a story that sells itself.",
     icon: Building2,
     href: "/for/brands",
-    color: "from-teal-500 to-cyan-500",
+    color: "from-pink-500 to-purple-500",
   },
   {
     id: "creators",
@@ -20,7 +20,7 @@ const useCases = [
     description: "Bring scripts and ideas to life, one moment at a time.",
     icon: Film,
     href: "/for/creators",
-    color: "from-cyan-500 to-sky-500",
+    color: "from-purple-500 to-blue-500",
   },
   {
     id: "knowledge",
@@ -28,7 +28,7 @@ const useCases = [
     description: "Transform dense information into experiences people remember.",
     icon: GraduationCap,
     href: "/for/knowledge",
-    color: "from-sky-500 to-indigo-500",
+    color: "from-blue-500 to-indigo-500",
   },
 ];
 
@@ -137,7 +137,7 @@ export default function MarketingHome() {
               </Button>
             </Link>
             <Link href="/login?signup=true">
-              <Button className="bg-teal-600 hover:bg-teal-500 text-white border-0 shadow-lg shadow-teal-600/20" data-testid="button-signup">
+              <Button className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20" data-testid="button-signup">
                 Get Started
               </Button>
             </Link>
@@ -149,7 +149,7 @@ export default function MarketingHome() {
         {/* Hero Section - reduced ambient gradients */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/20 via-transparent to-transparent" />
           
           <div className="absolute inset-0 opacity-[0.03]" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -162,13 +162,13 @@ export default function MarketingHome() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-white/5 border border-white/10 rounded-full backdrop-blur-sm">
-                <Sparkles className="w-4 h-4 text-teal-400" />
+                <Sparkles className="w-4 h-4 text-pink-400" />
                 <span className="text-white/80">This is how stories are experienced now</span>
               </div>
               
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
                 <span className="block text-white">Turn any content into an</span>
-                <span className="block text-teal-400">
+                <span className="block bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   interactive cinematic experience
                 </span>
               </h1>
@@ -180,7 +180,7 @@ export default function MarketingHome() {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/login?signup=true">
-                  <Button size="lg" className="h-14 px-8 text-lg bg-teal-600 hover:bg-teal-500 text-white border-0 shadow-lg shadow-teal-600/20 gap-3" data-testid="button-hero-cta">
+                  <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20 gap-3" data-testid="button-hero-cta">
                     Create a NextScene
                     <ArrowRight className="w-5 h-5" />
                   </Button>
@@ -202,7 +202,7 @@ export default function MarketingHome() {
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl">
                 <div className="aspect-video bg-neutral-900 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-20 h-20 rounded-full bg-teal-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-600/20 cursor-pointer hover:bg-teal-500 transition-colors">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20 cursor-pointer hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 transition-all">
                       <Play className="w-8 h-8 text-white ml-1 fill-white" />
                     </div>
                     <p className="text-white/40 text-sm">See NextScene in action</p>
@@ -221,7 +221,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-pipeline-title">
-                What is <span className="text-teal-400">NextScene?</span>
+                What is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene?</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 From content to cinematic experience in five steps
@@ -264,7 +264,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-usecases-title">
-                Three ways to use <span className="text-teal-400">NextScene</span>
+                Three ways to use <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 One engine, built for every storyteller
@@ -282,19 +282,19 @@ export default function MarketingHome() {
                 >
                   <Link href={useCase.href}>
                     <div 
-                      className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-teal-500/50 cursor-pointer transition-all duration-300 hover:bg-white/5 h-full"
+                      className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-purple-500/50 cursor-pointer transition-all duration-300 hover:bg-white/5 h-full"
                       data-testid={`card-usecase-${useCase.id}`}
                     >
                       <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${useCase.color} flex items-center justify-center mb-6 shadow-lg`}>
                         <useCase.icon className="w-7 h-7 text-white" />
                       </div>
-                      <h3 className="text-xl font-bold mb-3 group-hover:text-teal-400 transition-colors">
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-purple-400 transition-colors">
                         {useCase.title}
                       </h3>
                       <p className="text-white/50 leading-relaxed mb-4">
                         {useCase.description}
                       </p>
-                      <div className="flex items-center gap-2 text-teal-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                         Learn more <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
@@ -311,7 +311,7 @@ export default function MarketingHome() {
           <div className="max-w-5xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-different-title">
-                Why NextScene is <span className="text-teal-400">different</span>
+                Why NextScene is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">different</span>
               </h2>
             </div>
             
@@ -325,8 +325,8 @@ export default function MarketingHome() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="flex items-center gap-4 p-6 rounded-xl bg-gradient-to-r from-white/5 to-transparent border border-white/10"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center flex-shrink-0">
-                    <diff.icon className="w-5 h-5 text-teal-400" />
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <diff.icon className="w-5 h-5 text-purple-400" />
                   </div>
                   <p className="text-lg font-medium">{diff.text}</p>
                 </motion.div>
@@ -341,7 +341,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/5 border border-white/10 rounded-full">
-                <Shield className="w-4 h-4 text-teal-400" />
+                <Shield className="w-4 h-4 text-purple-400" />
                 <span className="text-white/70">Built for Trust</span>
               </div>
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-trust-title">
@@ -362,8 +362,8 @@ export default function MarketingHome() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="p-6 rounded-xl bg-gradient-to-b from-white/5 to-transparent border border-white/10"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center mb-4">
-                    <feature.icon className="w-5 h-5 text-teal-400" />
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4">
+                    <feature.icon className="w-5 h-5 text-purple-400" />
                   </div>
                   <h3 className="text-base font-bold mb-2">{feature.title}</h3>
                   <p className="text-white/50 text-sm">{feature.description}</p>
@@ -387,13 +387,13 @@ export default function MarketingHome() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-cta-title">
                 Ready to create your first<br />
-                <span className="text-teal-400">NextScene?</span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene?</span>
               </h2>
               <p className="text-xl text-white/50 mb-10 max-w-xl mx-auto">
                 Transform your content into cinematic experiences your audience will never forget
               </p>
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-16 px-12 text-lg bg-teal-600 hover:bg-teal-500 text-white border-0 shadow-lg shadow-teal-600/20 gap-3" data-testid="button-footer-cta">
+                <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20 gap-3" data-testid="button-footer-cta">
                   Create a NextScene
                   <ArrowRight className="w-5 h-5" />
                 </Button>
