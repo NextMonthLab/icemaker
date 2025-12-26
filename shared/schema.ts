@@ -1018,8 +1018,10 @@ export const ALLOWED_MEDIA_TYPES = {
 
 // ============ USER ONBOARDING PROFILES ============
 
-// Persona types for customized onboarding
-export type UserPersona = 'news_outlet' | 'business' | 'influencer' | 'educator' | 'creator' | 'other';
+// Persona/Lens types for customized onboarding
+// Legacy: news_outlet, business, influencer, educator, creator, other
+// New lenses: brand (business), creator (creative), knowledge (learning)
+export type UserPersona = 'news_outlet' | 'business' | 'influencer' | 'educator' | 'creator' | 'other' | 'brand' | 'knowledge';
 export type UserIndustry = 'media' | 'technology' | 'healthcare' | 'finance' | 'entertainment' | 'education' | 'retail' | 'travel' | 'food' | 'sports' | 'real_estate' | 'nonprofit' | 'government' | 'other';
 
 export const userOnboardingProfiles = pgTable("user_onboarding_profiles", {
