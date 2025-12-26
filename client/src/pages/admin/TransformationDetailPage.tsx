@@ -23,6 +23,7 @@ interface TransformationJobDetail {
   artifacts: Record<string, any>;
   outputUniverseId: number | null;
   errorMessageUser: string | null;
+  storyLength: "short" | "medium" | "long" | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -187,6 +188,12 @@ export default function TransformationDetailPage() {
                   <span className="text-muted-foreground">Current Stage</span>
                   <span className="font-medium">{job.currentStage + 1} / 6</span>
                 </div>
+                {job.storyLength && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Story Length</span>
+                    <span className="font-medium capitalize">{job.storyLength}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Created</span>
                   <span className="font-medium text-xs sm:text-sm">{format(new Date(job.createdAt), "MMM d, h:mm a")}</span>

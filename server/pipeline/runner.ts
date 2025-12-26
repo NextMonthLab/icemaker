@@ -46,6 +46,7 @@ export interface PipelineContext {
   hookPackCount?: number;
   releaseMode?: string;
   storyTitle?: string;
+  storyLength?: "short" | "medium" | "long";
 }
 
 const STAGE_NAMES = [
@@ -318,8 +319,11 @@ GROUNDING CONSTRAINTS (CRITICAL - MUST FOLLOW):
 
 DO NOT invent new plot points, characters, or facts not in the source material.` : "";
 
+    const cardCountTarget = ctx.storyLength === "short" ? "6-10" : ctx.storyLength === "long" ? "20-28" : "14-18";
+    const cardCountDescription = ctx.storyLength === "short" ? "short (~8 cards, ~1 week)" : ctx.storyLength === "long" ? "long (~24 cards, ~3-4 weeks)" : "medium (~16 cards, ~2 weeks)";
+    
     const systemPrompt = `You are a story designer for a vertical video story platform. 
-Break this story into 5-10 "story cards" - each card is a dramatic moment that will be shown as a vertical video with captions.
+Break this story into ${cardCountTarget} "story cards" for a ${cardCountDescription} story - each card is a dramatic moment that will be shown as a vertical video with captions.
 ${guardrailsConstraints}
 
 Return a JSON object with these fields:
@@ -576,9 +580,11 @@ function detectContentType(text: string): SourceType {
 }
 
 export async function runPipeline(jobId: number, sourceText: string): Promise<number> {
-  const ctx: PipelineContext = { jobId };
+  const job = await storage.getTransformationJob(jobId);
+  const storyLength = (job?.storyLength as "short" | "medium" | "long") || "medium";
+  const ctx: PipelineContext = { jobId, storyLength };
 
-  console.log(`[Pipeline] Starting job ${jobId} with ${sourceText.length} chars`);
+  console.log(`[Pipeline] Starting job ${jobId} with ${sourceText.length} chars, storyLength=${storyLength}`);
 
   await stage0_normalise(ctx, sourceText);
   await stage1_read(ctx);
