@@ -663,7 +663,13 @@ export type ManifestData = z.infer<typeof manifestSchema>;
 
 export type TransformationStatus = 'queued' | 'running' | 'completed' | 'failed';
 export type StageStatus = 'pending' | 'running' | 'done' | 'failed';
-export type SourceType = 'script' | 'pdf' | 'ppt' | 'article' | 'transcript' | 'unknown';
+export type SourceType = 'script' | 'pdf' | 'ppt' | 'article' | 'transcript' | 'url' | 'unknown';
+
+// Content metadata for URL-based transformations
+export type ContentSourceType = 'website' | 'blog_post' | 'news_article' | 'documentation' | 'social_media' | 'press_release' | 'other';
+export type ContentIndustry = 'technology' | 'healthcare' | 'finance' | 'entertainment' | 'education' | 'retail' | 'travel' | 'food' | 'sports' | 'real_estate' | 'other';
+export type ContentCategory = 'news' | 'narrative' | 'marketing' | 'educational' | 'entertainment' | 'documentary' | 'promotional' | 'other';
+export type ContentGoal = 'brand_awareness' | 'lead_generation' | 'audience_engagement' | 'product_launch' | 'thought_leadership' | 'storytelling' | 'education' | 'other';
 
 export const stageArtifactsSchema = z.object({
   stage0: z.object({
@@ -730,6 +736,11 @@ export const transformationJobs = pgTable("transformation_jobs", {
   sourceType: text("source_type").$type<SourceType>().default("unknown"),
   sourceFileName: text("source_file_name"),
   sourceFilePath: text("source_file_path"),
+  sourceUrl: text("source_url"),
+  contentSourceType: text("content_source_type").$type<ContentSourceType>(),
+  contentIndustry: text("content_industry").$type<ContentIndustry>(),
+  contentCategory: text("content_category").$type<ContentCategory>(),
+  contentGoal: text("content_goal").$type<ContentGoal>(),
   status: text("status").$type<TransformationStatus>().default("queued").notNull(),
   currentStage: integer("current_stage").default(0).notNull(),
   stageStatuses: jsonb("stage_statuses").$type<StageStatuses>(),
