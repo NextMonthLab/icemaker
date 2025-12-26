@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, real } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -182,6 +182,9 @@ export const sourceGuardrailsSchema = z.object({
 export type SourceGuardrails = z.infer<typeof sourceGuardrailsSchema>;
 
 // Universe (Story World)
+// Narration mode for auto-generating narration text
+export type NarrationMode = 'manual' | 'derive_from_sceneText' | 'derive_from_captions' | 'ai_summarise_from_card';
+
 export const universes = pgTable("universes", {
   id: serial("id").primaryKey(),
   slug: text("slug").unique(), // Unique identifier for deterministic imports
@@ -198,6 +201,12 @@ export const universes = pgTable("universes", {
   introCardsCount: integer("intro_cards_count").default(3), // Number of cards to unlock immediately in hybrid mode
   dailyReleaseStartsAtDayIndex: integer("daily_release_starts_at_day_index"), // When daily gating begins (defaults to introCardsCount + 1)
   timezone: text("timezone").default("UTC"), // Timezone for publishAt comparisons
+  // Narration defaults for this universe
+  defaultNarrationEnabled: boolean("default_narration_enabled").default(false),
+  defaultNarrationVoice: text("default_narration_voice"),
+  defaultNarrationSpeed: real("default_narration_speed").default(1.0),
+  defaultNarrationMode: text("default_narration_mode").$type<NarrationMode>().default("manual"),
+  narrationStyleNotes: text("narration_style_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -253,6 +262,9 @@ export const insertLocationSchema = createInsertSchema(locations).omit({ id: tru
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type Location = typeof locations.$inferSelect;
 
+// Narration status for cards
+export type NarrationStatus = 'none' | 'text_ready' | 'generating' | 'ready' | 'failed';
+
 // Cards (Story Episodes)
 export const cards = pgTable("cards", {
   id: serial("id").primaryKey(),
@@ -285,6 +297,17 @@ export const cards = pgTable("cards", {
   
   // Chat overrides for this card (mood/knowledge per character)
   chatOverrides: jsonb("chat_overrides").$type<ChatOverrides>(),
+  
+  // Narration (Text-to-Speech) fields
+  narrationEnabled: boolean("narration_enabled").default(false),
+  narrationText: text("narration_text"),
+  narrationVoice: text("narration_voice"),
+  narrationSpeed: real("narration_speed").default(1.0),
+  narrationStatus: text("narration_status").$type<NarrationStatus>().default("none"),
+  narrationAudioUrl: text("narration_audio_url"),
+  narrationAudioDurationSec: real("narration_audio_duration_sec"),
+  narrationUpdatedAt: timestamp("narration_updated_at"),
+  narrationError: text("narration_error"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -766,6 +789,21 @@ export type CreditType = "video" | "voice";
 export const insertCreditEventSchema = createInsertSchema(creditEvents).omit({ id: true, createdAt: true });
 export type InsertCreditEvent = z.infer<typeof insertCreditEventSchema>;
 export type CreditEvent = typeof creditEvents.$inferSelect;
+
+// TTS Usage Log (for billing/usage tracking)
+export const ttsUsage = pgTable("tts_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  universeId: integer("universe_id").references(() => universes.id).notNull(),
+  cardId: integer("card_id").references(() => cards.id).notNull(),
+  charsCount: integer("chars_count").notNull(),
+  voiceId: text("voice_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTtsUsageSchema = createInsertSchema(ttsUsage).omit({ id: true, createdAt: true });
+export type InsertTtsUsage = z.infer<typeof insertTtsUsageSchema>;
+export type TtsUsage = typeof ttsUsage.$inferSelect;
 
 // Export chat models for AI integrations
 export * from "./models/chat";

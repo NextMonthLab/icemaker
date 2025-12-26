@@ -797,6 +797,12 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.insert(schema.creditEvents).values(event as any).returning();
     return result;
   }
+  
+  // TTS Usage Logging
+  async logTtsUsage(usage: schema.InsertTtsUsage): Promise<schema.TtsUsage> {
+    const [result] = await db.insert(schema.ttsUsage).values(usage as any).returning();
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();

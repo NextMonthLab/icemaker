@@ -2770,5 +2770,281 @@ export async function registerRoutes(
     }
   });
 
+  // ============ TTS (TEXT-TO-SPEECH) ROUTES ============
+  
+  // Get available voices
+  app.get("/api/tts/voices", async (req, res) => {
+    try {
+      const { listVoices, isTTSConfigured } = await import("./tts");
+      
+      if (!isTTSConfigured()) {
+        return res.status(503).json({ 
+          message: "TTS not configured", 
+          configured: false,
+          voices: [] 
+        });
+      }
+      
+      const voices = listVoices();
+      res.json({ configured: true, voices });
+    } catch (error) {
+      console.error("Error fetching voices:", error);
+      res.status(500).json({ message: "Error fetching voices" });
+    }
+  });
+  
+  // Update card narration text and settings
+  app.post("/api/cards/:id/narration/text", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      const { narrationEnabled, narrationText, narrationVoice, narrationSpeed } = req.body;
+      
+      const card = await storage.getCard(cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      const universe = await storage.getUniverse(card.universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Universe not found" });
+      }
+      
+      const { canUseTTS } = await import("./tts/guards");
+      const permission = await canUseTTS(req.user, card.universeId);
+      if (!permission.allowed) {
+        return res.status(403).json({ message: permission.reason || "TTS not allowed" });
+      }
+      
+      let finalText = narrationText;
+      
+      // Auto-fill narration text based on universe mode if enabled but text is empty
+      if (narrationEnabled && (!finalText || finalText.trim() === "")) {
+        const mode = universe.defaultNarrationMode || "manual";
+        
+        if (mode === "derive_from_sceneText") {
+          finalText = card.sceneText || "";
+        } else if (mode === "derive_from_captions") {
+          const captions = card.captionsJson as string[] || [];
+          finalText = captions.join(" ");
+        } else if (mode === "ai_summarise_from_card") {
+          // Use OpenAI to summarize from card fields (no hallucination - only existing fields)
+          try {
+            const OpenAI = (await import("openai")).default;
+            const openai = new OpenAI();
+            
+            const prompt = `Summarize the following scene into a concise 1-paragraph narration suitable for text-to-speech. 
+Use ONLY the information provided below. Do NOT add any new facts, characters, or events.
+
+Title: ${card.title}
+Scene Text: ${card.sceneText}
+Recap: ${card.recapText}
+Captions: ${(card.captionsJson as string[] || []).join(", ")}
+
+Output only the narration paragraph, nothing else.`;
+
+            const response = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [{ role: "user", content: prompt }],
+              max_tokens: 500,
+              temperature: 0.5,
+            });
+            
+            finalText = response.choices[0]?.message?.content?.trim() || card.sceneText || "";
+          } catch (err) {
+            console.error("AI summarization failed:", err);
+            finalText = card.sceneText || "";
+          }
+        }
+      }
+      
+      const { validateNarrationText, MAX_NARRATION_TEXT_LENGTH } = await import("./tts");
+      
+      if (finalText && finalText.length > MAX_NARRATION_TEXT_LENGTH) {
+        return res.status(400).json({ 
+          message: `Narration text exceeds maximum length of ${MAX_NARRATION_TEXT_LENGTH} characters` 
+        });
+      }
+      
+      const updatedCard = await storage.updateCard(cardId, {
+        narrationEnabled: narrationEnabled ?? card.narrationEnabled,
+        narrationText: finalText ?? card.narrationText,
+        narrationVoice: narrationVoice ?? card.narrationVoice ?? universe.defaultNarrationVoice,
+        narrationSpeed: narrationSpeed ?? card.narrationSpeed ?? universe.defaultNarrationSpeed,
+        narrationStatus: finalText && finalText.trim() ? "text_ready" : "none",
+      });
+      
+      res.json(updatedCard);
+    } catch (error) {
+      console.error("Error updating narration text:", error);
+      res.status(500).json({ message: "Error updating narration text" });
+    }
+  });
+  
+  // Preview narration (short audio, not stored)
+  app.post("/api/cards/:id/narration/preview", requireAuth, async (req, res) => {
+    try {
+      const { text, voice, speed } = req.body;
+      
+      const { isTTSConfigured, synthesiseSpeech } = await import("./tts");
+      
+      if (!isTTSConfigured()) {
+        return res.status(503).json({ message: "TTS not configured" });
+      }
+      
+      // Limit preview to first 300 characters
+      const previewText = (text || "").slice(0, 300);
+      if (!previewText.trim()) {
+        return res.status(400).json({ message: "Preview text cannot be empty" });
+      }
+      
+      const result = await synthesiseSpeech({
+        text: previewText,
+        voice: voice || "alloy",
+        speed: speed || 1.0,
+      });
+      
+      res.set("Content-Type", result.contentType);
+      res.send(result.audioBuffer);
+    } catch (error) {
+      console.error("Error generating preview:", error);
+      res.status(500).json({ message: "Error generating preview" });
+    }
+  });
+  
+  // Generate full narration audio and store in R2
+  app.post("/api/cards/:id/narration/generate", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      
+      const card = await storage.getCard(cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      if (!card.narrationEnabled) {
+        return res.status(400).json({ message: "Narration is not enabled for this card" });
+      }
+      
+      if (!card.narrationText || card.narrationText.trim() === "") {
+        return res.status(400).json({ message: "Narration text is empty. Please add text first." });
+      }
+      
+      const { canUseTTS } = await import("./tts/guards");
+      const permission = await canUseTTS(req.user, card.universeId);
+      if (!permission.allowed) {
+        return res.status(403).json({ message: permission.reason || "TTS not allowed" });
+      }
+      
+      const { isTTSConfigured, synthesiseSpeech, validateNarrationText } = await import("./tts");
+      const { isObjectStorageConfigured, putObject, getNarrationKey } = await import("./storage/objectStore");
+      
+      if (!isTTSConfigured()) {
+        return res.status(503).json({ message: "TTS not configured: OPENAI_API_KEY is missing" });
+      }
+      
+      if (!isObjectStorageConfigured()) {
+        return res.status(503).json({ message: "Object storage not configured: R2 credentials are missing" });
+      }
+      
+      const validation = validateNarrationText(card.narrationText);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      // Set status to generating
+      await storage.updateCard(cardId, { 
+        narrationStatus: "generating",
+        narrationError: null,
+      });
+      
+      try {
+        const result = await synthesiseSpeech({
+          text: card.narrationText,
+          voice: card.narrationVoice || "alloy",
+          speed: card.narrationSpeed || 1.0,
+        });
+        
+        const key = getNarrationKey(card.universeId, cardId);
+        const audioUrl = await putObject(key, result.audioBuffer, result.contentType);
+        
+        // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
+        const estimatedDuration = (card.narrationText.length / 5) / 150 * 60;
+        
+        const updatedCard = await storage.updateCard(cardId, {
+          narrationAudioUrl: audioUrl,
+          narrationStatus: "ready",
+          narrationAudioDurationSec: estimatedDuration,
+          narrationUpdatedAt: new Date(),
+          narrationError: null,
+        });
+        
+        // Log TTS usage
+        await storage.logTtsUsage({
+          userId: req.user!.id,
+          universeId: card.universeId,
+          cardId,
+          charsCount: card.narrationText.length,
+          voiceId: card.narrationVoice || "alloy",
+        });
+        
+        res.json(updatedCard);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Generation failed";
+        await storage.updateCard(cardId, {
+          narrationStatus: "failed",
+          narrationError: errorMessage,
+        });
+        throw err;
+      }
+    } catch (error) {
+      console.error("Error generating narration:", error);
+      res.status(500).json({ message: "Error generating narration audio" });
+    }
+  });
+  
+  // Delete narration audio
+  app.delete("/api/cards/:id/narration", requireAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      
+      const card = await storage.getCard(cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      const { canUseTTS } = await import("./tts/guards");
+      const permission = await canUseTTS(req.user, card.universeId);
+      if (!permission.allowed) {
+        return res.status(403).json({ message: permission.reason || "TTS not allowed" });
+      }
+      
+      // Delete from R2 if URL exists
+      if (card.narrationAudioUrl) {
+        try {
+          const { deleteObject, extractKeyFromUrl } = await import("./storage/objectStore");
+          const key = extractKeyFromUrl(card.narrationAudioUrl);
+          if (key) {
+            await deleteObject(key);
+          }
+        } catch (err) {
+          console.error("Error deleting audio from R2:", err);
+        }
+      }
+      
+      const updatedCard = await storage.updateCard(cardId, {
+        narrationAudioUrl: null,
+        narrationStatus: "none",
+        narrationAudioDurationSec: null,
+        narrationUpdatedAt: null,
+        narrationError: null,
+      });
+      
+      res.json(updatedCard);
+    } catch (error) {
+      console.error("Error deleting narration:", error);
+      res.status(500).json({ message: "Error deleting narration" });
+    }
+  });
+
   return httpServer;
 }

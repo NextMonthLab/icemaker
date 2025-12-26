@@ -1,0 +1,224 @@
+Good. Then we’ll treat Postgres as the constant, and only swap the connection string between Replit and Render. Same schema, same code, same endpoints. No special “Render version”, just different env vars.
+
+Below is Prompt 1 (for Replit) that tells Rapplet exactly what to build for TTS narration on cards in a way that:
+	•	works now on Replit with Postgres
+	•	deploys cleanly on Render later
+	•	avoids hallucinations by locking narration text
+	•	stores audio safely (object storage), not on ephemeral disk
+	•	supports preview + generate + playback
+	•	is ready for Stripe gating later (hooks included, not a full billing rebuild)
+
+⸻
+
+Prompt 1: Add Card Narration (Text-to-Speech) with Storage + Admin Controls (Postgres)
+
+You are working inside the existing Story Engine app (StoryFlix/Story Engine). Postgres is already connected. We are adding Text-to-Speech narration for cards.
+
+Non-negotiables
+	1.	No hallucinations / no drift: the TTS service may ONLY speak the saved narrationText on the card.
+	•	If we auto-generate narration text, it must be generated from the card’s existing fields and then saved for the creator to edit before audio generation.
+	2.	Storage must be durable: do NOT rely on saving MP3s on local filesystem for production.
+	•	Use object storage (Cloudflare R2 preferred, S3-compatible).
+	•	For Replit dev, it’s still okay to use R2 via env vars; do not create a local-only storage approach that breaks later.
+	3.	Admin-first workflow: creators must be able to edit narration text, pick voice, preview, generate, regenerate, and delete narration.
+	4.	Front UI must be able to play narration audio and show the transcript.
+	5.	Keep this feature modular: it should not break existing cards/universes.
+
+⸻
+
+Part A: Database Schema (Postgres)
+
+Add new fields to the cards table (or equivalent Prisma model) and migrate:
+	•	narrationEnabled boolean default false
+	•	narrationText text nullable
+	•	narrationVoice varchar nullable (stores chosen voice id)
+	•	narrationSpeed numeric/float nullable (default 1.0 if set)
+	•	narrationStatus varchar default ‘none’
+Allowed: none | text_ready | generating | ready | failed
+	•	narrationAudioUrl text nullable
+	•	narrationAudioDurationSec numeric/float nullable
+	•	narrationUpdatedAt timestamp nullable
+	•	narrationError text nullable
+
+Add new fields to universes (or equivalent):
+	•	defaultNarrationEnabled boolean default false
+	•	defaultNarrationVoice varchar nullable
+	•	defaultNarrationSpeed numeric/float nullable (default 1.0)
+	•	defaultNarrationMode varchar default ‘manual’
+Allowed: manual | derive_from_sceneText | derive_from_captions | ai_summarise_from_card
+	•	narrationStyleNotes text nullable (creator guidance for wording, not for TTS)
+
+Migration must be safe for existing rows.
+
+⸻
+
+Part B: Voice Catalogue + Provider Abstraction
+
+Implement a tts/ module with:
+	•	listVoices() returns an array of voices: { id, name, previewTextHint, tags }
+	•	synthesiseSpeech({ text, voice, speed }) returns { audioBuffer, contentType }
+
+Provider approach
+
+We want to support OpenAI TTS or another provider later. Build it behind an interface.
+
+For now:
+	•	Implement OpenAI TTS if OPENAI_API_KEY exists
+	•	If key missing, the endpoints should return a clear error message and the UI should show “TTS not configured”.
+
+Environment variables:
+	•	OPENAI_API_KEY (optional for now, but required for actual generation)
+	•	R2_ENDPOINT
+	•	R2_ACCESS_KEY_ID
+	•	R2_SECRET_ACCESS_KEY
+	•	R2_BUCKET
+	•	R2_PUBLIC_BASE_URL (public URL base for reading files)
+
+Do not hardcode any secrets.
+
+⸻
+
+Part C: Object Storage (R2 / S3-compatible)
+
+Create storage/objectStore.ts with functions:
+	•	putObject(key, buffer, contentType) -> returns public URL
+	•	deleteObject(key)
+	•	Use S3-compatible client (AWS SDK v3) configured for R2.
+
+Key naming convention:
+narration/{universeSlug or universeId}/{cardId}/{timestamp}.mp3
+
+Store the returned public URL into cards.narrationAudioUrl.
+
+⸻
+
+Part D: API Endpoints
+
+Add endpoints (auth-protected for admin routes):
+	1.	GET /api/tts/voices
+Returns voice list + a default preview snippet.
+	2.	POST /api/cards/:id/narration/text
+Body: { narrationEnabled, narrationText, narrationVoice, narrationSpeed }
+
+	•	Saves fields
+	•	If narrationEnabled true and narrationText is empty, auto-fill using universe default mode:
+	•	derive_from_sceneText => use card.sceneText
+	•	derive_from_captions => join captions into a short narration
+	•	ai_summarise_from_card => call LLM to produce 1 concise paragraph from existing card fields ONLY (no new facts). Save result for creator editing. Do NOT generate audio in this step.
+Set narrationStatus = text_ready.
+
+	3.	POST /api/cards/:id/narration/preview
+Body: { text, voice, speed }
+
+	•	Generates a short preview audio (limit text to first ~300 chars)
+	•	Returns audio as a stream (no storage), for quick audition in admin
+
+	4.	POST /api/cards/:id/narration/generate
+
+	•	Reads card.narrationText (must exist)
+	•	Sets status generating
+	•	Calls TTS provider to synthesise full audio
+	•	Uploads to R2
+	•	Updates card:
+	•	narrationAudioUrl, narrationStatus='ready', narrationUpdatedAt=now, clear narrationError
+	•	On failure: narrationStatus='failed', set narrationError
+
+	5.	DELETE /api/cards/:id/narration
+
+	•	Deletes the object from R2 (if url exists)
+	•	Clears audio url and resets status to none (keep text optional, but disable narration)
+
+Guardrails
+	•	Hard limit narrationText length (e.g. 2,000–3,000 chars)
+	•	Reject generation if narrationEnabled false
+	•	Ensure narration text originates from stored field for generate endpoint (no ad-hoc text)
+
+⸻
+
+Part E: Admin UI Changes (must be obvious)
+
+In the Universe admin view (list of cards):
+	•	Add a clear “🎙 Narration” column:
+	•	Status chip: None / Text ready / Generating / Ready / Failed
+	•	Button: Edit (opens card edit)
+	•	Button: Generate (only if text_ready or failed)
+	•	Button: Play (only if ready)
+Make the “Generate Image” button label explicit: “Generate Image” (not generic AI/magic).
+
+In the Card edit screen:
+Add a “Narration” panel with:
+	•	Toggle: Enable narration
+	•	Textarea: narrationText
+	•	Dropdown: voice (populated from /api/tts/voices)
+	•	Slider: speed (0.8–1.2)
+	•	Buttons:
+	•	Preview (5 sec)
+	•	Save Text
+	•	Generate Audio
+	•	Delete Audio
+	•	Show audio player + transcript when ready
+	•	Show errors if failed
+
+Also add a “Back to Universe” button and ensure the little “i” icon on front UI can deep-link back to admin card edit.
+
+⸻
+
+Part F: Front UI Playback
+
+In the card viewer (phase 2 context card):
+	•	If card.narrationAudioUrl exists and narrationEnabled true:
+	•	Show play/pause
+	•	Show transcript (narrationText)
+	•	Do not auto-play unless the user taps (mobile restrictions)
+
+⸻
+
+Part G: Future Stripe Paywall Hooks (don’t implement full Stripe now)
+
+Add a simple server-side function stub:
+canUseTTS(user, universeId): { allowed: boolean, reason?: string }
+For now return allowed true for admin users, but wire it so we can later check plan limits.
+
+Add a usage log table (optional but recommended):
+tts_usage with: userId, universeId, cardId, charsCount, createdAt
+Record usage on successful generation.
+
+⸻
+
+Part H: Render Deployment Compatibility
+
+All secrets must come from env vars.
+Postgres uses DATABASE_URL.
+R2 uses env vars listed above.
+No filesystem dependency.
+
+⸻
+
+Deliverables
+	1.	DB migration + updated models
+	2.	TTS module with provider abstraction
+	3.	R2 object storage uploader
+	4.	API endpoints
+	5.	Admin UI changes
+	6.	Front UI playback
+	7.	Basic error handling and statuses
+
+⸻
+
+If you implement this, we can test in Replit immediately by:
+	•	Uploading/importing Time Spent cards
+	•	Turning on narration for Card 1
+	•	Preview voice
+	•	Generate narration audio
+	•	Confirm it plays on the front UI context card
+
+⸻
+
+Quick sanity note (so you don’t get stung later)
+
+Replit Postgres vs Render Postgres: same schema, just different DATABASE_URL.
+The only “new thing” on Render is you must also provide the R2 credentials and OpenAI key in Render env vars.
+
+⸻
+
+If you want, I’ll also write Prompt 2 right after this: “Narration auto-fill rules + anti-hallucination QA checks + ‘3-card hook’ default release behaviour” so the engine stays coherent and sticky across every import.
