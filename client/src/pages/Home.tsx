@@ -177,10 +177,10 @@ export default function Home() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                     
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/40 backdrop-blur-sm animate-pulse">
-                            <Play className="w-6 h-6 text-white ml-1 fill-white" />
+                    {/* Play Button Overlay - Always visible */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shadow-xl group-hover:bg-primary/90 group-hover:scale-110 transition-all duration-300">
+                            <Play className="w-10 h-10 text-white ml-1 fill-white drop-shadow-lg" />
                         </div>
                     </div>
                     
