@@ -153,10 +153,8 @@ function getImageBase64(imagePath: string): string {
   }
   
   const fileBuffer = fs.readFileSync(filePath);
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
   
-  return `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+  return fileBuffer.toString("base64");
 }
 
 export async function startImageToVideoGeneration(
