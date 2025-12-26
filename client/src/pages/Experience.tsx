@@ -1,9 +1,10 @@
-import { useParams, useSearch } from "wouter";
+import { useParams, useSearch, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import CardPlayer from "@/components/CardPlayer";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -24,6 +25,7 @@ export default function Experience() {
   const universe = storyData?.universe;
   const availableCards = storyData?.cards || [];
   const allCharacters = storyData?.characters || [];
+  const creator = storyData?.creator;
 
   const cardIndex = useMemo(() => {
     if (selectedIndex !== null) return selectedIndex;
@@ -144,6 +146,35 @@ export default function Experience() {
       {embedMode && (
         <div className="fixed bottom-2 right-2 text-xs text-white/50 bg-black/50 px-2 py-1 rounded z-50">
           Powered by StoryFlix
+        </div>
+      )}
+      
+      {creator && (
+        <div className="fixed bottom-4 left-4 z-50" data-testid="creator-attribution">
+          {creator.slug ? (
+            <Link href={`/creator/${creator.slug}`}>
+              <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full hover:bg-black/80 transition-colors cursor-pointer">
+                <Avatar className="h-6 w-6 border border-white/20">
+                  <AvatarImage src={creator.avatarUrl || undefined} />
+                  <AvatarFallback className="text-xs"><User className="w-3 h-3" /></AvatarFallback>
+                </Avatar>
+                <div className="text-white">
+                  <span className="text-xs font-medium">{creator.displayName}</span>
+                  {creator.headline && (
+                    <span className="text-white/50 text-[10px] ml-1 hidden sm:inline">{creator.headline}</span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full">
+              <Avatar className="h-6 w-6 border border-white/20">
+                <AvatarImage src={creator.avatarUrl || undefined} />
+                <AvatarFallback className="text-xs"><User className="w-3 h-3" /></AvatarFallback>
+              </Avatar>
+              <span className="text-white text-xs font-medium">{creator.displayName}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

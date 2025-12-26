@@ -56,7 +56,12 @@ class ApiClient {
   }
 
   async getStoryBySlug(slug: string) {
-    return this.request<{ universe: Universe; cards: Card[]; characters: Character[] }>(`/story/${slug}`);
+    return this.request<{ 
+      universe: Universe; 
+      cards: Card[]; 
+      characters: Character[];
+      creator?: { displayName: string; slug: string | null; headline: string | null; avatarUrl: string | null } | null;
+    }>(`/story/${slug}`);
   }
 
   async createUniverse(data: Partial<Universe>) {

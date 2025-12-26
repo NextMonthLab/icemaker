@@ -446,6 +446,14 @@ export async function registerRoutes(
       const cards = await storage.getCardsByUniverse(universe.id);
       const characters = await storage.getCharactersByUniverse(universe.id);
       
+      const creatorProfile = await storage.getCreatorForUniverse(universe.id);
+      const creator = creatorProfile ? {
+        displayName: creatorProfile.displayName,
+        slug: creatorProfile.slug,
+        headline: creatorProfile.headline,
+        avatarUrl: creatorProfile.avatarUrl,
+      } : null;
+      
       const now = new Date();
       const publishedCards = cards
         .filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
@@ -455,6 +463,7 @@ export async function registerRoutes(
         universe,
         cards: publishedCards,
         characters,
+        creator,
       });
     } catch (error) {
       console.error("Error fetching story by slug:", error);
