@@ -4,7 +4,7 @@ import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wan
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-import nextSceneLogo from "@assets/70C5E1E7-6EF6-4D4E-B835-33F4C5924FDE_1766780755538.png";
+const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png";
 
 const useCases = [
   {
@@ -128,7 +128,7 @@ export default function MarketingHome() {
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/">
             <img 
-              src={nextSceneLogo} 
+              src={LOGO_URL} 
               alt="NextScene" 
               className="h-[100px] cursor-pointer" 
               data-testid="link-logo"
@@ -410,7 +410,7 @@ export default function MarketingHome() {
         <footer className="py-12 px-6 border-t border-white/10 bg-black">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <img 
-              src={nextSceneLogo} 
+              src={LOGO_URL} 
               alt="NextScene" 
               className="h-20"
             />

@@ -59,9 +59,12 @@ export default function ForBrands() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black via-black/90 to-transparent">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/">
-            <span className="text-2xl font-display font-black tracking-tight cursor-pointer bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent" data-testid="link-logo">
-              NEXTSCENE
-            </span>
+            <img 
+              src="https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png" 
+              alt="NextScene" 
+              className="h-[100px] cursor-pointer" 
+              data-testid="link-logo"
+            />
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">
@@ -241,11 +244,11 @@ export default function ForBrands() {
         {/* Footer */}
         <footer className="py-12 px-6 border-t border-white/10">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <Link href="/">
-              <span className="text-xl font-display font-black tracking-tight bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-                NEXTSCENE
-              </span>
-            </Link>
+            <img 
+              src="https://res.cloudinary.com/drl0fxrkq/image/upload/c_crop,w_1920,h_500/v1766782089/18477D76-902C-4604-95AA-121B881D0618_xwlgoc.png" 
+              alt="NextScene" 
+              className="h-20"
+            />
             <div className="flex items-center gap-8">
               <Link href="/for/brands" className="text-white text-sm transition-colors">Brands</Link>
               <Link href="/for/creators" className="text-white/50 hover:text-white text-sm transition-colors">Creators</Link>
