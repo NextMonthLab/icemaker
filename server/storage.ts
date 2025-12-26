@@ -227,6 +227,11 @@ export class DatabaseStorage implements IStorage {
         await tx.delete(schema.cardCharacters).where(inArray(schema.cardCharacters.cardId, cardIds));
       }
       
+      // Clear transformation jobs that reference this universe (set outputUniverseId to null)
+      await tx.update(schema.transformationJobs)
+        .set({ outputUniverseId: null })
+        .where(eq(schema.transformationJobs.outputUniverseId, id));
+      
       // Delete all cards, characters, and locations for this universe
       await tx.delete(schema.cards).where(eq(schema.cards.universeId, id));
       await tx.delete(schema.characters).where(eq(schema.characters.universeId, id));
