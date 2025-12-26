@@ -408,20 +408,29 @@ export default function MarketingHome() {
 
         {/* Footer */}
         <footer className="py-12 px-6 border-t border-white/10 bg-black">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <img 
-              src={LOGO_URL} 
-              alt="NextScene" 
-              className="h-[60px]"
-            />
-            <div className="flex items-center gap-8">
-              <Link href="/for/brands" className="text-white/50 hover:text-white text-sm transition-colors">Brands</Link>
-              <Link href="/for/creators" className="text-white/50 hover:text-white text-sm transition-colors">Creators</Link>
-              <Link href="/for/knowledge" className="text-white/50 hover:text-white text-sm transition-colors">Knowledge</Link>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+              <img 
+                src={LOGO_URL} 
+                alt="NextScene" 
+                className="h-[60px]"
+              />
+              <div className="flex items-center gap-8">
+                <Link href="/for/brands" className="text-white/50 hover:text-white text-sm transition-colors">Brands</Link>
+                <Link href="/for/creators" className="text-white/50 hover:text-white text-sm transition-colors">Creators</Link>
+                <Link href="/for/knowledge" className="text-white/50 hover:text-white text-sm transition-colors">Knowledge</Link>
+              </div>
             </div>
-            <p className="text-white/30 text-sm">
-              © 2025 NextScene. All rights reserved.
-            </p>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
+              <div className="flex items-center gap-6">
+                <Link href="/privacy" className="text-white/40 hover:text-white/70 text-xs transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="text-white/40 hover:text-white/70 text-xs transition-colors">Terms of Service</Link>
+                <Link href="/cookies" className="text-white/40 hover:text-white/70 text-xs transition-colors">Cookie Policy</Link>
+              </div>
+              <p className="text-white/30 text-xs">
+                © {new Date().getFullYear()} NextMonth Ltd. All rights reserved.
+              </p>
+            </div>
           </div>
         </footer>
       </main>

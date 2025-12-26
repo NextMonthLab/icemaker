@@ -15,6 +15,9 @@ import ForEducator from "@/pages/marketing/ForEducator";
 import ForBrands from "@/pages/marketing/ForBrands";
 import ForCreators from "@/pages/marketing/ForCreators";
 import ForKnowledge from "@/pages/marketing/ForKnowledge";
+import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
+import TermsOfService from "@/pages/legal/TermsOfService";
+import CookiePolicy from "@/pages/legal/CookiePolicy";
 
 import Home from "@/pages/Home";
 import Today from "@/pages/Today";
@@ -93,6 +96,9 @@ function Router() {
       <Route path="/for/brands" component={ForBrands} />
       <Route path="/for/creators" component={ForCreators} />
       <Route path="/for/knowledge" component={ForKnowledge} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
+      <Route path="/cookies" component={CookiePolicy} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />
