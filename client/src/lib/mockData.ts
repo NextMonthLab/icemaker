@@ -2,7 +2,7 @@ import cardImage from "@assets/generated_images/cinematic_cyberpunk_noir_city_st
 import charImage from "@assets/generated_images/mysterious_cyberpunk_character_portrait.png";
 
 export interface Card {
-  id: string;
+  id: string | number;
   dayIndex: number;
   title: string;
   image: string;
@@ -10,6 +10,10 @@ export interface Card {
   sceneText: string;
   recapText: string;
   publishDate: string;
+  narrationEnabled?: boolean;
+  narrationAudioUrl?: string | null;
+  narrationText?: string | null;
+  narrationStatus?: string | null;
 }
 
 export interface Character {

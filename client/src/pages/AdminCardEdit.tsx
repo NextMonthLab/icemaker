@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, X, Plus, Trash2, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { ArrowLeft, Save, X, Plus, Trash2, Loader2, Volume2, Play, Pause, RefreshCw } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AdminCardEdit() {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +37,14 @@ export default function AdminCardEdit() {
     imageGenNegativePrompt: "",
     primaryCharacterIds: [] as number[],
     locationId: null as number | null,
+    narrationEnabled: false,
+    narrationText: "",
+    narrationVoice: "alloy",
+    narrationSpeed: 1.0,
   });
+  
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: card, isLoading: cardLoading } = useQuery({
     queryKey: ["card", cardId],
@@ -53,6 +62,15 @@ export default function AdminCardEdit() {
     queryKey: ["locations", card?.universeId],
     queryFn: () => api.getLocations(card!.universeId),
     enabled: !!card?.universeId,
+  });
+  
+  const { data: voicesData } = useQuery({
+    queryKey: ["tts-voices"],
+    queryFn: async () => {
+      const res = await fetch("/api/tts/voices");
+      if (!res.ok) return { configured: false, voices: [] };
+      return res.json();
+    },
   });
 
   useEffect(() => {
@@ -72,6 +90,10 @@ export default function AdminCardEdit() {
         imageGenNegativePrompt: card.imageGeneration?.negativePrompt || "",
         primaryCharacterIds: card.primaryCharacterIds || [],
         locationId: card.locationId || null,
+        narrationEnabled: card.narrationEnabled ?? false,
+        narrationText: card.narrationText || "",
+        narrationVoice: card.narrationVoice || "alloy",
+        narrationSpeed: card.narrationSpeed ?? 1.0,
       });
     }
   }, [card]);
@@ -136,6 +158,118 @@ export default function AdminCardEdit() {
         ? prev.primaryCharacterIds.filter(id => id !== charId)
         : [...prev.primaryCharacterIds, charId]
     }));
+  };
+  
+  const saveNarrationMutation = useMutation({
+    mutationFn: async (data: { narrationEnabled: boolean; narrationText: string; narrationVoice: string; narrationSpeed: number }) => {
+      const res = await fetch(`/api/cards/${cardId}/narration/text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to save narration");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      toast({ title: "Narration saved!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Save failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const generateNarrationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/narration/generate`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to generate narration");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      toast({ title: "Narration generated successfully!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Generation failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const deleteNarrationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/narration`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to delete narration");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      toast({ title: "Narration audio deleted" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const handlePreviewNarration = async () => {
+    if (previewPlaying && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+      setPreviewPlaying(false);
+      return;
+    }
+    
+    const text = formData.narrationText.slice(0, 300);
+    if (!text.trim()) {
+      toast({ title: "No text to preview", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      setPreviewPlaying(true);
+      const res = await fetch(`/api/cards/${cardId}/narration/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          text,
+          voice: formData.narrationVoice,
+          speed: formData.narrationSpeed,
+        }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Preview failed");
+      }
+      
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      previewAudioRef.current = audio;
+      audio.onended = () => {
+        setPreviewPlaying(false);
+        URL.revokeObjectURL(url);
+      };
+      audio.play();
+    } catch (error: any) {
+      setPreviewPlaying(false);
+      toast({ title: "Preview failed", description: error.message, variant: "destructive" });
+    }
   };
 
   if (!user?.isAdmin) {
@@ -388,6 +522,176 @@ export default function AdminCardEdit() {
                   onChange={(e) => setFormData(prev => ({ ...prev, imageGenNegativePrompt: e.target.value }))}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Volume2 className="w-5 h-5" />
+                Narration (TTS)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!voicesData?.configured ? (
+                <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+                  TTS is not configured. Set up OPENAI_API_KEY and R2 storage credentials to enable narration.
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="narrationEnabled">Enable Narration</Label>
+                      <p className="text-sm text-muted-foreground">Generate AI voice narration for this card</p>
+                    </div>
+                    <Switch
+                      id="narrationEnabled"
+                      checked={formData.narrationEnabled}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, narrationEnabled: checked }))}
+                      data-testid="switch-narration-enabled"
+                    />
+                  </div>
+
+                  {formData.narrationEnabled && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="narrationText">Narration Text</Label>
+                        <Textarea 
+                          id="narrationText"
+                          rows={4}
+                          placeholder="Enter the text that will be converted to speech..."
+                          value={formData.narrationText}
+                          onChange={(e) => setFormData(prev => ({ ...prev, narrationText: e.target.value }))}
+                          className="font-mono text-sm"
+                          data-testid="input-narration-text"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{formData.narrationText.length} / 3000 characters</span>
+                          {formData.narrationText.length > 3000 && (
+                            <span className="text-destructive">Exceeds limit</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="narrationVoice">Voice</Label>
+                          <Select 
+                            value={formData.narrationVoice} 
+                            onValueChange={(v) => setFormData(prev => ({ ...prev, narrationVoice: v }))}
+                          >
+                            <SelectTrigger data-testid="select-narration-voice">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {voicesData?.voices?.map((voice: { id: string; name: string; description: string }) => (
+                                <SelectItem key={voice.id} value={voice.id}>
+                                  {voice.name} - {voice.description}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Speed: {formData.narrationSpeed.toFixed(1)}x</Label>
+                          <Slider
+                            value={[formData.narrationSpeed]}
+                            onValueChange={([v]) => setFormData(prev => ({ ...prev, narrationSpeed: v }))}
+                            min={0.5}
+                            max={2.0}
+                            step={0.1}
+                            className="mt-3"
+                            data-testid="slider-narration-speed"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>0.5x</span>
+                            <span>2.0x</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handlePreviewNarration}
+                          disabled={!formData.narrationText.trim()}
+                          className="gap-2"
+                          data-testid="button-preview-narration"
+                        >
+                          {previewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          {previewPlaying ? "Stop" : "Preview (300 chars)"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => saveNarrationMutation.mutate({
+                            narrationEnabled: formData.narrationEnabled,
+                            narrationText: formData.narrationText,
+                            narrationVoice: formData.narrationVoice,
+                            narrationSpeed: formData.narrationSpeed,
+                          })}
+                          disabled={saveNarrationMutation.isPending}
+                          className="gap-2"
+                          data-testid="button-save-narration"
+                        >
+                          {saveNarrationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          Save Text
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => generateNarrationMutation.mutate()}
+                          disabled={generateNarrationMutation.isPending || !formData.narrationText.trim() || formData.narrationText.length > 3000}
+                          className="gap-2"
+                          data-testid="button-generate-narration"
+                        >
+                          {generateNarrationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                          Generate Audio
+                        </Button>
+                      </div>
+
+                      {card?.narrationStatus && card.narrationStatus !== "none" && (
+                        <div className="p-3 bg-muted rounded-lg space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Narration Status</span>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              card.narrationStatus === "ready" ? "bg-green-500/20 text-green-600" :
+                              card.narrationStatus === "generating" ? "bg-yellow-500/20 text-yellow-600" :
+                              card.narrationStatus === "failed" ? "bg-red-500/20 text-red-600" :
+                              "bg-muted-foreground/20"
+                            }`}>
+                              {card.narrationStatus}
+                            </span>
+                          </div>
+                          {card.narrationStatus === "ready" && card.narrationAudioUrl && (
+                            <div className="space-y-2">
+                              <audio controls className="w-full h-10" src={card.narrationAudioUrl} data-testid="audio-narration" />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteNarrationMutation.mutate()}
+                                disabled={deleteNarrationMutation.isPending}
+                                className="gap-2"
+                                data-testid="button-delete-narration"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete Audio
+                              </Button>
+                            </div>
+                          )}
+                          {card.narrationStatus === "failed" && card.narrationError && (
+                            <p className="text-sm text-destructive">{card.narrationError}</p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

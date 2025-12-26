@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw } from "lucide-react";
+import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
 
@@ -62,7 +62,11 @@ export default function CardPlayer({
   const [captionIndex, setCaptionIndex] = useState(0);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [dismissedRotateHint, setDismissedRotateHint] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const isTabletLandscape = useIsTabletLandscape();
+  
+  const hasNarration = card.narrationEnabled && card.narrationStatus === "ready" && card.narrationAudioUrl;
 
   // Reset all state when card changes
   useEffect(() => {
@@ -70,7 +74,39 @@ export default function CardPlayer({
     setCaptionIndex(0);
     setShowSwipeHint(false);
     setIsPlaying(autoplay);
+    
+    // Stop any playing audio when card changes
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   }, [card.id, autoplay]);
+  
+  // Play/pause audio based on phase
+  useEffect(() => {
+    if (!hasNarration || !audioRef.current) return;
+    
+    if (phase === "cinematic" && isPlaying && !audioMuted) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [phase, isPlaying, hasNarration, audioMuted]);
+  
+  const toggleAudioMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAudioMuted(prev => !prev);
+  }, []);
+  
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   const advanceToContext = useCallback(() => {
     setPhase("context");
@@ -177,7 +213,30 @@ export default function CardPlayer({
               <span className="text-xs font-mono text-white/60 bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
                 DAY {card.dayIndex}
               </span>
+              {hasNarration && (
+                <button
+                  onClick={toggleAudioMute}
+                  className="p-2 bg-black/30 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors"
+                  data-testid="button-toggle-audio"
+                >
+                  {audioMuted ? (
+                    <VolumeX className="w-4 h-4 text-white/70" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white/70" />
+                  )}
+                </button>
+              )}
             </div>
+            
+            {hasNarration && (
+              <audio
+                ref={audioRef}
+                src={card.narrationAudioUrl!}
+                preload="auto"
+                className="hidden"
+                data-testid="audio-narration-player"
+              />
+            )}
 
             <div className={`absolute inset-x-0 bottom-0 flex flex-col justify-end ${fullScreen ? 'p-8 pb-24' : 'p-6 pb-16'}`}>
               <AnimatePresence mode="wait">

@@ -2865,13 +2865,39 @@ Output only the narration paragraph, nothing else.`;
         });
       }
       
-      const updatedCard = await storage.updateCard(cardId, {
-        narrationEnabled: narrationEnabled ?? card.narrationEnabled,
+      // Determine if text has changed (requires regeneration)
+      const textChanged = finalText !== card.narrationText;
+      const isEnabled = narrationEnabled ?? card.narrationEnabled;
+      const hasText = finalText && finalText.trim();
+      
+      // Build update object
+      const updateData: Record<string, any> = {
+        narrationEnabled: isEnabled,
         narrationText: finalText ?? card.narrationText,
         narrationVoice: narrationVoice ?? card.narrationVoice ?? universe.defaultNarrationVoice,
         narrationSpeed: narrationSpeed ?? card.narrationSpeed ?? universe.defaultNarrationSpeed,
-        narrationStatus: finalText && finalText.trim() ? "text_ready" : "none",
-      });
+      };
+      
+      // If disabled or no text, clear everything
+      if (!isEnabled || !hasText) {
+        updateData.narrationStatus = "none";
+        updateData.narrationAudioUrl = null;
+        updateData.narrationAudioDurationSec = null;
+        updateData.narrationError = null;
+      } 
+      // If text changed but enabled, reset to text_ready and clear audio
+      else if (textChanged && card.narrationAudioUrl) {
+        updateData.narrationStatus = "text_ready";
+        updateData.narrationAudioUrl = null;
+        updateData.narrationAudioDurationSec = null;
+        updateData.narrationError = null;
+      }
+      // Otherwise just set to text_ready if not already ready
+      else if (hasText && card.narrationStatus === "none") {
+        updateData.narrationStatus = "text_ready";
+      }
+      
+      const updatedCard = await storage.updateCard(cardId, updateData);
       
       res.json(updatedCard);
     } catch (error) {
