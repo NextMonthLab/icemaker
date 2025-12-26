@@ -145,6 +145,18 @@ export interface IStorage {
   // User Onboarding Profiles
   getUserOnboardingProfile(userId: number): Promise<schema.UserOnboardingProfile | undefined>;
   upsertUserOnboardingProfile(profile: schema.InsertUserOnboardingProfile): Promise<schema.UserOnboardingProfile>;
+  
+  // Card Media Assets
+  getCardMediaAssets(cardId: number): Promise<schema.CardMediaAsset[]>;
+  getCardMediaAsset(id: number): Promise<schema.CardMediaAsset | undefined>;
+  createCardMediaAsset(asset: schema.InsertCardMediaAsset): Promise<schema.CardMediaAsset>;
+  deleteCardMediaAsset(id: number): Promise<void>;
+  softDeleteCardMediaAsset(id: number): Promise<void>;
+  
+  // User Storage Usage
+  getUserStorageUsage(userId: number): Promise<schema.UserStorageUsage | undefined>;
+  getOrCreateUserStorageUsage(userId: number): Promise<schema.UserStorageUsage>;
+  updateStorageUsage(userId: number, deltaBytes: number, deltaImages: number, deltaVideos: number): Promise<schema.UserStorageUsage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -982,6 +994,72 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return result;
     }
+  }
+  
+  // Card Media Assets
+  async getCardMediaAssets(cardId: number): Promise<schema.CardMediaAsset[]> {
+    const result = await db.query.cardMediaAssets.findMany({
+      where: and(
+        eq(schema.cardMediaAssets.cardId, cardId),
+        eq(schema.cardMediaAssets.isActive, true)
+      ),
+    });
+    return result;
+  }
+  
+  async getCardMediaAsset(id: number): Promise<schema.CardMediaAsset | undefined> {
+    const result = await db.query.cardMediaAssets.findFirst({
+      where: eq(schema.cardMediaAssets.id, id),
+    });
+    return result;
+  }
+  
+  async createCardMediaAsset(asset: schema.InsertCardMediaAsset): Promise<schema.CardMediaAsset> {
+    const [result] = await db.insert(schema.cardMediaAssets).values(asset as any).returning();
+    return result;
+  }
+  
+  async deleteCardMediaAsset(id: number): Promise<void> {
+    await db.delete(schema.cardMediaAssets).where(eq(schema.cardMediaAssets.id, id));
+  }
+  
+  async softDeleteCardMediaAsset(id: number): Promise<void> {
+    await db.update(schema.cardMediaAssets)
+      .set({ isActive: false })
+      .where(eq(schema.cardMediaAssets.id, id));
+  }
+  
+  // User Storage Usage
+  async getUserStorageUsage(userId: number): Promise<schema.UserStorageUsage | undefined> {
+    const result = await db.query.userStorageUsage.findFirst({
+      where: eq(schema.userStorageUsage.userId, userId),
+    });
+    return result;
+  }
+  
+  async getOrCreateUserStorageUsage(userId: number): Promise<schema.UserStorageUsage> {
+    let usage = await this.getUserStorageUsage(userId);
+    if (!usage) {
+      const [result] = await db.insert(schema.userStorageUsage)
+        .values({ userId, totalBytesUsed: 0, imageCount: 0, videoCount: 0 })
+        .returning();
+      usage = result;
+    }
+    return usage;
+  }
+  
+  async updateStorageUsage(userId: number, deltaBytes: number, deltaImages: number, deltaVideos: number): Promise<schema.UserStorageUsage> {
+    const current = await this.getOrCreateUserStorageUsage(userId);
+    const [result] = await db.update(schema.userStorageUsage)
+      .set({
+        totalBytesUsed: Math.max(0, current.totalBytesUsed + deltaBytes),
+        imageCount: Math.max(0, current.imageCount + deltaImages),
+        videoCount: Math.max(0, current.videoCount + deltaVideos),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.userStorageUsage.userId, userId))
+      .returning();
+    return result;
   }
 }
 
