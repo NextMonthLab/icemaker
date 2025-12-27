@@ -8,23 +8,23 @@ import { useMutation } from "@tanstack/react-query";
 
 const benefits = [
   {
-    title: "Enter a URL or upload documents",
-    description: "Paste your website, product page, or case study. NextScene extracts the meaning.",
+    title: "Connect your existing website",
+    description: "We understand what you do, how you sell, and what customers ask.",
     icon: Globe,
   },
   {
-    title: "NextScene builds a visual story",
-    description: "AI transforms your content into cinematic story cards with stunning visuals.",
+    title: "Your Smart Site is generated",
+    description: "Your content becomes explorable, conversational, and clear.",
     icon: Wand2,
   },
   {
-    title: '"Talk to the brand" via AI chat',
-    description: "Visitors can ask questions answered by an AI grounded in your content.",
+    title: "Customers can ask real questions",
+    description: "The Smart Site answers consistently, using your content.",
     icon: MessageCircle,
   },
   {
-    title: "Export anywhere",
-    description: "Embeddable experience, shareable link, or standalone video with QR.",
+    title: "Deploy anywhere",
+    description: "Embeddable experience, shareable link, or standalone video.",
     icon: Share2,
   },
 ];
@@ -141,13 +141,20 @@ export default function ForBrands() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-blue-500/10 border border-blue-500/20 rounded-full backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-300 text-sm font-medium">Try Smart Site Preview</span>
+                <span className="text-blue-300 text-sm font-medium">Smart Site Preview</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight mb-4 leading-tight">
-                See your website as an AI assistant in 60 seconds
+              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight mb-4 leading-[1.1]">
+                Your website is passive.<br />
+                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  See the version that actually talks to customers.
+                </span>
               </h1>
-              <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Enter your website below and we'll create a free preview showing how an AI assistant would answer customer questions about your brand. No signup required.
+              <p className="text-xl text-white/60 max-w-2xl mx-auto mb-6 leading-relaxed">
+                Turn your existing website into a Smart Site in under 60 seconds.<br />
+                No rebuild. No signup. Just see it working.
+              </p>
+              <p className="text-sm text-white/50 max-w-lg mx-auto mb-10 italic">
+                Most websites answer nothing. Smart Sites answer everything.
               </p>
 
               <div className="max-w-xl mx-auto">
@@ -179,8 +186,7 @@ export default function ForBrands() {
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4" />
-                        Create Preview
+                        Create my Smart Site preview
                       </>
                     )}
                   </Button>
@@ -190,20 +196,9 @@ export default function ForBrands() {
                     {error}
                   </p>
                 )}
-                <div className="flex items-center justify-center gap-6 text-xs text-white/40">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Free preview</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                    <span>No signup needed</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Ready in 60 seconds</span>
-                  </div>
-                </div>
+                <p className="text-xs text-white/50 text-center">
+                  Free preview. Ready in 60 seconds.
+                </p>
               </div>
             </motion.div>
           </div>
@@ -240,15 +235,14 @@ export default function ForBrands() {
               </div>
               
               <h1 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
-                <span className="block text-white">Turn your website into a</span>
+                <span className="block text-white">How Smart Sites</span>
                 <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                  cinematic story customers can explore
+                  work
                 </span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto mb-12 leading-relaxed" data-testid="text-hero-description">
-                Transform your brand content into interactive experiences that sell, 
-                educate, and engage — automatically.
+                Smart Sites present your content as a guided, cinematic experience customers can explore or talk to.
               </p>
               
               <Link href="/login?signup=true">
@@ -267,8 +261,11 @@ export default function ForBrands() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                How it <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">works</span>
+                What happens when you <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">create a preview</span>
               </h2>
+              <p className="text-white/50 text-lg max-w-3xl mx-auto mt-4">
+                We create a temporary Smart Site that sits on top of your existing website. Customers can ask it questions. It answers using your real content. You see what your website would do if it could actually respond.
+              </p>
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
