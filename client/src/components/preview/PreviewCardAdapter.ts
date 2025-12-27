@@ -20,6 +20,13 @@ export interface PreviewTarget {
   label?: string;
 }
 
+function getBestImage(identity: SiteIdentity): string {
+  if (identity.heroImageUrl) return identity.heroImageUrl;
+  if (identity.logoUrl) return identity.logoUrl;
+  if (identity.faviconUrl) return identity.faviconUrl;
+  return `https://placehold.co/1080x1920/1a1a2e/7c3aed?text=${encodeURIComponent(identity.sourceDomain)}`;
+}
+
 export function adaptPreviewToCards(
   identity: SiteIdentity,
   siteTitle: string | null,
@@ -28,7 +35,7 @@ export function adaptPreviewToCards(
   const brandName = identity.title?.split(' - ')[0]?.split(' | ')[0] || siteTitle?.split(' - ')[0] || identity.sourceDomain;
   const description = identity.heroDescription || '';
   const sentences = description.split(/[.!?]/).map(s => s.trim()).filter(s => s.length > 15);
-  const heroImage = identity.heroImageUrl || '';
+  const heroImage = getBestImage(identity);
 
   if (!target || target.type === 'overview') {
     return [
