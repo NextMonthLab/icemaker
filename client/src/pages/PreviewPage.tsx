@@ -283,7 +283,8 @@ function ChatOverlay({
               </div>
 
               <div className="flex-1 min-h-0 overflow-hidden" ref={scrollRef}>
-                <ScrollArea className="h-full p-4">
+                <ScrollArea className="h-full max-h-[calc(70vh-130px)] md:max-h-[470px]">
+                  <div className="p-4">
                 {messages.length === 0 && suggestedPrompts.length > 0 && (
                   <div className="space-y-2 mb-4">
                     <p className="text-xs text-white/40 mb-3">Try asking:</p>
@@ -334,6 +335,7 @@ function ChatOverlay({
                     </motion.div>
                   )}
                 </div>
+                  </div>
                 </ScrollArea>
               </div>
 
