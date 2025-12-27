@@ -22,21 +22,26 @@ export interface PreviewTarget {
   index?: number;
 }
 
-function getImageForIndex(identity: SiteIdentity, index: number, prevIndex?: number): string {
-  const pool = identity.imagePool || [];
-  if (pool.length > 1) {
-    let imageIdx = index % pool.length;
-    if (prevIndex !== undefined) {
-      const prevImgIdx = prevIndex % pool.length;
-      if (imageIdx === prevImgIdx) {
-        imageIdx = (imageIdx + 1) % pool.length;
-      }
-    }
-    return pool[imageIdx];
+function getImageForIndex(identity: SiteIdentity, index: number, useGradientFallback: boolean = false): string {
+  if (useGradientFallback) {
+    return createGradientPlaceholder(identity.primaryColour, identity.sourceDomain);
   }
-  if (pool.length === 1) return pool[0];
-  if (identity.heroImageUrl) return identity.heroImageUrl;
-  if (identity.logoUrl) return identity.logoUrl;
+  
+  const pool = identity.imagePool || [];
+  const uniqueImages = Array.from(new Set(pool));
+  
+  if (uniqueImages.length > 1) {
+    return uniqueImages[index % uniqueImages.length];
+  }
+  
+  if (uniqueImages.length === 1 && index === 0) {
+    return uniqueImages[0];
+  }
+  
+  if (identity.heroImageUrl && index === 0) {
+    return identity.heroImageUrl;
+  }
+  
   return createGradientPlaceholder(identity.primaryColour, identity.sourceDomain);
 }
 

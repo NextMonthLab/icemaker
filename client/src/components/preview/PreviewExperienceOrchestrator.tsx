@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { adaptPreviewToCards, getTargetsFromIdentity, PreviewTarget } from "./PreviewCardAdapter";
@@ -25,15 +25,17 @@ interface PreviewExperienceOrchestratorProps {
   siteSummary: string | null;
   onAskAbout: (prompt: string) => void;
   onClaim: () => void;
+  onModeChange?: (mode: 'cinematic' | 'interactive') => void;
 }
 
-type Mode = 'cinematic' | 'interactive' | 'transitioning';
+type Mode = 'cinematic' | 'interactive';
 
 export function PreviewExperienceOrchestrator({
   siteIdentity,
   siteTitle,
   onAskAbout,
   onClaim,
+  onModeChange,
 }: PreviewExperienceOrchestratorProps) {
   const [mode, setMode] = useState<Mode>('cinematic');
   const [currentTarget, setCurrentTarget] = useState<PreviewTarget>({ type: 'overview', id: 'overview', index: 0 });
@@ -43,6 +45,10 @@ export function PreviewExperienceOrchestrator({
   const targets = getTargetsFromIdentity(siteIdentity);
   const cards = adaptPreviewToCards(siteIdentity, siteTitle, currentTarget);
   const currentCard = cards[0];
+
+  useEffect(() => {
+    onModeChange?.(mode);
+  }, [mode, onModeChange]);
 
   const handlePhaseChange = useCallback((phase: "cinematic" | "context") => {
     if (phase === 'context') {
@@ -54,15 +60,14 @@ export function PreviewExperienceOrchestrator({
     if (target.id === currentTarget.id) return;
 
     setIsTransitioning(true);
-    setMode('transitioning');
 
     setTimeout(() => {
       setCurrentTarget(target);
       setMode('cinematic');
       setTimeout(() => {
         setIsTransitioning(false);
-      }, 50);
-    }, 250);
+      }, 100);
+    }, 300);
   }, [currentTarget.id]);
 
   const handleAskAbout = useCallback((target: PreviewTarget) => {
@@ -80,40 +85,39 @@ export function PreviewExperienceOrchestrator({
   }, [siteIdentity.sourceDomain, onAskAbout]);
 
   return (
-    <div className="relative w-full">
-      <AnimatePresence mode="wait">
+    <>
+      <AnimatePresence>
         {isTransitioning && (
           <motion.div
-            key="transition"
+            key="transition-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 bg-black"
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] bg-black"
           />
         )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {mode === 'cinematic' && currentCard && (
+        {mode === 'cinematic' && currentCard && !isTransitioning && (
           <motion.div
             key={`cinematic-${currentTarget.id}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="w-full h-[100svh] min-h-[500px] relative"
-            style={{ scrollSnapAlign: 'start' }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-50 bg-black"
           >
             {(siteIdentity.logoUrl || siteIdentity.faviconUrl) && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="absolute top-4 left-4 z-30 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md"
+                transition={{ delay: 0.6, duration: 0.4 }}
+                className="absolute top-4 left-4 z-[60] flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md"
                 style={{
-                  backgroundColor: 'rgba(0,0,0,0.5)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                 }}
               >
                 <img
@@ -122,43 +126,58 @@ export function PreviewExperienceOrchestrator({
                   className="w-6 h-6 rounded object-contain"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <span className="text-sm font-medium text-white/90 max-w-[120px] truncate">
+                <span className="text-sm font-medium text-white/90 max-w-[140px] truncate">
                   {siteIdentity.sourceDomain}
                 </span>
               </motion.div>
             )}
-            <CardPlayer
-              card={currentCard}
-              autoplay={true}
-              onPhaseChange={handlePhaseChange}
-              fullScreen={true}
-            />
+            <div className="w-full h-full">
+              <CardPlayer
+                card={currentCard}
+                autoplay={true}
+                onPhaseChange={handlePhaseChange}
+                fullScreen={true}
+              />
+            </div>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {mode === 'interactive' && (
+      <AnimatePresence>
+        {mode === 'interactive' && !isTransitioning && (
           <motion.div
             key={`interactive-${currentTarget.id}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full min-h-[100svh] pb-20"
+            className="w-full min-h-screen"
             style={{ 
-              background: `linear-gradient(to bottom, color-mix(in srgb, ${primaryColour} 8%, #0a0a0a), #0a0a0a)`
+              background: `linear-gradient(to bottom, color-mix(in srgb, ${primaryColour} 10%, #0a0a0a), #0a0a0a 30%)`
             }}
           >
             <div className="p-5 pt-6 border-b border-white/10">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">
-                  {currentTarget.label || 'Overview'}
-                </h2>
+                <div className="flex items-center gap-3">
+                  {(siteIdentity.logoUrl || siteIdentity.faviconUrl) && (
+                    <img
+                      src={siteIdentity.logoUrl || siteIdentity.faviconUrl || ''}
+                      alt=""
+                      className="w-8 h-8 rounded object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <h2 className="text-xl font-semibold text-white">
+                    {currentTarget.label || 'Overview'}
+                  </h2>
+                </div>
                 <button
                   onClick={() => handleAskAbout(currentTarget)}
                   className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
                   style={{
-                    backgroundColor: `color-mix(in srgb, ${primaryColour} 20%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${primaryColour} 25%, transparent)`,
                     color: primaryColour,
+                    border: `1px solid color-mix(in srgb, ${primaryColour} 40%, transparent)`,
                   }}
                   data-testid="button-ask-current"
                 >
@@ -168,8 +187,8 @@ export function PreviewExperienceOrchestrator({
               </div>
             </div>
 
-            <div className="p-4 space-y-3">
-              {targets.filter(t => t.id !== currentTarget.id).slice(0, 5).map((target) => (
+            <div className="p-4 space-y-3 pb-32">
+              {targets.filter(t => t.id !== currentTarget.id).slice(0, 6).map((target) => (
                 <button
                   key={target.id}
                   onClick={() => handleTargetClick(target)}
@@ -182,7 +201,7 @@ export function PreviewExperienceOrchestrator({
                 >
                   <div className="flex-1">
                     <span className="text-xs uppercase tracking-wider text-white/50 mb-1 block">
-                      {target.type === 'service' ? 'Service' : target.type === 'faq' ? 'Question' : target.type === 'lead' ? 'Next Step' : target.type}
+                      {target.type === 'service' ? 'Service' : target.type === 'faq' ? 'Question' : target.type === 'lead' ? 'Next Step' : target.type === 'why' ? 'About' : 'Explore'}
                     </span>
                     <span className="font-medium text-white group-hover:text-white transition-colors line-clamp-2">
                       {target.label}
@@ -194,23 +213,23 @@ export function PreviewExperienceOrchestrator({
             </div>
 
             {currentTarget.type === 'lead' && (
-              <div className="p-4 pt-2">
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent">
                 <button
                   onClick={onClaim}
-                  className="w-full p-4 rounded-xl font-semibold text-base transition-colors"
+                  className="w-full max-w-lg mx-auto block p-4 rounded-xl font-semibold text-base transition-colors shadow-2xl"
                   style={{
                     backgroundColor: primaryColour,
                     color: '#fff',
                   }}
                   data-testid="button-claim-orchestrator"
                 >
-                  Claim and activate
+                  Claim and activate this Smart Site
                 </button>
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

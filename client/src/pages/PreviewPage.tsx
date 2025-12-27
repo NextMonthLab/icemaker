@@ -401,6 +401,7 @@ export default function PreviewPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [experienceMode, setExperienceMode] = useState<'cinematic' | 'interactive'>('cinematic');
 
   const { data: preview, isLoading: previewLoading } = useQuery({
     queryKey: ["preview", previewId],
@@ -602,9 +603,7 @@ export default function PreviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col max-w-4xl mx-auto border-x border-border shadow-2xl">
-      <BrandHeader preview={preview} timeRemaining={getTimeRemaining()} />
-      
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {preview.siteIdentity && (
         <PreviewExperienceOrchestrator
           siteIdentity={preview.siteIdentity}
@@ -612,29 +611,25 @@ export default function PreviewPage() {
           siteSummary={preview.siteSummary}
           onAskAbout={(prompt) => handleSend(prompt)}
           onClaim={() => claimMutation.mutate()}
+          onModeChange={setExperienceMode}
         />
       )}
 
-      <div id="smart-site-scaffold">
-        <MiniSiteScaffold 
-          preview={preview} 
-          onAskQuestion={(question) => handleSend(question)}
+      {experienceMode === 'interactive' && (
+        <ChatOverlay
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          onToggle={() => setChatOpen(true)}
+          messages={messages}
+          input={input}
+          setInput={setInput}
+          onSend={handleSend}
+          isTyping={isTyping}
+          suggestedPrompts={generateContextualPrompts()}
+          capReached={capReached}
+          onCapClick={() => setShowPaywall(true)}
         />
-      </div>
-
-      <ChatOverlay
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-        onToggle={() => setChatOpen(true)}
-        messages={messages}
-        input={input}
-        setInput={setInput}
-        onSend={handleSend}
-        isTyping={isTyping}
-        suggestedPrompts={generateContextualPrompts()}
-        capReached={capReached}
-        onCapClick={() => setShowPaywall(true)}
-      />
+      )}
 
       <Dialog open={showPaywall} onOpenChange={setShowPaywall}>
         <DialogContent className="sm:max-w-md">
