@@ -99,7 +99,7 @@ export default function ForBusiness() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src="/attached_assets/F2BAC948-A0A6-4DA7-BB2F-FF58C5F37F7E_1766875595613.png" alt="NextScene" className="h-8 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} data-testid="link-logo" />
+            <img src="/logo.png" alt="NextScene" className="h-8 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} data-testid="link-logo" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login">
