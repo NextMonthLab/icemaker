@@ -4,7 +4,7 @@ import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wan
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-const LOGO_URL = "/nextscene-logo.png";
+const LOGO_URL = "https://res.cloudinary.com/dvudlkqip/image/upload/v1766825430/6F55E75F-5FC8-4488-BC3C-7FCA7EC0DB45_tevybh.jpg";
 
 const useCases = [
   {

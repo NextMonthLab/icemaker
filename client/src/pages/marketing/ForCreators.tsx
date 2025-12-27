@@ -42,7 +42,7 @@ export default function ForCreators() {
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/">
             <img 
-              src="/nextscene-logo.png" 
+              src="https://res.cloudinary.com/dvudlkqip/image/upload/v1766825430/6F55E75F-5FC8-4488-BC3C-7FCA7EC0DB45_tevybh.jpg" 
               alt="NextScene" 
               className="h-[75px] cursor-pointer" 
               data-testid="link-logo"
@@ -222,7 +222,7 @@ export default function ForCreators() {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <img 
-                src="/nextscene-logo.png" 
+                src="https://res.cloudinary.com/dvudlkqip/image/upload/v1766825430/6F55E75F-5FC8-4488-BC3C-7FCA7EC0DB45_tevybh.jpg" 
                 alt="NextScene" 
                 className="h-[60px]"
               />
