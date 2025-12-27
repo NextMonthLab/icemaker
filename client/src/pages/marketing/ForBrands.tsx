@@ -400,7 +400,14 @@ export default function ForBrands() {
                 <Link href="/terms" className="text-white/40 hover:text-white/70 text-xs transition-colors">Terms of Service</Link>
                 <Link href="/cookies" className="text-white/40 hover:text-white/70 text-xs transition-colors">Cookie Policy</Link>
               </div>
-              <p className="text-white/30 text-xs">© {new Date().getFullYear()} NextMonth Ltd. All rights reserved.</p>
+              <p className="text-white/30 text-xs">
+                © {new Date().getFullYear()} NextMonth Ltd. All rights reserved.
+                {import.meta.env.DEV && import.meta.env.VITE_GIT_COMMIT_HASH && (
+                  <span className="ml-2 font-mono text-white/20">
+                    v{import.meta.env.VITE_GIT_COMMIT_HASH.slice(0, 7)}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         </footer>
