@@ -1,0 +1,77 @@
+# Replit Prompt: Micro Smart Site vNext (Radar Grid Edition)
+
+## Mission
+Build a truly non-traditional Micro Smart Site interface:
+
+A visitor lands in an interactive space that feels like:
+- a “relevancy radar”
+- a living topic map
+- an infinite canvas of knowledge tiles
+
+The primary UI is:
+1) A **Chat Concierge** (centre hub, minimisable)
+2) An **infinite pannable grid** (drag up/down/left/right like an infinite spreadsheet)
+3) A **relevance engine** that repopulates and reorders tiles near the chat hub based on what the visitor is discussing.
+
+This must NOT look like a normal website, FAQ, accordion, or a vertical list of cards.
+
+---
+
+## Key Experience (Non-Negotiable)
+
+### The World
+- The background is a dark “infinite grid canvas”.
+- The user can drag the canvas in any direction (up/down/left/right).
+- The grid has tiles (small cards) that contain:
+  - a phrase
+  - a topic
+  - an image
+  - a page snippet
+  - a person (if known)
+  - a proof point
+  - a “next action” tile (request video reply, call, email)
+
+### The Hub
+- The chat concierge starts in the centre of the screen as a floating panel.
+- The user can minimise the concierge into a small orb:
+  - Either snaps to centre or corner (choose best for UX)
+- When the user taps a tile:
+  - the concierge expands and says something about that tile
+  - or asks a short intent question related to it
+- The visitor should feel like they are exploring the business via a living interface.
+
+### Relevancy Radar Behaviour
+- Tiles closest to the concierge are the most relevant to the current conversation.
+- As the user chats, tiles around the hub should update:
+  - swap content
+  - reorder
+  - change “relevance glow”
+- Farther tiles can repeat or be generic, but should feel infinite.
+- The grid should never become empty.
+
+---
+
+## Data Model (MVP)
+Create `mock/siteKnowledge.json` to simulate the “catalogued website”.
+
+Structure:
+```json
+{
+  "brand": { "name": "Progress Accountants", "domain": "progressaccountants.com" },
+  "topics": [
+    { "id":"t_tax", "label":"Tax strategy", "keywords":["tax","corporation tax","planning"], "type":"topic" },
+    { "id":"t_bookkeeping", "label":"Bookkeeping", "keywords":["bookkeeping","records","transactions"], "type":"topic" }
+  ],
+  "pages": [
+    { "id":"p_home", "title":"Home", "url":"https://progressaccountants.com", "summary":"We help businesses feel in control of their finances...", "keywords":["accountants","business"], "type":"page" }
+  ],
+  "people": [
+    { "id":"person_1", "name":"Example Person", "role":"Client Manager", "email":"hello@example.com", "keywords":["contact","help"], "type":"person" }
+  ],
+  "proof": [
+    { "id":"proof_1", "label":"Client stories", "summary":"Examples of results and testimonials", "keywords":["case study","testimonial"], "type":"proof" }
+  ],
+  "actions": [
+    { "id":"a_video_reply", "label":"Request a video reply", "summary":"Get a short personalised video response", "keywords":["video","reply"], "type":"action" }
+  ]
+}

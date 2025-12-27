@@ -1,0 +1,40 @@
+{
+  "brand": {
+    "name": "Progress Accountants",
+    "domain": "progressaccountants.com",
+    "tagline": "Accounting made simple",
+    "primaryColor": "#3b82f6"
+  },
+  "topics": [
+    { "id": "t_tax", "label": "Tax Strategy", "keywords": ["tax", "corporation tax", "planning", "savings"], "type": "topic", "summary": "Turn tax from a burden into a strategy" },
+    { "id": "t_bookkeeping", "label": "Bookkeeping", "keywords": ["bookkeeping", "records", "transactions", "accounts"], "type": "topic", "summary": "Accurate records, zero stress" },
+    { "id": "t_payroll", "label": "Payroll Services", "keywords": ["payroll", "salaries", "paye", "pension"], "type": "topic", "summary": "Reliable payroll management" },
+    { "id": "t_vat", "label": "VAT Returns", "keywords": ["vat", "returns", "hmrc", "compliance"], "type": "topic", "summary": "Stay compliant with VAT obligations" },
+    { "id": "t_advisory", "label": "Business Advisory", "keywords": ["advisory", "growth", "strategy", "planning"], "type": "topic", "summary": "Strategic guidance for business growth" },
+    { "id": "t_cloud", "label": "Cloud Accounting", "keywords": ["cloud", "xero", "quickbooks", "software"], "type": "topic", "summary": "Modern cloud-based solutions" }
+  ],
+  "pages": [
+    { "id": "p_home", "title": "Home", "url": "https://progressaccountants.com", "summary": "We help businesses feel in control of their finances with clear communication and expert guidance.", "keywords": ["accountants", "business", "finance"], "type": "page" },
+    { "id": "p_services", "title": "Our Services", "url": "https://progressaccountants.com/services", "summary": "From tax planning to bookkeeping, we offer comprehensive accounting services tailored to your needs.", "keywords": ["services", "accounting", "tax"], "type": "page" },
+    { "id": "p_industries", "title": "Industries", "url": "https://progressaccountants.com/industries", "summary": "Specialists in film, music, construction, and professional services sectors.", "keywords": ["industries", "film", "music", "construction"], "type": "page" },
+    { "id": "p_about", "title": "About Us", "url": "https://progressaccountants.com/about", "summary": "Chartered accountants with decades of combined experience, based in Oxfordshire.", "keywords": ["about", "team", "experience"], "type": "page" },
+    { "id": "p_pricing", "title": "Pricing", "url": "https://progressaccountants.com/pricing", "summary": "Transparent fixed-fee pricing with no billing surprises.", "keywords": ["pricing", "fees", "cost"], "type": "page" },
+    { "id": "p_contact", "title": "Contact", "url": "https://progressaccountants.com/contact", "summary": "Get in touch with our team in Banbury, Oxford, or London.", "keywords": ["contact", "phone", "email", "location"], "type": "page" }
+  ],
+  "people": [
+    { "id": "person_1", "name": "Sarah Mitchell", "role": "Managing Director", "email": "sarah@progressaccountants.com", "phone": "+44 1onal 123456", "keywords": ["director", "leadership", "management"], "type": "person", "avatar": null },
+    { "id": "person_2", "name": "James Thompson", "role": "Client Manager", "email": "james@progressaccountants.com", "phone": "+44 1234 567890", "keywords": ["client", "manager", "help", "contact"], "type": "person", "avatar": null },
+    { "id": "person_3", "name": "Emma Davies", "role": "Tax Specialist", "email": "emma@progressaccountants.com", "phone": null, "keywords": ["tax", "specialist", "planning"], "type": "person", "avatar": null }
+  ],
+  "proof": [
+    { "id": "proof_1", "label": "Client Success Stories", "summary": "See how we've helped businesses save thousands in tax and streamline their finances.", "keywords": ["case study", "testimonial", "results", "success"], "type": "proof" },
+    { "id": "proof_2", "label": "Industry Recognition", "summary": "Award-winning accountancy practice recognised for excellence in client service.", "keywords": ["awards", "recognition", "excellence"], "type": "proof" },
+    { "id": "proof_3", "label": "Years of Experience", "summary": "Over 25 years combined experience serving businesses across the UK.", "keywords": ["experience", "expertise", "years"], "type": "proof" }
+  ],
+  "actions": [
+    { "id": "a_video_reply", "label": "Request Video Reply", "summary": "Get a personalised video response from our team", "keywords": ["video", "reply", "personal"], "type": "action", "actionType": "video_reply" },
+    { "id": "a_call", "label": "Schedule a Call", "summary": "Book a free consultation call with an advisor", "keywords": ["call", "phone", "schedule", "consultation"], "type": "action", "actionType": "call" },
+    { "id": "a_email", "label": "Send an Enquiry", "summary": "Email us your questions directly", "keywords": ["email", "enquiry", "message"], "type": "action", "actionType": "email" },
+    { "id": "a_quote", "label": "Get a Quote", "summary": "Receive a custom quote for your business", "keywords": ["quote", "pricing", "estimate"], "type": "action", "actionType": "quote" }
+  ]
+}
