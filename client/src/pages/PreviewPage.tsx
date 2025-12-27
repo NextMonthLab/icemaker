@@ -78,14 +78,22 @@ function BrandHeader({
               {monogramLetter}
             </div>
           ) : (
-            <img 
-              src={logoSrc!} 
-              alt={preview.sourceDomain}
-              className="w-10 h-10 rounded-lg object-contain bg-white"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center p-1.5 shadow-sm"
+              style={{ 
+                backgroundColor: `color-mix(in srgb, ${primaryColour} 15%, #1a1a1a)`,
+                border: `1px solid color-mix(in srgb, ${primaryColour} 30%, transparent)`
               }}
-            />
+            >
+              <img 
+                src={logoSrc!} 
+                alt={preview.sourceDomain}
+                className="w-full h-full object-contain drop-shadow-sm"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
           )}
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold leading-tight truncate" data-testid="text-site-title">
