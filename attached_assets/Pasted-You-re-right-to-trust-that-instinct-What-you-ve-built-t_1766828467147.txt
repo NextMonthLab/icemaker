@@ -1,0 +1,229 @@
+You’re right to trust that instinct.
+What you’ve built technically is ahead of the language that’s introducing it.
+
+Right now the copy is describing features.
+What we discussed was a reframing of reality.
+
+Let me be very clear and then very practical.
+
+⸻
+
+The core problem (in plain English)
+
+Your current copy says:
+
+“Here’s a clever AI thing you can try.”
+
+What it needs to say is:
+
+“Your website is broken by default.
+This shows you the version that actually works.”
+
+At the moment:
+	•	“AI assistant”
+	•	“cinematic story”
+	•	“interactive experiences”
+
+are all interesting, but none of them trigger necessity.
+
+You don’t yet have the “LinkedIn company page moment”.
+
+⸻
+
+Why the current hero falls short
+
+1. “See your website as an AI assistant in 60 seconds”
+
+This is accurate, but weak.
+
+A business owner doesn’t wake up thinking:
+“I want an AI assistant version of my site.”
+
+They wake up thinking:
+	•	“My site doesn’t convert”
+	•	“People don’t get what we do”
+	•	“Leads are poor”
+	•	“We’re invisible”
+
+You’re describing the mechanism, not the pain.
+
+⸻
+
+2. “Cinematic story customers can explore”
+
+This is good later, but wrong first.
+
+“Cinematic story” sounds:
+	•	Creative
+	•	Marketing-led
+	•	Optional
+
+Whereas “Smart Site” sounds:
+	•	Functional
+	•	Inevitable
+	•	Slightly scary to not have
+
+You want inevitability, not inspiration, at the top.
+
+⸻
+
+The missing frame (this is the big one)
+
+You are not previewing an AI assistant.
+
+You are previewing the active version of their website.
+
+That distinction changes everything.
+
+⸻
+
+How I would reframe the top of the page (concrete rewrite)
+
+Section 1: Forecourt hook (this must be blunt)
+
+Current
+
+See your website as an AI assistant in 60 seconds
+
+Replace with
+
+Your website is passive.
+See the version that actually talks to customers.
+
+Sub-line:
+
+Turn your existing website into a Smart Site in under 60 seconds.
+No rebuild. No signup. Just see it working.
+
+CTA:
+
+Create my Smart Site preview
+
+Support line:
+
+Free preview. Ready in 60 seconds.
+
+This instantly:
+	•	Introduces a new category
+	•	Makes their current site feel outdated
+	•	Positions the preview as a reveal, not a demo
+
+⸻
+
+Section 2: Explain the preview properly (tight and honest)
+
+Current
+
+we’ll create a free preview showing how an AI assistant would answer customer questions
+
+Replace with
+
+We create a temporary Smart Site that sits on top of your existing website.
+Customers can ask it questions.
+It answers using your real content.
+You see what your website would do if it could actually respond.
+
+That’s the “forecourt walk-around”.
+
+⸻
+
+Section 3: Reposition “cinematic story” as the how, not the why
+
+Move this down, not away.
+
+Instead of:
+
+Turn your website into a cinematic story customers can explore
+
+Use:
+
+How Smart Sites work
+
+Then:
+
+Smart Sites present your content as a guided, cinematic experience customers can explore or talk to.
+
+Now it feels like:
+	•	A method
+	•	Not a creative indulgence
+
+⸻
+
+Fixing “How it works” (small but important tweaks)
+
+Your structure is solid, but the language is still creator-led, not business-led.
+
+Before
+
+Enter a URL or upload documents
+NextScene extracts the meaning
+
+After
+
+Connect your existing website
+We understand what you do, how you sell, and what customers ask
+
+⸻
+
+Before
+
+NextScene builds a visual story
+
+After
+
+Your Smart Site is generated
+Your content becomes explorable, conversational, and clear
+
+⸻
+
+Before
+
+“Talk to the brand” via AI chat
+
+After
+
+Customers can ask real questions
+The Smart Site answers consistently, using your content
+
+This subtly removes the “chatbot toy” vibe.
+
+⸻
+
+One line you should absolutely add (this is important)
+
+Somewhere near the preview CTA:
+
+Most websites answer nothing.
+Smart Sites answer everything.
+
+That’s a category line.
+
+⸻
+
+Big picture guidance (this is the takeaway)
+
+You’ve already built:
+	•	The right experience
+	•	The right flow
+	•	The right constraints
+
+What’s missing is permission to feel necessary.
+
+Right now the copy is polite.
+This product is not polite. It’s disruptive.
+
+You’re not offering:
+	•	“A nicer website”
+	•	“A creative AI layer”
+
+You’re offering:
+
+“The moment your website stops being a brochure.”
+
+If you want, next we can:
+	•	Rewrite the entire Business page end-to-end in one voice
+	•	Or just fix the hero + preview section and test conversion
+	•	Or A/B “AI assistant” vs “Smart Site” language explicitly
+
+But your instinct is correct:
+the words haven’t caught up with the product yet.
