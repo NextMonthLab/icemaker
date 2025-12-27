@@ -1,0 +1,124 @@
+Absolutely. Paste this straight into Replit (Rapplet). It tells it to keep the functional Smart Site preview, and add a Cinematic Story Mode spine on top without ripping anything up.
+
+You are Rapplet inside the NextScene repo.
+
+Mission
+Take the existing Smart Site Preview (/preview/:id) and wrap a Cinematic Story Mode around it.
+Do NOT remove the current functional scaffold. Add a cinematic card sequence as the primary opening experience, then flow naturally into the existing sections and chat overlay.
+
+Outcome
+The preview should feel like:
+“Your website, rendered in Smart Mode”
+with:
+- a cinematic card sequence up top (Story Mode)
+- the familiar mini-site scaffold below (Structure Mode)
+- AI chat as a contextual amplifier (not the whole page)
+
+Non negotiables
+1) Keep all existing safety controls intact (SSRF, caps, TTL, rate limits).
+2) Use real source content first, not AI rewritten copy.
+3) Story Mode must be additive and lightweight (no big performance regressions).
+4) UK English spelling. Avoid long dashes in copy.
+5) Chat stays secondary. Prefer “Ask about this” on cards and sections.
+
+What we have now
+- /preview/:id loads identity (logo/fav/colour) and renders a mini-site scaffold:
+  hero, what we do, common questions etc.
+- Chat is available via “Ask about this page” and can open as an overlay/drawer.
+
+What we need to build (Cinematic Story Mode)
+A) Add a cinematic “Story Mode” section at the top of the Preview page:
+- 4 to 6 cards max
+- full-width / full-bleed visual style on mobile
+- each card contains:
+  - an image (prefer heroImageUrl, otherwise derive a gradient using primaryColour)
+  - a short headline (use real extracted heroHeadline or headings)
+  - 1 short supporting line (from real heroDescription or nearby paragraphs)
+  - optional micro-CTA: “Ask about this” (opens chat with contextual prompt)
+- navigation:
+  - swipe/scroll snapping on mobile (CSS scroll-snap) OR simple next/prev arrows
+  - a subtle progress indicator (dots)
+- at the end of the card sequence, show a clear affordance:
+  “Explore the full Smart Site” (scrolls down to the scaffold)
+
+B) Define the Story Card mapping rules (use extracted content)
+Use existing stored identity/content on preview_instances (siteIdentity JSON) to populate cards without re-scraping.
+
+Suggested mapping:
+Card 1: Identity + tagline
+- image: heroImageUrl or gradient
+- headline: site title or heroHeadline
+- support: shortest strong line from heroDescription or first paragraph
+
+Card 2: The problem / tension
+- use a sentence from heroDescription/first paragraph if it contains a “pain” theme
+- fallback: first meaningful paragraph sentence
+
+Card 3: What we do
+- headline: “What we do”
+- support: 2-3 serviceHeadings shown as pill labels
+- micro-CTA: “Ask what’s included in {topService}”
+
+Card 4: Why choose us
+- pull from headings like “Why choose”, “About”, “Our approach”, or similar
+- fallback: pick the strongest non-service heading
+
+Card 5: Common questions
+- show 2-3 faqCandidates as tappable items
+- each tap opens chat with that exact question prefilled/sent
+
+Optional Card 6: Next step
+- headline: “Ready to activate?”
+- support: “Keep this Smart Site live and capture leads it uncovers.”
+- CTA: “Claim and activate” (same existing action)
+
+C) Contextual chat integration
+- Replace any generic “Try asking…” prompts with contextual prompts derived from the card content.
+- When user taps “Ask about this” on a card:
+  - open ChatOverlay
+  - prefill a question relevant to that card, eg:
+    - “Tell me more about {serviceHeading}”
+    - “Who is this best for?”
+    - “What’s the next step to get started?”
+
+D) Keep the functional scaffold beneath
+After Story Mode, the user should naturally scroll into the existing mini-site sections.
+Do not remove them. They provide credibility and detail.
+
+E) Hide counters and limits
+- Do not show message counters upfront.
+- Only show paywall modal when cap reached (existing behaviour).
+- Keep “expires in X” line, but keep it subtle.
+
+Implementation notes
+- Prefer pure CSS for the cinematic card UX (scroll-snap) to minimise dependencies.
+- Create small, reusable components:
+  - StoryMode.tsx
+  - StoryCard.tsx
+  - ProgressDots.tsx (optional)
+- Keep styles consistent with NextScene aesthetic but let primaryColour influence accents.
+
+Files likely to touch
+- client/src/pages/PreviewPage.tsx (integrate Story Mode at top)
+- client/src/components/preview/StoryMode.tsx (new)
+- client/src/components/preview/StoryCard.tsx (new)
+- client/src/components/preview/ChatOverlay.tsx (minor updates for prefill trigger)
+- shared/schema.ts + server ingestion ONLY if any required identity fields are missing (avoid if already present)
+
+Acceptance criteria
+1) On /preview/:id, the first thing I see is a cinematic card sequence using real content from the source site.
+2) It feels like the brand (logo/fav, colour, imagery) within 3 seconds.
+3) I can tap “Ask about this” on a card and chat opens with a relevant question.
+4) I can scroll into the detailed Smart Site scaffold afterwards.
+5) No new scraping on page load beyond the stored siteIdentity JSON.
+6) Existing caps, TTL, SSRF and rate limiting still work.
+
+Now do the work:
+- Inspect current PreviewPage implementation and identity data shape.
+- Add Story Mode with minimal diffs.
+- Ensure mobile UX is smooth.
+- Commit changes with a clear message and summarise how to test.
+
+If Rapplet builds that, you’ll have exactly the hybrid you described: cinematic front door + credible structure + smart conversation.
+
+When it’s done, send me a screen recording or a couple of screenshots and I’ll help you tune the card order and copy so it hits emotionally, not just visually.

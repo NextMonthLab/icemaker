@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { StoryMode } from "@/components/preview/StoryMode";
 
 interface SiteIdentity {
   sourceDomain: string;
@@ -604,10 +605,22 @@ export default function PreviewPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col max-w-4xl mx-auto border-x border-border shadow-2xl">
       <BrandHeader preview={preview} timeRemaining={getTimeRemaining()} />
       
-      <MiniSiteScaffold 
-        preview={preview} 
-        onAskQuestion={(question) => handleSend(question)}
-      />
+      {preview.siteIdentity && (
+        <StoryMode
+          siteIdentity={preview.siteIdentity}
+          siteTitle={preview.siteTitle}
+          siteSummary={preview.siteSummary}
+          onAskAbout={(prompt) => handleSend(prompt)}
+          onClaim={() => claimMutation.mutate()}
+        />
+      )}
+
+      <div id="smart-site-scaffold">
+        <MiniSiteScaffold 
+          preview={preview} 
+          onAskQuestion={(question) => handleSend(question)}
+        />
+      </div>
 
       <ChatOverlay
         isOpen={chatOpen}
