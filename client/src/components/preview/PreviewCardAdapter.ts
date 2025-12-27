@@ -22,11 +22,19 @@ export interface PreviewTarget {
   index?: number;
 }
 
-function getImageForIndex(identity: SiteIdentity, index: number): string {
+function getImageForIndex(identity: SiteIdentity, index: number, prevIndex?: number): string {
   const pool = identity.imagePool || [];
-  if (pool.length > 0) {
-    return pool[index % pool.length];
+  if (pool.length > 1) {
+    let imageIdx = index % pool.length;
+    if (prevIndex !== undefined) {
+      const prevImgIdx = prevIndex % pool.length;
+      if (imageIdx === prevImgIdx) {
+        imageIdx = (imageIdx + 1) % pool.length;
+      }
+    }
+    return pool[imageIdx];
   }
+  if (pool.length === 1) return pool[0];
   if (identity.heroImageUrl) return identity.heroImageUrl;
   if (identity.logoUrl) return identity.logoUrl;
   return createGradientPlaceholder(identity.primaryColour, identity.sourceDomain);

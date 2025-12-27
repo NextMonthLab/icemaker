@@ -102,9 +102,31 @@ export function PreviewExperienceOrchestrator({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full h-[100svh] min-h-[500px]"
+            className="w-full h-[100svh] min-h-[500px] relative"
             style={{ scrollSnapAlign: 'start' }}
           >
+            {(siteIdentity.logoUrl || siteIdentity.faviconUrl) && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="absolute top-4 left-4 z-30 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                <img
+                  src={siteIdentity.logoUrl || siteIdentity.faviconUrl || ''}
+                  alt=""
+                  className="w-6 h-6 rounded object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <span className="text-sm font-medium text-white/90 max-w-[120px] truncate">
+                  {siteIdentity.sourceDomain}
+                </span>
+              </motion.div>
+            )}
             <CardPlayer
               card={currentCard}
               autoplay={true}
