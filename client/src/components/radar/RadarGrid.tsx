@@ -1,10 +1,30 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
 import { InfiniteCanvas } from "./InfiniteCanvas";
 import { ChatHub } from "./ChatHub";
 import { KnowledgeTile } from "./KnowledgeTile";
 import type { SiteKnowledge, AnyKnowledgeItem } from "@/lib/siteKnowledge";
 import { getAllItems, rankByRelevance, scoreRelevance } from "@/lib/siteKnowledge";
+
+function getItemLabel(item: AnyKnowledgeItem): string {
+  switch (item.type) {
+    case 'topic': return item.label;
+    case 'page': return item.title;
+    case 'person': return item.name;
+    case 'proof': return item.label;
+    case 'action': return item.label;
+  }
+}
+
+function getItemSummary(item: AnyKnowledgeItem): string {
+  switch (item.type) {
+    case 'topic': return item.summary;
+    case 'page': return item.summary;
+    case 'person': return item.role;
+    case 'proof': return item.summary;
+    case 'action': return item.summary;
+  }
+}
 
 interface RadarGridProps {
   knowledge: SiteKnowledge;
@@ -49,9 +69,14 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
     return rankByRelevance(allItems, query);
   }, [allItems, conversationKeywords]);
 
-  const positions = useMemo(() => {
-    return generateTilePositions(rankedItems.length, 170);
-  }, [rankedItems.length]);
+  const positionMap = useMemo(() => {
+    const positions = generateTilePositions(rankedItems.length, 170);
+    const map = new Map<string, { x: number; y: number }>();
+    rankedItems.forEach((item, index) => {
+      map.set(item.id, positions[index] || { x: 0, y: 0 });
+    });
+    return map;
+  }, [rankedItems]);
 
   const handleIntentChange = useCallback((keywords: string[]) => {
     setConversationKeywords(prev => {
@@ -70,11 +95,7 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
 
   const handleSendMessage = useCallback(async (message: string) => {
     if (selectedItem) {
-      const context = `[User clicked on: ${selectedItem.type} - ${
-        'label' in selectedItem ? selectedItem.label : 
-        'title' in selectedItem ? selectedItem.title : 
-        'name' in selectedItem ? selectedItem.name : selectedItem.id
-      }] ${message}`;
+      const context = `[User clicked on: ${selectedItem.type} - ${getItemLabel(selectedItem)}] ${message}`;
       setSelectedItem(null);
       return onSendMessage(context);
     }
@@ -83,11 +104,8 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
 
   const getInitialMessage = useCallback(() => {
     if (selectedItem) {
-      const itemName = 'label' in selectedItem ? selectedItem.label : 
-                       'title' in selectedItem ? selectedItem.title : 
-                       'name' in selectedItem ? selectedItem.name : '';
-      const summary = 'summary' in selectedItem ? selectedItem.summary : 
-                      'role' in selectedItem ? selectedItem.role : '';
+      const itemName = getItemLabel(selectedItem);
+      const summary = getItemSummary(selectedItem);
       return `You selected "${itemName}". ${summary} What would you like to know about this?`;
     }
     return undefined;
@@ -96,16 +114,17 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
   return (
     <InfiniteCanvas>
       {/* Tiles */}
-      {rankedItems.map((item, index) => {
+      {rankedItems.map((item) => {
         const query = conversationKeywords.join(' ');
         const relevance = scoreRelevance(item, query);
+        const position = positionMap.get(item.id) || { x: 0, y: 0 };
         
         return (
           <KnowledgeTile
             key={item.id}
             item={item}
             relevanceScore={relevance}
-            position={positions[index] || { x: 0, y: 0 }}
+            position={position}
             onClick={handleTileClick}
             accentColor={relevance > 10 ? accentColor : undefined}
           />

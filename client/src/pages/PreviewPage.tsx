@@ -17,6 +17,8 @@ import {
 import { PreviewExperienceOrchestrator } from "@/components/preview/PreviewExperienceOrchestrator";
 import { BrandCustomizationScreen, type BrandPreferences } from "@/components/preview/BrandCustomizationScreen";
 import { SpatialSmartSite } from "@/components/spatial";
+import { RadarGrid } from "@/components/radar";
+import type { SiteKnowledge } from "@/lib/siteKnowledge";
 
 interface ValidatedContent {
   overview: string;
@@ -444,12 +446,79 @@ export default function PreviewPage() {
   const [experienceMode, setExperienceMode] = useState<'cinematic' | 'interactive'>('cinematic');
   const [showCustomization, setShowCustomization] = useState(true);
   const [brandPreferences, setBrandPreferences] = useState<BrandPreferences | null>(null);
-  const [useSpatialExperience, setUseSpatialExperience] = useState(true);
+  const [experienceType, setExperienceType] = useState<'radar' | 'spatial' | 'classic'>('radar');
 
-  const handleCustomizationConfirm = (prefs: BrandPreferences, spatial?: boolean) => {
+  const handleCustomizationConfirm = (prefs: BrandPreferences, expType?: 'radar' | 'spatial' | 'classic') => {
     setBrandPreferences(prefs);
-    if (spatial !== undefined) setUseSpatialExperience(spatial);
+    if (expType) setExperienceType(expType);
     setShowCustomization(false);
+  };
+
+  const generateSiteKnowledge = (preview: PreviewInstance): SiteKnowledge => {
+    const siteIdentity = preview.siteIdentity;
+    const brandName = siteIdentity?.title?.split(' - ')[0]?.split(' | ')[0] || preview.sourceDomain;
+    
+    return {
+      brand: {
+        name: brandName,
+        domain: preview.sourceDomain,
+        tagline: siteIdentity?.heroHeadline || preview.siteSummary || '',
+        primaryColor: brandPreferences?.accentColor || siteIdentity?.primaryColour || '#3b82f6',
+      },
+      topics: (siteIdentity?.serviceBullets || []).slice(0, 6).map((bullet, i) => ({
+        id: `t_${i}`,
+        label: bullet.split(' ').slice(0, 3).join(' '),
+        keywords: bullet.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+        type: 'topic' as const,
+        summary: bullet,
+      })),
+      pages: [
+        {
+          id: 'p_home',
+          title: 'Home',
+          url: preview.sourceUrl,
+          summary: siteIdentity?.heroDescription || preview.siteSummary || '',
+          keywords: ['home', 'main', 'about'],
+          type: 'page' as const,
+        },
+        ...(siteIdentity?.serviceHeadings || []).slice(0, 4).map((heading, i) => ({
+          id: `p_${i + 1}`,
+          title: heading,
+          url: preview.sourceUrl,
+          summary: `Learn more about ${heading}`,
+          keywords: heading.toLowerCase().split(/\s+/),
+          type: 'page' as const,
+        })),
+      ],
+      people: [],
+      proof: [],
+      actions: [
+        {
+          id: 'a_video',
+          label: 'Request Video Reply',
+          summary: 'Get a personalised video response',
+          keywords: ['video', 'reply', 'personal'],
+          type: 'action' as const,
+          actionType: 'video_reply' as const,
+        },
+        {
+          id: 'a_call',
+          label: 'Schedule a Call',
+          summary: 'Book a consultation call',
+          keywords: ['call', 'phone', 'consultation'],
+          type: 'action' as const,
+          actionType: 'call' as const,
+        },
+        {
+          id: 'a_email',
+          label: 'Send Enquiry',
+          summary: 'Email your questions',
+          keywords: ['email', 'enquiry', 'contact'],
+          type: 'action' as const,
+          actionType: 'email' as const,
+        },
+      ],
+    };
   };
 
   const { data: preview, isLoading: previewLoading } = useQuery({
@@ -664,7 +733,24 @@ export default function PreviewPage() {
         />
       )}
 
-      {preview.siteIdentity && !showCustomization && useSpatialExperience && (
+      {preview.siteIdentity && !showCustomization && experienceType === 'radar' && (
+        <RadarGrid
+          knowledge={generateSiteKnowledge(preview)}
+          accentColor={brandPreferences?.accentColor || preview.siteIdentity.primaryColour || '#3b82f6'}
+          onSendMessage={async (message) => {
+            const response = await fetch(`/api/previews/${previewId}/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message }),
+            });
+            if (!response.ok) throw new Error("Failed");
+            const data = await response.json();
+            return data.reply;
+          }}
+        />
+      )}
+
+      {preview.siteIdentity && !showCustomization && experienceType === 'spatial' && (
         <SpatialSmartSite
           siteIdentity={{
             sourceDomain: preview.siteIdentity.sourceDomain,
@@ -696,7 +782,7 @@ export default function PreviewPage() {
         />
       )}
 
-      {preview.siteIdentity && !showCustomization && !useSpatialExperience && (
+      {preview.siteIdentity && !showCustomization && experienceType === 'classic' && (
         <PreviewExperienceOrchestrator
           siteIdentity={preview.siteIdentity}
           siteTitle={preview.siteTitle}
@@ -708,7 +794,7 @@ export default function PreviewPage() {
         />
       )}
 
-      {experienceMode === 'interactive' && !showCustomization && !useSpatialExperience && (
+      {experienceMode === 'interactive' && !showCustomization && experienceType === 'classic' && (
         <ChatOverlay
           isOpen={chatOpen}
           onClose={() => setChatOpen(false)}

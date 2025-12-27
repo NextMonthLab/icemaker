@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sun, Moon, Check, ArrowRight, Palette, ImageIcon, Sparkles, LayoutGrid } from "lucide-react";
+import { Sun, Moon, Check, ArrowRight, Palette, ImageIcon, Sparkles, LayoutGrid, Radar } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+export type ExperienceType = 'radar' | 'spatial' | 'classic';
 
 interface BrandCustomizationScreenProps {
   logoUrl: string | null;
@@ -9,7 +11,7 @@ interface BrandCustomizationScreenProps {
   brandName: string;
   defaultAccentColor: string;
   imagePool: string[];
-  onConfirm: (preferences: BrandPreferences, spatial?: boolean) => void;
+  onConfirm: (preferences: BrandPreferences, experienceType?: ExperienceType) => void;
 }
 
 export interface BrandPreferences {
@@ -62,7 +64,7 @@ export function BrandCustomizationScreen({
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl || faviconUrl);
   const [selectedImages, setSelectedImages] = useState<string[]>(imagePool.slice(0, 3));
-  const [useSpatial, setUseSpatial] = useState(true);
+  const [experienceType, setExperienceType] = useState<ExperienceType>('radar');
 
   const allLogoCandidates = [
     ...(logoUrl ? [logoUrl] : []),
@@ -79,8 +81,8 @@ export function BrandCustomizationScreen({
   }, []);
 
   const handleConfirm = useCallback(() => {
-    onConfirm({ accentColor, theme, selectedLogo, selectedImages }, useSpatial);
-  }, [accentColor, theme, selectedLogo, selectedImages, onConfirm, useSpatial]);
+    onConfirm({ accentColor, theme, selectedLogo, selectedImages }, experienceType);
+  }, [accentColor, theme, selectedLogo, selectedImages, onConfirm, experienceType]);
 
   const bgColor = theme === 'dark' ? '#0a0a0a' : '#f5f5f5';
   const textColor = theme === 'dark' ? 'white' : 'black';
@@ -312,27 +314,41 @@ export function BrandCustomizationScreen({
           </span>
           
           <div 
-            className="flex rounded-full p-1 mx-auto w-fit"
-            style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+            className="flex flex-wrap justify-center gap-2"
           >
             <button
-              onClick={() => setUseSpatial(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all text-sm font-medium"
+              onClick={() => setExperienceType('radar')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm font-medium"
               style={{
-                backgroundColor: useSpatial ? accentColor : 'transparent',
-                color: useSpatial ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+                backgroundColor: experienceType === 'radar' ? accentColor : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+                color: experienceType === 'radar' ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+                border: experienceType === 'radar' ? `2px solid ${accentColor}` : '2px solid transparent',
+              }}
+              data-testid="experience-radar"
+            >
+              <Radar className="w-4 h-4" />
+              Radar
+            </button>
+            <button
+              onClick={() => setExperienceType('spatial')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm font-medium"
+              style={{
+                backgroundColor: experienceType === 'spatial' ? accentColor : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+                color: experienceType === 'spatial' ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+                border: experienceType === 'spatial' ? `2px solid ${accentColor}` : '2px solid transparent',
               }}
               data-testid="experience-spatial"
             >
               <Sparkles className="w-4 h-4" />
-              AI Concierge
+              Cards
             </button>
             <button
-              onClick={() => setUseSpatial(false)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all text-sm font-medium"
+              onClick={() => setExperienceType('classic')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm font-medium"
               style={{
-                backgroundColor: !useSpatial ? accentColor : 'transparent',
-                color: !useSpatial ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+                backgroundColor: experienceType === 'classic' ? accentColor : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+                color: experienceType === 'classic' ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+                border: experienceType === 'classic' ? `2px solid ${accentColor}` : '2px solid transparent',
               }}
               data-testid="experience-classic"
             >
