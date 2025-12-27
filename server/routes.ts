@@ -4400,16 +4400,16 @@ Output only the narration paragraph, nothing else.`;
       const userId = req.user?.id;
       const userIp = req.ip || req.socket.remoteAddress || "unknown";
 
-      // Rate limiting: check daily caps
+      // Rate limiting: check daily caps (increased for testing)
       if (userId) {
         const userCount = await storage.countUserPreviewsToday(userId);
-        if (userCount >= 2) {
-          return res.status(429).json({ message: "Daily limit reached (2 previews per day)" });
+        if (userCount >= 20) {
+          return res.status(429).json({ message: "Daily limit reached (20 previews per day)" });
         }
       } else {
         const ipCount = await storage.countIpPreviewsToday(userIp);
-        if (ipCount >= 3) {
-          return res.status(429).json({ message: "Daily limit reached (3 previews per IP per day)" });
+        if (ipCount >= 20) {
+          return res.status(429).json({ message: "Daily limit reached (20 previews per IP per day)" });
         }
       }
 
