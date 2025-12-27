@@ -1,0 +1,198 @@
+You’re absolutely right – this is close, and the issues you’re feeling are structural, not cosmetic. That’s actually good news, because it means you’re not chasing polish too early. Let’s break this down cleanly and decisively.
+
+⸻
+
+1. The core problem (why it feels “circular”)
+
+Right now, the page is doing three different jobs at once:
+	1.	Static explanation (who Assure UK are, what this service is)
+	2.	Guided exploration (the three cards / questions)
+	3.	Open AI conversation (Ask buttons)
+
+Because those jobs aren’t clearly separated, the user keeps getting:
+	•	Context resets
+	•	Full-screen card jumps
+	•	AI answers that don’t feel anchored to the previous intent
+
+So the mental model breaks. The user doesn’t know whether they’re:
+	•	Browsing
+	•	Being guided
+	•	Or chatting
+
+That’s why you feel like you’re “going round in circles”.
+
+This is not a content issue. It’s an interaction contract issue.
+
+⸻
+
+2. The three “Ask” entry points – this must be simplified
+
+You’ve spotted this perfectly. Three AI triggers is two too many.
+
+Current state
+	•	Ask (top right)
+	•	Ask about this page (bottom)
+	•	Three question cards
+
+This creates decision fatigue and competing expectations.
+
+Recommendation (strong)
+
+One primary AI entry point per page. No exceptions.
+
+Here’s the clean model:
+
+✅ Keep
+	•	One persistent “Ask” button (top right is fine)
+
+❌ Remove / demote
+	•	“Ask about this page” (redundant once context is clear)
+	•	The cards triggering AI directly
+
+Instead…
+
+⸻
+
+3. What the cards should do (this is the key shift)
+
+The cards should never directly trigger AI answers.
+
+They should do one of two things only:
+	1.	Reveal structured content
+	2.	Pre-load the AI with intent
+
+Think of them as context setters, not question askers.
+
+Example reframe of the three cards
+
+Instead of:
+	•	“What is LOOKING FOR SUPPORT WITH YOUR ASSURANCE REPORTING?”
+
+They become:
+
+Overview
+
+Clear, static explanation of the service
+No AI involved
+
+How We Help
+
+Bullet points, process, reassurance
+No AI involved
+
+Next Steps
+
+Clear CTA
+Option to then talk to AI
+
+Only after that does the user choose to “Ask”.
+
+When they do, the AI already knows:
+	•	Which service page they’re on
+	•	Which section they last viewed
+	•	What stage of intent they’re likely at
+
+That’s how you stop the looping.
+
+⸻
+
+4. Full-screen cards: good idea, but they need hierarchy
+
+You’re right: the full-size cards work. They just need a clearer rule.
+
+Proposed rule
+	•	Pages scroll
+	•	Cards explain
+	•	AI responds
+
+Right now cards sometimes behave like pages, sometimes like conversations.
+
+Fix
+	•	Cards are read-only, dismissible, and predictable
+	•	They never spawn another full-screen state unless it’s clearly labelled (eg “Start enquiry”)
+
+If a card triggers AI, it should:
+	•	Slide the chat in
+	•	Keep the card visible behind it
+	•	Anchor the answer to that card’s topic
+
+⸻
+
+5. Brand issues (you’re not wrong)
+
+Logo
+	•	Dark logo on dark background = instant credibility hit
+	•	This isn’t subtle – it reads as “unfinished”
+
+Fix
+	•	Force a white / light mono logo variant in dark UI
+	•	Do not rely on auto theming here
+
+Purple
+	•	You’re correct: that is not Assure UK’s brand purple
+	•	This suggests either:
+	•	A default SmartSite theme leaking through, or
+	•	A token mismatch
+
+Fix
+	•	Lock brand colours per tenant
+	•	AI UI should inherit, not override
+	•	If AI needs an accent colour, derive it algorithmically from the brand palette, don’t hardcode purple
+
+This is important psychologically:
+Right now the AI feels like a separate product, not Assure UK.
+
+⸻
+
+6. The structural pattern I’d strongly recommend (generic, reusable)
+
+You mentioned wanting something generic for every SmartSite page. Yes. This is the moment to define it.
+
+Suggested SmartSite Page Contract
+
+Every page has:
+	1.	Hero
+	•	Clear service / proposition
+	•	No AI
+	2.	Structured Sections
+	•	Overview
+	•	What this covers
+	•	Who it’s for
+	•	What happens next
+	3.	Single AI Entry
+	•	Persistent “Ask”
+	•	AI is positioned as:
+“Ask us about this service”
+	4.	AI Behaviour Rules
+	•	AI answers about the page first
+	•	Then offers:
+	•	Clarification
+	•	Next steps
+	•	Contact / handoff
+
+This removes the cognitive load from the user entirely.
+
+⸻
+
+7. Big picture reassurance (important)
+
+This is not a false start.
+This is exactly what iteration looks like just before it clicks.
+
+You’ve already nailed:
+	•	Visual tone
+	•	Card scale
+	•	The idea of AI as a guide, not a gimmick
+
+What you’re doing now is the grown-up bit:
+	•	Reducing ambiguity
+	•	Making intent explicit
+	•	Turning “cool” into “usable”
+
+You’re about one structural pass away from this feeling genuinely premium.
+
+If you want, next step I’d suggest is:
+	•	I sketch the final interaction flow in bullets, page → card → AI, no visuals, just logic.
+	•	Or we define the SmartSite Page Spec v1 so this never happens inconsistently again.
+
+You’re steering this exactly where it needs to go.

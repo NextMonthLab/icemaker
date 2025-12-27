@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
-import { adaptPreviewToCards, getTargetsFromIdentity, PreviewTarget } from "./PreviewCardAdapter";
-import { ChevronRight, MessageCircle } from "lucide-react";
+import { adaptPreviewToCards } from "./PreviewCardAdapter";
+import { ChevronDown, MessageCircle, ArrowRight, X } from "lucide-react";
 
 interface SiteIdentity {
   sourceDomain: string;
@@ -30,21 +30,72 @@ interface PreviewExperienceOrchestratorProps {
 
 type Mode = 'cinematic' | 'interactive';
 
+interface ContentSection {
+  id: string;
+  title: string;
+  type: 'overview' | 'services' | 'questions' | 'next-steps';
+  items: string[];
+}
+
+function buildSections(identity: SiteIdentity, siteSummary: string | null): ContentSection[] {
+  const sections: ContentSection[] = [];
+  
+  const overviewText = identity.heroDescription || siteSummary || '';
+  if (overviewText) {
+    sections.push({
+      id: 'overview',
+      title: 'Overview',
+      type: 'overview',
+      items: [overviewText],
+    });
+  }
+  
+  if (identity.serviceHeadings.length > 0 || identity.serviceBullets.length > 0) {
+    sections.push({
+      id: 'services',
+      title: 'What We Do',
+      type: 'services',
+      items: identity.serviceHeadings.length > 0 
+        ? identity.serviceHeadings.slice(0, 6) 
+        : identity.serviceBullets.slice(0, 6),
+    });
+  }
+  
+  if (identity.faqCandidates.length > 0) {
+    sections.push({
+      id: 'questions',
+      title: 'Common Questions',
+      type: 'questions',
+      items: identity.faqCandidates.slice(0, 4),
+    });
+  }
+  
+  sections.push({
+    id: 'next-steps',
+    title: 'Next Steps',
+    type: 'next-steps',
+    items: ['Ready to learn more? Start a conversation or activate this Smart Site.'],
+  });
+  
+  return sections;
+}
+
 export function PreviewExperienceOrchestrator({
   siteIdentity,
   siteTitle,
+  siteSummary,
   onAskAbout,
   onClaim,
   onModeChange,
 }: PreviewExperienceOrchestratorProps) {
   const [mode, setMode] = useState<Mode>('cinematic');
-  const [currentTarget, setCurrentTarget] = useState<PreviewTarget>({ type: 'overview', id: 'overview', index: 0 });
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
+  const brandName = siteIdentity.title?.split(' - ')[0]?.split(' | ')[0] || siteTitle?.split(' - ')[0] || siteIdentity.sourceDomain;
   const primaryColour = siteIdentity.primaryColour || '#7c3aed';
-  const targets = getTargetsFromIdentity(siteIdentity);
-  const cards = adaptPreviewToCards(siteIdentity, siteTitle, currentTarget);
-  const currentCard = cards[0];
+  const sections = buildSections(siteIdentity, siteSummary);
+  const cards = adaptPreviewToCards(siteIdentity, siteTitle, { type: 'overview', id: 'overview', index: 0 });
+  const heroCard = cards[0];
 
   useEffect(() => {
     onModeChange?.(mode);
@@ -56,53 +107,20 @@ export function PreviewExperienceOrchestrator({
     }
   }, []);
 
-  const handleTargetClick = useCallback((target: PreviewTarget) => {
-    if (target.id === currentTarget.id) return;
+  const handleSectionToggle = useCallback((sectionId: string) => {
+    setExpandedSection(prev => prev === sectionId ? null : sectionId);
+  }, []);
 
-    setIsTransitioning(true);
-
-    setTimeout(() => {
-      setCurrentTarget(target);
-      setMode('cinematic');
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 100);
-    }, 300);
-  }, [currentTarget.id]);
-
-  const handleAskAbout = useCallback((target: PreviewTarget) => {
-    const prompt = target.type === 'faq' 
-      ? target.label || 'Tell me more'
-      : target.type === 'service'
-      ? `What does ${target.label} include?`
-      : target.type === 'why'
-      ? 'What makes you different?'
-      : target.type === 'lead'
-      ? 'How do I get started?'
-      : `Tell me about ${siteIdentity.sourceDomain}`;
-    
-    onAskAbout(prompt);
-  }, [siteIdentity.sourceDomain, onAskAbout]);
+  const handleAskAboutService = useCallback(() => {
+    onAskAbout(`Tell me more about ${brandName}`);
+  }, [brandName, onAskAbout]);
 
   return (
     <>
-      <AnimatePresence>
-        {isTransitioning && (
-          <motion.div
-            key="transition-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] bg-black"
-          />
-        )}
-      </AnimatePresence>
-
       <AnimatePresence mode="wait">
-        {mode === 'cinematic' && currentCard && !isTransitioning && (
+        {mode === 'cinematic' && heroCard && (
           <motion.div
-            key={`cinematic-${currentTarget.id}`}
+            key="cinematic-hero"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -124,6 +142,7 @@ export function PreviewExperienceOrchestrator({
                   src={siteIdentity.logoUrl || siteIdentity.faviconUrl || ''}
                   alt=""
                   className="w-6 h-6 rounded object-contain"
+                  style={{ filter: 'brightness(1.2)' }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 <span className="text-sm font-medium text-white/90 max-w-[140px] truncate">
@@ -133,7 +152,7 @@ export function PreviewExperienceOrchestrator({
             )}
             <div className="w-full h-full">
               <CardPlayer
-                card={currentCard}
+                card={heroCard}
                 autoplay={true}
                 onPhaseChange={handlePhaseChange}
                 fullScreen={true}
@@ -144,89 +163,147 @@ export function PreviewExperienceOrchestrator({
       </AnimatePresence>
 
       <AnimatePresence>
-        {mode === 'interactive' && !isTransitioning && (
+        {mode === 'interactive' && (
           <motion.div
-            key={`interactive-${currentTarget.id}`}
+            key="interactive-content"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full min-h-screen"
+            className="w-full min-h-screen pb-24"
             style={{ 
-              background: `linear-gradient(to bottom, color-mix(in srgb, ${primaryColour} 10%, #0a0a0a), #0a0a0a 30%)`
+              background: `linear-gradient(180deg, color-mix(in srgb, ${primaryColour} 8%, #0a0a0a) 0%, #0a0a0a 200px)`
             }}
           >
-            <div className="p-5 pt-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {(siteIdentity.logoUrl || siteIdentity.faviconUrl) && (
+            <header className="p-5 pt-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                {(siteIdentity.logoUrl || siteIdentity.faviconUrl) && (
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center p-1.5"
+                    style={{ 
+                      backgroundColor: `color-mix(in srgb, ${primaryColour} 20%, #1a1a1a)`,
+                      border: `1px solid color-mix(in srgb, ${primaryColour} 30%, transparent)`
+                    }}
+                  >
                     <img
                       src={siteIdentity.logoUrl || siteIdentity.faviconUrl || ''}
                       alt=""
-                      className="w-8 h-8 rounded object-contain"
+                      className="w-full h-full object-contain"
+                      style={{ filter: 'brightness(1.1)' }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
-                  )}
-                  <h2 className="text-xl font-semibold text-white">
-                    {currentTarget.label || 'Overview'}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => handleAskAbout(currentTarget)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: `color-mix(in srgb, ${primaryColour} 25%, transparent)`,
-                    color: primaryColour,
-                    border: `1px solid color-mix(in srgb, ${primaryColour} 40%, transparent)`,
-                  }}
-                  data-testid="button-ask-current"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Ask
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3 pb-32">
-              {targets.filter(t => t.id !== currentTarget.id).slice(0, 6).map((target) => (
-                <button
-                  key={target.id}
-                  onClick={() => handleTargetClick(target)}
-                  className="w-full text-left p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all group flex items-center justify-between"
-                  style={{
-                    borderLeftColor: primaryColour,
-                    borderLeftWidth: '3px',
-                  }}
-                  data-testid={`target-${target.id}`}
-                >
-                  <div className="flex-1">
-                    <span className="text-xs uppercase tracking-wider text-white/50 mb-1 block">
-                      {target.type === 'service' ? 'Service' : target.type === 'faq' ? 'Question' : target.type === 'lead' ? 'Next Step' : target.type === 'why' ? 'About' : 'Explore'}
-                    </span>
-                    <span className="font-medium text-white group-hover:text-white transition-colors line-clamp-2">
-                      {target.label}
-                    </span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-white/80 transition-colors flex-shrink-0 ml-3" />
-                </button>
+                )}
+                <div>
+                  <h1 className="text-lg font-semibold text-white">{brandName}</h1>
+                  <p className="text-xs text-white/50">{siteIdentity.sourceDomain}</p>
+                </div>
+              </div>
+            </header>
+
+            <div className="p-4 space-y-3">
+              {sections.map((section) => (
+                <div 
+                  key={section.id}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+                >
+                  <button
+                    onClick={() => handleSectionToggle(section.id)}
+                    className="w-full text-left p-4 flex items-center justify-between"
+                    data-testid={`section-toggle-${section.id}`}
+                  >
+                    <span className="font-medium text-white">{section.title}</span>
+                    <motion.div
+                      animate={{ rotate: expandedSection === section.id ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-5 h-5 text-white/50" />
+                    </motion.div>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {expandedSection === section.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 border-t border-white/5 pt-3">
+                          {section.type === 'overview' && (
+                            <p className="text-sm text-white/70 leading-relaxed">
+                              {section.items[0]}
+                            </p>
+                          )}
+                          
+                          {section.type === 'services' && (
+                            <ul className="space-y-2">
+                              {section.items.map((item, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-white/70">
+                                  <span 
+                                    className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: primaryColour }}
+                                  />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          
+                          {section.type === 'questions' && (
+                            <ul className="space-y-2">
+                              {section.items.map((item, i) => (
+                                <li 
+                                  key={i} 
+                                  className="text-sm text-white/70 py-2 border-b border-white/5 last:border-0"
+                                >
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          
+                          {section.type === 'next-steps' && (
+                            <div className="space-y-3">
+                              <p className="text-sm text-white/70">{section.items[0]}</p>
+                              <button
+                                onClick={onClaim}
+                                className="w-full p-3 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                                style={{
+                                  backgroundColor: primaryColour,
+                                  color: '#fff',
+                                }}
+                                data-testid="button-claim-inline"
+                              >
+                                Activate this Smart Site
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
             </div>
 
-            {currentTarget.type === 'lead' && (
-              <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent">
-                <button
-                  onClick={onClaim}
-                  className="w-full max-w-lg mx-auto block p-4 rounded-xl font-semibold text-base transition-colors shadow-2xl"
-                  style={{
-                    backgroundColor: primaryColour,
-                    color: '#fff',
-                  }}
-                  data-testid="button-claim-orchestrator"
-                >
-                  Claim and activate this Smart Site
-                </button>
-              </div>
-            )}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent">
+              <button
+                onClick={handleAskAboutService}
+                className="w-full max-w-lg mx-auto block p-4 rounded-xl font-medium text-base transition-all shadow-2xl flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: `color-mix(in srgb, ${primaryColour} 15%, #1a1a1a)`,
+                  border: `1px solid color-mix(in srgb, ${primaryColour} 40%, transparent)`,
+                  color: '#fff',
+                }}
+                data-testid="button-single-ask"
+              >
+                <MessageCircle className="w-5 h-5" style={{ color: primaryColour }} />
+                Ask about {brandName}
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
