@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PreviewExperienceOrchestrator } from "@/components/preview/PreviewExperienceOrchestrator";
+import { BrandCustomizationScreen, type BrandPreferences } from "@/components/preview/BrandCustomizationScreen";
 
 interface SiteIdentity {
   sourceDomain: string;
@@ -29,6 +30,7 @@ interface SiteIdentity {
   serviceBullets: string[];
   faqCandidates: string[];
   extractedAt: string;
+  imagePool?: string[];
 }
 
 interface PreviewInstance {
@@ -389,6 +391,13 @@ export default function PreviewPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [experienceMode, setExperienceMode] = useState<'cinematic' | 'interactive'>('cinematic');
+  const [showCustomization, setShowCustomization] = useState(true);
+  const [brandPreferences, setBrandPreferences] = useState<BrandPreferences | null>(null);
+
+  const handleCustomizationConfirm = (prefs: BrandPreferences) => {
+    setBrandPreferences(prefs);
+    setShowCustomization(false);
+  };
 
   const { data: preview, isLoading: previewLoading } = useQuery({
     queryKey: ["preview", previewId],
@@ -591,7 +600,18 @@ export default function PreviewPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {preview.siteIdentity && (
+      {preview.siteIdentity && showCustomization && (
+        <BrandCustomizationScreen
+          logoUrl={preview.siteIdentity.logoUrl}
+          faviconUrl={preview.siteIdentity.faviconUrl}
+          brandName={preview.siteIdentity.title?.split(' - ')[0]?.split(' | ')[0] || preview.sourceDomain}
+          defaultAccentColor={preview.siteIdentity.primaryColour || '#ffffff'}
+          imagePool={preview.siteIdentity.imagePool || []}
+          onConfirm={handleCustomizationConfirm}
+        />
+      )}
+
+      {preview.siteIdentity && !showCustomization && (
         <PreviewExperienceOrchestrator
           siteIdentity={preview.siteIdentity}
           siteTitle={preview.siteTitle}
@@ -599,10 +619,11 @@ export default function PreviewPage() {
           onAskAbout={(prompt) => handleSend(prompt)}
           onClaim={() => claimMutation.mutate()}
           onModeChange={setExperienceMode}
+          brandPreferences={brandPreferences}
         />
       )}
 
-      {experienceMode === 'interactive' && (
+      {experienceMode === 'interactive' && !showCustomization && (
         <ChatOverlay
           isOpen={chatOpen}
           onClose={() => setChatOpen(false)}
