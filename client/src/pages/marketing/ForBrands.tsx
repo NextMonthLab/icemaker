@@ -151,7 +151,7 @@ export default function ForBrands() {
               </h1>
               <p className="text-xl text-white/60 max-w-2xl mx-auto mb-6 leading-relaxed">
                 Turn your existing website into a Smart Site in under 60 seconds.<br />
-                No rebuild. No signup. Just see it working.
+                No changes to your site. No signup. No commitment. Just see it working.
               </p>
               <p className="text-sm text-white/50 max-w-lg mx-auto mb-10 italic">
                 Most websites answer nothing. Smart Sites answer everything.
