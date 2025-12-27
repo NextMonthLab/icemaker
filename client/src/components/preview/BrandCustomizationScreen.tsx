@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sun, Moon, Check, ArrowRight, Palette, ImageIcon } from "lucide-react";
+import { Sun, Moon, Check, ArrowRight, Palette, ImageIcon, Sparkles, LayoutGrid } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BrandCustomizationScreenProps {
@@ -9,7 +9,7 @@ interface BrandCustomizationScreenProps {
   brandName: string;
   defaultAccentColor: string;
   imagePool: string[];
-  onConfirm: (preferences: BrandPreferences) => void;
+  onConfirm: (preferences: BrandPreferences, spatial?: boolean) => void;
 }
 
 export interface BrandPreferences {
@@ -62,6 +62,7 @@ export function BrandCustomizationScreen({
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl || faviconUrl);
   const [selectedImages, setSelectedImages] = useState<string[]>(imagePool.slice(0, 3));
+  const [useSpatial, setUseSpatial] = useState(true);
 
   const allLogoCandidates = [
     ...(logoUrl ? [logoUrl] : []),
@@ -78,8 +79,8 @@ export function BrandCustomizationScreen({
   }, []);
 
   const handleConfirm = useCallback(() => {
-    onConfirm({ accentColor, theme, selectedLogo, selectedImages });
-  }, [accentColor, theme, selectedLogo, selectedImages, onConfirm]);
+    onConfirm({ accentColor, theme, selectedLogo, selectedImages }, useSpatial);
+  }, [accentColor, theme, selectedLogo, selectedImages, onConfirm, useSpatial]);
 
   const bgColor = theme === 'dark' ? '#0a0a0a' : '#f5f5f5';
   const textColor = theme === 'dark' ? 'white' : 'black';
@@ -296,6 +297,47 @@ export function BrandCustomizationScreen({
             >
               <Sun className="w-4 h-4" />
               Light
+            </button>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="space-y-3"
+        >
+          <span className="text-sm font-medium block text-center" style={{ color: mutedColor }}>
+            Experience
+          </span>
+          
+          <div 
+            className="flex rounded-full p-1 mx-auto w-fit"
+            style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+          >
+            <button
+              onClick={() => setUseSpatial(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all text-sm font-medium"
+              style={{
+                backgroundColor: useSpatial ? accentColor : 'transparent',
+                color: useSpatial ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+              }}
+              data-testid="experience-spatial"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Concierge
+            </button>
+            <button
+              onClick={() => setUseSpatial(false)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all text-sm font-medium"
+              style={{
+                backgroundColor: !useSpatial ? accentColor : 'transparent',
+                color: !useSpatial ? (accentColor === '#ffffff' ? '#000' : '#fff') : mutedColor,
+              }}
+              data-testid="experience-classic"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Classic
             </button>
           </div>
         </motion.div>
