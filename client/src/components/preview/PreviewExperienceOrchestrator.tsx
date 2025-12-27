@@ -45,41 +45,12 @@ interface PreviewExperienceOrchestratorProps {
 
 type Mode = 'cinematic' | 'interactive';
 
-function getValidatedContent(identity: SiteIdentity, fallbackBrandName: string): ValidatedContent {
-  if (identity.validatedContent) {
-    return identity.validatedContent;
+function getValidatedContent(identity: SiteIdentity, fallbackBrandName: string): ValidatedContent | null {
+  // Hard gate: No UI without validation
+  if (!identity.validatedContent) {
+    return null;
   }
-  
-  const brandName = identity.title?.split(' - ')[0]?.split(' | ')[0] || fallbackBrandName;
-  const questions: CommonQuestion[] = [];
-  
-  if (identity.faqCandidates.length > 0) {
-    identity.faqCandidates.slice(0, 4).forEach((faq) => {
-      const cleanQuestion = faq.replace(/\?+$/, '').trim();
-      if (cleanQuestion.length > 10 && cleanQuestion.length < 120) {
-        questions.push({
-          question: cleanQuestion.endsWith('?') ? cleanQuestion : `${cleanQuestion}?`,
-          contextPrompt: `Answer this question about ${brandName}: ${cleanQuestion}. Keep it concise and helpful.`,
-        });
-      }
-    });
-  }
-  
-  if (questions.length < 2) {
-    questions.push({
-      question: `How do I get started with ${brandName}?`,
-      contextPrompt: `Explain how someone can get started working with ${brandName}. Focus on next steps.`,
-    });
-  }
-  
-  return {
-    overview: identity.heroDescription || 'Professional services and solutions.',
-    whatWeDo: identity.serviceHeadings.slice(0, 6),
-    commonQuestions: questions.slice(0, 4),
-    brandName,
-    passed: false,
-    issues: ['Using client-side fallback'],
-  };
+  return identity.validatedContent;
 }
 
 export function PreviewExperienceOrchestrator({
@@ -94,7 +65,16 @@ export function PreviewExperienceOrchestrator({
 
   const fallbackBrandName = siteIdentity.title?.split(' - ')[0]?.split(' | ')[0] || siteTitle?.split(' - ')[0] || siteIdentity.sourceDomain;
   const validatedContent = getValidatedContent(siteIdentity, fallbackBrandName);
-  const { brandName, overview, whatWeDo, commonQuestions } = validatedContent;
+  
+  // Gate on validation: if not passed, show failure state
+  const validationPassed = validatedContent?.passed ?? false;
+  const validationIssues = validatedContent?.issues ?? [];
+  
+  const brandName = validatedContent?.brandName ?? fallbackBrandName;
+  const overview = validatedContent?.overview ?? '';
+  const whatWeDo = validatedContent?.whatWeDo ?? [];
+  const commonQuestions = validatedContent?.commonQuestions ?? [];
+  
   const cards = adaptPreviewToCards(siteIdentity, siteTitle, { type: 'overview', id: 'overview', index: 0 });
   const heroCard = cards[0];
 
@@ -118,8 +98,9 @@ export function PreviewExperienceOrchestrator({
 
   return (
     <>
+      {/* CINEMATIC MODE: Only show if validation passed */}
       <AnimatePresence mode="wait">
-        {mode === 'cinematic' && heroCard && (
+        {mode === 'cinematic' && validationPassed && heroCard && (
           <motion.div
             key="cinematic-hero"
             initial={{ opacity: 0 }}
@@ -161,6 +142,42 @@ export function PreviewExperienceOrchestrator({
             </div>
           </motion.div>
         )}
+        
+        {/* VALIDATION FAILURE: Skip cinematic, show failure immediately */}
+        {mode === 'cinematic' && !validationPassed && (
+          <motion.div
+            key="validation-failure-immediate"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: '#0a0a0a' }}
+          >
+            <div className="max-w-md p-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <Shield className="w-8 h-8 text-amber-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-3">Content Validation Required</h2>
+              <p className="text-sm text-white/60 mb-6 leading-relaxed">
+                This site's content couldn't be fully validated. Smart Site experiences require verified content to ensure visitors receive accurate information.
+              </p>
+              {validationIssues.length > 0 && (
+                <ul className="text-xs text-white/40 mb-6 space-y-1 text-left max-w-sm mx-auto">
+                  {validationIssues.slice(0, 3).map((issue: string, i: number) => (
+                    <li key={i}>• {issue}</li>
+                  ))}
+                </ul>
+              )}
+              <button
+                onClick={handleAskGeneral}
+                className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition-colors text-white/80 flex items-center gap-2 mx-auto"
+                data-testid="button-ask-anyway-cinematic"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Ask a question anyway
+              </button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -194,6 +211,34 @@ export function PreviewExperienceOrchestrator({
                 </div>
               </div>
             </header>
+
+            {/* HARD GATE: Show failure state if validation didn't pass */}
+            {!validationPassed && (
+              <div className="p-6 m-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                <div className="flex items-center gap-3 mb-3">
+                  <Shield className="w-5 h-5 text-amber-400" />
+                  <h2 className="font-medium text-amber-200">Content Validation Required</h2>
+                </div>
+                <p className="text-sm text-white/60 mb-4">
+                  This site's content couldn't be fully validated for clarity and accuracy. 
+                  The Smart Site experience requires verified content to ensure visitors get accurate information.
+                </p>
+                {validationIssues.length > 0 && (
+                  <ul className="text-xs text-white/40 space-y-1 mb-4">
+                    {validationIssues.slice(0, 3).map((issue: string, i: number) => (
+                      <li key={i}>• {issue}</li>
+                    ))}
+                  </ul>
+                )}
+                <button
+                  onClick={handleAskGeneral}
+                  className="text-sm px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/80"
+                  data-testid="button-ask-anyway"
+                >
+                  Ask a question anyway
+                </button>
+              </div>
+            )}
 
             <div className="p-4 space-y-5">
               {/* Overview Block - Uses validated content */}
@@ -244,74 +289,78 @@ export function PreviewExperienceOrchestrator({
               )}
             </div>
 
-            {/* Single AI Entry Point */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent">
-              <button
-                onClick={handleAskGeneral}
-                className="w-full max-w-lg mx-auto block p-4 rounded-xl font-medium text-base transition-all shadow-2xl flex items-center justify-center gap-2 bg-white/[0.08] border border-white/[0.15] hover:bg-white/[0.12] hover:border-white/[0.25] text-white"
-                data-testid="button-single-ask"
-              >
-                <MessageCircle className="w-5 h-5 text-white/60" />
-                Ask about {brandName}
-              </button>
-            </div>
-
-            {/* PLANE 2: OWNER ACTIVATION (Separate Layer) */}
-            <div className="mt-16 mx-4 mb-8">
-              <div className="h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent mb-8" />
-              
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-4 h-4 text-white/50" />
-                  <span className="text-xs font-medium text-white/40 uppercase tracking-wider">For Business Owners</span>
-                </div>
-                
-                <h3 className="text-lg font-semibold text-white mb-2">Own this Smart Site</h3>
-                <p className="text-sm text-white/50 mb-5">
-                  This page is powered by a Smart Site. Activate it to unlock full control.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
-                    <Palette className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-white/70">Brand Matching</p>
-                      <p className="text-[11px] text-white/40">Your colours, your voice</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
-                    <Shield className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-white/70">AI Safeguards</p>
-                      <p className="text-[11px] text-white/40">Control what AI says</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
-                    <BarChart3 className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-white/70">Insights</p>
-                      <p className="text-[11px] text-white/40">What customers ask</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
-                    <MessageCircle className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-white/70">24/7 Leads</p>
-                      <p className="text-[11px] text-white/40">Capture enquiries always</p>
-                    </div>
-                  </div>
-                </div>
-                
+            {/* Single AI Entry Point - Only show when validation passed */}
+            {validationPassed && (
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent">
                 <button
-                  onClick={onClaim}
-                  className="w-full p-3.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 bg-white text-black hover:bg-white/90"
-                  data-testid="button-activate-smartsite"
+                  onClick={handleAskGeneral}
+                  className="w-full max-w-lg mx-auto block p-4 rounded-xl font-medium text-base transition-all shadow-2xl flex items-center justify-center gap-2 bg-white/[0.08] border border-white/[0.15] hover:bg-white/[0.12] hover:border-white/[0.25] text-white"
+                  data-testid="button-single-ask"
                 >
-                  Activate this Smart Site
-                  <ArrowRight className="w-4 h-4" />
+                  <MessageCircle className="w-5 h-5 text-white/60" />
+                  Ask about {brandName}
                 </button>
               </div>
-            </div>
+            )}
+
+            {/* PLANE 2: OWNER ACTIVATION (Separate Layer) - Only show when validation passed */}
+            {validationPassed && (
+              <div className="mt-16 mx-4 mb-8">
+                <div className="h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent mb-8" />
+                
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="w-4 h-4 text-white/50" />
+                    <span className="text-xs font-medium text-white/40 uppercase tracking-wider">For Business Owners</span>
+                  </div>
+                  
+                  <h3 className="text-lg font-semibold text-white mb-2">Own this Smart Site</h3>
+                  <p className="text-sm text-white/50 mb-5">
+                    This page is powered by a Smart Site. Activate it to unlock full control.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
+                      <Palette className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-white/70">Brand Matching</p>
+                        <p className="text-[11px] text-white/40">Your colours, your voice</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
+                      <Shield className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-white/70">AI Safeguards</p>
+                        <p className="text-[11px] text-white/40">Control what AI says</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
+                      <BarChart3 className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-white/70">Insights</p>
+                        <p className="text-[11px] text-white/40">What customers ask</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02]">
+                      <MessageCircle className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-white/70">24/7 Leads</p>
+                        <p className="text-[11px] text-white/40">Capture enquiries always</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={onClaim}
+                    className="w-full p-3.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 bg-white text-black hover:bg-white/90"
+                    data-testid="button-activate-smartsite"
+                  >
+                    Activate this Smart Site
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

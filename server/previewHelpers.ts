@@ -551,19 +551,16 @@ export async function ingestSitePreview(url: string): Promise<{
       
       console.log('[Pipeline] Completed:', pipelineResult.pipelineLog.join('\n'));
     } catch (pipelineError) {
-      console.error('[Pipeline] Error, falling back to basic extraction:', pipelineError);
-      // Fallback: basic validated content from extracted data
+      console.error('[Pipeline] Error, validation failed:', pipelineError);
       const brandName = siteIdentity.title?.split(' - ')[0]?.split(' | ')[0] || siteIdentity.sourceDomain;
+      // Hard gate: no content when validation fails - only mark failure
       siteIdentity.validatedContent = {
-        overview: siteIdentity.heroDescription || 'Professional services and solutions.',
-        whatWeDo: siteIdentity.serviceHeadings.slice(0, 6),
-        commonQuestions: siteIdentity.faqCandidates.slice(0, 4).map(faq => ({
-          question: faq.includes('?') ? faq : `${faq}?`,
-          contextPrompt: `Answer this question about ${brandName}: ${faq}. Be helpful and concise.`,
-        })),
+        overview: '',
+        whatWeDo: [],
+        commonQuestions: [],
         brandName,
         passed: false,
-        issues: ['Pipeline failed, using fallback extraction'],
+        issues: ['Validation pipeline failed - content cannot be displayed until validated'],
       };
     }
 
