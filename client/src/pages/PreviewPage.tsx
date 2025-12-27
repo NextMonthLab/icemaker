@@ -272,8 +272,8 @@ function ChatOverlay({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed inset-x-0 bottom-0 z-50 md:right-6 md:left-auto md:bottom-6 md:w-96"
           >
-            <div className="bg-background border border-border rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col max-h-[70vh] md:max-h-[600px]">
-              <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="bg-background border border-border rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col max-h-[70vh] md:max-h-[600px] overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-primary" />
                   <span className="font-semibold text-sm">Chat</span>
@@ -287,7 +287,8 @@ function ChatOverlay({
                 </button>
               </div>
 
-              <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <div className="flex-1 min-h-0 overflow-hidden" ref={scrollRef}>
+                <ScrollArea className="h-full p-4">
                 {messages.length === 0 && suggestedPrompts.length > 0 && (
                   <div className="space-y-2 mb-4">
                     <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
@@ -338,9 +339,10 @@ function ChatOverlay({
                     </motion.div>
                   )}
                 </div>
-              </ScrollArea>
+                </ScrollArea>
+              </div>
 
-              <div className="p-3 border-t border-border">
+              <div className="p-3 border-t border-border shrink-0">
                 {capReached ? (
                   <button
                     onClick={onCapClick}
