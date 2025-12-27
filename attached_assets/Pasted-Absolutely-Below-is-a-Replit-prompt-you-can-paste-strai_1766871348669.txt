@@ -1,0 +1,191 @@
+Absolutely. Below is a Replit prompt you can paste straight into replit.md (or use as a build instruction). It bakes in everything we’ve learned: slower, smarter site comprehension; monochrome until verified brand; one AI entry; “Common Questions” as AI triggers; and the crucial split between visitor and owner.
+
+# Prompt: SmartSite vNext – “Scan, Understand, Structure” Build Pass
+
+## Context
+You are working inside the SmartSite experience (tenant-branded microsite pages + AI chat layer). The current system builds pages too quickly and produces:
+- Incorrect accent colours (defaults to purple, clashes with site brand)
+- “Dumb” accordion UIs that feel static and not intelligent
+- Confusing AI triggers (multiple entry points causing circular loops)
+- Bad grammar from reusing internal service labels as customer questions
+- A jarring tone shift where “Next Steps” suddenly talks to the SmartSite owner rather than the visitor
+
+We want a higher-quality, more deliberate process:
+**The system should take longer and be better** by scanning the source website more thoroughly, extracting structure and meaning, then generating a SmartSite page that feels premium and genuinely helpful.
+
+This “longer scan” time is also a selling moment:
+Instead of a spinner, educate the business owner on what the system is doing and why it matters (intelligence capture + 24/7 lead gen + safeguards).
+
+## Mission
+Implement a new SmartSite generation flow:
+1) **Scan → Understand → Structure → Build** pipeline
+2) A premium **Progress UI** during scanning that explains what’s happening
+3) A **Visitor-first page contract** with a single AI entry point
+4) A **separate Owner activation plane** (never mixed into the visitor narrative)
+5) **Monochrome default theme** unless brand colours are explicitly verified
+
+---
+
+## Product Requirements (non-negotiable)
+
+### A) New Generation Pipeline (4 phases)
+When creating a SmartSite from a domain or website URL, do NOT immediately generate UI content.
+
+Instead run these phases:
+
+**Phase 1: Crawl & Capture**
+- Fetch key pages (home, services, about, contact, FAQs if present)
+- Extract: headings, nav labels, internal links, meta descriptions, visible CTAs
+- Capture brand artefacts: logo(s), dominant colours if confidently detectable
+- Store raw scan results for traceability
+
+**Phase 2: Understand & Departmentalise**
+- Identify core departments/sections: Who we are, What we do, Services, Proof, FAQs, Contact/CTA
+- Identify service “entities” and map them to human-friendly names
+- Produce a structured “site map” object:
+  - brand: { name, tagline candidates, tone hints }
+  - services: [{ id, name, description, likelyAudience, keyOutcomes }]
+  - FAQs: [{ question, intentTag }]
+  - CTAs: [{ label, target, intentTag }]
+- IMPORTANT: internal service labels are NOT customer questions
+
+**Phase 3: Generate SmartSite Page Spec**
+- Create a page spec that follows the Visitor Contract (see below)
+- Produce “Common Questions” as human questions mapped to AI trigger prompts
+- Do not generate long paragraph copy everywhere; prefer crisp, structured blocks
+
+**Phase 4: Render**
+- Render the page using the new spec
+- Wire the AI entry logic to the spec context
+
+---
+
+### B) Replace Spinner With Premium “What We’re Doing” Progress
+During scanning/building, show a full-screen progress experience with:
+- Step labels (Crawl, Understand, Structure, Build)
+- Short microcopy explaining value to the owner, e.g.:
+  - “Reading your site structure so visitors get accurate answers”
+  - “Extracting services and key questions customers actually ask”
+  - “Preparing brand-safe styling (no guessing colours)”
+  - “Building a 24/7 assistant that captures enquiry intent”
+
+This is also a sales moment. Include a discreet panel:
+- “What you’ll get when you activate this Smart Site”
+  - Brand matching + editing
+  - AI programming + safeguards
+  - Lead capture + insight reporting
+  - Conversation intelligence dashboard
+
+Do NOT mention pricing unless pricing is already part of the product flow. Keep it benefit-led.
+
+---
+
+### C) Theme Rules: Monochrome Default (No Purple Hallucinations)
+If brand colours are not explicitly verified:
+- Use a monochrome palette only (charcoal, near-black, soft grey, off-white)
+- No bright accent colours (no purple)
+- Use tone/elevation/borders/blur/spacing for sophistication
+- CTAs should be neutral (light grey/white text with subtle borders)
+
+Only enable brand colours if:
+- They are provided by the owner, OR
+- The scan confidently extracts them and passes validation (e.g. multiple occurrences, consistent CSS vars)
+
+Implement a guard:
+- `theme.mode = "monochrome"` by default
+- `theme.mode = "brand"` only when `theme.verified = true`
+
+---
+
+## Visitor Page Contract (new default structure)
+
+The page must serve ONE job: help a visitor understand and take action.
+
+### Layout
+1) **Hero**
+- Service or category name
+- Short supportive line (no hype)
+- One primary CTA (e.g. “Ask a question” or “Get started”)
+
+2) **Structured Sections (not accordions by default)**
+Use cards/blocks with clear headings:
+- Overview (short)
+- What we do (bullets)
+- Who it’s for (bullets)
+- What happens next (3-step process)
+
+3) **Common Questions (AI triggers, not expandable text)**
+Display as a list of tappable items.
+When tapped:
+- Open chat
+- Preload a prompt tied to page context
+- Example: “Answer as Assure UK. Keep it concise. Offer next step.”
+
+4) **Single AI Entry**
+Only ONE visible AI entry point:
+- A persistent “Ask” button OR a single bottom bar
+Remove multiple “ask about this page” duplicates.
+
+### Interaction Rules
+- Tapping “Common Questions” should open chat with context, NOT navigate away.
+- No full-screen jumps that reset context mid-conversation.
+
+---
+
+## Owner Activation Plane (separate from visitor narrative)
+
+The visitor should never see “activate this smart site” language mixed into “Next steps”.
+
+Owner messaging must be clearly separated via one of:
+- A distinct “Owner Mode” panel at the very bottom with a divider
+- A modal triggered by “Own this Smart Site”
+- A small footer link: “Own this Smart Site” → opens owner panel
+
+Owner panel content must explain:
+- You can change colours and branding
+- You can edit the text and structure
+- You can program the AI and add safeguards
+- Most importantly: it collects intelligence from customer conversations and supports 24/7 lead generation
+
+This panel must feel like a different layer, not a continuation.
+
+---
+
+## Content/Language Rules (quality)
+- No shouting headings in all caps unless brand requires it.
+- Don’t turn service names into questions.
+- “Common Questions” must be genuinely human, intent-led, and grammatically correct.
+- Overview copy must be short and factual.
+
+---
+
+## Engineering Tasks (implementation guidance)
+1) Create a `SmartSiteScanPipeline` module with four phases and intermediate outputs.
+2) Add a `ScanProgressScreen` component with step UI + microcopy + owner value panel.
+3) Replace accordion layout with a `StructuredSections` component (cards/blocks).
+4) Implement `CommonQuestionsList` that triggers chat with preloaded context prompts.
+5) Enforce `MonochromeTheme` unless `theme.verified === true`.
+6) Refactor AI entry points to a single component per page.
+7) Create `OwnerActivationPanel` and ensure it is not presented as “Next steps” to visitors.
+
+---
+
+## Acceptance Criteria
+- No purple appears unless brand-verified.
+- Page feels premium and calm using tones by default.
+- Only one AI entry point exists.
+- “Common Questions” are human, and tapping one opens chat with correct context.
+- No jarring persona shift: visitor content stays visitor; owner content is isolated.
+- Progress screen explains what the system is doing (no generic spinner).
+
+---
+
+## Deliverables
+- Updated scan/generation pipeline code
+- New progress UI
+- New page layout components
+- Theme guardrail implementation
+- Owner activation plane implementation
+- A short developer note explaining where brand colours are set and how verification works
+
+If you want, I can also write the microcopy for the progress screen so it feels cinematic and premium without sounding like AI marketing mush.

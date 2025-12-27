@@ -5,6 +5,7 @@ import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, C
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { ScanProgressScreen } from "@/components/preview/ScanProgressScreen";
 
 const benefits = [
   {
@@ -101,6 +102,12 @@ export default function ForBrands() {
       setError("Please enter a valid URL");
     }
   };
+
+  const scanDomain = siteUrl.replace(/^https?:\/\//, '').split('/')[0] || 'your site';
+
+  if (createPreviewMutation.isPending) {
+    return <ScanProgressScreen domain={scanDomain} />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">

@@ -267,18 +267,18 @@ function ChatOverlay({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed inset-x-0 bottom-0 z-50 md:right-6 md:left-auto md:bottom-6 md:w-96"
           >
-            <div className="bg-background border border-border rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col max-h-[70vh] md:max-h-[600px] overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+            <div className="bg-[#0f0f0f] border border-white/[0.08] rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col max-h-[70vh] md:max-h-[600px] overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-white/[0.08] shrink-0">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-sm">Chat</span>
+                  <MessageCircle className="w-4 h-4 text-white/50" />
+                  <span className="font-semibold text-sm text-white">Chat</span>
                 </div>
                 <button 
                   onClick={onClose}
-                  className="p-1 rounded-full hover:bg-secondary transition-colors"
+                  className="p-1 rounded-full hover:bg-white/[0.06] transition-colors"
                   data-testid="button-close-chat"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 text-white/60" />
                 </button>
               </div>
 
@@ -286,13 +286,13 @@ function ChatOverlay({
                 <ScrollArea className="h-full p-4">
                 {messages.length === 0 && suggestedPrompts.length > 0 && (
                   <div className="space-y-2 mb-4">
-                    <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
+                    <p className="text-xs text-white/40 mb-3">Try asking:</p>
                     {suggestedPrompts.slice(0, 3).map((prompt, i) => (
                       <button
                         key={i}
                         onClick={() => onSend(prompt)}
                         disabled={isTyping || capReached}
-                        className="w-full text-left p-2.5 rounded-lg border border-border bg-secondary/20 hover:bg-accent/10 hover:border-primary/30 transition-all text-xs disabled:opacity-50"
+                        className="w-full text-left p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.12] transition-all text-xs text-white/70 disabled:opacity-50"
                         data-testid={`button-suggested-prompt-${i}`}
                       >
                         {prompt}
@@ -312,8 +312,8 @@ function ChatOverlay({
                       <div className={`
                         max-w-[85%] p-3 rounded-xl text-sm leading-relaxed
                         ${msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                          : 'bg-secondary/80 text-secondary-foreground rounded-tl-sm border border-border'}
+                          ? 'bg-white text-black rounded-tr-sm'
+                          : 'bg-white/[0.06] text-white/80 rounded-tl-sm border border-white/[0.08]'}
                       `}>
                         {msg.content}
                       </div>
@@ -326,10 +326,10 @@ function ChatOverlay({
                       animate={{ opacity: 1, y: 0 }}
                       className="flex justify-start"
                     >
-                      <div className="bg-secondary/50 p-3 rounded-xl rounded-tl-sm border border-border flex gap-1 items-center">
-                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></span>
+                      <div className="bg-white/[0.04] p-3 rounded-xl rounded-tl-sm border border-white/[0.08] flex gap-1 items-center">
+                        <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                        <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                        <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce"></span>
                       </div>
                     </motion.div>
                   )}
@@ -337,11 +337,11 @@ function ChatOverlay({
                 </ScrollArea>
               </div>
 
-              <div className="p-3 border-t border-border shrink-0">
+              <div className="p-3 border-t border-white/[0.08] shrink-0">
                 {capReached ? (
                   <button
                     onClick={onCapClick}
-                    className="w-full p-3 rounded-lg bg-primary text-primary-foreground font-medium text-sm"
+                    className="w-full p-3 rounded-lg bg-white text-black font-medium text-sm"
                     data-testid="button-cap-reached-claim"
                   >
                     Continue conversation - Claim this Smart Site
@@ -352,20 +352,19 @@ function ChatOverlay({
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask a question..."
-                      className="bg-secondary/30 border-border h-10 rounded-full px-4 text-sm"
+                      className="bg-white/[0.04] border-white/[0.08] h-10 rounded-full px-4 text-sm text-white placeholder:text-white/40"
                       onKeyDown={(e) => e.key === 'Enter' && onSend()}
                       disabled={isTyping}
                       data-testid="input-chat-message"
                     />
-                    <Button
+                    <button
                       onClick={() => onSend()}
-                      size="icon"
-                      className="shrink-0 h-10 w-10 rounded-full"
+                      className="shrink-0 h-10 w-10 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50"
                       disabled={isTyping || !input.trim()}
                       data-testid="button-send-message"
                     >
                       {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>
@@ -628,15 +627,15 @@ export default function PreviewPage() {
 
           <div className="py-4 space-y-3">
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <div className="w-2 h-2 rounded-full bg-white/60"></div>
               <span>Unlimited conversations with potential customers</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <div className="w-2 h-2 rounded-full bg-white/60"></div>
               <span>Full site content and intelligent responses</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <div className="w-2 h-2 rounded-full bg-white/60"></div>
               <span>Lead capture and conversation history</span>
             </div>
           </div>

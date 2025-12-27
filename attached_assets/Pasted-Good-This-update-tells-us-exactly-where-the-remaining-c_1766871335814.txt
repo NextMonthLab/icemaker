@@ -1,0 +1,245 @@
+Good. This update tells us exactly where the remaining cracks are. You’ve improved the order, but the system is now exposing three deeper truths:
+	1.	Colour can’t be guessed
+	2.	Accordions are the wrong abstraction
+	3.	There are two audiences colliding on the same page
+
+Let’s tackle this cleanly, without fluff.
+
+⸻
+
+1. The purple problem (this is a system bug, not taste)
+
+You’re 100% right: the app is hallucinating purple.
+
+That tells me one thing very clearly:
+
+The SmartSite theming system currently has a default “AI accent colour” that overrides brand reality.
+
+That cannot exist in a product like this.
+
+Hard rule (non-negotiable)
+
+If brand colours are not explicitly declared and validated:
+	•	Do not invent colour
+	•	Do not infer colour
+	•	Do not decorate with colour
+
+Correct fallback
+
+You nailed it instinctively:
+
+Use tones, not colours
+
+Recommended fallback palette
+	•	Charcoal / near-black
+	•	Off-white / soft grey
+	•	Subtle contrast via elevation, blur, borders, spacing
+	•	One neutral accent: white or light grey for CTAs
+
+This keeps you:
+	•	Brand-safe
+	•	Premium
+	•	Calm
+	•	Invisible (in a good way)
+
+Colour should be an opt-in enhancement, not a default behaviour.
+
+👉 Actionable system rule:
+	•	If no verified brand palette → force Monochrome Mode
+	•	Only allow colour once owner confirms palette
+
+⸻
+
+2. Accordions feel “dumb” because they are dumb here
+
+Accordions are for:
+	•	FAQs
+	•	Dense reference material
+	•	Secondary content
+
+You’re using them for primary understanding. That’s why it feels flat.
+
+The user isn’t learning. They’re opening drawers.
+
+What’s missing: intent
+
+Right now:
+	•	“Overview”
+	•	“What We Do”
+	•	“Common Questions”
+
+These are content containers, not thinking containers.
+
+⸻
+
+3. The grammar issue is a symptom, not the disease
+
+You’re right to call this out:
+
+“What is LOOKING FOR SUPPORT WITH YOUR ASSURANCE REPORTING?”
+
+That’s awful. But fixing grammar alone won’t save it.
+
+Why it’s happening:
+	•	The system is promoting internal labels into user-facing questions
+
+“LOOKING FOR SUPPORT…” is a service name, not a human question.
+
+Rule that must exist:
+
+Service identifiers ≠ customer language
+
+⸻
+
+4. How “Common Questions” should actually work
+
+This is important, because this is where AI shines without being annoying.
+
+Instead of accordions expanding text…
+
+Common Questions should be smart triggers into chat.
+
+Example UI pattern
+Common Questions
+	•	“Do I need an assurance report for my pension scheme?”
+	•	“How long does a pension audit usually take?”
+	•	“What information will you need from us?”
+	•	“Can you support schemes of our size?”
+
+Each one:
+	•	Does not expand inline
+	•	Does not show pre-written copy
+	•	Instead triggers the chat with:
+“Answer this question in the context of Pension Scheme Audits for Assure UK.”
+
+This gives you:
+	•	Human language
+	•	Contextual AI
+	•	No grammar horrors
+	•	No duplicated content
+
+The page sets the stage.
+The AI performs the dialogue.
+
+⸻
+
+5. The biggest issue you spotted (and it’s a serious one)
+
+This is the most important thing you said:
+
+“Next steps feels like you’re still talking to the customer, and suddenly it’s like… it’s not talking to the customer, the smart site is now talking to the smart site owner.”
+
+That jolt is fatal if not fixed.
+
+You’ve got two personas colliding:
+
+Persona A: Visitor
+	•	Pension trustee
+	•	Scheme manager
+	•	Auditor
+	•	Wants reassurance and clarity
+
+Persona B: Owner
+	•	Business owner
+	•	Wants control, intelligence, leads, safeguards
+
+They must never share the same narrative layer.
+
+⸻
+
+6. The fix: split the page into two planes
+
+This is the structural move that will unlock everything.
+
+Plane 1: Visitor Experience (default)
+
+This is everything above the fold and the main scroll.
+
+It contains:
+	•	Hero
+	•	Overview
+	•	What We Do
+	•	Common Questions (AI-triggered)
+	•	Single “Ask” entry point
+
+No mention of:
+	•	Claiming
+	•	Editing
+	•	Programming
+	•	Intelligence
+	•	Lead gen
+	•	Safeguards
+
+The visitor should never know this is a “Smart Site”.
+
+⸻
+
+Plane 2: Owner Opportunity (clearly separate)
+
+This must feel like a different layer, not a continuation.
+
+Options to separate it:
+	•	A visually distinct panel
+	•	A modal
+	•	A bottom “admin reveal”
+	•	A clear divider with different tone and copy
+
+Example framing (conceptual, not copy-polished):
+Own this Smart Site
+
+This page is powered by a Smart Site.
+
+If you activate it, you can:
+	•	Match it perfectly to your brand
+	•	Edit and structure all content
+	•	Train the AI on your services and safeguards
+	•	Capture insights from every conversation
+	•	Generate qualified leads 24/7
+
+The AI doesn’t just answer questions.
+It learns what your customers are asking.
+
+This is not “Next Steps”.
+This is Meta Mode.
+
+And it should feel deliberate, optional, and powerful.
+
+⸻
+
+7. What this iteration proves (important morale check)
+
+You haven’t made it worse.
+You’ve exposed the real requirements.
+
+That’s progress.
+
+What you’ve learned in this iteration:
+	•	Colour must be explicit or neutral
+	•	AI should answer questions, not write page copy
+	•	Pages structure intent, chat handles language
+	•	Visitor and owner must be cleanly separated
+
+These are platform-level insights, not page tweaks.
+
+⸻
+
+8. What I’d do next (very specific)
+
+If you want my strongest recommendation for the next step:
+
+Lock these rules into the system:
+	1.	Monochrome by default
+	2.	One AI entry per page
+	3.	No accordions for primary content
+	4.	Common Questions = AI triggers only
+	5.	Owner activation lives in a separate plane
+
+Then:
+	•	Apply that spec to one page only
+	•	Make it feel undeniably clean
+	•	Then propagate
+
+You’re no longer designing a page.
+You’re defining a SmartSite contract.
+
+And you’re doing it at exactly the right moment.
