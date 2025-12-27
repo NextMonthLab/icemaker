@@ -4427,7 +4427,7 @@ Output only the narration paragraph, nothing else.`;
         return res.status(400).json({ message: `Could not access website: ${err.message}` });
       }
 
-      // Create preview instance
+      // Create preview instance with site identity
       const preview = await storage.createPreviewInstance({
         id: generatePreviewId(),
         ownerUserId: userId || null,
@@ -4438,6 +4438,7 @@ Output only the narration paragraph, nothing else.`;
         siteSummary: siteData.summary,
         keyServices: siteData.keyServices,
         contactInfo: null,
+        siteIdentity: siteData.siteIdentity,
         expiresAt: calculateExpiresAt(),
         ingestedPagesCount: siteData.pagesIngested,
         totalCharsIngested: siteData.totalChars,
@@ -4449,6 +4450,7 @@ Output only the narration paragraph, nothing else.`;
         expiresAt: preview.expiresAt,
         status: preview.status,
         siteTitle: preview.siteTitle,
+        siteIdentity: preview.siteIdentity,
       });
     } catch (error) {
       console.error("Error creating preview:", error);
@@ -4473,9 +4475,12 @@ Output only the narration paragraph, nothing else.`;
       res.json({
         id: preview.id,
         status: preview.status,
+        sourceUrl: preview.sourceUrl,
+        sourceDomain: preview.sourceDomain,
         siteTitle: preview.siteTitle,
         siteSummary: preview.siteSummary,
         keyServices: preview.keyServices,
+        siteIdentity: preview.siteIdentity,
         messageCount: preview.messageCount,
         maxMessages: preview.maxMessages,
         expiresAt: preview.expiresAt,
