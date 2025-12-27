@@ -1,7 +1,10 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, CheckCircle2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 const benefits = [
   {
@@ -54,6 +57,51 @@ const useCases = [
 ];
 
 export default function ForBrands() {
+  const [, setLocation] = useLocation();
+  const [siteUrl, setSiteUrl] = useState("");
+  const [error, setError] = useState("");
+
+  const createPreviewMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const response = await fetch('/api/previews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create preview");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setLocation(`/preview/${data.previewId}`);
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    },
+  });
+
+  const handleCreatePreview = () => {
+    setError("");
+    if (!siteUrl.trim()) {
+      setError("Please enter your website URL");
+      return;
+    }
+
+    let url = siteUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+
+    try {
+      new URL(url);
+      createPreviewMutation.mutate(url);
+    } catch {
+      setError("Please enter a valid URL");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black to-transparent">
@@ -82,8 +130,101 @@ export default function ForBrands() {
       </header>
 
       <main>
+        {/* Smart Site Preview Section */}
+        <section className="relative py-20 px-6 overflow-hidden pt-32">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-black to-black" />
+          <div className="max-w-3xl mx-auto text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-blue-500/10 border border-blue-500/20 rounded-full backdrop-blur-sm">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <span className="text-blue-300 text-sm font-medium">Try Smart Site Preview</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight mb-4 leading-tight">
+                See your website as an AI assistant in 60 seconds
+              </h1>
+              <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Enter your website below and we'll create a free preview showing how an AI assistant would answer customer questions about your brand. No signup required.
+              </p>
+
+              <div className="max-w-xl mx-auto">
+                <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                  <Input
+                    type="url"
+                    placeholder="yourbrand.com"
+                    value={siteUrl}
+                    onChange={(e) => {
+                      setSiteUrl(e.target.value);
+                      setError("");
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreatePreview()}
+                    disabled={createPreviewMutation.isPending}
+                    className="flex-1 h-14 px-5 text-base bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-blue-500"
+                    data-testid="input-preview-url"
+                  />
+                  <Button
+                    onClick={handleCreatePreview}
+                    disabled={createPreviewMutation.isPending || !siteUrl.trim()}
+                    size="lg"
+                    className="gap-2 h-14 px-8 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white border-0 shadow-lg shadow-blue-500/25"
+                    data-testid="button-create-preview"
+                  >
+                    {createPreviewMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Create Preview
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {error && (
+                  <p className="text-sm text-red-400 text-left mb-3" data-testid="text-preview-error">
+                    {error}
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-6 text-xs text-white/40">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Free preview</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                    <span>No signup needed</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Ready in 60 seconds</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Divider */}
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-black px-4 text-sm text-white/40">
+                Or explore the full platform
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Hero */}
-        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-32">
+        <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-black to-black" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
           
