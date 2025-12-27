@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 
-const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1766875394/6D8AC1E3-D35E-4435-9DBE-E9F573A97A8D_znzy2e.jpg";
+const LOGO_URL = "/attached_assets/F2BAC948-A0A6-4DA7-BB2F-FF58C5F37F7E_1766875595613.png";
 
 export default function PrivacyPolicy() {
   return (
@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextScene" className="h-12 cursor-pointer" />
+            <img src={LOGO_URL} alt="NextScene" className="h-16 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} />
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">

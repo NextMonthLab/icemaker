@@ -42,9 +42,10 @@ export default function ForKnowledge() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <img 
-              src="https://res.cloudinary.com/drl0fxrkq/image/upload/v1766875394/6D8AC1E3-D35E-4435-9DBE-E9F573A97A8D_znzy2e.jpg" 
+              src="/attached_assets/F2BAC948-A0A6-4DA7-BB2F-FF58C5F37F7E_1766875595613.png" 
               alt="NextScene" 
-              className="h-[60px] cursor-pointer" 
+              className="h-[80px] cursor-pointer" 
+              style={{ clipPath: 'inset(20% 0 20% 0)' }}
               data-testid="link-logo"
             />
           </Link>
@@ -223,9 +224,10 @@ export default function ForKnowledge() {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <img 
-                src="https://res.cloudinary.com/drl0fxrkq/image/upload/v1766875394/6D8AC1E3-D35E-4435-9DBE-E9F573A97A8D_znzy2e.jpg" 
+                src="/attached_assets/F2BAC948-A0A6-4DA7-BB2F-FF58C5F37F7E_1766875595613.png" 
                 alt="NextScene" 
-                className="h-[48px]"
+                className="h-[64px]"
+                style={{ clipPath: 'inset(20% 0 20% 0)' }}
               />
               <div className="flex items-center gap-8">
                 <Link href="/for/brands" className="text-white/50 hover:text-white text-sm transition-colors">Brands</Link>
