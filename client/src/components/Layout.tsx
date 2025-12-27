@@ -36,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row max-w-md mx-auto md:max-w-2xl lg:max-w-5xl border-x border-border shadow-2xl relative">
       {/* Desktop Sidebar (Hidden on Mobile and Tablet) */}
       <aside className="hidden lg:flex w-56 flex-col border-r border-border p-5 shrink-0 bg-background/95 backdrop-blur-sm">
-        <img src="https://res.cloudinary.com/dvudlkqip/image/upload/v1766825430/6F55E75F-5FC8-4488-BC3C-7FCA7EC0DB45_tevybh.jpg" alt="NextScene" className="h-6 mb-6" />
+        <img src="https://res.cloudinary.com/dvudlkqip/image/upload/v1766825430/6F55E75F-5FC8-4488-BC3C-7FCA7EC0DB45_tevybh.jpg" alt="NextScene" className="h-5 mb-6" />
         <nav className="space-y-3 flex-1">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>

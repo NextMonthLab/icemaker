@@ -130,7 +130,7 @@ export default function MarketingHome() {
             <img 
               src={LOGO_URL} 
               alt="NextScene" 
-              className="h-[75px] cursor-pointer" 
+              className="h-[60px] cursor-pointer" 
               data-testid="link-logo"
             />
           </Link>
@@ -413,7 +413,7 @@ export default function MarketingHome() {
               <img 
                 src={LOGO_URL} 
                 alt="NextScene" 
-                className="h-[60px]"
+                className="h-[48px]"
               />
               <div className="flex items-center gap-8">
                 <Link href="/for/brands" className="text-white/50 hover:text-white text-sm transition-colors">Brands</Link>
