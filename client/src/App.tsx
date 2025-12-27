@@ -44,6 +44,7 @@ import BecomeCreator from "@/pages/BecomeCreator";
 import Onboarding from "@/pages/Onboarding";
 import CreatorProfile from "@/pages/CreatorProfile";
 import RequireAuth from "@/components/RequireAuth";
+import { DebugPanel } from "@/components/DebugPanel";
 
 function withAuth<P extends object>(Component: React.ComponentType<P>) {
   return function ProtectedRoute(props: P) {
@@ -138,6 +139,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            {import.meta.env.DEV && <DebugPanel />}
           </TooltipProvider>
         </AppContextProvider>
       </AuthProvider>

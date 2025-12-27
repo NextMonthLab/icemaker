@@ -4,6 +4,20 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
+import { execSync } from "child_process";
+
+// Get git commit hash and build timestamp for debugging
+const getGitCommitHash = () => {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+};
+
+const getBuildTimestamp = () => {
+  return new Date().toISOString();
+};
 
 export default defineConfig({
   plugins: [
@@ -47,5 +61,9 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+  },
+  define: {
+    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
+    'import.meta.env.VITE_BUILD_TIMESTAMP': JSON.stringify(getBuildTimestamp()),
   },
 });

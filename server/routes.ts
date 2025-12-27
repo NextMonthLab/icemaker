@@ -4687,6 +4687,16 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
+  // Health check endpoint for debugging
+  app.get('/api/health', (_req, res) => {
+    res.json({
+      status: 'ok',
+      version: process.env.GIT_COMMIT_HASH || 'unknown',
+      nodeEnv: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
 
