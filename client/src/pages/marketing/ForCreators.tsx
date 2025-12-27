@@ -38,7 +38,7 @@ const perfectFor = [
 export default function ForCreators() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black via-black/90 to-transparent">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <img 
