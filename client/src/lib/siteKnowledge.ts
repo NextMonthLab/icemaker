@@ -15,6 +15,7 @@ export interface Topic extends KnowledgeItem {
   type: 'topic';
   label: string;
   summary: string;
+  imageUrl?: string;
 }
 
 export interface Page extends KnowledgeItem {
@@ -22,6 +23,7 @@ export interface Page extends KnowledgeItem {
   title: string;
   url: string;
   summary: string;
+  imageUrl?: string;
 }
 
 export interface Person extends KnowledgeItem {
@@ -37,6 +39,7 @@ export interface Proof extends KnowledgeItem {
   type: 'proof';
   label: string;
   summary: string;
+  imageUrl?: string;
 }
 
 export interface Action extends KnowledgeItem {
@@ -44,6 +47,7 @@ export interface Action extends KnowledgeItem {
   label: string;
   summary: string;
   actionType: 'video_reply' | 'call' | 'email' | 'quote';
+  imageUrl?: string;
 }
 
 export type AnyKnowledgeItem = Topic | Page | Person | Proof | Action;

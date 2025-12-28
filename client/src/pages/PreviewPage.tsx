@@ -457,7 +457,61 @@ export default function PreviewPage() {
   const generateSiteKnowledge = (preview: PreviewInstance): SiteKnowledge => {
     const siteIdentity = preview.siteIdentity;
     const brandName = siteIdentity?.title?.split(' - ')[0]?.split(' | ')[0] || preview.sourceDomain;
+    const imagePool = siteIdentity?.imagePool || [];
+    const validatedContent = siteIdentity?.validatedContent;
     
+    const topics = [
+      ...(siteIdentity?.serviceBullets || []).slice(0, 6).map((bullet, i) => ({
+        id: `t_${i}`,
+        label: bullet.length > 40 ? bullet.slice(0, 40) + '...' : bullet,
+        keywords: bullet.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+        type: 'topic' as const,
+        summary: bullet,
+        imageUrl: imagePool[i % imagePool.length],
+      })),
+      ...(validatedContent?.whatWeDo || []).slice(0, 4).map((item, i) => ({
+        id: `tw_${i}`,
+        label: item.length > 40 ? item.slice(0, 40) + '...' : item,
+        keywords: item.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+        type: 'topic' as const,
+        summary: item,
+        imageUrl: imagePool[(i + 2) % imagePool.length],
+      })),
+    ];
+
+    const pages = [
+      {
+        id: 'p_home',
+        title: brandName,
+        url: preview.sourceUrl,
+        summary: siteIdentity?.heroDescription || preview.siteSummary || `Explore everything about ${brandName}`,
+        keywords: ['home', 'main', 'about', ...brandName.toLowerCase().split(/\s+/)],
+        type: 'page' as const,
+        imageUrl: siteIdentity?.heroImageUrl || imagePool[0],
+      },
+      ...(siteIdentity?.serviceHeadings || []).slice(0, 5).map((heading, i) => ({
+        id: `p_${i + 1}`,
+        title: heading,
+        url: preview.sourceUrl,
+        summary: `Learn more about ${heading}`,
+        keywords: heading.toLowerCase().split(/\s+/),
+        type: 'page' as const,
+        imageUrl: imagePool[(i + 1) % imagePool.length],
+      })),
+    ];
+
+    const proof = (validatedContent?.commonQuestions || siteIdentity?.faqCandidates || []).slice(0, 4).map((faq, i) => {
+      const question = typeof faq === 'string' ? faq : faq.question;
+      return {
+        id: `pr_${i}`,
+        label: question.length > 50 ? question.slice(0, 50) + '...' : question,
+        summary: question,
+        keywords: question.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+        type: 'proof' as const,
+        imageUrl: imagePool[(i + 3) % imagePool.length],
+      };
+    });
+
     return {
       brand: {
         name: brandName,
@@ -465,57 +519,42 @@ export default function PreviewPage() {
         tagline: siteIdentity?.heroHeadline || preview.siteSummary || '',
         primaryColor: brandPreferences?.accentColor || siteIdentity?.primaryColour || '#3b82f6',
       },
-      topics: (siteIdentity?.serviceBullets || []).slice(0, 6).map((bullet, i) => ({
-        id: `t_${i}`,
-        label: bullet.split(' ').slice(0, 3).join(' '),
-        keywords: bullet.toLowerCase().split(/\s+/).filter(w => w.length > 3),
-        type: 'topic' as const,
-        summary: bullet,
-      })),
-      pages: [
-        {
-          id: 'p_home',
-          title: 'Home',
-          url: preview.sourceUrl,
-          summary: siteIdentity?.heroDescription || preview.siteSummary || '',
-          keywords: ['home', 'main', 'about'],
-          type: 'page' as const,
-        },
-        ...(siteIdentity?.serviceHeadings || []).slice(0, 4).map((heading, i) => ({
-          id: `p_${i + 1}`,
-          title: heading,
-          url: preview.sourceUrl,
-          summary: `Learn more about ${heading}`,
-          keywords: heading.toLowerCase().split(/\s+/),
-          type: 'page' as const,
-        })),
-      ],
+      topics,
+      pages,
       people: [],
-      proof: [],
+      proof,
       actions: [
         {
           id: 'a_video',
           label: 'Request Video Reply',
-          summary: 'Get a personalised video response',
-          keywords: ['video', 'reply', 'personal'],
+          summary: 'Get a personalised video response from our team',
+          keywords: ['video', 'reply', 'personal', 'response'],
           type: 'action' as const,
           actionType: 'video_reply' as const,
         },
         {
           id: 'a_call',
           label: 'Schedule a Call',
-          summary: 'Book a consultation call',
-          keywords: ['call', 'phone', 'consultation'],
+          summary: 'Book a consultation call with our experts',
+          keywords: ['call', 'phone', 'consultation', 'schedule', 'book'],
           type: 'action' as const,
           actionType: 'call' as const,
         },
         {
           id: 'a_email',
           label: 'Send Enquiry',
-          summary: 'Email your questions',
-          keywords: ['email', 'enquiry', 'contact'],
+          summary: 'Email your questions to our team',
+          keywords: ['email', 'enquiry', 'contact', 'message'],
           type: 'action' as const,
           actionType: 'email' as const,
+        },
+        {
+          id: 'a_quote',
+          label: 'Get a Quote',
+          summary: 'Request pricing information',
+          keywords: ['quote', 'price', 'cost', 'pricing'],
+          type: 'action' as const,
+          actionType: 'quote' as const,
         },
       ],
     };

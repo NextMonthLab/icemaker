@@ -33,12 +33,7 @@ export function ChatHub({
   const getProactiveWelcome = () => {
     if (initialMessage) return initialMessage;
     
-    const tileHints = nearbyTiles.slice(0, 3);
-    if (tileHints.length > 0) {
-      const tileList = tileHints.map(t => `"${t}"`).join(', ');
-      return `Welcome to ${brandName}! I can see topics like ${tileList} floating around us. What brings you here today?`;
-    }
-    return `Welcome! I'm your guide to ${brandName}. The knowledge around us shifts based on what we discuss. What would you like to explore?`;
+    return `Welcome to the new way to explore ${brandName}! All the information about us is right at your fingertips. Simply tap on any tile around me, or tell me what you're looking for and I'll bring the most relevant information closer so we can discuss it together.`;
   };
 
   const [messages, setMessages] = useState<Message[]>([

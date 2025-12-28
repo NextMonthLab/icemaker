@@ -44,9 +44,11 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
   const color = accentColor || typeColors[item.type];
   const glowIntensity = Math.min(relevanceScore / 30, 1);
   
-  const showDetails = zoomLevel >= 0.8;
-  const showSummary = zoomLevel >= 1.2;
-  const showFullContent = zoomLevel >= 1.6;
+  const showDetails = true;
+  const showSummary = true;
+  const showFullContent = zoomLevel >= 1.2;
+  
+  const imageUrl = 'imageUrl' in item ? (item as any).imageUrl : undefined;
   
   const getLabel = () => {
     switch (item.type) {
@@ -68,7 +70,8 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
     }
   };
 
-  const tileWidth = showFullContent ? 200 : showSummary ? 160 : showDetails ? 140 : 80;
+  const tileWidth = imageUrl ? 180 : 160;
+  const tileHeight = imageUrl ? 'auto' : 'auto';
 
   return (
     <motion.button
@@ -85,80 +88,77 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
         damping: 20,
         opacity: { duration: 0.3 }
       }}
-      whileHover={{ scale: 1.08, zIndex: 100 }}
+      whileHover={{ scale: 1.05, zIndex: 100 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(item)}
-      className="absolute rounded-xl text-left transition-all"
+      className="absolute rounded-xl text-left overflow-hidden"
       style={{
         width: tileWidth,
-        padding: showDetails ? '12px' : '8px',
         backgroundColor: 'rgba(20, 20, 20, 0.95)',
         backdropFilter: 'blur(8px)',
-        border: `1px solid ${color}${Math.floor(20 + glowIntensity * 40).toString(16)}`,
+        border: `1px solid ${color}${Math.floor(30 + glowIntensity * 40).toString(16)}`,
         boxShadow: glowIntensity > 0.2 
           ? `0 0 ${20 + glowIntensity * 40}px ${color}${Math.floor(glowIntensity * 50).toString(16)}, 0 4px 20px rgba(0,0,0,0.4)`
           : '0 4px 20px rgba(0,0,0,0.3)',
         left: '50%',
         top: '50%',
         marginLeft: -tileWidth / 2,
-        marginTop: showDetails ? '-50px' : '-30px',
+        marginTop: imageUrl ? '-70px' : '-50px',
       }}
       data-tile
       data-testid={`tile-${item.id}`}
     >
-      {/* Relevance indicator */}
-      {relevanceScore > 0 && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+      {/* Image header if available */}
+      {imageUrl && (
+        <div 
+          className="w-full h-20 bg-cover bg-center"
           style={{ 
-            backgroundColor: color,
-            boxShadow: `0 0 12px ${color}`,
+            backgroundImage: `url(${imageUrl})`,
+            borderBottom: `1px solid ${color}20`,
           }}
         />
       )}
       
-      {showDetails ? (
-        <>
-          <div className="flex items-start gap-2">
-            <div 
-              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${color}20` }}
-            >
-              <Icon className="w-3.5 h-3.5" style={{ color }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-medium truncate leading-tight">
-                {getLabel()}
-              </p>
-              {showSummary && (
-                <p className="text-white/50 text-[10px] line-clamp-2 mt-0.5 leading-tight">
-                  {getSummary()}
-                </p>
-              )}
-            </div>
-          </div>
-          
-          {showFullContent && (
-            <div 
-              className="mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide"
-              style={{ backgroundColor: `${color}15`, color }}
-            >
-              {item.type}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="flex items-center justify-center">
+      {/* Content */}
+      <div className="p-3">
+        {/* Relevance indicator */}
+        {relevanceScore > 0 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute top-2 right-2 w-3 h-3 rounded-full"
+            style={{ 
+              backgroundColor: color,
+              boxShadow: `0 0 12px ${color}`,
+            }}
+          />
+        )}
+        
+        <div className="flex items-start gap-2">
           <div 
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${color}20` }}
           >
-            <Icon className="w-4 h-4" style={{ color }} />
+            <Icon className="w-3.5 h-3.5" style={{ color }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-xs font-medium leading-tight line-clamp-2">
+              {getLabel()}
+            </p>
+            <p className="text-white/50 text-[10px] line-clamp-2 mt-1 leading-tight">
+              {getSummary()}
+            </p>
           </div>
         </div>
-      )}
+        
+        {/* Type badge - always show */}
+        <div 
+          className="mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide font-medium"
+          style={{ backgroundColor: `${color}20`, color }}
+        >
+          {item.type}
+        </div>
+      </div>
     </motion.button>
   );
 }

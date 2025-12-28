@@ -134,6 +134,7 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('[data-tile]') || (e.target as HTMLElement).closest('[data-chat-hub]')) return;
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     offsetStart.current = { ...canvasOffset };
@@ -156,7 +157,7 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const delta = e.deltaY > 0 ? -0.08 : 0.08;
     setZoomLevel(prev => Math.max(0.5, Math.min(2, prev + delta)));
   }, []);
 
@@ -201,12 +202,14 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
       />
 
       {/* Pannable tile layer - moves with canvas offset */}
-      <motion.div
+      <div
         className="absolute"
         style={{
           left: '50%',
           top: '50%',
           transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoomLevel})`,
+          transformOrigin: 'center center',
+          willChange: 'transform',
         }}
         data-testid="tile-layer"
       >
@@ -227,7 +230,7 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
             />
           );
         })}
-      </motion.div>
+      </div>
 
       {/* Fixed ChatHub - NEVER moves with canvas */}
       <AnimatePresence mode="wait">
