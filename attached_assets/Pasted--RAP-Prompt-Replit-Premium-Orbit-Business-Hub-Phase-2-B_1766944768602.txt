@@ -1,0 +1,264 @@
+# RAP Prompt (Replit): Premium Orbit Business Hub — Phase 2 Build (Orbit Insight: Conversations + Leads + Bundled ICE)
+
+## Where this prompt belongs
+**Applies to:** NextMonth (Orbit + ICE) codebase in Replit  
+**Phase:** 2 (Prompt 2)  
+**Goal:** Turn the Business Hub into a true **Orbit Insight** product by adding **Conversations**, **Leads (contextual)**, and **bundled ICE allowances** with soft-cap nudges.
+
+---
+
+## Context (locked product doctrine)
+Respect the locked decisions in `replit.md`:
+
+### Tiers (locked)
+- Orbit Free (£0): ownership + public Orbit + activity counts only
+- Orbit Grow (£19): control + curation + ICE Maker pay-as-you-go
+- **Orbit Insight (£49): unlocks understanding**
+- Orbit Intelligence (£99): patterns + strategy
+
+### Free cost guardrail (locked)
+- Free Orbit conversations: **50 messages/month hard cap** (do not break; phase 2 should work alongside it)
+
+### ICE bundling (locked)
+- Orbit Insight includes ICE Maker bundled with **soft cap: 6 ICE credits/month**
+- Soft cap only: show UX nudges at thresholds, do not hard-block creation (unless there is clear abuse handling already)
+
+### No browser-based local LLM for free
+- Do not add browser local LLM chat for free; keep free convo controlled and consistent.
+
+---
+
+## Phase 2 Objective (what to build now)
+Add real value to the Business Hub for **Orbit Insight** plan holders:
+
+1) **Conversations panel (Insight+)**
+   - Owner can view transcripts and metadata
+   - Cluster top questions + themes (lightweight)
+2) **Leads panel (Insight+)**
+   - Owner can view leads captured, and link each lead to the journey/session that produced it
+3) **Session + event stitching**
+   - Minimal changes needed so we can attribute conversations + leads to a visitor journey
+4) **ICE bundling logic**
+   - Add monthly allowance for Insight plan (6 credits)
+   - Display usage and apply soft-cap nudges
+5) **Upgrade prompts**
+   - Improve locked panels: show meaningful previews and “why upgrade” messaging
+
+Do NOT implement Pattern Intelligence or Strategy Advice yet (Phase 3).
+
+---
+
+## Important constraints
+- Do not redesign the public Orbit view.
+- Do not build a full analytics suite.
+- Do not add team permissions.
+- Do not add social OAuth.
+- Do not overbuild RAG. Keep clustering simple.
+- Do not introduce heavy compute. Prefer batch or lightweight summaries.
+
+---
+
+## Implementation Plan (do it in this order)
+
+### Step 1 — Data model: sessions + events (minimal, forward-compatible)
+We need the ability to reconstruct journeys. Add:
+
+#### A) sessionId
+- When a visitor opens an Orbit, create a `sessionId` (UUID) stored in cookie/localStorage.
+- Include `sessionId` on:
+  - conversation messages
+  - box clicks/expands
+  - ICE opens
+  - lead submissions
+
+#### B) event log enrichment
+If an events table exists, ensure fields:
+- `orbitId`
+- `sessionId`
+- `eventType` (visit, box_open, chat_message, ice_open, lead_submit)
+- `boxId` (optional)
+- `iceId` (optional)
+- `createdAt`
+
+If no events table exists, create a minimal one now.
+
+### Step 2 — Conversations storage (Insight product truth)
+Confirm where chat messages are stored today.
+If missing, implement:
+
+- `orbitConversations` table:
+  - `id`
+  - `orbitId`
+  - `sessionId`
+  - `visitorId?` (optional, anonymous ok)
+  - `createdAt`
+- `orbitMessages` table:
+  - `id`
+  - `conversationId`
+  - `role` (user/assistant/system)
+  - `content`
+  - `createdAt`
+
+If your current schema differs, adapt. The key is: **owner can read transcripts**.
+
+### Step 3 — Conversations API (owner-only)
+Add endpoints:
+
+- `GET /api/orbit/:slug/conversations`
+  - returns list: conversationId, startedAt, lastMessageAt, messageCount, topBoxIds engaged, leadGenerated boolean
+- `GET /api/orbit/:slug/conversations/:id`
+  - returns full transcript + session events timeline (basic)
+
+Owner-only access check:
+- viewerIsOwner AND tier >= insight
+
+### Step 4 — Conversation clustering (lightweight, low cost)
+We want “Orbit Insight” to feel intelligent without heavy infra.
+
+Implement a simple clustering pass:
+- On conversation close OR nightly batch:
+  - extract:
+    - top questions (by similarity or keyword heuristics)
+    - themes (keywords/entities)
+- Store aggregates per orbit:
+  - `topQuestions[]`
+  - `topThemes[]`
+  - `unansweredQuestions[]` (optional heuristic: low-confidence / fallback responses)
+
+Keep it simple:
+- Use deterministic keyword extraction + cosine similarity if embeddings already exist
+- If not, do basic n-gram keywording first
+- Do not add heavy LLM summarisation unless already available and cheap.
+
+Expose via:
+- `GET /api/orbit/:slug/insights/summary`
+  - `topQuestions`, `topThemes`, `conversationCount`, `leadsCount`
+
+### Step 5 — Leads (contextual linking)
+You said Leads panel exists but needs context. Implement:
+
+- Ensure a leads table has:
+  - `orbitId`
+  - `sessionId`
+  - `source` (orbit/chat/cta/ice)
+  - `boxId?`
+  - `conversationId?`
+  - `createdAt`
+  - lead fields (name/email/message)
+
+Add:
+- `GET /api/orbit/:slug/leads`
+  - list leads with: createdAt, source, boxTitle, conversationSummary (short), lastVisitorQuestion
+- `GET /api/orbit/:slug/leads/:id`
+  - details + linked session timeline + transcript excerpt
+
+### Step 6 — Business Hub UI: unlock Conversations + Leads panels
+In the sidebar nav:
+- Conversations (Insight+): now active
+- Leads (Insight+): now active
+
+UI requirements:
+
+#### Conversations panel
+- list view of conversations (date, message count, lead badge)
+- click into a conversation detail drawer:
+  - transcript
+  - “What they engaged with” (boxIds/iceIds)
+  - session timeline (simple)
+- include a small “Top questions this month” module at top (from summary endpoint)
+
+#### Leads panel
+- list view: lead name/email, date, source, linked box
+- detail view:
+  - what happened before the lead (last 3–5 events)
+  - transcript excerpt around conversion
+
+### Step 7 — ICE bundling for Orbit Insight
+We need to implement monthly credit allowance:
+
+Data model:
+- add `monthlyIceAllowance` and `monthlyIceUsed` per orbit or per owner account
+- recommended: per orbit owner account, but simplest is per owner:
+  - `userPlan`
+  - `iceAllowanceMonthly`
+  - `iceUsedThisPeriod`
+  - `periodStart`
+
+Behaviour:
+- On Orbit Insight:
+  - auto-grant **6 credits/month**
+- On Orbit Grow:
+  - credits are purchased only
+
+UI:
+- ICE panel shows:
+  - “Included this month: 6”
+  - “Used: X”
+  - “Remaining: Y”
+- Soft nudges:
+  - at 4 used: positive reinforcement
+  - at 6 used: “you’re using this heavily”
+  - at 8+: suggest Orbit Intelligence
+
+Do not hard-block ICE creation at 6, but if abuse protection exists, you may throttle beyond a higher threshold.
+
+### Step 8 — Upgrade UX improvements
+For owners on Grow (tier=grow), show locked previews:
+
+- Conversations locked:
+  - show “You’ve had X conversations this month”
+  - list 2–3 example question titles with blur/mask
+  - CTA: Unlock Orbit Insight
+
+- Leads locked:
+  - show “X leads captured”
+  - mask lead details
+  - CTA: Unlock Orbit Insight
+
+Keep it tasteful, not spammy.
+
+### Step 9 — QA checklist
+- Non-owners never see transcripts or lead details
+- Owners on Free see no sidebar (or upgrade CTA only)
+- Owners on Grow:
+  - see counts but not transcripts/leads details
+  - see upgrade previews and CTAs
+- Owners on Insight:
+  - can view transcripts and leads with context
+  - ICE allowance visible and applied
+- Events include sessionId and can be reconstructed into a simple timeline
+- No regression on public Orbit performance
+
+---
+
+## File suggestions (adjust to repo)
+Frontend:
+- `client/src/components/orbit/HubPanels/ConversationsPanel.tsx`
+- `client/src/components/orbit/HubPanels/ConversationDetail.tsx`
+- `client/src/components/orbit/HubPanels/LeadsPanel.tsx`
+- `client/src/components/orbit/HubPanels/LeadDetail.tsx`
+- `client/src/lib/orbitSession.ts` (sessionId management)
+- `client/src/components/orbit/LockedPreviewCard.tsx`
+
+Backend:
+- `server/routes/orbitConversations.ts`
+- `server/routes/orbitLeads.ts`
+- `server/routes/orbitInsights.ts`
+- `server/services/orbitInsights.ts` (clustering + summaries)
+- `server/services/orbitSessions.ts` (event logging helpers)
+
+DB:
+- migrations for sessions/events + conversation + messages fields as needed
+- ensure owner/tier checks
+
+---
+
+## Deliverable
+A working Phase 2 Business Hub:
+- Orbit Insight tier feels real: transcripts + top questions/themes + contextual leads
+- Session stitching is implemented for future pattern intelligence
+- ICE monthly allowance for Orbit Insight is enforced + visible with soft nudges
+- Upgrade previews for Grow are compelling and accurate
+
+Proceed with implementation now.
+Do not ask clarifying questions unless genuinely blocked by missing schema or missing existing endpoints.

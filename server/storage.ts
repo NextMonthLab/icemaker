@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, and, desc, inArray, sql, gte } from "drizzle-orm";
+import { eq, and, desc, asc, inArray, sql, gte } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
 const { Pool } = pg;
@@ -205,6 +205,14 @@ export interface IStorage {
   getOrbitLeads(businessSlug: string, limit?: number): Promise<schema.OrbitLead[]>;
   getOrbitLeadsCount(businessSlug: string): Promise<number>;
   markLeadRead(leadId: number): Promise<void>;
+
+  // Orbit Boxes (Grid Curation)
+  getOrbitBoxes(businessSlug: string, includeHidden?: boolean): Promise<schema.OrbitBox[]>;
+  getOrbitBox(id: number): Promise<schema.OrbitBox | undefined>;
+  createOrbitBox(data: schema.InsertOrbitBox): Promise<schema.OrbitBox>;
+  updateOrbitBox(id: number, data: Partial<schema.InsertOrbitBox>): Promise<schema.OrbitBox | undefined>;
+  deleteOrbitBox(id: number): Promise<void>;
+  reorderOrbitBoxes(businessSlug: string, boxIds: number[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1413,6 +1421,58 @@ export class DatabaseStorage implements IStorage {
     await db.update(schema.orbitLeads)
       .set({ isRead: true })
       .where(eq(schema.orbitLeads.id, leadId));
+  }
+
+  // Orbit Boxes (Grid Curation)
+  async getOrbitBoxes(businessSlug: string, includeHidden: boolean = false): Promise<schema.OrbitBox[]> {
+    const conditions = [eq(schema.orbitBoxes.businessSlug, businessSlug)];
+    if (!includeHidden) {
+      conditions.push(eq(schema.orbitBoxes.isVisible, true));
+    }
+    
+    const results = await db.query.orbitBoxes.findMany({
+      where: and(...conditions),
+      orderBy: [asc(schema.orbitBoxes.sortOrder)],
+    });
+    return results;
+  }
+
+  async getOrbitBox(id: number): Promise<schema.OrbitBox | undefined> {
+    const result = await db.query.orbitBoxes.findFirst({
+      where: eq(schema.orbitBoxes.id, id),
+    });
+    return result;
+  }
+
+  async createOrbitBox(data: schema.InsertOrbitBox): Promise<schema.OrbitBox> {
+    const [box] = await db.insert(schema.orbitBoxes).values(data).returning();
+    return box;
+  }
+
+  async updateOrbitBox(id: number, data: Partial<schema.InsertOrbitBox>): Promise<schema.OrbitBox | undefined> {
+    const [box] = await db.update(schema.orbitBoxes)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.orbitBoxes.id, id))
+      .returning();
+    return box;
+  }
+
+  async deleteOrbitBox(id: number): Promise<void> {
+    await db.delete(schema.orbitBoxes)
+      .where(eq(schema.orbitBoxes.id, id));
+  }
+
+  async reorderOrbitBoxes(businessSlug: string, boxIds: number[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < boxIds.length; i++) {
+        await tx.update(schema.orbitBoxes)
+          .set({ sortOrder: i, updatedAt: new Date() })
+          .where(and(
+            eq(schema.orbitBoxes.id, boxIds[i]),
+            eq(schema.orbitBoxes.businessSlug, businessSlug)
+          ));
+      }
+    });
   }
 }
 

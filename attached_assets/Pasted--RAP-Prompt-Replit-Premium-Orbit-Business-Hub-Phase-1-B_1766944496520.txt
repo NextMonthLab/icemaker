@@ -1,0 +1,205 @@
+# RAP Prompt (Replit): Premium Orbit Business Hub — Phase 1 Build (Sidebar + Grow Tier)
+
+## Where this prompt belongs
+**Applies to:** NextMonth (Orbit + ICE) codebase in Replit  
+**Goal:** Implement **Phase 1** of the **Premium Orbit Business Hub** with clean tier gating and a right-side slide-in sidebar on the existing public Orbit route.
+
+---
+
+## Context (locked product doctrine)
+We have locked strategic decisions in `replit.md`. This build must respect them:
+
+### Tiers (locked)
+- **Orbit Free**: £0 — public Orbit + activity counts only
+- **Orbit Grow**: £19/mo — Control + curation + ICE Maker (pay-as-you-go)
+- **Orbit Insight**: £49/mo — Insights + clarity + ICE Maker bundled (soft cap)
+- **Orbit Intelligence**: £99/mo — Patterns + strategy
+
+### Free cost guardrail (locked)
+- Free Orbit conversations hard cap: **50 messages/month** (already tracked elsewhere; Phase 1 should not break it)
+
+### ICE economics (locked)
+- ICE credits: **£8 / 5 for £35 / 10 for £60**
+- Default Standard ICE includes **12 cards, 12 images, ≤4 video scenes (Haiper)** for 1 credit
+- Full Cinematic upgrades are credit-scaled (Phase 1 only needs UI entry points; do not implement video caps logic unless already present)
+
+---
+
+## Phase 1 Objective (what to build now)
+Implement the **Premium Orbit Business Hub** as a **sidebar overlay** on the *existing* Orbit page:
+
+- Same route: `/orbit/:slug` (and `/o/:slug` alias)
+- Same public Orbit grid view for all visitors
+- If the visiting user is the **owner** AND has tier **Grow or above**, they see a **slide-in sidebar** (Business Hub)
+- No duplicate “admin page”. No forked UI.
+- Tier gating is server-truth based, not client-only.
+
+Phase 1 includes:
+1) Sidebar shell + navigation
+2) Owner + tier check (Grow+) and gated rendering
+3) Overview metrics panel (reads existing counts)
+4) Grid curation (add box, reorder, hide/show)
+5) ICE Maker entry points (create ICE from a box + show credit balance link)
+6) Brand settings (logo + accent colour + orbit title/description)
+7) Locked sections placeholders for later tiers (Conversations/Leads/Patterns/Strategy) with upgrade CTAs, but NOT functional.
+
+---
+
+## Important constraints (do NOT break these)
+- Do not alter the existing public Orbit preview layout or behaviour for non-owners.
+- Do not introduce a full CMS/editor. Sidebar is *curation only*.
+- Do not add OAuth social connections.
+- Do not implement analytics dashboards beyond basic counts.
+- Do not introduce team permissions.
+- Do not rename routes.
+- Keep changes minimal and robust.
+
+---
+
+## Implementation Plan (do it in this order)
+
+### Step 0 — Locate current Orbit view
+Find the existing Orbit route page/component and identify:
+- where grid is rendered
+- how orbit data is fetched (`orbitData`, `ownerId`, `businessSlug`, etc.)
+
+### Step 1 — Add tier + ownership to the orbit API response (server-truth)
+Update the orbit retrieval endpoint (e.g. `GET /api/orbit/:slug`) to return:
+- `ownerId`
+- `viewerIsOwner` (boolean derived server-side)
+- `tier` (one of: `free | grow | insight | intelligence`) for the owner only (or safe to return generally if you prefer)
+- `canAccessBusinessHub` boolean = `viewerIsOwner && tier in [grow, insight, intelligence]`
+
+If tiers are not yet stored, implement minimal tier storage:
+- Extend existing `orbitMeta` table/model with:
+  - `planTier` (default `free`)
+- Wire it to the authenticated owner user.
+
+### Step 2 — Sidebar UI shell (client)
+Create a right-side slide-in panel:
+- Component: `OrbitBusinessHubSidebar.tsx`
+- Trigger:
+  - auto-visible for owners with `canAccessBusinessHub`
+  - plus a small “Hub” toggle button (top-right) for convenience
+- Must be responsive:
+  - desktop: 380–420px width
+  - mobile: full-width sheet or bottom drawer
+- Use minimal styling consistent with NextMonth UI.
+
+Sidebar nav items (Phase 1):
+- Overview
+- Grid
+- ICE Maker
+- Brand
+Locked (placeholders only):
+- Conversations (Insight+)
+- Leads (Insight+)
+- Patterns (Intelligence)
+- Strategy (Intelligence)
+
+Locked items show:
+- short description
+- “Unlock Orbit Insight” or “Unlock Orbit Intelligence” CTA button
+(CTA can link to existing upgrade page or open existing pricing modal if present)
+
+### Step 3 — Overview panel (Grow+)
+Display existing metrics (read-only):
+- Visits
+- Conversations
+- ICE views / ICEs created (if tracked)
+- Leads count (if tracked)
+
+If only some exist, show what is available and leave placeholders for missing ones.
+
+### Step 4 — Grid curation (Grow+)
+Add curation controls **without changing public view**:
+- Add Box button opens modal:
+  - box types for v1: `url`, `text`, `testimonial`, `pdf` (pdf optional if already supported)
+  - fields: title, optional description, sourceUrl (for url/pdf), content (for text/testimonial)
+- Reorder boxes (drag-and-drop within the sidebar list)
+- Toggle visibility (show/hide)
+- Persist changes via API:
+  - `POST /api/orbit/:slug/boxes` (create)
+  - `PATCH /api/orbit/:slug/boxes/:id` (update visibility, metadata)
+  - `POST /api/orbit/:slug/boxes/reorder` (array of ids)
+
+Note:
+- Public grid should reflect visibility + order.
+- Only owner can call these routes.
+
+### Step 5 — ICE Maker entry points (Grow+)
+On each grid box:
+- add owner-only action: **“Create ICE”**
+- Implementation:
+  - clicking triggers existing ICE creation flow (whatever exists today) with the selected `boxId` as context
+  - if no flow exists, create a minimal stub modal that confirms “Create ICE from this box” and logs `boxId` — but prefer wiring to real flow.
+
+In sidebar:
+- show ICE credit balance (if credits exist in DB)
+- show buttons:
+  - “Buy ICE Credits”
+  - “View ICE Library” (if exists) or “My ICEs” placeholder
+
+Do not implement new payments logic here; just link to existing routes.
+
+### Step 6 — Brand settings (Grow+)
+Add owner-only brand settings with API persistence:
+- logo upload (use existing upload mechanism or object storage)
+- accent colour picker (hex)
+- orbit title and short description
+Persist to `orbitMeta.brand` or similar structure.
+
+Public Orbit should render with:
+- logo and accent if present
+- otherwise defaults
+
+### Step 7 — Access control
+Ensure:
+- sidebar is not rendered unless `canAccessBusinessHub` true
+- all edit APIs require auth and ownership checks
+- return 403 on unauthorised edits
+
+### Step 8 — QA checklist (must complete)
+- Non-owner sees no hub controls and no UI regression
+- Owner on Free plan (tier=free) sees a small “Upgrade to Grow” banner but no sidebar
+- Owner on Grow sees sidebar and can:
+  - add box
+  - hide/show
+  - reorder
+  - click “Create ICE” from a box (real flow or stub)
+  - edit branding
+- No breaking changes to /orbit/:slug routing or alias
+- Build passes and deploy succeeds
+
+---
+
+## File suggestions (adjust to match repo structure)
+Frontend:
+- `client/src/components/orbit/OrbitBusinessHubSidebar.tsx`
+- `client/src/components/orbit/HubNav.tsx`
+- `client/src/components/orbit/HubPanels/OverviewPanel.tsx`
+- `client/src/components/orbit/HubPanels/GridPanel.tsx`
+- `client/src/components/orbit/HubPanels/ICEPanel.tsx`
+- `client/src/components/orbit/HubPanels/BrandPanel.tsx`
+- `client/src/components/orbit/modals/AddBoxModal.tsx`
+
+Backend:
+- `server/routes/orbit.ts` (extend)
+- `server/routes/orbitBoxes.ts` (new if needed)
+- `server/middleware/auth.ts` (reuse)
+- `shared/types/orbit.ts` (extend types)
+
+DB:
+- Add `planTier` to orbit meta (default `free`)
+- Ensure `ownerId` already exists from claim flow
+
+---
+
+## Deliverable
+A working Phase 1 Business Hub:
+- Owner-only sidebar overlay on `/orbit/:slug`
+- Grow-tier features: Overview, Grid curation, ICE entry points, Brand settings
+- Locked placeholders for higher tiers
+
+Proceed with implementation now.
+Do not ask me questions unless something is genuinely blocked by missing code context—make best assumptions and implement cleanly.

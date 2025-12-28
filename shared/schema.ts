@@ -1144,6 +1144,9 @@ export * from "./models/chat";
 // Generation status for Orbit pack generation
 export type OrbitGenerationStatus = 'idle' | 'generating' | 'ready' | 'failed';
 
+// Orbit tier levels (locked decision)
+export type OrbitTier = 'free' | 'grow' | 'insight' | 'intelligence';
+
 // Orbit Meta - tracks business orbits and links to existing preview data
 export const orbitMeta = pgTable("orbit_meta", {
   id: serial("id").primaryKey(),
@@ -1173,6 +1176,11 @@ export const orbitMeta = pgTable("orbit_meta", {
   customLogo: text("custom_logo"),
   customAccent: text("custom_accent"),
   customTone: text("custom_tone"),
+  customTitle: text("custom_title"),
+  customDescription: text("custom_description"),
+  
+  // Tier (free | grow | insight | intelligence)
+  planTier: text("plan_tier").default("free").notNull(),
   
   // Stats
   totalPackVersions: integer("total_pack_versions").default(0).notNull(),
@@ -1247,3 +1255,30 @@ export const orbitLeads = pgTable("orbit_leads", {
 export const insertOrbitLeadSchema = createInsertSchema(orbitLeads).omit({ id: true, createdAt: true, isRead: true });
 export type InsertOrbitLead = z.infer<typeof insertOrbitLeadSchema>;
 export type OrbitLead = typeof orbitLeads.$inferSelect;
+
+// Orbit Boxes - grid curation for Business Hub
+export type OrbitBoxType = 'url' | 'text' | 'testimonial' | 'pdf' | 'ice';
+
+export const orbitBoxes = pgTable("orbit_boxes", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  
+  boxType: text("box_type").$type<OrbitBoxType>().notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  sourceUrl: text("source_url"),
+  content: text("content"),
+  imageUrl: text("image_url"),
+  
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isVisible: boolean("is_visible").default(true).notNull(),
+  
+  iceId: integer("ice_id"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertOrbitBoxSchema = createInsertSchema(orbitBoxes).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertOrbitBox = z.infer<typeof insertOrbitBoxSchema>;
+export type OrbitBox = typeof orbitBoxes.$inferSelect;
