@@ -135,3 +135,29 @@ For users who want 12 consecutive video scenes:
 2. ICE Maker must remain high-margin (79%+)
 3. Video is never unlimited — always a conscious choice
 4. Pattern Intelligence must remain deterministic/batch-processed
+
+---
+
+## Recent Changes
+
+### Phase 5: Final Integration Pass (December 2025)
+
+**Security Fixes:**
+- Removed preview mode bypass from all Business Hub endpoints (`/api/orbit/:slug/hub`, `/api/orbit/:slug/leads`)
+- Implemented triple-gating in DataHub: owner check → paid tier check → content display
+- `isPaid` now calculated from `orbitMeta.planTier` using `PAID_TIERS = ['grow', 'insight', 'intelligence']`
+- OrbitView.tsx only redirects paid tier owners to Business Hub
+
+**Feature Flags Added:**
+- Location: `server/config/featureFlags.ts`
+- Kill-switches: notifications, video generation, AI features, soft launch mode
+
+**Copy Standardization:**
+- All tier displays use "Orbit Understand" not "Orbit Insight"
+- Internal code values remain: free, grow, insight, intelligence
+
+**Files Modified:**
+- `server/routes.ts` - tier gating, preview mode removal
+- `client/src/pages/orbit/DataHub.tsx` - triple-gating, preview removal
+- `client/src/pages/orbit/OrbitView.tsx` - paid owner redirect
+- `server/config/featureFlags.ts` - new file with kill-switches
