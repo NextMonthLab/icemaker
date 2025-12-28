@@ -11,12 +11,13 @@ import {
   TrendingUp,
   Crown,
   MessageSquare,
-  UserCheck
+  UserCheck,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads';
+export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads' | 'notifications';
 
 interface BusinessHubSidebarProps {
   isOwner: boolean;
@@ -112,6 +113,14 @@ export function BusinessHubSidebar({
       description: 'Customize appearance',
       available: isPaidTier,
       tierRequired: 'grow',
+    },
+    { 
+      id: 'notifications' as HubPanel, 
+      label: 'Notifications', 
+      icon: Bell,
+      description: 'Alert preferences',
+      available: isInsightTier,
+      tierRequired: 'insight',
     },
     { 
       id: 'settings' as HubPanel, 

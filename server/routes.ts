@@ -5859,8 +5859,6 @@ Keep responses concise (2-3 sentences maximum).`;
   // PHASE 4: NOTIFICATIONS LAYER
   // ============================================
 
-  const INSIGHT_TIERS = ['insight', 'intelligence'];
-
   // Get notifications (authenticated, Insight+ only)
   app.get("/api/notifications", async (req, res) => {
     try {

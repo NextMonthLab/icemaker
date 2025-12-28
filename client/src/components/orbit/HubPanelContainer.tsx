@@ -4,6 +4,7 @@ import { HubBrandPanel } from "./HubBrandPanel";
 import { HubConversationsPanel } from "./HubConversationsPanel";
 import { HubLeadsPanel } from "./HubLeadsPanel";
 import { HubIcePanel } from "./HubIcePanel";
+import { HubNotificationsPanel } from "./HubNotificationsPanel";
 import type { HubPanel } from "./BusinessHubSidebar";
 
 interface HubPanelContainerProps {
@@ -45,6 +46,13 @@ export function HubPanelContainer({
           currentTitle={customTitle}
           currentDescription={customDescription}
         />
+      );
+    
+    case 'notifications':
+      return (
+        <div className="p-6">
+          <HubNotificationsPanel tier={planTier} />
+        </div>
       );
     
     case 'settings':
