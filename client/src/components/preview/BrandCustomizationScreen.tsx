@@ -171,7 +171,7 @@ export function BrandCustomizationScreen({
                 <button
                   key={i}
                   onClick={() => setSelectedLogo(img)}
-                  className="w-16 h-16 rounded-xl flex items-center justify-center p-2 transition-all relative overflow-hidden"
+                  className="w-20 h-20 rounded-xl flex items-center justify-center p-2.5 transition-all relative overflow-hidden"
                   style={{
                     backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
                     border: selectedLogo === img 
