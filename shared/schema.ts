@@ -1412,3 +1412,85 @@ export const orbitInsightsSummary = pgTable("orbit_insights_summary", {
 export const insertOrbitInsightsSummarySchema = createInsertSchema(orbitInsightsSummary).omit({ id: true, lastUpdated: true });
 export type InsertOrbitInsightsSummary = z.infer<typeof insertOrbitInsightsSummarySchema>;
 export type OrbitInsightsSummary = typeof orbitInsightsSummary.$inferSelect;
+
+// Notification Types
+export type NotificationType = 
+  | 'lead_captured' 
+  | 'conversation_spike' 
+  | 'pattern_shift' 
+  | 'friction_detected' 
+  | 'high_performing_ice';
+
+export type NotificationSeverity = 'info' | 'important';
+export type EmailCadence = 'instant' | 'daily_digest' | 'weekly_digest';
+
+// Notifications - in-app and email notifications for orbit owners
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  orbitId: integer("orbit_id").references(() => orbitMeta.id, { onDelete: "cascade" }).notNull(),
+  
+  type: text("type").$type<NotificationType>().notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  actionUrl: text("action_url").notNull(),
+  meta: jsonb("meta").$type<Record<string, any>>(),
+  
+  severity: text("severity").$type<NotificationSeverity>().default("info").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  sentEmailAt: timestamp("sent_email_at"),
+  dedupeKey: text("dedupe_key"),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+// Notification Preferences - user preferences for notification delivery
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  
+  emailEnabled: boolean("email_enabled").default(true).notNull(),
+  emailCadence: text("email_cadence").$type<EmailCadence>().default("daily_digest").notNull(),
+  
+  leadAlertsEnabled: boolean("lead_alerts_enabled").default(true).notNull(),
+  conversationAlertsEnabled: boolean("conversation_alerts_enabled").default(false).notNull(),
+  intelligenceAlertsEnabled: boolean("intelligence_alerts_enabled").default(false).notNull(),
+  iceAlertsEnabled: boolean("ice_alerts_enabled").default(false).notNull(),
+  
+  quietHoursEnabled: boolean("quiet_hours_enabled").default(false).notNull(),
+  quietStartHour: integer("quiet_start_hour"),
+  quietEndHour: integer("quiet_end_hour"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+
+// Magic Links - secure, expiring links for email notifications
+export type MagicLinkPurpose = 'view_lead' | 'view_conversation' | 'view_intelligence' | 'view_ice';
+
+export const magicLinks = pgTable("magic_links", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  orbitId: integer("orbit_id").references(() => orbitMeta.id, { onDelete: "cascade" }).notNull(),
+  
+  purpose: text("purpose").$type<MagicLinkPurpose>().notNull(),
+  targetId: integer("target_id"),
+  
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMagicLinkSchema = createInsertSchema(magicLinks).omit({ id: true, createdAt: true });
+export type InsertMagicLink = z.infer<typeof insertMagicLinkSchema>;
+export type MagicLink = typeof magicLinks.$inferSelect;
