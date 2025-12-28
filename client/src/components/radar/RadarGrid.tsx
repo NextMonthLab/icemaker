@@ -185,12 +185,58 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
   }, [onSendMessage, selectedItem]);
 
   const getInitialMessage = useCallback(() => {
-    if (selectedItem) {
-      const itemName = getItemLabel(selectedItem);
-      const summary = getItemSummary(selectedItem);
-      return `You selected "${itemName}". ${summary} What would you like to know about this?`;
+    if (!selectedItem) return undefined;
+    
+    const itemName = getItemLabel(selectedItem);
+    const summary = getItemSummary(selectedItem);
+    
+    switch (selectedItem.type) {
+      case 'page': {
+        const page = selectedItem as import('@/lib/siteKnowledge').Page;
+        const hasWeatherKeywords = page.keywords.some(k => 
+          ['weather', 'forecast', 'temperature', 'climate'].includes(k.toLowerCase())
+        );
+        if (hasWeatherKeywords) {
+          return `Here's the ${itemName} page.\n\n${summary}\n\nTell me your town or location and I can help you understand the forecast. Or tap here to visit the page directly: ${page.url}`;
+        }
+        return `Here's the ${itemName} page.\n\n${summary}\n\nI can answer questions about this, or you can visit the page directly: ${page.url}\n\nWhat would you like to do?`;
+      }
+      case 'topic': {
+        const topic = selectedItem as import('@/lib/siteKnowledge').Topic;
+        const hasLocationContext = topic.keywords.some(k => 
+          ['location', 'local', 'area', 'region', 'weather'].includes(k.toLowerCase())
+        );
+        if (hasLocationContext) {
+          return `${itemName}: ${summary}\n\nTell me your location and I can give you more specific information. Or ask me anything about this topic.`;
+        }
+        return `${itemName}: ${summary}\n\nI can dive deeper into any aspect of this. What interests you most?`;
+      }
+      case 'action': {
+        const action = selectedItem as import('@/lib/siteKnowledge').Action;
+        const actionPrompts: Record<string, string> = {
+          'video_reply': `Want to send a video message? ${summary}\n\nJust say "record" to get started, or ask me anything else.`,
+          'call': `Ready to schedule a call? ${summary}\n\nTell me when works best for you, or ask me anything else.`,
+          'email': `Want to send us a message? ${summary}\n\nYou can type your question here and I'll help you compose it, or ask me anything else.`,
+          'quote': `Looking for a quote? ${summary}\n\nTell me what you need and I'll help you get started, or ask me anything else.`
+        };
+        return actionPrompts[action.actionType] || `${itemName}: ${summary}\n\nHow can I help you with this?`;
+      }
+      case 'person': {
+        const person = selectedItem as import('@/lib/siteKnowledge').Person;
+        const contactOptions = [];
+        if (person.email) contactOptions.push(`email at ${person.email}`);
+        if (person.phone) contactOptions.push(`call at ${person.phone}`);
+        const contactInfo = contactOptions.length > 0 
+          ? `\n\nYou can reach ${person.name.split(' ')[0]} by ${contactOptions.join(' or ')}.`
+          : '';
+        return `Meet ${person.name}, ${person.role}.${contactInfo}\n\nWould you like me to help you get in touch, or do you have questions I can answer?`;
+      }
+      case 'proof': {
+        return `${itemName}\n\n${summary}\n\nWant to see more examples of our work, or do you have questions about what we can do for you?`;
+      }
+      default:
+        return `${itemName}: ${summary}\n\nHow can I help you with this?`;
     }
-    return undefined;
   }, [selectedItem]);
 
   const nearbyTileLabels = useMemo(() => {

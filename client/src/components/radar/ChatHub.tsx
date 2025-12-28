@@ -1,10 +1,111 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Send, X, Minimize2, Loader2 } from "lucide-react";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+function renderMessageContent(content: string, accentColor: string) {
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const phonePattern = /\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+  
+  const lines = content.split('\n');
+  
+  return lines.map((line, lineIdx) => {
+    const elements = lineIdx > 0 
+      ? [<br key={`br-${lineIdx}`} />, ...renderLine(line, lineIdx, accentColor)]
+      : renderLine(line, lineIdx, accentColor);
+    return <React.Fragment key={`line-${lineIdx}`}>{elements}</React.Fragment>;
+  });
+  
+  function isUrl(str: string): boolean {
+    return str.startsWith('http://') || str.startsWith('https://');
+  }
+  
+  function isEmail(str: string): boolean {
+    return emailPattern.test(str);
+  }
+  
+  function isPhone(str: string): boolean {
+    return phonePattern.test(str);
+  }
+  
+  function renderLine(line: string, lineIdx: number, color: string): React.ReactNode[] {
+    const urlParts = line.split(urlPattern);
+    const result: React.ReactNode[] = [];
+    
+    urlParts.forEach((segment, segIdx) => {
+      if (isUrl(segment)) {
+        try {
+          const url = new URL(segment);
+          const displayText = url.hostname.replace('www.', '') + (url.pathname !== '/' ? url.pathname : '');
+          result.push(
+            <a 
+              key={`${lineIdx}-url-${segIdx}`}
+              href={segment}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline font-medium hover:opacity-80 px-1 py-0.5 rounded"
+              style={{ color, backgroundColor: `${color}15` }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {displayText.length > 30 ? displayText.slice(0, 30) + '...' : displayText}
+            </a>
+          );
+        } catch {
+          result.push(<span key={`${lineIdx}-url-${segIdx}`}>{segment}</span>);
+        }
+      } else {
+        result.push(...renderEmailsAndPhones(segment, lineIdx, segIdx, color));
+      }
+    });
+    
+    return result;
+  }
+  
+  function renderEmailsAndPhones(text: string, lineIdx: number, segIdx: number, color: string): React.ReactNode[] {
+    const combinedPattern = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g;
+    const parts = text.split(combinedPattern);
+    const result: React.ReactNode[] = [];
+    
+    parts.forEach((part, partIdx) => {
+      if (!part) return;
+      
+      if (isEmail(part)) {
+        result.push(
+          <a 
+            key={`${lineIdx}-${segIdx}-email-${partIdx}`}
+            href={`mailto:${part}`}
+            className="underline font-medium hover:opacity-80"
+            style={{ color }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      } else if (isPhone(part)) {
+        const cleanPhone = part.replace(/[^\d+]/g, '');
+        result.push(
+          <a 
+            key={`${lineIdx}-${segIdx}-phone-${partIdx}`}
+            href={`tel:${cleanPhone}`}
+            className="underline font-medium hover:opacity-80"
+            style={{ color }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      } else {
+        result.push(<span key={`${lineIdx}-${segIdx}-text-${partIdx}`}>{part}</span>);
+      }
+    });
+    
+    return result;
+  }
 }
 
 interface ChatHubProps {
@@ -164,7 +265,9 @@ export function ChatHub({
                 }`}
                 style={msg.role === 'assistant' ? { backgroundColor: `${accentColor}15` } : {}}
               >
-                {msg.content}
+                {msg.role === 'assistant' 
+                  ? renderMessageContent(msg.content, accentColor)
+                  : msg.content}
               </div>
             </div>
           ))}
