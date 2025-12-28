@@ -1,0 +1,65 @@
+Good. That answer means the core architecture is already where we want it: one route, immediate publish, preview = unclaimed public Orbit, same layout. That’s exactly the discipline we were aiming for.
+
+Two things to do now:
+	1.	We should delete or hard-deprecate /preview/:id ASAP (or 301 it), because “backward compatibility” becomes “two mental models” fast. If it must exist, it should always redirect to /orbit/:slug and never render its own UI.
+	2.	On the claim security question: add magic-link verification now. Not later.
+
+Here’s why I’m being blunt about that:
+	•	Orbit is public and shareable.
+	•	If claiming is unauthenticated, you invite squatting and embarrassment.
+	•	This is not a “future polish” item. It’s basic product safety.
+
+The right MVP claim security (simple, fast, good enough)
+
+You don’t need DNS verification yet. Do this:
+
+Magic-link claim flow
+	•	In the unclaimed Orbit, CTA: Claim this Orbit
+	•	User enters their email address
+	•	System checks the business domain and compares:
+Option A (best lightweight):
+Extract business website domain from orbitMeta.sourceUrl and require the email domain to match (or be on an allowlist).
+Example:
+	•	sourceUrl = https://acmeplumbing.co.uk
+	•	allowed emails: @acmeplumbing.co.uk
+Provide an escape hatch:
+	•	“My email domain doesn’t match” → manual review / support (later), or allow but flag as “unverified owner” and keep NextMonth branding until verified.
+
+Send magic link
+	•	Email contains a one-time token link:
+	•	/orbit/:slug/claim?token=...
+
+On success
+	•	Set orbitMeta.ownerId
+	•	Store ownerEmail, verifiedAt
+	•	Orbit becomes “claimed”
+	•	Sidebar unlocks for that user
+
+What this protects you from immediately
+	•	Random people claiming other businesses’ Orbits
+	•	Sales reps generating an Orbit for a prospect then losing it to someone else
+	•	Public share links being hijacked
+
+What about non-matching email domains?
+
+Make it explicit in MVP:
+	•	If domain matches: instant claim
+	•	If not: allow “request access” but keep it unclaimed until verified, or require manual approval.
+
+If you try to handle every edge case now, you’ll slow down. But you must stop the obvious abuse.
+
+⸻
+
+What to reply to Replit (copy-paste)
+
+Use this:
+
+Replit: Great – implementation aligns with the checklist. Two actions:
+	1.	Please hard-deprecate /preview/:id: it should 301/redirect to /orbit/:slug and not render its own UI to avoid dual mental models.
+	2.	Yes, add claim security now (MVP): implement magic-link email verification. Ideally require email domain match against orbitMeta.sourceUrl domain for instant claim. If domain mismatch, route to a “request access” flow (can be manual/flagged for now). On verification, set orbitMeta.ownerId, ownerEmail, verifiedAt, unlock Business Hub sidebar.
+
+Proceed with this before Milestone 2.
+
+⸻
+
+If you want, I can also give you the exact claim CTA copy for unclaimed Orbit so it feels premium rather than “signup wall”, but the key decision is made: magic link now.

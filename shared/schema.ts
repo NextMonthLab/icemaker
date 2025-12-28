@@ -1159,6 +1159,8 @@ export const orbitMeta = pgTable("orbit_meta", {
   
   // Ownership (null = unclaimed preview)
   ownerId: integer("owner_id").references(() => users.id),
+  ownerEmail: text("owner_email"),
+  verifiedAt: timestamp("verified_at"),
   
   // Generation job tracking
   generationStatus: text("generation_status").$type<OrbitGenerationStatus>().default("idle").notNull(),
@@ -1181,3 +1183,19 @@ export const orbitMeta = pgTable("orbit_meta", {
 export const insertOrbitMetaSchema = createInsertSchema(orbitMeta).omit({ id: true, createdAt: true, lastUpdated: true });
 export type InsertOrbitMeta = z.infer<typeof insertOrbitMetaSchema>;
 export type OrbitMeta = typeof orbitMeta.$inferSelect;
+
+// Orbit Claim Tokens - magic link tokens for claiming ownership
+export const orbitClaimTokens = pgTable("orbit_claim_tokens", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  domainMatch: boolean("domain_match").default(false).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitClaimTokenSchema = createInsertSchema(orbitClaimTokens).omit({ id: true, createdAt: true });
+export type InsertOrbitClaimToken = z.infer<typeof insertOrbitClaimTokenSchema>;
+export type OrbitClaimToken = typeof orbitClaimTokens.$inferSelect;
