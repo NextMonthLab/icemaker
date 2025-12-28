@@ -61,10 +61,20 @@ export default function ForBrands() {
   const [, setLocation] = useLocation();
   const [siteUrl, setSiteUrl] = useState("");
   const [error, setError] = useState("");
+  const [showProgress, setShowProgress] = useState(false);
+  const [previewResult, setPreviewResult] = useState<{ previewId: string } | null>(null);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Navigate once both API completes AND animation finishes
+  useEffect(() => {
+    if (previewResult && animationComplete) {
+      setLocation(`/preview/${previewResult.previewId}`);
+    }
+  }, [previewResult, animationComplete, setLocation]);
 
   const createPreviewMutation = useMutation({
     mutationFn: async (url: string) => {
@@ -80,9 +90,10 @@ export default function ForBrands() {
       return response.json();
     },
     onSuccess: (data) => {
-      setLocation(`/preview/${data.previewId}`);
+      setPreviewResult(data);
     },
     onError: (err: Error) => {
+      setShowProgress(false);
       setError(err.message);
     },
   });
@@ -101,16 +112,23 @@ export default function ForBrands() {
 
     try {
       new URL(url);
+      setShowProgress(true);
+      setAnimationComplete(false);
+      setPreviewResult(null);
       createPreviewMutation.mutate(url);
     } catch {
       setError("Please enter a valid URL");
     }
   };
 
+  const handleAnimationComplete = () => {
+    setAnimationComplete(true);
+  };
+
   const scanDomain = siteUrl.replace(/^https?:\/\//, '').split('/')[0] || 'your site';
 
-  if (createPreviewMutation.isPending) {
-    return <ScanProgressScreen domain={scanDomain} />;
+  if (showProgress) {
+    return <ScanProgressScreen domain={scanDomain} onComplete={handleAnimationComplete} />;
   }
 
   return (
