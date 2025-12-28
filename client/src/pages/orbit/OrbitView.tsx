@@ -173,6 +173,16 @@ export default function OrbitView() {
     }
   }, [matchedClaim, searchString]);
 
+  useEffect(() => {
+    if (slug && orbitData?.status === 'ready') {
+      fetch(`/api/orbit/${slug}/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metric: 'visits' }),
+      }).catch(() => {});
+    }
+  }, [slug, orbitData?.status]);
+
   const handleClaimRequest = () => {
     if (!claimEmail) return;
     setClaimStatus('sending');
@@ -414,6 +424,11 @@ export default function OrbitView() {
             if (isUnclaimed) {
               return "This orbit hasn't been claimed yet. The business owner can claim it to enable full chat features.";
             }
+            fetch(`/api/orbit/${slug}/track`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metric: 'conversations' }),
+            }).catch(() => {});
             const response = await fetch(`/api/previews/${preview.id}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -451,6 +466,11 @@ export default function OrbitView() {
             if (isUnclaimed) {
               return "This orbit hasn't been claimed yet. The business owner can claim it to enable full chat features.";
             }
+            fetch(`/api/orbit/${slug}/track`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metric: 'conversations' }),
+            }).catch(() => {});
             const response = await fetch(`/api/previews/${preview.id}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -463,6 +483,25 @@ export default function OrbitView() {
             return data.reply;
           }}
         />
+      )}
+
+      {!isUnclaimed && !showCustomization && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
+          <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+            <span className="text-xs text-white/60">
+              Powered by <span className="text-pink-400 font-medium">NextMonth</span>
+            </span>
+            <Button 
+              size="sm"
+              variant="ghost"
+              className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
+              onClick={() => setLocation(`/orbit/${slug}/hub`)}
+              data-testid="button-view-hub"
+            >
+              View Data Hub
+            </Button>
+          </div>
+        </div>
       )}
 
       {isUnclaimed && !showCustomization && (

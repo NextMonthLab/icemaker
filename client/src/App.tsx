@@ -20,6 +20,7 @@ import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
 import PreviewRedirect from "@/pages/PreviewRedirect";
 import OrbitView from "@/pages/orbit/OrbitView";
+import DataHub from "@/pages/orbit/DataHub";
 
 import Home from "@/pages/Home";
 import Today from "@/pages/Today";
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/o/:slug" component={OrbitView} />
       <Route path="/orbit/:slug" component={OrbitView} />
       <Route path="/orbit/:slug/claim" component={OrbitView} />
+      <Route path="/orbit/:slug/hub" component={DataHub} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />
