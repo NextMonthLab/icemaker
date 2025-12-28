@@ -201,13 +201,12 @@ export default function ForBrands() {
                 <p className="text-sm text-white/60 text-left mb-2">
                   Paste your homepage URL (e.g. https://yourbrand.com)
                 </p>
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 animate-pulse" />
-                  <div className="absolute inset-0 rounded-lg" style={{
-                    animation: 'pulse-border 3s ease-in-out infinite',
-                  }} />
-                  
-                  <div className="relative flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 animate-pulse" />
+                    <div className="absolute inset-0 rounded-lg" style={{
+                      animation: 'pulse-border 3s ease-in-out infinite',
+                    }} />
                     <Input
                       type="url"
                       placeholder="yourbrand.com"
@@ -218,28 +217,28 @@ export default function ForBrands() {
                       }}
                       onKeyDown={(e) => e.key === 'Enter' && handleCreatePreview()}
                       disabled={createPreviewMutation.isPending}
-                      className="flex-1 h-14 px-5 text-base bg-white/5 border border-pink-500/30 text-white placeholder:text-white/40 focus-visible:ring-pink-500 focus-visible:border-pink-400 transition-all duration-300 rounded-lg"
+                      className="relative h-14 px-5 text-base bg-white/5 border-0 text-white placeholder:text-white/40 focus-visible:ring-pink-500 focus-visible:border-pink-400 transition-all duration-300 rounded-lg w-full"
                       data-testid="input-preview-url"
                     />
-                    <Button
-                      onClick={handleCreatePreview}
-                      disabled={createPreviewMutation.isPending || !siteUrl.trim()}
-                      size="lg"
-                      className="gap-2 h-14 px-6 sm:px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/40 transition-all duration-300 rounded-lg whitespace-nowrap"
-                      data-testid="button-create-preview"
-                    >
-                      {createPreviewMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          Create Preview
-                        </>
-                      )}
-                    </Button>
                   </div>
+                  <Button
+                    onClick={handleCreatePreview}
+                    disabled={createPreviewMutation.isPending || !siteUrl.trim()}
+                    size="lg"
+                    className="gap-2 h-14 px-6 sm:px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/40 transition-all duration-300 rounded-lg whitespace-nowrap"
+                    data-testid="button-create-preview"
+                  >
+                    {createPreviewMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Create Preview
+                      </>
+                    )}
+                  </Button>
                 </div>
                 {error && (
                   <div className="text-left mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
