@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FileText, User, Star, Video, Phone, Mail, Quote, Lightbulb, ExternalLink, Cloud, Sun, Calendar, MapPin, Globe, Briefcase, Award, MessageCircle, Zap, Book, TrendingUp, Shield, Heart, HelpCircle, Settings, Home, DollarSign, Clock, Users, Target, Sparkles, Rss, Twitter, Facebook, Instagram, Linkedin, Youtube, type LucideIcon } from "lucide-react";
 import type { AnyKnowledgeItem, Topic, Page, Person, Proof, Action, Blog, Social } from "@/lib/siteKnowledge";
 
@@ -145,6 +145,7 @@ function getActionIcon(actionType: string) {
 }
 
 export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoomLevel = 1 }: KnowledgeTileProps) {
+  const shouldReduceMotion = useReducedMotion();
   const CategoryIcon = getCategoryIcon(item);
   
   const getTypeIcon = (): LucideIcon => {
@@ -202,18 +203,26 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
       animate={{ 
         opacity: 1, 
         scale: 1,
         x: position.x,
         y: position.y,
       }}
-      transition={{ 
+      transition={shouldReduceMotion ? { duration: 0 } : { 
         type: 'spring', 
         stiffness: 120, 
         damping: 20,
         opacity: { duration: 0.3 }
+      }}
+      whileHover={shouldReduceMotion ? {} : { 
+        y: -2,
+        transition: { duration: 0.15 }
+      }}
+      whileTap={shouldReduceMotion ? {} : { 
+        y: -1,
+        transition: { duration: 0.08 }
       }}
       className="absolute rounded-lg text-left overflow-hidden"
       style={{

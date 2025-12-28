@@ -77,7 +77,10 @@ function MetricCard({
   locked?: boolean;
 }) {
   return (
-    <div className={`bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 ${locked ? 'opacity-60' : ''}`}>
+    <div 
+      className={`orbit-metric-card bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 ${locked ? 'opacity-60' : 'cursor-default'}`}
+      data-testid={`metric-${label.toLowerCase().replace(/\s+/g, '-')}`}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="p-2 bg-zinc-800 rounded-lg">
           <Icon className="w-5 h-5 text-zinc-400" />
@@ -100,7 +103,10 @@ function MetricCard({
 
 function LockedSection({ title, description }: { title: string; description: string }) {
   return (
-    <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-6 relative overflow-hidden">
+    <div 
+      className="orbit-hover bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-6 relative overflow-hidden"
+      data-testid={`locked-${title.toLowerCase().replace(/\s+/g, '-')}`}
+    >
       <div className="absolute inset-0 backdrop-blur-[2px]" />
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
@@ -110,7 +116,7 @@ function LockedSection({ title, description }: { title: string; description: str
         <p className="text-xs text-zinc-600 mb-4">{description}</p>
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-4 bg-zinc-800/50 rounded animate-pulse" style={{ width: `${70 + i * 10}%` }} />
+            <div key={i} className="h-4 bg-zinc-800/50 rounded" style={{ width: `${70 + i * 10}%` }} />
           ))}
         </div>
       </div>
@@ -147,7 +153,10 @@ export default function DataHub() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin mx-auto" />
+          <p className="text-zinc-500 text-sm mt-4">Loading intelligence...</p>
+        </div>
       </div>
     );
   }

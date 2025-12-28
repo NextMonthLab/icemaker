@@ -405,7 +405,10 @@ export default function OrbitView() {
   if (orbitLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" data-testid="loading-spinner" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-500 mx-auto" data-testid="loading-spinner" />
+          <p className="text-zinc-500 text-sm mt-4">Loading orbit...</p>
+        </div>
       </div>
     );
   }
@@ -433,12 +436,12 @@ export default function OrbitView() {
   if (orbitData?.status === "generating") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 text-pink-400 mx-auto animate-spin" />
-          <h1 className="text-xl font-semibold text-zinc-100">Generating Orbit...</h1>
-          <p className="text-zinc-400">This usually takes about 30 seconds</p>
+        <div className="text-center space-y-4 max-w-sm px-6">
+          <div className="w-12 h-12 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin mx-auto" />
+          <h1 className="text-lg font-medium text-zinc-200">Preparing your orbit</h1>
+          <p className="text-zinc-500 text-sm">Extracting intelligence from your site. This typically takes 30 seconds.</p>
           {orbitData.requestedAt && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-600">
               Started: {new Date(orbitData.requestedAt).toLocaleTimeString()}
             </p>
           )}
@@ -470,7 +473,10 @@ export default function OrbitView() {
   if (previewLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-500 mx-auto" />
+          <p className="text-zinc-500 text-sm mt-4">Loading experience...</p>
+        </div>
       </div>
     );
   }

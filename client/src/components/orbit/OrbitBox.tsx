@@ -44,7 +44,7 @@ export function OrbitBox({ id, type, title, summary, themes, isUnclaimed = false
 
   return (
     <Card 
-      className={`group transition-all duration-200 cursor-pointer hover:shadow-lg hover:shadow-pink-500/10 border-zinc-800 bg-zinc-900/50 ${isUnclaimed ? 'opacity-90' : ''}`}
+      className={`group orbit-tile cursor-pointer border-zinc-800 bg-zinc-900/50 ${isUnclaimed ? 'opacity-90' : ''}`}
       onClick={toggleExpand}
       data-testid={`orbit-box-${id}`}
     >
