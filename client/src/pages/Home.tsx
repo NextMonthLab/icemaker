@@ -67,7 +67,7 @@ export default function Home() {
         <div className="p-4 pt-8 md:p-8 space-y-6 animate-in fade-in duration-500">
           <div className="text-center space-y-2">
             <span className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Choose Your Story</span>
-            <h1 className="text-3xl font-display font-black">NextScene</h1>
+            <h1 className="text-3xl font-display font-black">NextMonth</h1>
           </div>
 
           <div className="grid gap-4 max-w-lg mx-auto">

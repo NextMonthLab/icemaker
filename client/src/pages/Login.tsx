@@ -25,7 +25,7 @@ export default function Login() {
         await register(username, password);
         toast({
           title: "Account created",
-          description: "Welcome to NextScene!",
+          description: "Welcome to NextMonth!",
         });
         setLocation("/onboarding");
       } else {
@@ -57,10 +57,10 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8 relative z-10">
             <div className="text-center space-y-2">
                 <h1 className="text-4xl md:text-6xl font-display font-black text-white tracking-widest uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-                    NextScene
+                    NextMonth
                 </h1>
                 <p className="text-muted-foreground font-mono text-sm tracking-widest uppercase">
-                    Interactive Narrative Engine
+                    The AI Tool Creation Platform
                 </p>
             </div>
 
