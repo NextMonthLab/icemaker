@@ -1182,6 +1182,11 @@ export const orbitMeta = pgTable("orbit_meta", {
   // Tier (free | grow | insight | intelligence)
   planTier: text("plan_tier").default("free").notNull(),
   
+  // ICE Allowance (Phase 2: bundled credits for Insight tier)
+  iceAllowanceMonthly: integer("ice_allowance_monthly").default(0).notNull(),
+  iceUsedThisPeriod: integer("ice_used_this_period").default(0).notNull(),
+  icePeriodStart: timestamp("ice_period_start"),
+  
   // Stats
   totalPackVersions: integer("total_pack_versions").default(0).notNull(),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
@@ -1246,8 +1251,14 @@ export const orbitLeads = pgTable("orbit_leads", {
   message: text("message"),
   
   // Tracking
-  source: text("source").default('orbit'), // orbit, chat, cta
+  source: text("source").default('orbit'), // orbit, chat, cta, ice
   isRead: boolean("is_read").default(false).notNull(),
+  
+  // Phase 2: Contextual linking for journey reconstruction
+  sessionId: text("session_id"), // Links to orbitSessions
+  boxId: integer("box_id"), // Which box triggered the lead
+  conversationId: integer("conversation_id"), // Which conversation produced the lead
+  lastQuestion: text("last_question"), // Last visitor question before conversion
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -1282,3 +1293,122 @@ export const orbitBoxes = pgTable("orbit_boxes", {
 export const insertOrbitBoxSchema = createInsertSchema(orbitBoxes).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertOrbitBox = z.infer<typeof insertOrbitBoxSchema>;
 export type OrbitBox = typeof orbitBoxes.$inferSelect;
+
+// ============ ORBIT PHASE 2: SESSIONS, EVENTS, CONVERSATIONS ============
+
+// Orbit Sessions - visitor journey tracking
+export const orbitSessions = pgTable("orbit_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(), // UUID stored in cookie/localStorage
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  
+  // Optional visitor identification
+  visitorId: text("visitor_id"), // Can be linked to a user or anonymous
+  
+  // Session metadata
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  lastActivityAt: timestamp("last_activity_at").defaultNow().notNull(),
+  
+  // Summary stats (updated on events)
+  eventCount: integer("event_count").default(0).notNull(),
+  messageCount: integer("message_count").default(0).notNull(),
+  leadGenerated: boolean("lead_generated").default(false).notNull(),
+});
+
+export const insertOrbitSessionSchema = createInsertSchema(orbitSessions).omit({ id: true, startedAt: true, lastActivityAt: true });
+export type InsertOrbitSession = z.infer<typeof insertOrbitSessionSchema>;
+export type OrbitSession = typeof orbitSessions.$inferSelect;
+
+// Orbit Events - granular event log for journey reconstruction
+export type OrbitEventType = 'visit' | 'box_open' | 'box_click' | 'chat_message' | 'ice_open' | 'lead_submit';
+
+export const orbitEvents = pgTable("orbit_events", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  sessionId: text("session_id").references(() => orbitSessions.sessionId).notNull(),
+  
+  eventType: text("event_type").$type<OrbitEventType>().notNull(),
+  
+  // Optional linked entities
+  boxId: integer("box_id").references(() => orbitBoxes.id),
+  iceId: integer("ice_id"),
+  conversationId: integer("conversation_id"), // Will reference orbitConversations
+  
+  // Event metadata
+  metadataJson: jsonb("metadata_json").$type<Record<string, any>>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitEventSchema = createInsertSchema(orbitEvents).omit({ id: true, createdAt: true });
+export type InsertOrbitEvent = z.infer<typeof insertOrbitEventSchema>;
+export type OrbitEvent = typeof orbitEvents.$inferSelect;
+
+// Orbit Conversations - chat transcripts for Insight tier
+export const orbitConversations = pgTable("orbit_conversations", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  sessionId: text("session_id").references(() => orbitSessions.sessionId),
+  
+  // Optional visitor identification
+  visitorId: text("visitor_id"),
+  
+  // Conversation metadata
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+  messageCount: integer("message_count").default(0).notNull(),
+  
+  // Context: which boxes/ICEs were engaged
+  engagedBoxIds: integer("engaged_box_ids").array(),
+  engagedIceIds: integer("engaged_ice_ids").array(),
+  
+  // Lead linkage
+  leadGenerated: boolean("lead_generated").default(false).notNull(),
+  leadId: integer("lead_id"),
+  
+  // Clustering outputs (populated by batch job)
+  extractedQuestions: text("extracted_questions").array(),
+  extractedThemes: text("extracted_themes").array(),
+});
+
+export const insertOrbitConversationSchema = createInsertSchema(orbitConversations).omit({ id: true, startedAt: true, lastMessageAt: true });
+export type InsertOrbitConversation = z.infer<typeof insertOrbitConversationSchema>;
+export type OrbitConversation = typeof orbitConversations.$inferSelect;
+
+// Orbit Messages - individual chat messages within conversations
+export const orbitMessages = pgTable("orbit_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").references(() => orbitConversations.id, { onDelete: "cascade" }).notNull(),
+  
+  role: text("role").notNull(), // 'user' | 'assistant' | 'system'
+  content: text("content").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitMessageSchema = createInsertSchema(orbitMessages).omit({ id: true, createdAt: true });
+export type InsertOrbitMessage = z.infer<typeof insertOrbitMessageSchema>;
+export type OrbitMessage = typeof orbitMessages.$inferSelect;
+
+// Orbit Insights Summary - aggregated analytics for Insight tier (per orbit, per period)
+export const orbitInsightsSummary = pgTable("orbit_insights_summary", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  
+  // Period (e.g., current month)
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  
+  // Aggregated data
+  conversationCount: integer("conversation_count").default(0).notNull(),
+  leadsCount: integer("leads_count").default(0).notNull(),
+  topQuestions: text("top_questions").array(),
+  topThemes: text("top_themes").array(),
+  unansweredQuestions: text("unanswered_questions").array(),
+  
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+});
+
+export const insertOrbitInsightsSummarySchema = createInsertSchema(orbitInsightsSummary).omit({ id: true, lastUpdated: true });
+export type InsertOrbitInsightsSummary = z.infer<typeof insertOrbitInsightsSummarySchema>;
+export type OrbitInsightsSummary = typeof orbitInsightsSummary.$inferSelect;
