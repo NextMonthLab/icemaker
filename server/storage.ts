@@ -246,6 +246,24 @@ export interface IStorage {
   getOrbitIceAllowance(businessSlug: string): Promise<{ allowance: number; used: number; periodStart: Date | null }>;
   incrementOrbitIceUsed(businessSlug: string): Promise<void>;
   resetOrbitIcePeriod(businessSlug: string, allowance: number): Promise<void>;
+
+  // Phase 4: Notifications
+  createNotification(data: schema.InsertNotification): Promise<schema.Notification>;
+  getNotifications(userId: number, limit?: number): Promise<schema.Notification[]>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  markNotificationRead(id: number): Promise<void>;
+  markAllNotificationsRead(userId: number): Promise<void>;
+  findNotificationByDedupeKey(dedupeKey: string): Promise<schema.Notification | undefined>;
+
+  // Phase 4: Notification Preferences
+  getNotificationPreferences(userId: number): Promise<schema.NotificationPreferences | undefined>;
+  upsertNotificationPreferences(data: schema.InsertNotificationPreferences): Promise<schema.NotificationPreferences>;
+
+  // Phase 4: Magic Links
+  createMagicLink(data: schema.InsertMagicLink): Promise<schema.MagicLink>;
+  getMagicLink(token: string): Promise<schema.MagicLink | undefined>;
+  markMagicLinkUsed(token: string): Promise<void>;
+  cleanupExpiredMagicLinks(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1680,6 +1698,93 @@ export class DatabaseStorage implements IStorage {
         icePeriodStart: new Date()
       })
       .where(eq(schema.orbitMeta.businessSlug, businessSlug));
+  }
+
+  // Phase 4: Notifications
+  async createNotification(data: schema.InsertNotification): Promise<schema.Notification> {
+    const [notification] = await db.insert(schema.notifications).values(data).returning();
+    return notification;
+  }
+
+  async getNotifications(userId: number, limit: number = 50): Promise<schema.Notification[]> {
+    return db.query.notifications.findMany({
+      where: eq(schema.notifications.userId, userId),
+      orderBy: [desc(schema.notifications.createdAt)],
+      limit,
+    });
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(schema.notifications)
+      .where(and(
+        eq(schema.notifications.userId, userId),
+        eq(schema.notifications.isRead, false)
+      ));
+    return Number(result[0]?.count || 0);
+  }
+
+  async markNotificationRead(id: number): Promise<void> {
+    await db.update(schema.notifications)
+      .set({ isRead: true })
+      .where(eq(schema.notifications.id, id));
+  }
+
+  async markAllNotificationsRead(userId: number): Promise<void> {
+    await db.update(schema.notifications)
+      .set({ isRead: true })
+      .where(eq(schema.notifications.userId, userId));
+  }
+
+  async findNotificationByDedupeKey(dedupeKey: string): Promise<schema.Notification | undefined> {
+    return db.query.notifications.findFirst({
+      where: eq(schema.notifications.dedupeKey, dedupeKey),
+    });
+  }
+
+  // Phase 4: Notification Preferences
+  async getNotificationPreferences(userId: number): Promise<schema.NotificationPreferences | undefined> {
+    return db.query.notificationPreferences.findFirst({
+      where: eq(schema.notificationPreferences.userId, userId),
+    });
+  }
+
+  async upsertNotificationPreferences(data: schema.InsertNotificationPreferences): Promise<schema.NotificationPreferences> {
+    const existing = await this.getNotificationPreferences(data.userId);
+    if (existing) {
+      const [updated] = await db.update(schema.notificationPreferences)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(schema.notificationPreferences.userId, data.userId))
+        .returning();
+      return updated;
+    }
+    const [prefs] = await db.insert(schema.notificationPreferences).values(data).returning();
+    return prefs;
+  }
+
+  // Phase 4: Magic Links
+  async createMagicLink(data: schema.InsertMagicLink): Promise<schema.MagicLink> {
+    const [link] = await db.insert(schema.magicLinks).values(data).returning();
+    return link;
+  }
+
+  async getMagicLink(token: string): Promise<schema.MagicLink | undefined> {
+    return db.query.magicLinks.findFirst({
+      where: eq(schema.magicLinks.token, token),
+    });
+  }
+
+  async markMagicLinkUsed(token: string): Promise<void> {
+    await db.update(schema.magicLinks)
+      .set({ usedAt: new Date() })
+      .where(eq(schema.magicLinks.token, token));
+  }
+
+  async cleanupExpiredMagicLinks(): Promise<number> {
+    const result = await db.delete(schema.magicLinks)
+      .where(sql`${schema.magicLinks.expiresAt} < NOW()`)
+      .returning();
+    return result.length;
   }
 }
 
