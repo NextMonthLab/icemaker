@@ -70,8 +70,8 @@ export default function ForKnowledge() {
       <main>
         {/* Hero */}
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/30 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-900/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
             <motion.div
@@ -79,14 +79,14 @@ export default function ForKnowledge() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-emerald-500/10 border border-emerald-500/20 rounded-full backdrop-blur-sm">
-                <GraduationCap className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-300">For Knowledge & Learning</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm">
+                <GraduationCap className="w-4 h-4 text-pink-400" />
+                <span className="text-pink-300">For Knowledge & Learning</span>
               </div>
               
               <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
                 <span className="block text-white">Make information</span>
-                <span className="block font-display bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="block font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   unforgettable
                 </span>
               </h1>
@@ -112,7 +112,7 @@ export default function ForKnowledge() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                How it <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">works</span>
+                How it <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">works</span>
               </h2>
             </div>
             
@@ -127,7 +127,7 @@ export default function ForKnowledge() {
                   className="p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
                 >
                   <div className="flex items-start gap-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-pink-500/20">
                       <feature.icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -143,14 +143,14 @@ export default function ForKnowledge() {
 
         {/* Knowledge Retention */}
         <section className="py-24 px-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/20 via-black to-black" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-black" />
           <div className="max-w-4xl mx-auto relative z-10 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-500/30">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-pink-500/30">
                 <BookOpen className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">
@@ -188,7 +188,7 @@ export default function ForKnowledge() {
                   transition={{ duration: 0.5, delay: index * 0.05 }}
                   className="flex items-center gap-3 p-4 rounded-lg bg-white/5 border border-white/10"
                 >
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-pink-400 flex-shrink-0" />
                   <span className="text-white/80">{useCase}</span>
                 </motion.div>
               ))}
@@ -198,7 +198,7 @@ export default function ForKnowledge() {
 
         {/* CTA */}
         <section className="py-32 px-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/40 via-emerald-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black to-transparent" />
           
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <motion.div
@@ -208,13 +208,13 @@ export default function ForKnowledge() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
                 Ready to make learning<br />
-                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   unforgettable?
                 </span>
               </h2>
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white border-0 shadow-xl shadow-emerald-500/30 gap-3" data-testid="button-footer-cta">
-                  Transform a Document
+                <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
+                  Build a Learning Experience
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>

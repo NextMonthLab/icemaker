@@ -70,7 +70,7 @@ export default function ForCreators() {
       <main>
         {/* Hero */}
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-950/30 via-black to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-900/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
@@ -86,7 +86,7 @@ export default function ForCreators() {
               
               <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
                 <span className="block text-white">Your story,</span>
-                <span className="block font-display bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">
+                <span className="block font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   one moment at a time
                 </span>
               </h1>
@@ -112,7 +112,7 @@ export default function ForCreators() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                From script to <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">screen</span>
+                From script to <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">screen</span>
               </h2>
             </div>
             
@@ -143,7 +143,7 @@ export default function ForCreators() {
 
         {/* Visual Consistency */}
         <section className="py-24 px-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-black to-black" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-black" />
           <div className="max-w-4xl mx-auto relative z-10 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -187,7 +187,7 @@ export default function ForCreators() {
                   transition={{ duration: 0.5, delay: index * 0.05 }}
                   className="flex items-center gap-3 p-4 rounded-lg bg-white/5 border border-white/10"
                 >
-                  <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-pink-400 flex-shrink-0" />
                   <span className="text-white/80">{item}</span>
                 </motion.div>
               ))}
@@ -197,7 +197,7 @@ export default function ForCreators() {
 
         {/* CTA */}
         <section className="py-32 px-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-purple-950/40 via-purple-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black to-transparent" />
           
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <motion.div
@@ -207,13 +207,13 @@ export default function ForCreators() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
                 Ready to bring your<br />
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   story to life?
                 </span>
               </h2>
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white border-0 shadow-xl shadow-purple-500/30 gap-3" data-testid="button-footer-cta">
-                  Create a Story
+                <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
+                  Build a Story Experience
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
