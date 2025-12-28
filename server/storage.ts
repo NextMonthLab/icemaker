@@ -198,6 +198,12 @@ export interface IStorage {
   }>;
   incrementOrbitMetric(businessSlug: string, metric: 'visits' | 'interactions' | 'conversations' | 'iceViews'): Promise<void>;
   getOrCreateTodayAnalytics(businessSlug: string): Promise<schema.OrbitAnalytics>;
+  
+  // Orbit Leads
+  createOrbitLead(data: schema.InsertOrbitLead): Promise<schema.OrbitLead>;
+  getOrbitLeads(businessSlug: string, limit?: number): Promise<schema.OrbitLead[]>;
+  getOrbitLeadsCount(businessSlug: string): Promise<number>;
+  markLeadRead(leadId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1363,6 +1369,34 @@ export class DatabaseStorage implements IStorage {
       conversations: acc.conversations + day.conversations,
       iceViews: acc.iceViews + day.iceViews,
     }), { visits: 0, interactions: 0, conversations: 0, iceViews: 0 });
+  }
+
+  // Orbit Leads
+  async createOrbitLead(data: schema.InsertOrbitLead): Promise<schema.OrbitLead> {
+    const [lead] = await db.insert(schema.orbitLeads).values(data).returning();
+    return lead;
+  }
+
+  async getOrbitLeads(businessSlug: string, limit: number = 50): Promise<schema.OrbitLead[]> {
+    const results = await db.query.orbitLeads.findMany({
+      where: eq(schema.orbitLeads.businessSlug, businessSlug),
+      orderBy: [desc(schema.orbitLeads.createdAt)],
+      limit,
+    });
+    return results;
+  }
+
+  async getOrbitLeadsCount(businessSlug: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(schema.orbitLeads)
+      .where(eq(schema.orbitLeads.businessSlug, businessSlug));
+    return Number(result[0]?.count || 0);
+  }
+
+  async markLeadRead(leadId: number): Promise<void> {
+    await db.update(schema.orbitLeads)
+      .set({ isRead: true })
+      .where(eq(schema.orbitLeads.id, leadId));
   }
 }
 

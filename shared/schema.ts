@@ -1224,3 +1224,26 @@ export const orbitAnalytics = pgTable("orbit_analytics", {
 export const insertOrbitAnalyticsSchema = createInsertSchema(orbitAnalytics).omit({ id: true, createdAt: true });
 export type InsertOrbitAnalytics = z.infer<typeof insertOrbitAnalyticsSchema>;
 export type OrbitAnalytics = typeof orbitAnalytics.$inferSelect;
+
+// Orbit Leads - contact requests from visitors
+export const orbitLeads = pgTable("orbit_leads", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  
+  // Contact information
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  company: text("company"),
+  message: text("message"),
+  
+  // Tracking
+  source: text("source").default('orbit'), // orbit, chat, cta
+  isRead: boolean("is_read").default(false).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitLeadSchema = createInsertSchema(orbitLeads).omit({ id: true, createdAt: true, isRead: true });
+export type InsertOrbitLead = z.infer<typeof insertOrbitLeadSchema>;
+export type OrbitLead = typeof orbitLeads.$inferSelect;

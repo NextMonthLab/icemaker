@@ -5108,6 +5108,69 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
+  // Orbit Leads - Submit a lead
+  app.post("/api/orbit/:slug/leads", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { name, email, phone, company, message, source = 'orbit' } = req.body;
+      
+      if (!name || !email) {
+        return res.status(400).json({ message: "Name and email are required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const lead = await storage.createOrbitLead({
+        businessSlug: slug,
+        name,
+        email,
+        phone: phone || null,
+        company: company || null,
+        message: message || null,
+        source,
+      });
+      
+      res.json({ success: true, leadId: lead.id });
+    } catch (error) {
+      console.error("Error creating orbit lead:", error);
+      res.status(500).json({ message: "Error creating lead" });
+    }
+  });
+
+  // Orbit Leads - Get leads (owner only)
+  app.get("/api/orbit/:slug/leads", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { preview = '' } = req.query;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isPreviewMode = preview === 'true';
+      const isOwner = isPreviewMode || (req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id);
+      
+      // Always return lead count (free tier)
+      const count = await storage.getOrbitLeadsCount(slug);
+      
+      // Full lead details only for owners (paid feature in future)
+      const leads = isOwner ? await storage.getOrbitLeads(slug) : [];
+      
+      res.json({
+        count,
+        leads: isOwner ? leads : null,
+        isOwner,
+      });
+    } catch (error) {
+      console.error("Error getting orbit leads:", error);
+      res.status(500).json({ message: "Error getting leads" });
+    }
+  });
+
   // Health check endpoint for debugging
   app.get('/api/health', (_req, res) => {
     res.json({
