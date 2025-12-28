@@ -97,8 +97,8 @@ export default function ForCreators() {
               </p>
               
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white border-0 shadow-xl shadow-purple-500/30 gap-3" data-testid="button-hero-cta">
-                  Create a Story
+                <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta">
+                  Build a Story Experience
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>

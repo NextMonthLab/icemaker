@@ -143,20 +143,20 @@ export default function ForBrands() {
       <main>
         {/* Smart Site Preview Section */}
         <section className="relative py-20 px-6 overflow-hidden pt-20">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-black to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-blue-500/10 border border-blue-500/20 rounded-full backdrop-blur-sm">
-                <Sparkles className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-300 text-sm font-medium">Smart Site Preview</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm">
+                <Sparkles className="w-4 h-4 text-pink-400" />
+                <span className="text-pink-300 text-sm font-medium">Smart Site Preview</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-[1.1]">
                 Your website is passive.<br />
-                <span className="font-display bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   See the version that actually talks to customers.
                 </span>
               </h1>
@@ -180,14 +180,14 @@ export default function ForBrands() {
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleCreatePreview()}
                     disabled={createPreviewMutation.isPending}
-                    className="flex-1 h-14 px-5 text-base bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-blue-500"
+                    className="flex-1 h-14 px-5 text-base bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-pink-500"
                     data-testid="input-preview-url"
                   />
                   <Button
                     onClick={handleCreatePreview}
                     disabled={createPreviewMutation.isPending || !siteUrl.trim()}
                     size="lg"
-                    className="gap-2 h-14 px-8 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white border-0 shadow-lg shadow-blue-500/25"
+                    className="gap-2 h-14 px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30"
                     data-testid="button-create-preview"
                   >
                     {createPreviewMutation.isPending ? (
@@ -231,8 +231,8 @@ export default function ForBrands() {
 
         {/* Hero */}
         <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
             <motion.div
@@ -240,14 +240,14 @@ export default function ForBrands() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-blue-500/10 border border-blue-500/20 rounded-full backdrop-blur-sm">
-                <Globe className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-300">For Brands & Businesses</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm">
+                <Globe className="w-4 h-4 text-pink-400" />
+                <span className="text-pink-300">For Brands & Businesses</span>
               </div>
               
               <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
                 <span className="block text-white">How Smart Sites</span>
-                <span className="block font-display bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+                <span className="block font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   work
                 </span>
               </h1>
@@ -257,8 +257,8 @@ export default function ForBrands() {
               </p>
               
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white border-0 shadow-xl shadow-blue-500/30 gap-3" data-testid="button-hero-cta">
-                  Create a Brand Story
+                <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta">
+                  Build a Brand Experience
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>

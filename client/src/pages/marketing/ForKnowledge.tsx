@@ -97,8 +97,8 @@ export default function ForKnowledge() {
               </p>
               
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white border-0 shadow-xl shadow-emerald-500/30 gap-3" data-testid="button-hero-cta">
-                  Transform a Document
+                <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta">
+                  Build a Learning Experience
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
