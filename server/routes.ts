@@ -4492,6 +4492,20 @@ Output only the narration paragraph, nothing else.`;
     }
   });
 
+  // Get orbit slug from preview ID (for redirect)
+  app.get("/api/previews/:id/orbit-slug", async (req, res) => {
+    try {
+      const orbit = await storage.getOrbitMetaByPreviewId(req.params.id);
+      if (!orbit) {
+        return res.status(404).json({ message: "No orbit found for this preview" });
+      }
+      res.json({ businessSlug: orbit.businessSlug });
+    } catch (error) {
+      console.error("Error getting orbit slug:", error);
+      res.status(500).json({ message: "Error getting orbit slug" });
+    }
+  });
+
   // Chat with preview
   app.post("/api/previews/:id/chat", async (req, res) => {
     try {
@@ -4895,6 +4909,121 @@ Keep responses concise (2-3 sentences maximum).`;
     } catch (error) {
       console.error("Error listing orbit versions:", error);
       res.status(500).json({ message: "Error listing orbit versions" });
+    }
+  });
+
+  // Request claim - sends magic link email
+  app.post("/api/orbit/:slug/claim/request", async (req, res) => {
+    try {
+      const { email } = req.body;
+      const slug = req.params.slug;
+
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+
+      if (orbitMeta.ownerId || orbitMeta.verifiedAt) {
+        return res.status(400).json({ message: "This orbit has already been claimed" });
+      }
+
+      // Extract domain from source URL and email
+      const sourceUrl = new URL(orbitMeta.sourceUrl);
+      const sourceDomain = sourceUrl.hostname.replace(/^www\./, '');
+      const emailDomain = email.split('@')[1]?.toLowerCase();
+      const domainMatch = emailDomain === sourceDomain;
+
+      // Generate secure token
+      const crypto = await import('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+
+      // Create claim token (expires in 24 hours)
+      await storage.createClaimToken({
+        businessSlug: slug,
+        email: email.toLowerCase(),
+        token,
+        domainMatch,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      // For MVP, we'll log the magic link (in production, send email)
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : 'http://localhost:5000';
+      const magicLink = `${baseUrl}/orbit/${slug}/claim?token=${token}`;
+      
+      console.log(`[Claim] Magic link for ${email}: ${magicLink}`);
+
+      res.json({
+        success: true,
+        domainMatch,
+        message: domainMatch 
+          ? "Verification email sent! Check your inbox."
+          : "Your email domain doesn't match the business. Verification email sent, but additional review may be required.",
+      });
+    } catch (error) {
+      console.error("Error requesting claim:", error);
+      res.status(500).json({ message: "Error processing claim request" });
+    }
+  });
+
+  // Verify claim token and claim orbit
+  app.post("/api/orbit/:slug/claim/verify", async (req, res) => {
+    try {
+      const { token } = req.body;
+      const slug = req.params.slug;
+
+      if (!token) {
+        return res.status(400).json({ message: "Token is required" });
+      }
+
+      const claimToken = await storage.getClaimToken(token);
+      if (!claimToken) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+
+      if (claimToken.businessSlug !== slug) {
+        return res.status(400).json({ message: "Token does not match this orbit" });
+      }
+
+      if (claimToken.usedAt) {
+        return res.status(400).json({ message: "Token has already been used" });
+      }
+
+      if (new Date() > new Date(claimToken.expiresAt)) {
+        return res.status(400).json({ message: "Token has expired" });
+      }
+
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+
+      if (orbitMeta.ownerId || orbitMeta.verifiedAt) {
+        return res.status(400).json({ message: "This orbit has already been claimed" });
+      }
+
+      // Mark token as used
+      await storage.markClaimTokenUsed(token);
+
+      // Get or create user by email (for MVP, just store email without creating user)
+      const user = await storage.getUserByEmail(claimToken.email);
+      
+      // Claim the orbit
+      await storage.claimOrbit(slug, claimToken.email, user?.id);
+
+      res.json({
+        success: true,
+        message: "Orbit claimed successfully!",
+        domainMatch: claimToken.domainMatch,
+      });
+    } catch (error) {
+      console.error("Error verifying claim:", error);
+      res.status(500).json({ message: "Error verifying claim" });
     }
   });
 

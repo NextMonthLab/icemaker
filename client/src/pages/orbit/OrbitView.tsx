@@ -1,12 +1,20 @@
-import { useRoute } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, Globe, ExternalLink, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useRoute, useLocation, useSearch } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Loader2, Globe, ExternalLink, AlertCircle, CheckCircle, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { RadarGrid } from "@/components/radar";
 import { SpatialSmartSite } from "@/components/spatial";
 import { BrandCustomizationScreen, type BrandPreferences } from "@/components/preview/BrandCustomizationScreen";
 import type { SiteKnowledge } from "@/lib/siteKnowledge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ValidatedContent {
   overview: string;
@@ -62,11 +70,18 @@ interface OrbitResponse {
 export default function OrbitView() {
   const [matchedOrbit, orbitParams] = useRoute("/orbit/:slug");
   const [matchedO, oParams] = useRoute("/o/:slug");
-  const slug = orbitParams?.slug || oParams?.slug;
+  const [matchedClaim, claimParams] = useRoute("/orbit/:slug/claim");
+  const slug = orbitParams?.slug || oParams?.slug || claimParams?.slug;
+  const searchString = useSearch();
+  const [, setLocation] = useLocation();
   
   const [showCustomization, setShowCustomization] = useState(true);
   const [brandPreferences, setBrandPreferences] = useState<BrandPreferences | null>(null);
   const [experienceType, setExperienceType] = useState<'radar' | 'spatial' | 'classic'>('radar');
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [claimEmail, setClaimEmail] = useState('');
+  const [claimStatus, setClaimStatus] = useState<'idle' | 'sending' | 'sent' | 'verifying' | 'success' | 'error'>('idle');
+  const [claimMessage, setClaimMessage] = useState('');
 
   const { data: orbitData, isLoading: orbitLoading, error: orbitError, refetch } = useQuery<OrbitResponse>({
     queryKey: ["orbit", slug],
@@ -98,6 +113,71 @@ export default function OrbitView() {
   });
 
   const isUnclaimed = !orbitData?.ownerId;
+
+  const requestClaimMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch(`/api/orbit/${slug}/claim/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to request claim');
+      return data;
+    },
+    onSuccess: (data) => {
+      setClaimStatus('sent');
+      setClaimMessage(data.trusted 
+        ? 'Check your email for the magic link to claim this orbit.' 
+        : 'We need to verify your connection to this domain. Check your email for next steps.');
+    },
+    onError: (error: Error) => {
+      setClaimStatus('error');
+      setClaimMessage(error.message);
+    },
+  });
+
+  const verifyClaimMutation = useMutation({
+    mutationFn: async (token: string) => {
+      const response = await fetch(`/api/orbit/${slug}/claim/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to verify claim');
+      return data;
+    },
+    onSuccess: () => {
+      setClaimStatus('success');
+      setClaimMessage('You\'ve successfully claimed this orbit!');
+      refetch();
+      setTimeout(() => {
+        setShowClaimModal(false);
+        setLocation(`/orbit/${slug}`);
+      }, 2000);
+    },
+    onError: (error: Error) => {
+      setClaimStatus('error');
+      setClaimMessage(error.message);
+    },
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const token = params.get('token');
+    if (token && matchedClaim) {
+      setShowClaimModal(true);
+      setClaimStatus('verifying');
+      verifyClaimMutation.mutate(token);
+    }
+  }, [matchedClaim, searchString]);
+
+  const handleClaimRequest = () => {
+    if (!claimEmail) return;
+    setClaimStatus('sending');
+    requestClaimMutation.mutate(claimEmail);
+  };
 
   const handleCustomizationConfirm = (prefs: BrandPreferences, expType?: 'radar' | 'spatial' | 'classic') => {
     setBrandPreferences(prefs);
@@ -394,7 +474,7 @@ export default function OrbitView() {
             <Button 
               size="sm"
               className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-3 py-1 h-7"
-              onClick={() => window.location.href = `/for/brands?claim=${slug}`}
+              onClick={() => setShowClaimModal(true)}
               data-testid="button-claim-orbit"
             >
               Claim This Orbit
@@ -402,6 +482,89 @@ export default function OrbitView() {
           </div>
         </div>
       )}
+
+      <Dialog open={showClaimModal} onOpenChange={setShowClaimModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {claimStatus === 'success' ? 'Orbit Claimed!' : 'Claim Your Orbit'}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {claimStatus === 'verifying' 
+                ? 'Verifying your claim...'
+                : claimStatus === 'success'
+                ? 'You now own this orbit and can customize it.'
+                : `Prove you own ${preview?.sourceDomain || slug} to claim this orbit.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {claimStatus === 'verifying' && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
+              </div>
+            )}
+
+            {claimStatus === 'success' && (
+              <div className="flex flex-col items-center justify-center py-6 gap-2">
+                <CheckCircle className="w-12 h-12 text-green-400" />
+                <p className="text-green-400 text-sm">{claimMessage}</p>
+              </div>
+            )}
+
+            {claimStatus === 'error' && (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <p className="text-red-400 text-sm">{claimMessage}</p>
+              </div>
+            )}
+
+            {claimStatus === 'sent' && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3">
+                <Mail className="w-10 h-10 text-pink-400" />
+                <p className="text-zinc-300 text-center text-sm">{claimMessage}</p>
+                <p className="text-zinc-500 text-xs text-center">
+                  Check your console for the magic link (email delivery coming soon).
+                </p>
+              </div>
+            )}
+
+            {(claimStatus === 'idle' || claimStatus === 'sending') && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-400">Your email address</label>
+                  <Input
+                    type="email"
+                    placeholder={`you@${preview?.sourceDomain || 'example.com'}`}
+                    value={claimEmail}
+                    onChange={(e) => setClaimEmail(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                    data-testid="input-claim-email"
+                  />
+                  <p className="text-xs text-zinc-500">
+                    For instant verification, use an email @{preview?.sourceDomain || 'your domain'}.
+                  </p>
+                </div>
+                <Button
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                  onClick={handleClaimRequest}
+                  disabled={!claimEmail || claimStatus === 'sending'}
+                  data-testid="button-submit-claim"
+                >
+                  {claimStatus === 'sending' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Magic Link'
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

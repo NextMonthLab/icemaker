@@ -18,7 +18,7 @@ import ForKnowledge from "@/pages/marketing/ForKnowledge";
 import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
-import PreviewPage from "@/pages/PreviewPage";
+import PreviewRedirect from "@/pages/PreviewRedirect";
 import OrbitView from "@/pages/orbit/OrbitView";
 
 import Home from "@/pages/Home";
@@ -102,9 +102,10 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />
-      <Route path="/preview/:id" component={PreviewPage} />
+      <Route path="/preview/:id" component={PreviewRedirect} />
       <Route path="/o/:slug" component={OrbitView} />
       <Route path="/orbit/:slug" component={OrbitView} />
+      <Route path="/orbit/:slug/claim" component={OrbitView} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />

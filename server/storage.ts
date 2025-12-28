@@ -181,6 +181,12 @@ export interface IStorage {
   setOrbitGenerationStatus(businessSlug: string, status: schema.OrbitGenerationStatus, error?: string): Promise<void>;
   setOrbitPackVersion(businessSlug: string, version: string, key: string): Promise<void>;
   setOrbitPreviewId(businessSlug: string, previewId: string): Promise<void>;
+  claimOrbit(businessSlug: string, email: string, userId?: number): Promise<void>;
+  
+  // Orbit Claim Tokens
+  createClaimToken(data: schema.InsertOrbitClaimToken): Promise<schema.OrbitClaimToken>;
+  getClaimToken(token: string): Promise<schema.OrbitClaimToken | undefined>;
+  markClaimTokenUsed(token: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1237,6 +1243,35 @@ export class DatabaseStorage implements IStorage {
         lastUpdated: new Date(),
       })
       .where(eq(schema.orbitMeta.businessSlug, businessSlug));
+  }
+
+  async claimOrbit(businessSlug: string, email: string, userId?: number): Promise<void> {
+    await db.update(schema.orbitMeta)
+      .set({
+        ownerId: userId || null,
+        ownerEmail: email,
+        verifiedAt: new Date(),
+        lastUpdated: new Date(),
+      })
+      .where(eq(schema.orbitMeta.businessSlug, businessSlug));
+  }
+
+  async createClaimToken(data: schema.InsertOrbitClaimToken): Promise<schema.OrbitClaimToken> {
+    const [result] = await db.insert(schema.orbitClaimTokens).values(data as any).returning();
+    return result;
+  }
+
+  async getClaimToken(token: string): Promise<schema.OrbitClaimToken | undefined> {
+    const result = await db.query.orbitClaimTokens.findFirst({
+      where: eq(schema.orbitClaimTokens.token, token),
+    });
+    return result;
+  }
+
+  async markClaimTokenUsed(token: string): Promise<void> {
+    await db.update(schema.orbitClaimTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(schema.orbitClaimTokens.token, token));
   }
 }
 

@@ -1,0 +1,103 @@
+Yes. Absolutely yes.
+And not as a rambling update – this needs to be formally recorded as a locked product decision, otherwise drift will creep back in.
+
+What you want here is a single source-of-truth record that future build decisions, prompts, and refactors must obey.
+
+I’d do this in two layers:
+
+⸻
+
+1. A concise “Decision Record” (this is the important bit)
+
+This should be treated as locked product doctrine, not discussion.
+
+You can send this to Replit / RatPlan and also store it wherever you keep canonical decisions (repo docs, Notion, etc.).
+
+📌 Decision Record: Orbit Claiming & Tier Model (LOCKED)
+
+Decision summary
+All businesses can and should claim their Orbit for free. Orbit is the universal home for every business. Capability is tiered, not access.
+
+Locked principles
+	1.	There is only one Orbit per business
+	•	Public
+	•	Lives at /orbit/:slug
+	•	Always exists
+	•	Always shareable
+	2.	Claiming is universal and free
+	•	Claiming does not imply payment
+	•	Claiming establishes ownership and identity
+	•	Claiming unlocks a free Data Hub (read-only)
+	3.	Free (Claimed) Orbit includes
+	•	Public Orbit view (NextMonth branded)
+	•	Ownership of the Orbit
+	•	Read-only Data Hub showing:
+	•	Visit counts
+	•	Interaction counts
+	•	Conversation counts
+	•	ICE views
+	•	No access to:
+	•	Conversation transcripts
+	•	Insight summaries
+	•	Intelligence analysis
+	•	ICE Maker
+	•	Intelligence curation
+	•	Sidebar editing
+	4.	Paid Orbit = Orbital Intelligence Viewer – Business Hub
+Unlocks:
+	•	Sidebar (curation layer)
+	•	Intelligence expansion (add/prioritise boxes, connect sources)
+	•	ICE Maker (express + polish)
+	•	Insight access (themes, intent, questions)
+	•	Reduced NextMonth branding
+	5.	Preview is not a separate product
+	•	“Preview” is simply an unclaimed or free claimed Orbit state
+	•	Same route, same layout, same pack
+	•	Differences are branding and capability gates only
+	6.	Data philosophy
+	•	Activity is free
+	•	Understanding is paid
+
+Status: LOCKED
+Do not reinterpret without explicit decision update
+
+⸻
+
+2. A short instruction to Replit (execution-focused)
+
+This keeps them aligned without re-debating intent.
+
+Message to Replit (copy-paste)
+
+We are locking a product decision:
+
+All businesses can claim their Orbit for free. Orbit is the universal home for every business. Capability is tiered, not access.
+
+Claiming unlocks ownership and a read-only Data Hub (activity counts only). Paid plans unlock the Business Hub sidebar, intelligence curation, ICE Maker, and insight access.
+
+There is no separate preview product. Preview is just an Orbit state.
+
+Please treat this as locked doctrine and ensure upcoming Milestones (Business Hub, Data Hub, ICE bridge) align with this model.
+
+⸻
+
+Why this is worth recording now (straight talk)
+
+If you don’t record this:
+	•	Someone will later “simplify” by making claim = paid again
+	•	Or add a second preview surface
+	•	Or hide data entirely from free users
+	•	Or re-introduce CMS language
+
+You’ve just made Orbit a home, not a funnel trick.
+That’s a strategic move. It deserves a written record.
+
+⸻
+
+My recommendation
+
+Yes, communicate this comprehensively once, clearly, and mark it LOCKED.
+
+If you want, next I can:
+	•	Help you design the free Data Hub UI so it feels valuable but incomplete
+	•	Or write the upgrade copy that naturally flows from “you have activity” → “do you want understanding?”
