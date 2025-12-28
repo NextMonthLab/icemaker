@@ -156,7 +156,7 @@ export default function ForBrands() {
               </div>
               <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-[1.1]">
                 Your website is passive.<br />
-                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   See the version that actually talks to customers.
                 </span>
               </h1>
@@ -272,7 +272,7 @@ export default function ForBrands() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                What happens when you <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">create a preview</span>
+                What happens when you <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">create a preview</span>
               </h2>
               <p className="text-white/50 text-lg max-w-3xl mx-auto mt-4">
                 We create a temporary Smart Site that sits on top of your existing website. Customers can ask it questions. It answers using your real content. You see what your website would do if it could actually respond.
@@ -310,7 +310,7 @@ export default function ForBrands() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                Export <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">anywhere</span>
+                Export <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">anywhere</span>
               </h2>
               <p className="text-white/50 text-lg">Three ways to share your brand story</p>
             </div>
@@ -376,7 +376,7 @@ export default function ForBrands() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
                 Ready to transform<br />
-                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   your brand story?
                 </span>
               </h2>

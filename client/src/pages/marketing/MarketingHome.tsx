@@ -225,7 +225,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4" data-testid="text-pipeline-title">
-                What is <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth?</span>
+                What is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth?</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 From content to cinematic experience in five steps
@@ -268,7 +268,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4" data-testid="text-usecases-title">
-                Three ways to use <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth</span>
+                Three ways to use <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 One engine, built for every storyteller
@@ -315,7 +315,7 @@ export default function MarketingHome() {
           <div className="max-w-5xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4" data-testid="text-different-title">
-                Why NextMonth is <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">different</span>
+                Why NextMonth is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">different</span>
               </h2>
             </div>
             
@@ -389,7 +389,7 @@ export default function MarketingHome() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-website-title">
                 Turn your website into an<br />
-                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">interactive experience</span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">interactive experience</span>
               </h2>
               <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
                 Close the gap between where your visitors are and where your information actually lives. Guide people through your ideas instead of leaving them to figure it out alone.
@@ -418,7 +418,7 @@ export default function MarketingHome() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-cta-title">
                 Ready to create your first<br />
-                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">experience?</span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">experience?</span>
               </h2>
               <p className="text-xl text-white/50 mb-10 max-w-xl mx-auto">
                 Transform your content into cinematic moments your audience will never forget

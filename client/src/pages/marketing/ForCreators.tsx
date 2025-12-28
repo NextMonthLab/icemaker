@@ -112,7 +112,7 @@ export default function ForCreators() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-                From script to <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">screen</span>
+                From script to <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">screen</span>
               </h2>
             </div>
             
@@ -207,7 +207,7 @@ export default function ForCreators() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
                 Ready to bring your<br />
-                <span className="font-display bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   story to life?
                 </span>
               </h2>
