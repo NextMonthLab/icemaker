@@ -5027,6 +5027,86 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
+  // Orbit Analytics - Track metrics
+  app.post("/api/orbit/:slug/track", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { metric } = req.body;
+      
+      if (!['visits', 'interactions', 'conversations', 'iceViews'].includes(metric)) {
+        return res.status(400).json({ message: "Invalid metric" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      await storage.incrementOrbitMetric(slug, metric);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error tracking orbit metric:", error);
+      res.status(500).json({ message: "Error tracking metric" });
+    }
+  });
+
+  // Orbit Data Hub - Get analytics summary (owner only for full data, public for counts)
+  app.get("/api/orbit/:slug/hub", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { days = '30' } = req.query;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const daysNum = Math.min(parseInt(days as string) || 30, 90);
+      const summary = await storage.getOrbitAnalyticsSummary(slug, daysNum);
+      const dailyData = await storage.getOrbitAnalytics(slug, daysNum);
+      
+      // Check if user is owner (for paid features)
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      const isPaid = false; // TODO: Check subscription tier
+      
+      res.json({
+        businessSlug: slug,
+        isClaimed: !!orbitMeta.verifiedAt,
+        isOwner,
+        isPaid,
+        days: daysNum,
+        
+        // Free tier - activity counts (always visible)
+        activity: {
+          visits: summary.visits,
+          interactions: summary.interactions,
+          conversations: summary.conversations,
+          iceViews: summary.iceViews,
+        },
+        
+        // Daily breakdown (free tier)
+        daily: dailyData.map(d => ({
+          date: d.date,
+          visits: d.visits,
+          interactions: d.interactions,
+          conversations: d.conversations,
+          iceViews: d.iceViews,
+        })),
+        
+        // Paid tier - understanding (locked for free)
+        insights: isPaid ? {
+          uniqueVisitors: dailyData.reduce((sum, d) => sum + d.uniqueVisitors, 0),
+          avgSessionDuration: Math.round(dailyData.reduce((sum, d) => sum + d.avgSessionDuration, 0) / Math.max(dailyData.length, 1)),
+          topQuestions: dailyData.flatMap(d => d.topQuestions || []).slice(0, 10),
+          topTopics: dailyData.flatMap(d => d.topTopics || []).slice(0, 10),
+        } : null,
+      });
+    } catch (error) {
+      console.error("Error getting orbit hub data:", error);
+      res.status(500).json({ message: "Error getting hub data" });
+    }
+  });
+
   // Health check endpoint for debugging
   app.get('/api/health', (_req, res) => {
     res.json({

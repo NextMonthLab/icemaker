@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, and, desc, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, gte } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
 const { Pool } = pg;
@@ -187,6 +187,17 @@ export interface IStorage {
   createClaimToken(data: schema.InsertOrbitClaimToken): Promise<schema.OrbitClaimToken>;
   getClaimToken(token: string): Promise<schema.OrbitClaimToken | undefined>;
   markClaimTokenUsed(token: string): Promise<void>;
+
+  // Orbit Analytics
+  getOrbitAnalytics(businessSlug: string, days?: number): Promise<schema.OrbitAnalytics[]>;
+  getOrbitAnalyticsSummary(businessSlug: string, days?: number): Promise<{
+    visits: number;
+    interactions: number;
+    conversations: number;
+    iceViews: number;
+  }>;
+  incrementOrbitMetric(businessSlug: string, metric: 'visits' | 'interactions' | 'conversations' | 'iceViews'): Promise<void>;
+  getOrCreateTodayAnalytics(businessSlug: string): Promise<schema.OrbitAnalytics>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1272,6 +1283,86 @@ export class DatabaseStorage implements IStorage {
     await db.update(schema.orbitClaimTokens)
       .set({ usedAt: new Date() })
       .where(eq(schema.orbitClaimTokens.token, token));
+  }
+
+  async getOrCreateTodayAnalytics(businessSlug: string): Promise<schema.OrbitAnalytics> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const existing = await db.query.orbitAnalytics.findFirst({
+      where: and(
+        eq(schema.orbitAnalytics.businessSlug, businessSlug),
+        eq(schema.orbitAnalytics.date, today)
+      ),
+    });
+    
+    if (existing) return existing;
+    
+    const [created] = await db.insert(schema.orbitAnalytics)
+      .values({
+        businessSlug,
+        date: today,
+        visits: 0,
+        interactions: 0,
+        conversations: 0,
+        iceViews: 0,
+        uniqueVisitors: 0,
+        avgSessionDuration: 0,
+      })
+      .returning();
+    return created;
+  }
+
+  async incrementOrbitMetric(businessSlug: string, metric: 'visits' | 'interactions' | 'conversations' | 'iceViews'): Promise<void> {
+    await this.getOrCreateTodayAnalytics(businessSlug);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const columnMap = {
+      visits: schema.orbitAnalytics.visits,
+      interactions: schema.orbitAnalytics.interactions,
+      conversations: schema.orbitAnalytics.conversations,
+      iceViews: schema.orbitAnalytics.iceViews,
+    };
+    
+    await db.update(schema.orbitAnalytics)
+      .set({ [metric]: sql`${columnMap[metric]} + 1` })
+      .where(and(
+        eq(schema.orbitAnalytics.businessSlug, businessSlug),
+        eq(schema.orbitAnalytics.date, today)
+      ));
+  }
+
+  async getOrbitAnalytics(businessSlug: string, days: number = 30): Promise<schema.OrbitAnalytics[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const results = await db.query.orbitAnalytics.findMany({
+      where: and(
+        eq(schema.orbitAnalytics.businessSlug, businessSlug),
+        gte(schema.orbitAnalytics.date, startDate)
+      ),
+      orderBy: [desc(schema.orbitAnalytics.date)],
+    });
+    return results;
+  }
+
+  async getOrbitAnalyticsSummary(businessSlug: string, days: number = 30): Promise<{
+    visits: number;
+    interactions: number;
+    conversations: number;
+    iceViews: number;
+  }> {
+    const analytics = await this.getOrbitAnalytics(businessSlug, days);
+    
+    return analytics.reduce((acc, day) => ({
+      visits: acc.visits + day.visits,
+      interactions: acc.interactions + day.interactions,
+      conversations: acc.conversations + day.conversations,
+      iceViews: acc.iceViews + day.iceViews,
+    }), { visits: 0, interactions: 0, conversations: 0, iceViews: 0 });
   }
 }
 

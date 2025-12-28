@@ -1199,3 +1199,28 @@ export const orbitClaimTokens = pgTable("orbit_claim_tokens", {
 export const insertOrbitClaimTokenSchema = createInsertSchema(orbitClaimTokens).omit({ id: true, createdAt: true });
 export type InsertOrbitClaimToken = z.infer<typeof insertOrbitClaimTokenSchema>;
 export type OrbitClaimToken = typeof orbitClaimTokens.$inferSelect;
+
+// Orbit Analytics - daily activity tracking for Data Hub
+export const orbitAnalytics = pgTable("orbit_analytics", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  date: timestamp("date").notNull(),
+  
+  // Activity counts (free tier - visible)
+  visits: integer("visits").default(0).notNull(),
+  interactions: integer("interactions").default(0).notNull(),
+  conversations: integer("conversations").default(0).notNull(),
+  iceViews: integer("ice_views").default(0).notNull(),
+  
+  // Understanding metrics (paid tier - locked)
+  uniqueVisitors: integer("unique_visitors").default(0).notNull(),
+  avgSessionDuration: integer("avg_session_duration").default(0).notNull(),
+  topQuestions: text("top_questions").array(),
+  topTopics: text("top_topics").array(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitAnalyticsSchema = createInsertSchema(orbitAnalytics).omit({ id: true, createdAt: true });
+export type InsertOrbitAnalytics = z.infer<typeof insertOrbitAnalyticsSchema>;
+export type OrbitAnalytics = typeof orbitAnalytics.$inferSelect;
