@@ -1,0 +1,282 @@
+# RAP Prompt (Replit): Premium Orbit Business Hub — Phase 4 Build (Notifications Layer + Magic Links + Email)
+
+## Where this prompt belongs
+**Applies to:** NextMonth (Orbit + ICE) codebase in Replit  
+**Phase:** 4 (Prompt 4)  
+**Goal:** Add a **Notifications Layer** so Orbit feels alive: in-app notifications + email notifications + magic-link delivery. This must be **signal-based**, not spam-based, and must respect tier gating and cost guardrails.
+
+---
+
+## Context (locked product doctrine)
+Respect all locked decisions in `replit.md`:
+
+### Tiers (locked)
+- Orbit Free (£0): public Orbit + activity counts only
+- Orbit Grow (£19): control + curation + ICE Maker pay-as-you-go
+- Orbit Insight (£49): transcripts + contextual leads + bundled ICE
+- Orbit Intelligence (£99): patterns + strategy
+
+### Notification philosophy (locked by sequencing)
+- Notifications come AFTER Intelligence exists (Phase 3)
+- Notifications must be **triggered by meaningful thresholds**, not raw events
+- Default behaviour should be **quiet and useful**
+- Avoid real-time heavy compute; use scheduled evaluation + cached intelligence
+
+---
+
+## Phase 4 Objective
+Implement a robust notifications system that supports:
+
+1) **In-app notifications** (bell + list + unread counts)  
+2) **Email notifications** (digest + important alerts)  
+3) **Magic links** to view the relevant content fast (conversation, lead, intelligence insight)  
+4) **User/org preferences** for notification types + cadence  
+5) **Tier gating**: notifications are a paid feature (Insight+), with Intelligence-only alerts for pattern/strategy triggers.
+
+---
+
+## Important constraints (do NOT break these)
+- Do not introduce complex marketing automation.
+- Do not spam: keep defaults conservative.
+- Do not send email for Free tier.
+- Do not compute patterns in real time; reuse Phase 3 computed outputs.
+- Do not require team permissions; single owner is enough for now.
+- Ensure all magic links expire and are single-purpose.
+
+---
+
+## Implementation Plan (do it in this order)
+
+### Step 1 — Data model: notifications + preferences + magic links
+
+#### A) Notifications table
+Create `notifications` (or equivalent):
+- `id` (uuid)
+- `userId` (owner)
+- `orbitId`
+- `type` (enum string)
+- `title`
+- `body` (short)
+- `actionUrl` (internal route)
+- `meta` (json: ids + context)
+- `severity` (`info | important`)
+- `isRead` (boolean)
+- `createdAt`
+- `sentEmailAt` (nullable)
+- `dedupeKey` (string, nullable, unique per time window)
+
+#### B) Notification preferences
+Create `notificationPreferences`:
+- `userId`
+- `emailEnabled` (boolean)
+- `emailCadence` (`instant | daily_digest | weekly_digest`)
+- toggles per category:
+  - `leadAlertsEnabled`
+  - `conversationAlertsEnabled`
+  - `intelligenceAlertsEnabled`
+  - `iceAlertsEnabled`
+- quiet hours (optional):
+  - `quietHoursEnabled`
+  - `quietStartHour`
+  - `quietEndHour`
+
+Default preferences:
+- **Insight tier**: emailEnabled=true, cadence=daily_digest, leadAlertsEnabled=true, conversationAlertsEnabled=false (unless meaningful), intelligenceAlertsEnabled=false
+- **Intelligence tier**: daily_digest + intelligenceAlertsEnabled=true
+
+#### C) Magic links table
+Create `magicLinks`:
+- `id` (uuid or short token)
+- `userId`
+- `orbitId`
+- `purpose` (`view_lead | view_conversation | view_intelligence | view_ice`)
+- `targetId` (leadId/conversationId/etc)
+- `expiresAt` (default 7 days)
+- `usedAt` (nullable)
+- `createdAt`
+
+Magic links should be:
+- single-use OR time-bound (choose one; recommend time-bound + mark usedAt)
+- safe: always re-check auth when possible, otherwise use token to grant temporary access to that one target view only
+
+---
+
+### Step 2 — Notification types (keep it small and valuable)
+
+Implement these notification types:
+
+#### Insight-tier notifications (Insight+)
+1. `lead_captured`
+- Trigger: new lead created
+- Severity: important
+- Action: open lead detail view
+
+2. `conversation_spike` (optional, conservative)
+- Trigger: conversations today exceed 2× 7-day average AND minimum threshold (e.g. >= 5)
+- Severity: info
+- Action: open Conversations panel filtered to today
+
+#### Intelligence-tier notifications (Intelligence only)
+3. `pattern_shift`
+- Trigger: top theme changed significantly OR new commonPath appears above threshold
+- Severity: important
+- Action: open Intelligence panel "What changed"
+
+4. `friction_detected`
+- Trigger: frictionSignals increased OR a specific box becomes a stall point above threshold
+- Severity: info
+- Action: open Intelligence panel "Where people stall"
+
+5. `high_performing_ice`
+- Trigger: an ICE becomes top engaged asset over last 7 days (above threshold)
+- Severity: info
+- Action: open ICE detail / usage
+
+Do NOT implement more types in Phase 4.
+
+---
+
+### Step 3 — Trigger engine (scheduled evaluation, not real-time)
+
+Create a scheduled job runner:
+- Runs every hour for event-based triggers (leads)
+- Runs daily for pattern/intelligence triggers (use Phase 3 cached intelligence outputs)
+
+Implementation approach:
+- A server cron (or Replit scheduled task equivalent) calling:
+  - `POST /api/cron/notifications/run`
+- This endpoint:
+  - loops eligible orbits per tier
+  - evaluates triggers
+  - writes notifications with dedupeKey
+  - optionally sends emails depending on preferences
+
+Dedupe rules:
+- lead_captured: dedupe per leadId (never duplicate)
+- conversation_spike: dedupe per day
+- pattern_shift: dedupe per day
+- friction_detected: dedupe per day
+- high_performing_ice: dedupe per week
+
+---
+
+### Step 4 — In-app notifications UI
+
+Add:
+- Notification bell icon in app header for authenticated owners
+- Unread badge count
+- Dropdown list preview (latest 5)
+- Notifications page/panel:
+  - list view with filters (All / Unread / Important)
+  - mark as read
+  - mark all as read
+
+API endpoints:
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `POST /api/notifications/read-all`
+
+Ensure:
+- only owner sees their notifications
+- tier gating: show feature only for Insight+
+
+---
+
+### Step 5 — Email notifications (digest-first)
+Implement email sending for:
+- Daily digest (default)
+- Weekly digest (optional)
+- Instant only for `lead_captured` if user chooses `instant`
+
+Email content rules:
+- Keep it short and businesslike
+- Include 2–5 bullet items
+- Each item links via a magic link to the relevant page
+
+Email examples (structure only):
+Subject: "Orbit update: 2 new leads, 1 pattern change"
+Body:
+- New lead: [name] (source: Orbit) → View
+- Conversations spiked today → View
+- New common journey detected → View
+
+Email transport:
+- Use whatever email provider exists in the codebase
+- If none exists, add a minimal provider abstraction and support one provider via env vars
+- Make emailing a best-effort: failures should not crash the job
+
+---
+
+### Step 6 — Preferences UI (Business Hub)
+Add a "Notifications" section inside the Business Hub (owner-only):
+- Email on/off
+- Cadence selector
+- Toggle categories
+- Quiet hours (optional)
+
+Tier gating:
+- Insight: can manage lead + digest
+- Intelligence: also manage intelligence alerts
+
+Locked preview for Grow tier:
+- Show "Get notified when leads arrive" as a locked teaser with CTA to upgrade to Insight
+
+---
+
+### Step 7 — Security checks
+- All magic links must expire
+- Magic link routes should validate:
+  - token exists
+  - not expired
+  - purpose matches route
+  - then grant access to that one target (read-only)
+- Do not expose raw IDs in emails without token protection
+- Avoid open redirects; actionUrl must be internal
+
+---
+
+## File suggestions (adjust to repo)
+Backend:
+- `server/services/notifications.ts` (trigger evaluation + create)
+- `server/services/magicLinks.ts` (create/validate)
+- `server/routes/notifications.ts`
+- `server/routes/cron.ts`
+- `server/email/provider.ts` (+ chosen provider)
+- `server/email/templates/digest.ts`
+
+Frontend:
+- `client/src/components/notifications/NotificationBell.tsx`
+- `client/src/components/notifications/NotificationsList.tsx`
+- `client/src/pages/notifications.tsx` (or panel)
+- `client/src/components/orbit/HubPanels/NotificationsPanel.tsx`
+
+DB:
+- migrations for notifications, preferences, magicLinks
+
+Env:
+- Add required env vars for email provider
+- Keep optional: if email disabled, in-app notifications still work
+
+---
+
+## QA checklist (must complete)
+- Insight owner receives in-app notification on new lead
+- Daily digest sends only once per day (deduped)
+- Magic link opens the correct lead/conversation/intelligence view
+- Grow tier sees locked teaser only
+- Free tier sees nothing notification-related
+- No spam: defaults are digest-based, not instant
+- Job runner does not break app if email fails
+
+---
+
+## Deliverable
+A working Notifications Layer:
+- In-app notification system for owners (Insight+)
+- Email digest + optional instant leads (Insight+)
+- Intelligence alerts (Intelligence tier only)
+- Secure magic links with expiry
+- Preferences UI in Business Hub
+
+Proceed with implementation now.
+Do not expand scope beyond the notification types listed.

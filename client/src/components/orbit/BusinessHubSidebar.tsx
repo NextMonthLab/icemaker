@@ -9,12 +9,14 @@ import {
   ChevronRight,
   Users,
   TrendingUp,
-  Crown
+  Crown,
+  MessageSquare,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings';
+export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads';
 
 interface BusinessHubSidebarProps {
   isOwner: boolean;
@@ -56,6 +58,11 @@ export function BusinessHubSidebar({
 }: BusinessHubSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const PAID_TIERS = ['grow', 'insight', 'intelligence'];
+  const INSIGHT_TIERS = ['insight', 'intelligence'];
+  const isPaidTier = PAID_TIERS.includes(planTier);
+  const isInsightTier = INSIGHT_TIERS.includes(planTier);
+
   const navItems = [
     { 
       id: 'overview' as HubPanel, 
@@ -65,11 +72,29 @@ export function BusinessHubSidebar({
       available: true,
     },
     { 
+      id: 'conversations' as HubPanel, 
+      label: 'Conversations', 
+      icon: MessageSquare,
+      description: isInsightTier ? 'View transcripts' : 'Chat insights',
+      available: isPaidTier,
+      tierRequired: 'grow',
+      insightRequired: true,
+    },
+    { 
+      id: 'leads' as HubPanel, 
+      label: 'Leads', 
+      icon: UserCheck,
+      description: isInsightTier ? 'View journey context' : 'Lead capture',
+      available: isPaidTier,
+      tierRequired: 'grow',
+      insightRequired: true,
+    },
+    { 
       id: 'grid' as HubPanel, 
       label: 'Grid', 
       icon: Grid3X3,
       description: 'Curate your content',
-      available: planTier !== 'free',
+      available: isPaidTier,
       tierRequired: 'grow',
     },
     { 
@@ -77,7 +102,7 @@ export function BusinessHubSidebar({
       label: 'ICE Maker', 
       icon: Sparkles,
       description: 'Create experiences',
-      available: planTier !== 'free',
+      available: isPaidTier,
       tierRequired: 'grow',
     },
     { 
@@ -85,7 +110,7 @@ export function BusinessHubSidebar({
       label: 'Brand', 
       icon: Palette,
       description: 'Customize appearance',
-      available: planTier !== 'free',
+      available: isPaidTier,
       tierRequired: 'grow',
     },
     { 
