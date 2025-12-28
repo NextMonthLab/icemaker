@@ -117,7 +117,7 @@ export default function ForBrands() {
             <img
               src="/logo.png"
               alt="NextMonth"
-              className="h-10 md:h-12 cursor-pointer"
+              className="h-24 md:h-32 cursor-pointer"
               data-testid="link-logo"
             />
           </Link>
@@ -393,7 +393,7 @@ export default function ForBrands() {
               <img
                 src="/logo.png"
                 alt="NextMonth"
-                className="h-10"
+                className="h-16"
               />
               <div className="flex items-center gap-8">
                 <Link href="/for/brands" className="text-white text-sm transition-colors">Brands</Link>
