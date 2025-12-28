@@ -313,7 +313,7 @@ export default function MarketingHome() {
                     <p className="text-white/50 leading-relaxed mb-4 flex-grow">
                       {useCase.description}
                     </p>
-                    <Link href={`/login?signup=true&intent=${useCase.intent}`}>
+                    <Link href={useCase.href}>
                       <button 
                         className="flex items-center gap-2 text-pink-400 hover:text-pink-300 text-sm font-medium transition-colors cursor-pointer"
                         data-testid={`button-microcta-${useCase.id}`}
