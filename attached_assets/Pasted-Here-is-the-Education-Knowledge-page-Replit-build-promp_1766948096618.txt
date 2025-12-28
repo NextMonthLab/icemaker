@@ -1,0 +1,135 @@
+Here is the Education / Knowledge page Replit build prompt, clean and ready to paste.
+No extras. No commentary.
+
+⸻
+
+Replit Build Prompt — For Knowledge & Learning Page
+
+Context
+You are working inside the NextMonth marketing site.
+This page lives at /for/knowledge and targets education, training, and knowledge-led organisations.
+
+The visual language, layout system, components, and navigation already exist.
+Your task is to implement and refine the Knowledge & Learning landing page using existing components and styles.
+
+Do not redesign global navigation or footer.
+Do not introduce new colour systems.
+Follow the established cinematic, minimal, dark UI style.
+
+⸻
+
+Page Purpose
+
+Position NextMonth as the platform that transforms documents, training materials, and knowledge into unforgettable interactive learning experiences.
+
+This page should clearly speak to:
+	•	Businesses
+	•	Educators
+	•	Trainers
+	•	Compliance teams
+	•	Knowledge leaders
+
+⸻
+
+Page Structure & Copy
+
+1. Hero Section
+Badge (pill):
+For Knowledge & Learning
+
+Headline:
+Make information unforgettable
+
+Subheading:
+Transform dense documents into visual experiences people actually remember and engage with.
+
+Primary CTA (pink button):
+Build a Learning Experience →
+
+CTA should route to the existing experience builder entry point.
+
+⸻
+
+2. How It Works (Section Header)
+Title:
+How it works
+
+⸻
+
+3. How It Works — Feature Cards (4 cards)
+Card 1
+Title: PDFs, decks, and documents
+Body:
+Upload any educational content. NextMonth understands structure, hierarchy, and key concepts.
+
+Card 2
+Title: Transform into story cards
+Body:
+Dense information becomes visual, digestible moments that stick in memory.
+
+Card 3
+Title: Built-in interaction and recall
+Body:
+Learners can ask questions and explore concepts through AI chat grounded in your material.
+
+Card 4
+Title: Export for any platform
+Body:
+LMS, intranet, website embed, or shareable link. Your content goes anywhere.
+
+⸻
+
+4. Philosophy Section (Single Focus Block)
+Icon: Book / Learning icon
+
+Headline:
+Stories stick. Documents don’t.
+
+Body Copy:
+People remember narratives 22x better than facts alone. NextMonth transforms your educational content into story-driven experiences with built-in interaction that reinforces learning.
+
+Optional secondary line (smaller text):
+AI chat lets learners explore concepts on their own terms, grounded entirely in your source material.
+
+⸻
+
+5. Perfect For (Checklist Section)
+Section Title:
+Perfect for
+
+Checklist items:
+	•	Employee onboarding and training
+	•	Product and feature education
+	•	Compliance and policy training
+	•	Course modules and curriculum
+	•	Research and report summaries
+	•	Technical documentation
+
+⸻
+
+6. Closing CTA Section
+Headline:
+Ready to make learning unforgettable?
+
+Primary CTA (pink button):
+Build a Learning Experience →
+
+CTA routes to the same builder entry point as hero.
+
+⸻
+
+Implementation Notes
+	•	Use existing card components and spacing.
+	•	Maintain strong vertical rhythm for mobile.
+	•	No pricing references on this page.
+	•	No testimonials yet.
+	•	No feature promises beyond what already exists.
+
+⸻
+
+End of prompt.
+
+If you want, next we can:
+	•	Lock copy variants for enterprise vs education
+	•	Or wire conversion tracking per vertical
+	•	Or move straight into subscription gating logic

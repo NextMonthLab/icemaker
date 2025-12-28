@@ -194,13 +194,13 @@ export default function OrbitView() {
     enabled: !!slug && !!isOwner,
   });
 
-  // Redirect owners to Data Hub (unless they're on claim route or explicitly viewing public orbit)
+  // Redirect paid tier owners to Business Hub (unless they're on claim route or explicitly viewing public orbit)
   const viewPublic = new URLSearchParams(searchString).get('view') === 'public';
   useEffect(() => {
-    if (isOwner && slug && !matchedClaim && !viewPublic) {
+    if (isOwner && isPaidTier && slug && !matchedClaim && !viewPublic) {
       setLocation(`/orbit/${slug}/hub`);
     }
-  }, [isOwner, slug, matchedClaim, viewPublic, setLocation]);
+  }, [isOwner, isPaidTier, slug, matchedClaim, viewPublic, setLocation]);
 
   const requestClaimMutation = useMutation({
     mutationFn: async (email: string) => {

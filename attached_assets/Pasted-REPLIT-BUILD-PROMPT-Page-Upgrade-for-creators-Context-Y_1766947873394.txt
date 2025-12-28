@@ -1,0 +1,186 @@
+REPLIT BUILD PROMPT (Page Upgrade: /for/creators)
+
+Context
+You are working inside the existing NextMonth web codebase.
+The route /for/creators already exists and targets creators and filmmakers.
+
+This is an upgrade pass, not a redesign.
+Preserve the current dark cinematic visual language, gradients, rounded cards, and component system.
+
+Goal
+Make the /for/creators page:
+- Clearer in the first 5 seconds
+- More filmmaker-specific (less generic AI language)
+- More concrete about outputs and next steps
+- More conversion-focused on mobile
+
+Non-negotiables
+- Do NOT break routing, auth, or the global “Build Experience” button.
+- Keep existing layout components where possible.
+- UK English spelling.
+- No long dashes (—). Use normal hyphens only.
+- Add semantic data-nm-* attributes for overlay tooling.
+- Improve mobile readability (grey-on-black contrast).
+- One clear primary CTA per viewport.
+
+Scope
+This prompt applies ONLY to the /for/creators page.
+Do not modify the homepage, /for/brands, or shared nav unless required for layout safety.
+
+--------------------------------
+SECTION-BY-SECTION INSTRUCTIONS
+--------------------------------
+
+1) Page wrapper
+- Add data-nm-page="for-creators" to the top-level wrapper.
+- Ensure only one H1 exists on the page.
+
+--------------------------------
+
+2) Hero section
+
+Keep the core idea but tighten the copy.
+
+Hero badge:
+- Keep “For Creators & Filmmakers”
+
+H1 (keep concept, refine wording):
+"Your story, one moment at a time"
+
+Subcopy (replace current paragraph with this tone):
+"Transform scripts and ideas into cinematic, interactive story experiences.
+Built for filmmakers who think in scenes, not pages."
+
+Under the subcopy, add a short “Built for” inline list (3 items max):
+- Short films
+- Trailers and proof-of-concepts
+- Interactive fiction
+
+CTAs:
+- Primary button (only one primary above the fold):
+  Text: "Build a Story Experience"
+  Add data-nm-cta="build-story-experience-hero"
+
+- Secondary text link under the button:
+  Text: "See an example experience"
+  Add data-nm-cta="see-example-experience"
+
+--------------------------------
+
+3) “From script to screen” section
+
+Section heading:
+"From script to screen"
+
+Intro line (1 sentence max):
+"Turn written story into a visual, structured experience without losing your voice."
+
+Cards (keep existing cards, rewrite descriptions):
+
+Card 1
+Title: "Scripts become story cards"
+Description:
+"Upload your screenplay, treatment, or outline. Each scene or beat becomes a visual story card."
+
+Card 2
+Title: "Cinematic visuals per card"
+Description:
+"AI generates consistent imagery in your chosen visual style across the entire experience."
+
+Card 3
+Title: "Optional character interaction"
+Description:
+"Let audiences speak to characters between scenes, safely constrained to your story world."
+
+Card 4
+Title: "Release your way"
+Description:
+"Drop everything at once or release scenes daily to build anticipation."
+
+Under the cards, add a small output line:
+"Output: cinematic cards, optional character chat, shareable link"
+
+Add data-nm-section="script-to-screen"
+
+--------------------------------
+
+4) Visual Bible System section
+
+Section heading:
+"Visual Bible System"
+
+Replace vague language with filmmaker-specific framing.
+
+Body copy (2 short paragraphs max):
+"Define your look once. Lens feel, lighting mood, colour palette, and visual tone are locked and applied across every card.
+
+Characters stay recognisable. Locations feel connected. Your visual identity stays intact from first scene to last."
+
+Add a non-functional visual chip row (purely presentational):
+- Neo-noir
+- Warm naturalism
+- High contrast sci-fi
+- Handheld documentary
+
+Add data-nm-section="visual-bible-system"
+
+--------------------------------
+
+5) “Perfect for” checklist
+
+Keep the checklist format but ensure labels are parallel and concise:
+
+- Short films and micro-cinema
+- Trailers and teasers
+- Pilot episodes and proof-of-concepts
+- Experimental storytelling
+- Interactive fiction
+- Music video narratives
+
+Add data-nm-section="perfect-for-creators"
+
+--------------------------------
+
+6) Final CTA section
+
+Replace the generic ending with a strong close.
+
+Heading:
+"Ready to bring your story to life?"
+
+Subcopy (1 sentence):
+"Build an interactive story experience your audience can explore, not just watch."
+
+CTAs:
+- Primary button:
+  Text: "Build a Story Experience"
+  data-nm-cta="build-story-experience-footer"
+
+- Secondary text link:
+  Text: "Browse examples"
+  data-nm-cta="browse-examples"
+
+--------------------------------
+
+7) UI and UX polish (apply throughout page)
+
+- Increase paragraph text contrast slightly for mobile readability.
+- Ensure consistent vertical spacing between sections.
+- Prevent sticky header overlap with headings (use scroll-margin-top if needed).
+- Ensure all buttons meet mobile tap target standards.
+- Maintain one clear primary CTA per section.
+
+--------------------------------
+
+Implementation notes
+- Prefer updating the existing page component rather than creating a new one.
+- Reuse existing Card, Section, and Button components.
+- Add data-nm-section attributes to all major sections.
+- Do not introduce new dependencies.
+
+--------------------------------
+
+Output required
+1) List the files you changed.
+2) Paste the final implemented copy blocks for review.
+3) Confirm that routing, auth, and global navigation remain unaffected.

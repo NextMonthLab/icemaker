@@ -124,14 +124,10 @@ export default function DataHub() {
   const [, setLocation] = useLocation();
   const [timeRange, setTimeRange] = useState<'7' | '30'>('30');
   
-  // Check for preview mode in URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const isPreview = urlParams.get('preview') === 'true';
-
   const { data: hubData, isLoading, error } = useQuery<HubData>({
-    queryKey: ["orbit-hub", slug, timeRange, isPreview],
+    queryKey: ["orbit-hub", slug, timeRange],
     queryFn: async () => {
-      const response = await fetch(`/api/orbit/${slug}/hub?days=${timeRange}${isPreview ? '&preview=true' : ''}`);
+      const response = await fetch(`/api/orbit/${slug}/hub?days=${timeRange}`);
       if (!response.ok) throw new Error("Failed to load hub data");
       return response.json();
     },
@@ -139,9 +135,9 @@ export default function DataHub() {
   });
 
   const { data: leadsData } = useQuery<LeadsResponse>({
-    queryKey: ["orbit-leads", slug, isPreview],
+    queryKey: ["orbit-leads", slug],
     queryFn: async () => {
-      const response = await fetch(`/api/orbit/${slug}/leads${isPreview ? '?preview=true' : ''}`);
+      const response = await fetch(`/api/orbit/${slug}/leads`);
       if (!response.ok) throw new Error("Failed to load leads");
       return response.json();
     },
@@ -164,6 +160,59 @@ export default function DataHub() {
           <Button variant="outline" onClick={() => setLocation(`/orbit/${slug}`)}>
             Return to Orbit
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hubData.isOwner) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Lock className="w-12 h-12 mx-auto mb-4 text-zinc-600" />
+          <h2 className="text-xl font-semibold text-white mb-2">Access restricted</h2>
+          <p className="text-zinc-400 mb-6 text-sm">
+            Only the owner of this Orbit can access the Business Hub.
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation(`/orbit/${slug}`)}
+            data-testid="button-return-to-orbit"
+          >
+            View Orbit
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hubData.isPaid) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
+            <BarChart3 className="w-8 h-8 text-pink-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Upgrade to unlock your Business Hub</h2>
+          <p className="text-zinc-400 mb-6 text-sm">
+            See who's visiting, what they're asking, and shape your Orbit to grow your business.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button 
+              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+              data-testid="button-upgrade-to-grow"
+            >
+              Upgrade to Grow
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setLocation(`/orbit/${slug}?view=public`)}
+              className="text-zinc-400"
+              data-testid="button-view-orbit"
+            >
+              View your Orbit
+            </Button>
+          </div>
         </div>
       </div>
     );

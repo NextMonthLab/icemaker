@@ -5135,10 +5135,12 @@ Keep responses concise (2-3 sentences maximum).`;
       const summary = await storage.getOrbitAnalyticsSummary(slug, daysNum);
       const dailyData = await storage.getOrbitAnalytics(slug, daysNum);
       
-      // Check if user is owner (for paid features) - preview mode bypasses auth for testing
-      const isPreviewMode = preview === 'true';
-      const isOwner = isPreviewMode || (req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id);
-      const isPaid = false; // TODO: Check subscription tier
+      // Check if user is owner (for paid features)
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      
+      // Check plan tier for paid features
+      const PAID_TIERS = ['grow', 'insight', 'intelligence'];
+      const isPaid = orbitMeta.planTier ? PAID_TIERS.includes(orbitMeta.planTier) : false;
       
       res.json({
         businessSlug: slug,
@@ -5223,18 +5225,14 @@ Keep responses concise (2-3 sentences maximum).`;
   app.get("/api/orbit/:slug/leads", async (req, res) => {
     try {
       const { slug } = req.params;
-      const { preview = '' } = req.query;
       
       const orbitMeta = await storage.getOrbitMeta(slug);
       if (!orbitMeta) {
         return res.status(404).json({ message: "Orbit not found" });
       }
       
-      // Preview mode for testing (should be removed in production)
-      const isPreviewMode = preview === 'true' && process.env.NODE_ENV !== 'production';
-      
       // Strict owner check - must be authenticated and match ownerId
-      const isOwner = isPreviewMode || (req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id);
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
       
       // Always return lead count (free tier activity metric)
       const count = await storage.getOrbitLeadsCount(slug);
