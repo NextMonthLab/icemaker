@@ -130,7 +130,7 @@ export default function MarketingHome() {
             <img 
               src={LOGO_URL} 
               alt="NextMonth" 
-              className="h-10 cursor-pointer" 
+              className="h-10 md:h-12 cursor-pointer" 
               data-testid="link-logo"
             />
           </Link>
