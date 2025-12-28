@@ -75,24 +75,61 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
   }, [allItems, conversationKeywords]);
 
   const positionMap = useMemo(() => {
-    const baseDistance = 200;
+    const viewportRadius = Math.min(window.innerWidth, window.innerHeight) / 2;
+    const tileHalfWidth = 55;
+    const maxEdge = viewportRadius - 15;
+    const ring1Radius = 75;
+    const ring2Radius = 115;
     const map = new Map<string, { x: number; y: number; distance: number }>();
     
-    rankedItems.forEach((item, index) => {
-      const query = conversationKeywords.join(' ');
-      const relevance = scoreRelevance(item, query);
-      const relevanceFactor = Math.max(0.4, 1 - (relevance / 50));
-      const distance = baseDistance + (index * 60 * relevanceFactor);
-      const angleOffset = (index * 137.5 * Math.PI) / 180;
-      const ring = Math.floor(index / 8) + 1;
-      const angle = angleOffset + (ring * 0.3);
+    let placed = 0;
+    const rings = [
+      { count: 6, radius: ring1Radius },
+      { count: 7, radius: ring2Radius },
+    ];
+    
+    for (let r = 0; r < rings.length && placed < rankedItems.length; r++) {
+      const { count, radius } = rings[r];
+      const effectiveRadius = Math.min(radius, maxEdge - tileHalfWidth);
+      for (let i = 0; i < count && placed < rankedItems.length; i++) {
+        const item = rankedItems[placed];
+        const query = conversationKeywords.join(' ');
+        const relevance = scoreRelevance(item, query);
+        const pullFactor = relevance > 0 ? Math.max(0.9, 1 - relevance / 20) : 1;
+        const adjustedRadius = effectiveRadius * pullFactor;
+        const angle = (i / count) * 2 * Math.PI - Math.PI / 2 + (r * 0.55);
+        
+        map.set(item.id, {
+          x: Math.cos(angle) * adjustedRadius,
+          y: Math.sin(angle) * adjustedRadius,
+          distance: adjustedRadius,
+        });
+        placed++;
+      }
+    }
+    
+    let ring = 3;
+    while (placed < rankedItems.length) {
+      const tilesInRing = 5 + ring * 2;
+      const rawRadius = ring2Radius + (ring - 2) * (tileHalfWidth * 1.1);
       
-      map.set(item.id, {
-        x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance,
-        distance,
-      });
-    });
+      for (let i = 0; i < tilesInRing && placed < rankedItems.length; i++) {
+        const item = rankedItems[placed];
+        const query = conversationKeywords.join(' ');
+        const relevance = scoreRelevance(item, query);
+        const pullFactor = relevance > 0 ? Math.max(0.9, 1 - relevance / 20) : 1;
+        const adjustedRadius = rawRadius * pullFactor;
+        const angle = (i / tilesInRing) * 2 * Math.PI - Math.PI / 2 + (ring * 0.45);
+        
+        map.set(item.id, {
+          x: Math.cos(angle) * adjustedRadius,
+          y: Math.sin(angle) * adjustedRadius,
+          distance: adjustedRadius,
+        });
+        placed++;
+      }
+      ring++;
+    }
     return map;
   }, [rankedItems, conversationKeywords]);
 
@@ -133,12 +170,13 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
   }, [rankedItems]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('[data-tile]') || (e.target as HTMLElement).closest('[data-chat-hub]')) return;
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-tile]') || target.closest('[data-chat-hub]')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     offsetStart.current = { ...canvasOffset };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    target.setPointerCapture(e.pointerId);
   }, [canvasOffset]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -172,6 +210,7 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
       style={{
         background: '#0a0a0a',
         cursor: isDragging ? 'grabbing' : 'grab',
+        touchAction: 'none',
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

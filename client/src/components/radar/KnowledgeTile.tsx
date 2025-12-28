@@ -48,7 +48,8 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
   const showSummary = true;
   const showFullContent = zoomLevel >= 1.2;
   
-  const imageUrl = 'imageUrl' in item ? (item as any).imageUrl : undefined;
+  const rawImageUrl = 'imageUrl' in item ? (item as any).imageUrl : undefined;
+  const imageUrl = rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.length > 0 ? rawImageUrl : undefined;
   
   const getLabel = () => {
     switch (item.type) {
@@ -70,8 +71,7 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
     }
   };
 
-  const tileWidth = imageUrl ? 180 : 160;
-  const tileHeight = imageUrl ? 'auto' : 'auto';
+  const tileWidth = 110;
 
   return (
     <motion.button
@@ -103,24 +103,24 @@ export function KnowledgeTile({ item, relevanceScore, position, onClick, accentC
         left: '50%',
         top: '50%',
         marginLeft: -tileWidth / 2,
-        marginTop: imageUrl ? '-70px' : '-50px',
+        marginTop: '-60px',
       }}
       data-tile
       data-testid={`tile-${item.id}`}
     >
-      {/* Image header if available */}
-      {imageUrl && (
-        <div 
-          className="w-full h-20 bg-cover bg-center"
-          style={{ 
-            backgroundImage: `url(${imageUrl})`,
-            borderBottom: `1px solid ${color}20`,
-          }}
-        />
-      )}
+      {/* Image header or gradient placeholder */}
+      <div 
+        className="w-full h-12 bg-cover bg-center"
+        style={{ 
+          backgroundImage: imageUrl 
+            ? `url(${imageUrl})` 
+            : `linear-gradient(135deg, ${color}40 0%, ${color}15 100%)`,
+          borderBottom: `1px solid ${color}25`,
+        }}
+      />
       
       {/* Content */}
-      <div className="p-3">
+      <div className="p-2">
         {/* Relevance indicator */}
         {relevanceScore > 0 && (
           <motion.div
