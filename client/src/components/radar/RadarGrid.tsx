@@ -222,9 +222,9 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
           ['location', 'local', 'area', 'region', 'weather'].includes(k.toLowerCase())
         );
         if (hasLocationContext) {
-          return `${itemName}: ${summary}\n\nTell me your location and I can give you more specific information. Or ask me anything about this topic.`;
+          return `${summary}\n\nTell me your location and I can give you more specific information.`;
         }
-        return `${itemName}: ${summary}\n\nI can dive deeper into any aspect of this. What interests you most?`;
+        return `${summary}\n\nI can dive deeper into any aspect of this. What interests you most?`;
       }
       case 'action': {
         const action = selectedItem as import('@/lib/siteKnowledge').Action;
