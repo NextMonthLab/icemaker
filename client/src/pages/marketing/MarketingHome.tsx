@@ -141,12 +141,12 @@ export default function MarketingHome() {
                 Sign In
               </Button>
             </Link>
-            <a href="#how-it-works">
+            <Link href="/login?signup=true">
               <Button className="bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/20 gap-2" data-testid="button-signup">
                 <Sparkles className="w-4 h-4" />
-                Start Creating
+                Launch Experience Builder
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -375,6 +375,33 @@ export default function MarketingHome() {
           </div>
         </section>
 
+        {/* Website Experience Section */}
+        <section className="py-32 px-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-black" />
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-website-title">
+                Turn your website into an<br />
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">interactive experience</span>
+              </h2>
+              <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Close the gap between where your visitors are and where your information actually lives. Guide people through your ideas instead of leaving them to figure it out alone.
+              </p>
+              <Link href="/login?signup=true">
+                <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3 rounded-xl" data-testid="button-website-cta">
+                  Build a Website Experience
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="py-32 px-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-neutral-950" />
@@ -389,14 +416,14 @@ export default function MarketingHome() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-cta-title">
                 Ready to create your first<br />
-                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth?</span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">experience?</span>
               </h2>
               <p className="text-xl text-white/50 mb-10 max-w-xl mx-auto">
-                Transform your content into cinematic experiences your audience will never forget
+                Transform your content into cinematic moments your audience will never forget
               </p>
               <Link href="/login?signup=true">
-                <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20 gap-3" data-testid="button-footer-cta">
-                  Create a NextMonth
+                <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
+                  Launch Experience Builder
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
