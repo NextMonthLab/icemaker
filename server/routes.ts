@@ -5467,6 +5467,394 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
+  // ============ PHASE 2: ORBIT INSIGHT ENDPOINTS ============
+
+  // Helper for Insight tier checking
+  const INSIGHT_TIERS = ['insight', 'intelligence'];
+
+  // Session tracking - Create or update session
+  app.post("/api/orbit/:slug/session", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ message: "sessionId is required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const session = await storage.getOrCreateOrbitSession(sessionId, slug);
+      res.json({ session });
+    } catch (error) {
+      console.error("Error managing session:", error);
+      res.status(500).json({ message: "Error managing session" });
+    }
+  });
+
+  // Event logging - Log an event
+  app.post("/api/orbit/:slug/events", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { sessionId, eventType, boxId, iceId, conversationId, metadata } = req.body;
+      
+      if (!sessionId || !eventType) {
+        return res.status(400).json({ message: "sessionId and eventType are required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Ensure session exists
+      await storage.getOrCreateOrbitSession(sessionId, slug);
+      
+      const event = await storage.logOrbitEvent({
+        businessSlug: slug,
+        sessionId,
+        eventType,
+        boxId: boxId || null,
+        iceId: iceId || null,
+        conversationId: conversationId || null,
+        metadataJson: metadata || null,
+      });
+      
+      res.json({ event });
+    } catch (error) {
+      console.error("Error logging event:", error);
+      res.status(500).json({ message: "Error logging event" });
+    }
+  });
+
+  // Conversations - List (owner only, Insight+ tier required)
+  app.get("/api/orbit/:slug/conversations", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view conversations" });
+      }
+      
+      // Get count for all tiers
+      const conversations = await storage.getOrbitConversations(slug, limit);
+      const count = conversations.length;
+      
+      // Insight+ gets full transcripts, Grow gets count only
+      const tier = orbitMeta.planTier;
+      if (!tier || !INSIGHT_TIERS.includes(tier)) {
+        return res.json({ 
+          count,
+          conversations: conversations.slice(0, 3).map(c => ({
+            id: c.id,
+            startedAt: c.startedAt,
+            messageCount: c.messageCount,
+            preview: true,
+          })),
+          locked: true,
+          upgradeMessage: "Upgrade to Orbit Insight to view conversation transcripts"
+        });
+      }
+      
+      res.json({ conversations, count, locked: false });
+    } catch (error) {
+      console.error("Error getting conversations:", error);
+      res.status(500).json({ message: "Error getting conversations" });
+    }
+  });
+
+  // Conversations - Get single with messages (owner only, Insight+ tier required)
+  app.get("/api/orbit/:slug/conversations/:id", async (req, res) => {
+    try {
+      const { slug, id } = req.params;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view conversation details" });
+      }
+      
+      const tier = orbitMeta.planTier;
+      if (!tier || !INSIGHT_TIERS.includes(tier)) {
+        return res.status(403).json({ message: "Upgrade to Orbit Insight to view conversation transcripts" });
+      }
+      
+      const conversation = await storage.getOrbitConversation(parseInt(id));
+      if (!conversation || conversation.businessSlug !== slug) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      
+      const messages = await storage.getOrbitMessages(parseInt(id));
+      
+      // Get session events for timeline
+      let events: any[] = [];
+      if (conversation.sessionId) {
+        events = await storage.getOrbitEvents(conversation.sessionId);
+      }
+      
+      res.json({ conversation, messages, events });
+    } catch (error) {
+      console.error("Error getting conversation:", error);
+      res.status(500).json({ message: "Error getting conversation" });
+    }
+  });
+
+  // Conversations - Create (for chat widget)
+  app.post("/api/orbit/:slug/conversations", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { sessionId } = req.body;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const conversation = await storage.createOrbitConversation({
+        businessSlug: slug,
+        sessionId: sessionId || null,
+      });
+      
+      res.json({ conversation });
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ message: "Error creating conversation" });
+    }
+  });
+
+  // Conversations - Add message (for chat widget)
+  app.post("/api/orbit/:slug/conversations/:id/messages", async (req, res) => {
+    try {
+      const { slug, id } = req.params;
+      const { role, content } = req.body;
+      
+      if (!role || !content) {
+        return res.status(400).json({ message: "role and content are required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const conversation = await storage.getOrbitConversation(parseInt(id));
+      if (!conversation || conversation.businessSlug !== slug) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      
+      const message = await storage.addOrbitMessage({
+        conversationId: parseInt(id),
+        role,
+        content,
+      });
+      
+      res.json({ message });
+    } catch (error) {
+      console.error("Error adding message:", error);
+      res.status(500).json({ message: "Error adding message" });
+    }
+  });
+
+  // Insights Summary (owner only, Insight+ tier required)
+  app.get("/api/orbit/:slug/insights/summary", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view insights" });
+      }
+      
+      const tier = orbitMeta.planTier;
+      if (!tier || !INSIGHT_TIERS.includes(tier)) {
+        // Return basic counts for Grow tier
+        const conversations = await storage.getOrbitConversations(slug, 1000);
+        const leadsCount = await storage.getOrbitLeadsCount(slug);
+        
+        return res.json({
+          conversationCount: conversations.length,
+          leadsCount,
+          locked: true,
+          upgradeMessage: "Upgrade to Orbit Insight for detailed analytics and question clustering"
+        });
+      }
+      
+      // Full insights for Insight+ tier
+      const summary = await storage.getOrbitInsightsSummary(slug);
+      const conversations = await storage.getOrbitConversations(slug, 1000);
+      const leadsCount = await storage.getOrbitLeadsCount(slug);
+      
+      res.json({
+        conversationCount: conversations.length,
+        leadsCount,
+        topQuestions: summary?.topQuestions || [],
+        topThemes: summary?.topThemes || [],
+        unansweredQuestions: summary?.unansweredQuestions || [],
+        locked: false,
+      });
+    } catch (error) {
+      console.error("Error getting insights summary:", error);
+      res.status(500).json({ message: "Error getting insights" });
+    }
+  });
+
+  // Leads - List with context (owner only, Insight+ for full details)
+  app.get("/api/orbit/:slug/leads", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view leads" });
+      }
+      
+      const leads = await storage.getOrbitLeads(slug, limit);
+      const count = await storage.getOrbitLeadsCount(slug);
+      
+      // Insight+ gets full details, Grow gets masked preview
+      const tier = orbitMeta.planTier;
+      if (!tier || !INSIGHT_TIERS.includes(tier)) {
+        return res.json({
+          count,
+          leads: leads.slice(0, 3).map(l => ({
+            id: l.id,
+            createdAt: l.createdAt,
+            source: l.source,
+            preview: true,
+            name: l.name ? l.name[0] + '***' : null,
+          })),
+          locked: true,
+          upgradeMessage: "Upgrade to Orbit Insight to view lead details and journey context"
+        });
+      }
+      
+      res.json({ leads, count, locked: false });
+    } catch (error) {
+      console.error("Error getting leads:", error);
+      res.status(500).json({ message: "Error getting leads" });
+    }
+  });
+
+  // Leads - Get single with context (owner only, Insight+ tier required)
+  app.get("/api/orbit/:slug/leads/:id", async (req, res) => {
+    try {
+      const { slug, id } = req.params;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view lead details" });
+      }
+      
+      const tier = orbitMeta.planTier;
+      if (!tier || !INSIGHT_TIERS.includes(tier)) {
+        return res.status(403).json({ message: "Upgrade to Orbit Insight to view lead details" });
+      }
+      
+      const lead = await storage.getOrbitLead(parseInt(id));
+      if (!lead || lead.businessSlug !== slug) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      
+      // Get session events for journey context
+      let events: any[] = [];
+      if (lead.sessionId) {
+        events = await storage.getOrbitEvents(lead.sessionId);
+      }
+      
+      // Get conversation excerpt if linked
+      let conversationExcerpt: any[] = [];
+      if (lead.conversationId) {
+        const messages = await storage.getOrbitMessages(lead.conversationId);
+        conversationExcerpt = messages.slice(-5);
+      }
+      
+      res.json({ lead, events, conversationExcerpt });
+    } catch (error) {
+      console.error("Error getting lead:", error);
+      res.status(500).json({ message: "Error getting lead" });
+    }
+  });
+
+  // ICE Allowance - Get usage (owner only)
+  app.get("/api/orbit/:slug/ice-allowance", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can view ICE allowance" });
+      }
+      
+      const { allowance, used, periodStart } = await storage.getOrbitIceAllowance(slug);
+      
+      // Calculate tier-based defaults
+      const tier = orbitMeta.planTier || 'free';
+      let tierAllowance = 0;
+      if (tier === 'insight') tierAllowance = 6;
+      else if (tier === 'intelligence') tierAllowance = 12;
+      
+      // Reset period if needed (first of month)
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      if (!periodStart || periodStart < startOfMonth) {
+        await storage.resetOrbitIcePeriod(slug, tierAllowance);
+        return res.json({
+          allowance: tierAllowance,
+          used: 0,
+          remaining: tierAllowance,
+          periodStart: startOfMonth,
+          tier,
+        });
+      }
+      
+      res.json({
+        allowance: allowance || tierAllowance,
+        used,
+        remaining: Math.max(0, (allowance || tierAllowance) - used),
+        periodStart,
+        tier,
+      });
+    } catch (error) {
+      console.error("Error getting ICE allowance:", error);
+      res.status(500).json({ message: "Error getting ICE allowance" });
+    }
+  });
+
   // Health check endpoint for debugging
   app.get('/api/health', (_req, res) => {
     res.json({
