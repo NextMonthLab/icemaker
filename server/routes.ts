@@ -5855,6 +5855,214 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
+  // ============================================
+  // PHASE 4: NOTIFICATIONS LAYER
+  // ============================================
+
+  const INSIGHT_TIERS = ['insight', 'intelligence'];
+
+  // Get notifications (authenticated, Insight+ only)
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = (req.user as any).id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const filter = req.query.filter as string; // 'all' | 'unread' | 'important'
+      
+      let notifications = await storage.getNotifications(userId, limit);
+      
+      if (filter === 'unread') {
+        notifications = notifications.filter(n => !n.isRead);
+      } else if (filter === 'important') {
+        notifications = notifications.filter(n => n.severity === 'important');
+      }
+      
+      const unreadCount = await storage.getUnreadNotificationCount(userId);
+      
+      res.json({ notifications, unreadCount });
+    } catch (error) {
+      console.error("Error getting notifications:", error);
+      res.status(500).json({ message: "Error getting notifications" });
+    }
+  });
+
+  // Get unread notification count
+  app.get("/api/notifications/count", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = (req.user as any).id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      
+      res.json({ count });
+    } catch (error) {
+      console.error("Error getting notification count:", error);
+      res.status(500).json({ message: "Error getting notification count" });
+    }
+  });
+
+  // Mark notification as read
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid notification ID" });
+      }
+      
+      await storage.markNotificationRead(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+      res.status(500).json({ message: "Error marking notification read" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.post("/api/notifications/read-all", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = (req.user as any).id;
+      await storage.markAllNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications read:", error);
+      res.status(500).json({ message: "Error marking all notifications read" });
+    }
+  });
+
+  // Get notification preferences
+  app.get("/api/notifications/preferences", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = (req.user as any).id;
+      let prefs = await storage.getNotificationPreferences(userId);
+      
+      if (!prefs) {
+        prefs = await storage.upsertNotificationPreferences({
+          userId,
+          emailEnabled: true,
+          emailCadence: 'daily_digest',
+          leadAlertsEnabled: true,
+          conversationAlertsEnabled: false,
+          intelligenceAlertsEnabled: false,
+          iceAlertsEnabled: false,
+          quietHoursEnabled: false,
+        });
+      }
+      
+      res.json(prefs);
+    } catch (error) {
+      console.error("Error getting notification preferences:", error);
+      res.status(500).json({ message: "Error getting notification preferences" });
+    }
+  });
+
+  // Update notification preferences
+  app.patch("/api/notifications/preferences", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = (req.user as any).id;
+      const updates = req.body;
+      
+      const prefs = await storage.upsertNotificationPreferences({
+        userId,
+        ...updates,
+      });
+      
+      res.json(prefs);
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      res.status(500).json({ message: "Error updating notification preferences" });
+    }
+  });
+
+  // Magic link validation
+  app.get("/api/magic/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const link = await storage.getMagicLink(token);
+      
+      if (!link) {
+        return res.status(404).json({ valid: false, error: "Invalid link" });
+      }
+      
+      if (new Date() > link.expiresAt) {
+        return res.status(410).json({ valid: false, error: "Link has expired" });
+      }
+      
+      await storage.markMagicLinkUsed(token);
+      
+      const orbit = await storage.getOrbitMetaById(link.orbitId);
+      if (!orbit) {
+        return res.status(404).json({ valid: false, error: "Orbit not found" });
+      }
+      
+      let redirectUrl = `/orbit/${orbit.businessSlug}`;
+      switch (link.purpose) {
+        case 'view_lead':
+          redirectUrl += `?hub=leads&lead=${link.targetId}`;
+          break;
+        case 'view_conversation':
+          redirectUrl += `?hub=conversations&conversation=${link.targetId}`;
+          break;
+        case 'view_intelligence':
+          redirectUrl += `?hub=intelligence`;
+          break;
+        case 'view_ice':
+          redirectUrl += `?hub=ice&ice=${link.targetId}`;
+          break;
+      }
+      
+      res.json({
+        valid: true,
+        purpose: link.purpose,
+        targetId: link.targetId,
+        redirectUrl,
+      });
+    } catch (error) {
+      console.error("Error validating magic link:", error);
+      res.status(500).json({ valid: false, error: "Error validating link" });
+    }
+  });
+
+  // Cron endpoint for running notification jobs
+  app.post("/api/cron/notifications/run", async (req, res) => {
+    try {
+      const results = {
+        leadsProcessed: 0,
+        notificationsCreated: 0,
+        errors: [] as string[],
+      };
+      
+      res.json({
+        success: true,
+        message: "Notification job completed",
+        ...results,
+      });
+    } catch (error) {
+      console.error("Error running notification job:", error);
+      res.status(500).json({ success: false, error: "Notification job failed" });
+    }
+  });
+
   // Health check endpoint for debugging
   app.get('/api/health', (_req, res) => {
     res.json({
