@@ -129,7 +129,7 @@ export default function MarketingHome() {
           <Link href="/">
             <img 
               src={LOGO_URL} 
-              alt="NextScene" 
+              alt="NextMonth" 
               className="h-[96px] cursor-pointer" 
               style={{ clipPath: 'inset(20% 0 20% 0)' }}
               data-testid="link-logo"
@@ -179,14 +179,14 @@ export default function MarketingHome() {
               </h1>
               
               <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto mb-12 leading-relaxed" data-testid="text-hero-description">
-                NextScene transforms scripts, documents, and websites into visual story cards 
+                NextMonth transforms scripts, documents, and websites into visual story cards 
                 your audience can explore, feel, and interact with.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/login?signup=true">
                   <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20 gap-3" data-testid="button-hero-cta">
-                    Create a NextScene
+                    Create a NextMonth
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
@@ -210,7 +210,7 @@ export default function MarketingHome() {
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20 cursor-pointer hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 transition-all">
                       <Play className="w-8 h-8 text-white ml-1 fill-white" />
                     </div>
-                    <p className="text-white/40 text-sm">See NextScene in action</p>
+                    <p className="text-white/40 text-sm">See NextMonth in action</p>
                   </div>
                 </div>
               </div>
@@ -220,13 +220,13 @@ export default function MarketingHome() {
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
         </section>
 
-        {/* What is NextScene - Pipeline Visualization */}
+        {/* What is NextMonth - Pipeline Visualization */}
         <section id="how-it-works" className="py-24 px-6 relative scroll-mt-24">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-neutral-950 to-black" />
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-pipeline-title">
-                What is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene?</span>
+                What is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth?</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 From content to cinematic experience in five steps
@@ -262,14 +262,14 @@ export default function MarketingHome() {
           </div>
         </section>
 
-        {/* Three Ways to Use NextScene */}
+        {/* Three Ways to Use NextMonth */}
         <section className="py-24 px-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-neutral-950" />
           
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-usecases-title">
-                Three ways to use <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene</span>
+                Three ways to use <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth</span>
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
                 One engine, built for every storyteller
@@ -310,13 +310,13 @@ export default function MarketingHome() {
           </div>
         </section>
 
-        {/* Why NextScene is Different */}
+        {/* Why NextMonth is Different */}
         <section className="py-24 px-6 relative">
           <div className="absolute inset-0 bg-black" />
           <div className="max-w-5xl mx-auto relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4" data-testid="text-different-title">
-                Why NextScene is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">different</span>
+                Why NextMonth is <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">different</span>
               </h2>
             </div>
             
@@ -353,7 +353,7 @@ export default function MarketingHome() {
                 Trust & Control
               </h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto">
-                Credibility matters. NextScene gives you full control.
+                Credibility matters. NextMonth gives you full control.
               </p>
             </div>
             
@@ -392,14 +392,14 @@ export default function MarketingHome() {
             >
               <h2 className="text-4xl md:text-6xl font-display font-bold mb-6" data-testid="text-cta-title">
                 Ready to create your first<br />
-                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextScene?</span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">NextMonth?</span>
               </h2>
               <p className="text-xl text-white/50 mb-10 max-w-xl mx-auto">
                 Transform your content into cinematic experiences your audience will never forget
               </p>
               <Link href="/login?signup=true">
                 <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400 text-white border-0 shadow-lg shadow-purple-500/20 gap-3" data-testid="button-footer-cta">
-                  Create a NextScene
+                  Create a NextMonth
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -413,7 +413,7 @@ export default function MarketingHome() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <img 
                 src={LOGO_URL} 
-                alt="NextScene" 
+                alt="NextMonth" 
                 className="h-[48px]"
               />
               <div className="flex items-center gap-8">

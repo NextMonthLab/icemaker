@@ -476,7 +476,7 @@ export default function Admin() {
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center mb-4">
                 <Wand2 className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Welcome to NextScene</h3>
+              <h3 className="text-xl font-bold mb-2">Welcome to NextMonth</h3>
               <p className="text-muted-foreground mb-6 max-w-md">
                 Transform your script, story, or ideas into an interactive narrative experience. 
                 Upload any text and our AI will create characters, scenes, and daily story drops.

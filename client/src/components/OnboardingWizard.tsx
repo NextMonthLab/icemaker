@@ -327,7 +327,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
                     You're all set
                   </h1>
                   <p className="text-muted-foreground">
-                    Here's what NextScene will do for you
+                    Here's what NextMonth will do for you
                   </p>
                 </div>
                 <div className="space-y-4 max-w-md mx-auto">
@@ -348,7 +348,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
                 </div>
                 <div className="text-center pt-4">
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    NextScene doesn't invent meaning. It elevates what's already there.
+                    NextMonth doesn't invent meaning. It elevates what's already there.
                   </p>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
             className="gap-2"
             data-testid="button-next"
           >
-            {step === totalSteps ? (saveOnboarding.isPending ? "Creating..." : "Create Your NextScene") : "Continue"}
+            {step === totalSteps ? (saveOnboarding.isPending ? "Creating..." : "Create Your NextMonth") : "Continue"}
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

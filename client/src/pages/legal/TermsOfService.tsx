@@ -9,7 +9,7 @@ export default function TermsOfService() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextScene" className="h-16 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} />
+            <img src={LOGO_URL} alt="NextMonth" className="h-16 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} />
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">
@@ -28,7 +28,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">1. Agreement to Terms</h2>
             <p className="text-white/70 leading-relaxed">
-              These Terms of Service ("Terms") constitute a legally binding agreement between you and NextMonth Ltd ("Company", "we", "us", or "our"), company number 16464586, registered at 44 Orchard Way, Banbury, United Kingdom, OX16 0HA, concerning your access to and use of the NextScene platform and services.
+              These Terms of Service ("Terms") constitute a legally binding agreement between you and NextMonth Ltd ("Company", "we", "us", or "our"), company number 16464586, registered at 44 Orchard Way, Banbury, United Kingdom, OX16 0HA, concerning your access to and use of the NextMonth platform and services.
             </p>
             <p className="text-white/70 leading-relaxed mt-4">
               By accessing or using our service, you agree to be bound by these Terms. If you disagree with any part of these Terms, you may not access the service.
@@ -38,7 +38,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">2. Description of Service</h2>
             <p className="text-white/70 leading-relaxed">
-              NextScene is a content transformation platform that converts scripts, documents, websites, and other structured content into interactive, cinematic story experiences. Our service includes AI-generated visuals, character chat functionality, and content distribution features.
+              NextMonth is a content transformation platform that converts scripts, documents, websites, and other structured content into interactive, cinematic story experiences. Our service includes AI-generated visuals, character chat functionality, and content distribution features.
             </p>
           </section>
 

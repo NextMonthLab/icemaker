@@ -12,7 +12,7 @@ const businessPersona = {
   title: "Businesses",
   heroTitle: "Turn Your Brand Story Into An Experience",
   heroSubtitle: "Transform product launches, case studies, and company updates into engaging visual narratives your audience will remember.",
-  description: "Businesses use NextScene to create compelling brand narratives that capture attention and drive engagement across channels.",
+  description: "Businesses use NextMonth to create compelling brand narratives that capture attention and drive engagement across channels.",
   icon: Building2,
   color: "from-blue-500/10 via-transparent to-cyan-500/10",
   useCases: [
@@ -99,7 +99,7 @@ export default function ForBusiness() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src="/logo.png" alt="NextScene" className="h-10 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} data-testid="link-logo" />
+            <img src="/logo.png" alt="NextMonth" className="h-10 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} data-testid="link-logo" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login">
@@ -237,7 +237,7 @@ export default function ForBusiness() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-display font-bold mb-4" data-testid="text-usecases-title">
-                How {businessPersona.title} Use NextScene
+                How {businessPersona.title} Use NextMonth
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
                 {businessPersona.description}
@@ -266,7 +266,7 @@ export default function ForBusiness() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-display font-bold mb-4" data-testid="text-benefits-title">
-                Why {businessPersona.title} Choose NextScene
+                Why {businessPersona.title} Choose NextMonth
               </h2>
             </div>
 
@@ -308,7 +308,7 @@ export default function ForBusiness() {
               Ready to Transform Your {businessPersona.title.replace(/s$/, '')} Content?
             </h2>
             <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              Join thousands of {businessPersona.title.toLowerCase()} already creating engaging stories with NextScene.
+              Join thousands of {businessPersona.title.toLowerCase()} already creating engaging stories with NextMonth.
             </p>
             <Link href={`/login?signup=true&persona=${businessPersona.id}`}>
               <Button size="lg" variant="secondary" className="gap-2" data-testid="button-footer-cta">
@@ -324,7 +324,7 @@ export default function ForBusiness() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/">
             <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-              Back to NextScene Home
+              Back to NextMonth Home
             </span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">

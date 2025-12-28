@@ -325,7 +325,7 @@ export default function Profile() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                     <Crown className="w-5 h-5 fill-current" />
-                    NextScene PRO
+                    NextMonth PRO
                 </CardTitle>
                 <CardDescription>
                     Future premium features will be available here.

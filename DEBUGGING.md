@@ -1,6 +1,6 @@
-# NextScene Debugging Guide
+# NextMonth Debugging Guide
 
-This document describes the built-in debugging and diagnostic tools available in NextScene.
+This document describes the built-in debugging and diagnostic tools available in NextMonth.
 
 ## Quick Reference
 

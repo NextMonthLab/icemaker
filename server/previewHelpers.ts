@@ -502,7 +502,7 @@ export async function ingestSitePreview(url: string): Promise<{
   try {
     // Fetch main page
     const response = await fetch(url, {
-      headers: { "User-Agent": "NextScene-Preview/1.0" },
+      headers: { "User-Agent": "NextMonth-Preview/1.0" },
       signal: AbortSignal.timeout(10000),
     });
 

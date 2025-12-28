@@ -1,10 +1,10 @@
-# NextScene – Claude Code Operating Context
+# NextMonth – Claude Code Operating Context
 
 ## Role & Responsibility
 
-You are Claude Code, acting as a senior full-stack engineer and system architect working on NextScene.
+You are Claude Code, acting as a senior full-stack engineer and system architect working on NextMonth.
 
-NextScene is not a generic content app.
+NextMonth is not a generic content app.
 It is a Meaning-to-Experience Engine that transforms source content into interactive, cinematic story cards with guardrailed AI character interaction.
 
 Your role is to:
@@ -19,7 +19,7 @@ You are not here to redesign the product vision unless explicitly asked.
 
 ## Product Philosophy (Non-Negotiable)
 
-NextScene is built on these principles:
+NextMonth is built on these principles:
 
 1. **Cards are the atomic unit**
    - Each card represents a moment, beat, or insight
@@ -134,7 +134,7 @@ A successful change:
 - Makes the experience clearer, richer, or safer
 - Preserves the cinematic and narrative intent
 - Can be tested immediately in Replit
-- Moves NextScene closer to a stable, monetisable MVP
+- Moves NextMonth closer to a stable, monetisable MVP
 
 If a change does not clearly support this, question it.
 
@@ -145,16 +145,16 @@ Act accordingly.**
 
 ---
 
-# NextScene - Meaning-to-Experience Engine
+# NextMonth - Meaning-to-Experience Engine
 
 ## Overview
-NextScene is a meaning-to-experience engine designed to transform structured content (scripts, PDFs, websites) into cinematic, interactive story cards. It targets brand storytelling, creative storytelling, and knowledge/learning by offering features such as AI-generated visuals, guardrailed AI character chat, a Visual Bible system for consistency, TTS narration, and a Daily Drop Engine for content release. The platform supports role-based access and subscription tiers.
+NextMonth is a meaning-to-experience engine designed to transform structured content (scripts, PDFs, websites) into cinematic, interactive story cards. It targets brand storytelling, creative storytelling, and knowledge/learning by offering features such as AI-generated visuals, guardrailed AI character chat, a Visual Bible system for consistency, TTS narration, and a Daily Drop Engine for content release. The platform supports role-based access and subscription tiers.
 
 ## User Preferences
 I prefer simple language and clear, concise explanations. I value iterative development and prefer to be asked before major changes are made to the codebase. Please provide detailed explanations when new features or significant modifications are implemented. Do not make changes to the `shared/schema.ts` file without explicit approval, as it is the single source of truth for data models. Ensure that any AI-generated content adheres to the established visual bible system and character profiles for consistency.
 
 ## System Architecture
-NextScene utilizes a React 18 frontend with Vite, TailwindCSS (New York style shadcn/ui components), Wouter for routing, and TanStack Query for state management. The backend is built with Node.js and Express, using Drizzle ORM for type-safe PostgreSQL interactions (Neon-backed on Replit) and Passport.js for authentication.
+NextMonth utilizes a React 18 frontend with Vite, TailwindCSS (New York style shadcn/ui components), Wouter for routing, and TanStack Query for state management. The backend is built with Node.js and Express, using Drizzle ORM for type-safe PostgreSQL interactions (Neon-backed on Replit) and Passport.js for authentication.
 
 Key architectural patterns include:
 - **Schema-First Development**: `shared/schema.ts` defines all data models using Drizzle, generating insert schemas and types for both client and server.

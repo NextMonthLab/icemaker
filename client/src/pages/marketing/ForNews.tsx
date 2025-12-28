@@ -6,7 +6,7 @@ const newsPersona = {
   title: "News & Media",
   heroTitle: "Breaking News, Transformed Into Immersive Stories",
   heroSubtitle: "Turn your articles into daily visual story drops that keep readers engaged and coming back for more.",
-  description: "News organizations use NextScene to bring complex stories to life with AI-generated visuals, character perspectives, and serialized daily drops.",
+  description: "News organizations use NextMonth to bring complex stories to life with AI-generated visuals, character perspectives, and serialized daily drops.",
   icon: Newspaper,
   color: "from-red-500/10 via-transparent to-orange-500/10",
   useCases: [
@@ -34,7 +34,7 @@ const newsPersona = {
     "Works with any CMS or publishing system"
   ],
   testimonial: {
-    quote: "NextScene helped us increase daily reader retention by 3x. Our investigative series now feels like must-watch content.",
+    quote: "NextMonth helped us increase daily reader retention by 3x. Our investigative series now feels like must-watch content.",
     author: "Sarah Chen",
     role: "Digital Innovation Director, Metro News"
   }

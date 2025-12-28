@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextScene" className="h-16 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} />
+            <img src={LOGO_URL} alt="NextMonth" className="h-16 cursor-pointer" style={{ clipPath: 'inset(20% 0 20% 0)' }} />
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">
@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">1. Introduction</h2>
             <p className="text-white/70 leading-relaxed">
-              NextMonth Ltd ("we", "us", or "our"), company number 16464586, registered at 44 Orchard Way, Banbury, United Kingdom, OX16 0HA, operates the NextScene platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.
+              NextMonth Ltd ("we", "us", or "our"), company number 16464586, registered at 44 Orchard Way, Banbury, United Kingdom, OX16 0HA, operates the NextMonth platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.
             </p>
             <p className="text-white/70 leading-relaxed mt-4">
               We are committed to protecting your privacy and ensuring compliance with the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.

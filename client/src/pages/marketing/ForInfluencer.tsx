@@ -6,7 +6,7 @@ const influencerPersona = {
   title: "Creators & Influencers",
   heroTitle: "Build A Story Universe Your Fans Can't Stop Watching",
   heroSubtitle: "Transform your content into serialized story experiences with AI characters your audience can actually talk to.",
-  description: "Creators use NextScene to build deeper connections through immersive narratives, daily content drops, and interactive AI characters.",
+  description: "Creators use NextMonth to build deeper connections through immersive narratives, daily content drops, and interactive AI characters.",
   icon: Star,
   color: "from-purple-500/10 via-transparent to-pink-500/10",
   useCases: [
@@ -34,7 +34,7 @@ const influencerPersona = {
     "Monetization options for premium content"
   ],
   testimonial: {
-    quote: "My audience went from watching one video to checking in daily for the next story drop. NextScene helped me build a real community.",
+    quote: "My audience went from watching one video to checking in daily for the next story drop. NextMonth helped me build a real community.",
     author: "Alex Rivera",
     role: "Content Creator, 2M Followers"
   }

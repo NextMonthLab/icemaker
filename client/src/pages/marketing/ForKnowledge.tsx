@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 const features = [
   {
     title: "PDFs, decks, and documents",
-    description: "Upload any educational content. NextScene understands structure, hierarchy, and key concepts.",
+    description: "Upload any educational content. NextMonth understands structure, hierarchy, and key concepts.",
     icon: FileText,
   },
   {
@@ -43,7 +43,7 @@ export default function ForKnowledge() {
           <Link href="/">
             <img 
               src="/logo.png" 
-              alt="NextScene" 
+              alt="NextMonth" 
               className="h-[80px] cursor-pointer" 
               style={{ clipPath: 'inset(20% 0 20% 0)' }}
               data-testid="link-logo"
@@ -154,7 +154,7 @@ export default function ForKnowledge() {
                 Stories stick. Documents don't.
               </h2>
               <p className="text-xl text-white/60 max-w-2xl mx-auto mb-8">
-                People remember narratives 22x better than facts alone. NextScene transforms 
+                People remember narratives 22x better than facts alone. NextMonth transforms 
                 your educational content into story-driven experiences with built-in interaction 
                 that reinforces learning.
               </p>
@@ -225,7 +225,7 @@ export default function ForKnowledge() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <img 
                 src="/logo.png" 
-                alt="NextScene" 
+                alt="NextMonth" 
                 className="h-[64px]"
                 style={{ clipPath: 'inset(20% 0 20% 0)' }}
               />
