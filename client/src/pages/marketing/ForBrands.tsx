@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, CheckCircle2, Sparkles, Loader2, Shield, Eye, Lock, TrendingUp, BarChart3, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -9,23 +9,23 @@ import { ScanProgressScreen } from "@/components/preview/ScanProgressScreen";
 
 const benefits = [
   {
-    title: "Connect your existing website",
-    description: "We understand what you do, how you sell, and what customers ask.",
+    title: "We read your public pages",
+    description: "We fetch your website content and structure it into a guided experience.",
     icon: Globe,
   },
   {
-    title: "Your Smart Site is generated",
-    description: "Your content becomes explorable, conversational, and clear.",
+    title: "Chapters and boundaries are created",
+    description: "We create key points, safe guardrails, and clear structure from your content.",
     icon: Wand2,
   },
   {
     title: "Customers can ask real questions",
-    description: "The Smart Site answers consistently, using your content.",
+    description: "Answers stay grounded in your pages, not generic internet knowledge.",
     icon: MessageCircle,
   },
   {
-    title: "Deploy anywhere",
-    description: "Embeddable experience, shareable link, or standalone video.",
+    title: "Share it anywhere",
+    description: "Embed on your site, share a link, or export as an asset.",
     icon: Share2,
   },
 ];
@@ -175,10 +175,17 @@ export default function ForBrands() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed"
+                className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-4 leading-relaxed"
               >
-                Turn your existing website into a Smart Site in under 60 seconds.<br />
-                No changes to your site. No signup. No commitment. Just see it working.
+                Enter your URL. We generate a temporary Smart Site layer. Your visitors can explore and ask questions based on your real content.
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+                className="text-sm text-white/50 max-w-xl mx-auto mb-8"
+              >
+                Uses only public pages you provide. No changes to your site. You can delete the preview anytime.
               </motion.p>
 
               <motion.div 
@@ -187,8 +194,10 @@ export default function ForBrands() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="max-w-xl mx-auto"
               >
-                <div className="relative mb-6">
-                  {/* Pulsing glow background */}
+                <p className="text-sm text-white/60 text-left mb-2">
+                  Paste your homepage URL (e.g. https://yourbrand.com)
+                </p>
+                <div className="relative mb-4">
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 animate-pulse" />
                   <div className="absolute inset-0 rounded-lg" style={{
                     animation: 'pulse-border 3s ease-in-out infinite',
@@ -229,13 +238,30 @@ export default function ForBrands() {
                   </div>
                 </div>
                 {error && (
-                  <p className="text-sm text-red-400 text-left mb-3" data-testid="text-preview-error">
-                    {error}
-                  </p>
+                  <div className="text-left mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p className="text-sm text-red-400" data-testid="text-preview-error">
+                      {error}
+                    </p>
+                    {error.includes("valid URL") && (
+                      <p className="text-xs text-red-300/70 mt-1">
+                        Try using your homepage URL without paths (e.g. https://yourbrand.com)
+                      </p>
+                    )}
+                    {error.includes("Failed") && (
+                      <p className="text-xs text-red-300/70 mt-1">
+                        Make sure the page is publicly accessible. Try your homepage URL instead.
+                      </p>
+                    )}
+                  </div>
                 )}
-                <p className="text-xs text-white/50 text-center">
-                  Free preview. Ready in 60 seconds.
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="text-xs text-white/50">
+                    Free preview. Ready in about 60 seconds.
+                  </p>
+                  <p className="text-xs text-white/40">
+                    We fetch your public content and generate a guided experience.
+                  </p>
+                </div>
               </motion.div>
 
               <motion.p 
@@ -352,6 +378,40 @@ export default function ForBrands() {
           </div>
         </section>
 
+        {/* Built for Trust */}
+        <section className="py-16 px-6 relative">
+          <div className="absolute inset-0 bg-black" />
+          <div className="max-w-3xl mx-auto relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-bold">Built for trust</h3>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-white/70 text-sm">Source-grounded answers</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-white/70 text-sm">Guardrails to reduce hallucination</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-white/70 text-sm">Human review options for publish flows</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* Export Options */}
         <section className="py-24 px-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-black" />
@@ -412,6 +472,46 @@ export default function ForBrands() {
           </div>
         </section>
 
+        {/* What You Unlock */}
+        <section className="py-20 px-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 to-black" />
+          <div className="max-w-3xl mx-auto relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <h2 className="text-2xl md:text-3xl font-bold mb-8">
+                What you unlock when you <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">claim your Smart Site</span>
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                  <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center mx-auto mb-4">
+                    <BarChart3 className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <h3 className="font-bold mb-2">Free Claim</h3>
+                  <p className="text-white/50 text-sm">Analytics and activity counts</p>
+                </div>
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                    <Eye className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <h3 className="font-bold mb-2">Paid Tier</h3>
+                  <p className="text-white/50 text-sm">Insights and transcripts</p>
+                </div>
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                    <Brain className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h3 className="font-bold mb-2">Intelligence</h3>
+                  <p className="text-white/50 text-sm">Pattern intelligence and strategic advice</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="py-32 px-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black to-transparent" />
@@ -428,12 +528,20 @@ export default function ForBrands() {
                   your brand story?
                 </span>
               </h2>
-              <Link href="/login?signup=true">
-                <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
-                  Build a Brand Experience
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/login?signup=true">
+                  <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
+                    Build a Brand Experience
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/orbit/progress-accountants-accountin-1766789673893">
+                  <Button size="lg" variant="outline" className="h-16 px-8 text-lg bg-transparent border-white/30 text-white hover:bg-white/10 hover:border-white/50 gap-3" data-testid="button-sample-cta">
+                    Explore a sample Smart Site
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
           </div>
         </section>
