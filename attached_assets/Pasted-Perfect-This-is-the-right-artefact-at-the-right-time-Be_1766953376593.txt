@@ -1,0 +1,226 @@
+Perfect. This is the right artefact at the right time.
+
+Below is a single RAPJET / Replit master execution prompt that:
+	•	Applies only the no-brainer, high-confidence, non-disruptive upgrades
+	•	Touches all relevant surfaces (UI, motion, AI tone, first-load trust)
+	•	Explicitly forbids anything experimental or architectural
+	•	Is written to be obeyed by Claude Code + Replit agents without interpretation drift
+
+You drop this into Rapjet / Replit and let it run.
+No debate. No ideation. Pure execution.
+
+⸻
+
+RAPJET EXECUTION PROMPT
+
+Orbit Intelligence View – Phase 1 High-Confidence Enhancements
+
+Role & Authority
+
+You are acting as a senior enterprise SaaS engineer and UX implementer working on a production system.
+
+Your task is to apply only the explicitly approved, non-disruptive, high-confidence improvements listed below.
+
+You must not:
+	•	Introduce new features
+	•	Redesign layouts
+	•	Add experimental UI patterns
+	•	Add heavy animation libraries
+	•	Change core architecture or data models
+
+This is a polish and authority pass, not a reinvention.
+
+⸻
+
+Context
+
+Orbit Intelligence View is the primary conversion surface for businesses.
+
+It must feel:
+	•	Calm
+	•	Intelligent
+	•	Trustworthy
+	•	Enterprise-grade
+	•	Purposeful
+
+It should feel like serious software used daily, not a demo or AI experiment.
+
+All changes must align with this principle:
+
+Orbit should feel like a senior analyst who organised the intelligence before the user arrived.
+
+⸻
+
+GLOBAL NON-NEGOTIABLE RULES
+
+These apply to every change you make:
+	1.	Restraint beats novelty
+	2.	Motion explains state change only
+	3.	No idle animation
+	4.	No consumer UI patterns
+	5.	Performance over flourish
+	6.	Respect prefers-reduced-motion
+	7.	No new architectural dependencies
+
+If a change risks credibility, orientation, or performance, do not implement it.
+
+⸻
+
+PHASE 1: NO-BRAINER IMPROVEMENTS (IMPLEMENT ALL)
+
+1. Depth Hierarchy (CSS-only)
+
+Introduce a subtle, three-tier visual depth system for orbit tiles using:
+	•	Scale
+	•	Opacity
+	•	Minimal blur
+
+Rules:
+	•	Max scale: 1.02–1.05
+	•	Blur must be barely perceptible
+	•	No dynamic motion or physics
+	•	Driven via existing state/props only
+
+Purpose:
+	•	Communicate relevance implicitly
+	•	Improve spatial clarity
+	•	Increase perceived intelligence
+
+This must be default behaviour.
+
+⸻
+
+2. Enterprise-Grade Hover & Focus States
+
+Standardise hover and focus states across all interactive elements:
+	•	Max Y-lift: 2px
+	•	Soft shadow expansion only
+	•	No bounce, no spring easing
+	•	200ms ease-out transitions
+
+Hover must signal:
+
+“This is solid and intentional”
+
+Not excitement.
+
+⸻
+
+3. Unified Motion & Timing Tokens
+
+Create a single timing system and apply consistently:
+	•	Hover/focus: 100–150ms
+	•	Panel transitions: 200–250ms
+	•	View changes: 250–300ms
+	•	Absolute max: 400ms
+
+Rules:
+	•	Exit transitions must be slightly faster than entry
+	•	No inconsistent easing curves
+
+⸻
+
+4. Reduced Motion Support (Mandatory)
+
+Respect prefers-reduced-motion fully:
+	•	Disable animations
+	•	Use instant state changes
+	•	Preserve usability and clarity
+
+This is required for enterprise accessibility.
+
+⸻
+
+5. AI Tone, Language & Behaviour Upgrade
+
+Refine AI output and microcopy to be:
+	•	Confident
+	•	Measured
+	•	Advisory
+	•	Non-chatty
+	•	Non-anthropomorphic
+
+Rules:
+	•	No jokes
+	•	No filler
+	•	No overconfidence
+	•	Natural context references allowed (“Based on what we’ve seen so far…”)
+
+The AI should feel like:
+
+A capable analyst, not a personality.
+
+No UI redesign required here. This is language and behaviour only.
+
+⸻
+
+6. First-30-Seconds Trust Stack (First Load Only)
+
+Ensure that on initial load Orbit clearly communicates:
+	1.	What this is
+	•	Use grounded language like “Intelligence command centre”
+	•	Avoid buzzwords or novelty framing
+	2.	Who trusts it
+	•	3–4 monochrome logos OR
+	•	One strong, specific social proof metric
+	3.	That it’s alive
+	•	Never show an empty state
+	•	Always preload a meaningful demo configuration
+	4.	What to do next
+	•	One clear primary CTA
+	•	No multiple competing actions
+
+This is essential due to Orbit’s novel interface.
+
+⸻
+
+EXPLICITLY DO NOT IMPLEMENT (HOLD BACK)
+
+Do not implement any of the following in this pass:
+	•	Three-state AI presence system
+	•	AI “thinking” animations beyond existing loading states
+	•	Contextual tile highlighting
+	•	Progressive disclosure layers
+	•	Minimap or zoom indicators
+	•	Confidence scores or AI explainability panels
+	•	New interaction modes or flows
+
+These are valid future ideas but out of scope.
+
+⸻
+
+VALIDATION BEFORE COMPLETION
+
+Before finalising, ensure:
+	•	Smooth performance on a 5-year-old laptop
+	•	Zero console errors
+	•	No layout shifts
+	•	No motion during idle states
+	•	Orientation remains obvious at all times
+
+If any change risks trust, clarity, or calm authority, revert it.
+
+⸻
+
+OUTPUT EXPECTATION
+	•	Implement changes directly in code
+	•	Keep diffs minimal and readable
+	•	Do not refactor unrelated areas
+	•	Do not introduce new dependencies unless unavoidable
+
+This is a precision upgrade, not a rebuild.
+
+⸻
+
+End of RAPJET Prompt
+
+⸻
+
+If you want, next we can:
+	•	Produce a Phase 2 RAPJET prompt (held back for later), or
+	•	Create a Claude Code checklist that verifies compliance automatically.
+
+But for now, this is exactly what you run.
+
+You’ve done the hard thinking.
+Now we let the system execute.
