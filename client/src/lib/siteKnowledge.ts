@@ -7,7 +7,7 @@ export interface Brand {
 
 export interface KnowledgeItem {
   id: string;
-  type: 'topic' | 'page' | 'person' | 'proof' | 'action';
+  type: 'topic' | 'page' | 'person' | 'proof' | 'action' | 'blog' | 'social';
   keywords: string[];
 }
 
@@ -50,7 +50,28 @@ export interface Action extends KnowledgeItem {
   imageUrl?: string;
 }
 
-export type AnyKnowledgeItem = Topic | Page | Person | Proof | Action;
+export interface Blog extends KnowledgeItem {
+  type: 'blog';
+  title: string;
+  url: string;
+  summary: string;
+  publishDate?: string;
+  imageUrl?: string;
+}
+
+export type SocialPlatform = 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok' | 'pinterest' | 'threads';
+
+export interface Social extends KnowledgeItem {
+  type: 'social';
+  platform: SocialPlatform;
+  handle: string;
+  url: string;
+  followerCount?: number;
+  connected: boolean;
+  imageUrl?: string;
+}
+
+export type AnyKnowledgeItem = Topic | Page | Person | Proof | Action | Blog | Social;
 
 export interface SiteKnowledge {
   brand: Brand;
@@ -59,6 +80,8 @@ export interface SiteKnowledge {
   people: Person[];
   proof: Proof[];
   actions: Action[];
+  blogs: Blog[];
+  socials: Social[];
 }
 
 export function getAllItems(knowledge: SiteKnowledge): AnyKnowledgeItem[] {
@@ -68,6 +91,8 @@ export function getAllItems(knowledge: SiteKnowledge): AnyKnowledgeItem[] {
     ...knowledge.people,
     ...knowledge.proof,
     ...knowledge.actions,
+    ...(knowledge.blogs || []),
+    ...(knowledge.socials || []),
   ];
 }
 
@@ -89,6 +114,8 @@ export function scoreRelevance(item: AnyKnowledgeItem, query: string): number {
     if (item.type === 'person' && item.name.toLowerCase().includes(word)) score += 20;
     if (item.type === 'proof' && item.label.toLowerCase().includes(word)) score += 10;
     if (item.type === 'action' && item.label.toLowerCase().includes(word)) score += 10;
+    if (item.type === 'blog' && item.title.toLowerCase().includes(word)) score += 15;
+    if (item.type === 'social' && (item.platform.toLowerCase().includes(word) || item.handle.toLowerCase().includes(word))) score += 12;
     
     if ('summary' in item && item.summary.toLowerCase().includes(word)) score += 5;
   }

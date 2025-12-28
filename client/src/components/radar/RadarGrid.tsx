@@ -15,6 +15,8 @@ function getItemLabel(item: AnyKnowledgeItem): string {
     case 'person': return item.name;
     case 'proof': return item.label;
     case 'action': return item.label;
+    case 'blog': return item.title;
+    case 'social': return item.connected ? `@${item.handle}` : item.platform.charAt(0).toUpperCase() + item.platform.slice(1);
   }
 }
 
@@ -25,6 +27,8 @@ function getItemSummary(item: AnyKnowledgeItem): string {
     case 'person': return item.role;
     case 'proof': return item.summary;
     case 'action': return item.summary;
+    case 'blog': return item.summary;
+    case 'social': return item.connected ? (item.followerCount ? `${item.followerCount.toLocaleString()} followers` : 'View feed') : 'Connect to show feed';
   }
 }
 
@@ -244,6 +248,19 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6' }:
       }
       case 'proof': {
         return `${itemName}\n\n${summary}\n\nWant to see more examples of our work, or do you have questions about what we can do for you?`;
+      }
+      case 'blog': {
+        const blog = selectedItem as import('@/lib/siteKnowledge').Blog;
+        return `${itemName}\n\n${summary}\n\nWant to read the full article? Visit: ${blog.url}\n\nOr ask me any questions about this topic.`;
+      }
+      case 'social': {
+        const social = selectedItem as import('@/lib/siteKnowledge').Social;
+        const platformName = social.platform.charAt(0).toUpperCase() + social.platform.slice(1);
+        if (social.connected) {
+          const followerInfo = social.followerCount ? `${social.followerCount.toLocaleString()} followers\n\n` : '';
+          return `Here's our ${platformName} feed (@${social.handle}).\n\n${followerInfo}Visit: ${social.url}\n\nAsk me about our latest posts or activity.`;
+        }
+        return `Connect your ${platformName} account to display your feed and engage with visitors.\n\nOnce connected, visitors will be able to see your latest posts right here.`;
       }
       default:
         return `${itemName}: ${summary}\n\nHow can I help you with this?`;

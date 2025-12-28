@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { FileText, User, Star, Video, Phone, Mail, Quote, Lightbulb, ExternalLink, Cloud, Sun, Calendar, MapPin, Globe, Briefcase, Award, MessageCircle, Zap, Book, TrendingUp, Shield, Heart, HelpCircle, Settings, Home, DollarSign, Clock, Users, Target, Sparkles, type LucideIcon } from "lucide-react";
-import type { AnyKnowledgeItem, Topic, Page, Person, Proof, Action } from "@/lib/siteKnowledge";
+import { FileText, User, Star, Video, Phone, Mail, Quote, Lightbulb, ExternalLink, Cloud, Sun, Calendar, MapPin, Globe, Briefcase, Award, MessageCircle, Zap, Book, TrendingUp, Shield, Heart, HelpCircle, Settings, Home, DollarSign, Clock, Users, Target, Sparkles, Rss, Twitter, Facebook, Instagram, Linkedin, Youtube, type LucideIcon } from "lucide-react";
+import type { AnyKnowledgeItem, Topic, Page, Person, Proof, Action, Blog, Social } from "@/lib/siteKnowledge";
 
 interface KnowledgeTileProps {
   item: AnyKnowledgeItem;
@@ -10,20 +10,46 @@ interface KnowledgeTileProps {
   zoomLevel?: number;
 }
 
-const typeIcons = {
+const typeIcons: Record<string, LucideIcon> = {
   topic: Lightbulb,
   page: FileText,
   person: User,
   proof: Star,
   action: Video,
+  blog: Rss,
+  social: Globe,
 };
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   topic: '#8b5cf6',
   page: '#3b82f6',
   person: '#22c55e',
   proof: '#eab308',
   action: '#ec4899',
+  blog: '#f97316',
+  social: '#06b6d4',
+};
+
+const socialIcons: Record<string, LucideIcon> = {
+  twitter: Twitter,
+  facebook: Facebook,
+  instagram: Instagram,
+  linkedin: Linkedin,
+  youtube: Youtube,
+  tiktok: Zap,
+  pinterest: Target,
+  threads: MessageCircle,
+};
+
+const socialColors: Record<string, string> = {
+  twitter: '#1DA1F2',
+  facebook: '#4267B2',
+  instagram: '#E4405F',
+  linkedin: '#0A66C2',
+  youtube: '#FF0000',
+  tiktok: '#000000',
+  pinterest: '#E60023',
+  threads: '#000000',
 };
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -60,6 +86,8 @@ const typeImageQueries: Record<string, string[]> = {
   person: ['professional headshot', 'business portrait', 'team collaboration', 'office meeting', 'consultant expert', 'corporate professional', 'leadership portrait', 'business handshake', 'workplace team', 'executive portrait'],
   proof: ['success celebration', 'achievement trophy', 'growth chart', 'business results', 'milestone award', 'analytics dashboard', 'performance metrics', 'victory celebration', 'quality certification', 'excellence badge'],
   action: ['action button', 'call to action', 'contact form', 'schedule calendar', 'video conference', 'phone call', 'email inbox', 'booking appointment', 'quick response', 'instant message'],
+  blog: ['blog article', 'writing desk', 'content creation', 'news article', 'publishing media', 'editorial content', 'newsletter design', 'journal writing', 'story telling', 'media content'],
+  social: ['social media', 'digital marketing', 'online community', 'social network', 'viral content', 'engagement metrics', 'follower growth', 'influencer marketing', 'brand presence', 'social sharing'],
 };
 
 function hashString(str: string): number {
@@ -118,11 +146,19 @@ function getActionIcon(actionType: string) {
 
 export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoomLevel = 1 }: KnowledgeTileProps) {
   const CategoryIcon = getCategoryIcon(item);
-  const TypeIcon = item.type === 'action' 
-    ? getActionIcon((item as Action).actionType)
-    : typeIcons[item.type];
   
-  const color = accentColor || typeColors[item.type];
+  const getTypeIcon = (): LucideIcon => {
+    if (item.type === 'action') return getActionIcon((item as Action).actionType);
+    if (item.type === 'social') return socialIcons[(item as Social).platform] || Globe;
+    return typeIcons[item.type] || Globe;
+  };
+  const TypeIcon = getTypeIcon();
+  
+  const getColor = (): string => {
+    if (item.type === 'social') return socialColors[(item as Social).platform] || typeColors.social;
+    return accentColor || typeColors[item.type] || '#3b82f6';
+  };
+  const color = getColor();
   const glowIntensity = Math.min(relevanceScore / 30, 1);
   
   const rawImageUrl = 'imageUrl' in item ? (item as any).imageUrl : undefined;
@@ -137,6 +173,11 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
       case 'person': return (item as Person).name;
       case 'proof': return (item as Proof).label;
       case 'action': return (item as Action).label;
+      case 'blog': return (item as Blog).title;
+      case 'social': {
+        const social = item as Social;
+        return social.connected ? `@${social.handle}` : social.platform.charAt(0).toUpperCase() + social.platform.slice(1);
+      }
     }
   };
 
@@ -147,6 +188,12 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
       case 'person': return (item as Person).role;
       case 'proof': return (item as Proof).summary;
       case 'action': return (item as Action).summary;
+      case 'blog': return (item as Blog).summary;
+      case 'social': {
+        const social = item as Social;
+        if (!social.connected) return 'Connect to show feed';
+        return social.followerCount ? `${social.followerCount.toLocaleString()} followers` : 'View feed';
+      }
     }
   };
 
