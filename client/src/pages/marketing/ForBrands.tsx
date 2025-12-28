@@ -117,8 +117,7 @@ export default function ForBrands() {
             <img
               src="/logo.png"
               alt="NextMonth"
-              className="h-[96px] cursor-pointer"
-              style={{ clipPath: 'inset(20% 0 20% 0)' }}
+              className="h-8 cursor-pointer"
               data-testid="link-logo"
             />
           </Link>
@@ -394,8 +393,7 @@ export default function ForBrands() {
               <img
                 src="/logo.png"
                 alt="NextMonth"
-                className="h-[64px]"
-                style={{ clipPath: 'inset(20% 0 20% 0)' }}
+                className="h-8"
               />
               <div className="flex items-center gap-8">
                 <Link href="/for/brands" className="text-white text-sm transition-colors">Brands</Link>
