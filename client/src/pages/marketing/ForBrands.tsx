@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, Video, QrCode, CheckCircle2, Sparkles, Loader2, Shield, Eye, Lock, TrendingUp, BarChart3, Brain } from "lucide-react";
+import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, QrCode, CheckCircle2, Sparkles, Loader2, Shield, Eye, BarChart3, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
