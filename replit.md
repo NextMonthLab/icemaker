@@ -161,3 +161,37 @@ For users who want 12 consecutive video scenes:
 - `client/src/pages/orbit/DataHub.tsx` - triple-gating, preview removal
 - `client/src/pages/orbit/OrbitView.tsx` - paid owner redirect
 - `server/config/featureFlags.ts` - new file with kill-switches
+
+**Super Admin Dashboard Added:**
+- Route: `/super-admin` - comprehensive admin management
+- Admin user: hello@nextmonth.io (with full admin privileges)
+- Features: user management, orbit management, preview tracking, lead capture, feature flags display
+
+---
+
+## 📌 Orbit Intelligence View Design Guardrails (LOCKED)
+
+**Status: LOCKED — See `ORBIT_GUARDRAILS.md` for full specification**
+
+All Orbit UI development must comply with the design guardrails in `ORBIT_GUARDRAILS.md`. Key principles:
+
+1. **North Star**: Orbit should feel like a senior analyst who organised your intelligence before you asked
+2. **Restraint Over Spectacle**: Never try to look impressive, feel inevitable instead
+3. **Motion Has One Job**: Explain state change only, no idle/looping animations
+4. **AI Presence Is Contextual**: Capable analyst, not a personality
+5. **Orientation Is Sacred**: Users must re-orient in under 2 seconds
+6. **Enterprise Credibility**: Age like Stripe or Linear, not like a Dribbble trend
+
+**Validation Checklist (Before Any Change Ships):**
+- 8-Hour Test: Would this feel right after a full workday?
+- Boardroom Test: Would a CMO show this to a CEO?
+- Interruption Test: Can users re-orient in under 2 seconds?
+- Minimum Spec Test: Smooth on a 5-year-old laptop with 40 tabs?
+- Reduced Motion Test: Fully usable without animation?
+
+**Explicitly NOT in Phase-1 (Hold in Mind):**
+- Three-state AI presence system
+- Contextual AI tile highlighting
+- Progressive disclosure hover-depth layers
+- AI confidence metrics or source explainability
+- Minimap / zoom indicators
