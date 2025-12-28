@@ -131,7 +131,7 @@ export default function MarketingHome() {
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black to-transparent">
-        <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col md:flex-row items-center md:justify-between gap-2 md:gap-0">
+        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           <Link href="/">
             <div className="h-18 md:h-24 flex items-center">
               <img 
@@ -152,7 +152,8 @@ export default function MarketingHome() {
             <Link href="/login?signup=true">
               <Button className="bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/20 gap-2" data-testid="button-signup">
                 <Sparkles className="w-4 h-4" />
-                Launch Experience Builder
+                <span className="hidden sm:inline">Launch Experience Builder</span>
+                <span className="sm:hidden">Launch Builder</span>
               </Button>
             </Link>
           </div>
