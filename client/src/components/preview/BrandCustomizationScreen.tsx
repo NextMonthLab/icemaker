@@ -85,7 +85,7 @@ export function BrandCustomizationScreen({
   const [accentColor, setAccentColor] = useState(defaultAccentColor || '#ffffff');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl || faviconUrl);
-  const [selectedImages, setSelectedImages] = useState<string[]>(imagePool.slice(0, 3));
+  const [selectedImages, setSelectedImages] = useState<string[]>(imagePool);
   const [experienceType, setExperienceType] = useState<ExperienceType>('radar');
   const [huePosition, setHuePosition] = useState(() => hexToHue(defaultAccentColor || '#3b82f6'));
   const spectrumRef = useRef<HTMLDivElement>(null);
@@ -107,7 +107,7 @@ export function BrandCustomizationScreen({
     setSelectedImages(prev => 
       prev.includes(img) 
         ? prev.filter(i => i !== img)
-        : [...prev, img].slice(0, 6)
+        : [...prev, img]
     );
   }, []);
 
@@ -218,9 +218,16 @@ export function BrandCustomizationScreen({
               </div>
             </div>
             
-            <ScrollArea className="w-full">
-              <div className="flex gap-2 pb-2">
-                {imagePool.slice(0, 8).map((img, i) => (
+            <div 
+              className="w-full overflow-x-auto pb-2"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
+            >
+              <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
+                {imagePool.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => toggleImageSelection(img)}
@@ -250,7 +257,7 @@ export function BrandCustomizationScreen({
                   </button>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </motion.div>
         )}
 

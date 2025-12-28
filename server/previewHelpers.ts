@@ -313,7 +313,7 @@ function extractImagePool(html: string, baseUrl: string): string[] {
   
   const imgMatches = mainContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi) || [];
   for (const img of imgMatches) {
-    if (images.length >= 6) break;
+    if (images.length >= 20) break;
     
     const srcMatch = img.match(/src=["']([^"']+)["']/i);
     if (!srcMatch) continue;
