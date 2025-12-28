@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, db } from "./storage";
+import { sql, eq, desc, gte } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
@@ -6067,6 +6068,247 @@ Keep responses concise (2-3 sentences maximum).`;
       nodeEnv: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // ============ SUPER ADMIN ENDPOINTS ============
+  
+  // Super admin: Get dashboard stats
+  app.get("/api/super-admin/stats", requireAdmin, async (_req, res) => {
+    try {
+      const usersResult = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
+      const orbitsResult = await db.select({ count: sql<number>`count(*)` }).from(schema.orbitMeta);
+      const previewsResult = await db.select({ count: sql<number>`count(*)` }).from(schema.previewInstances);
+      const leadsResult = await db.select({ count: sql<number>`count(*)` }).from(schema.orbitLeads);
+      const universesResult = await db.select({ count: sql<number>`count(*)` }).from(schema.universes);
+      
+      // Get recent activity
+      const recentUsers = await db.select({ count: sql<number>`count(*)` })
+        .from(schema.users)
+        .where(gte(schema.users.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)));
+      
+      const recentPreviews = await db.select({ count: sql<number>`count(*)` })
+        .from(schema.previewInstances)
+        .where(gte(schema.previewInstances.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)));
+      
+      const activePreviewsResult = await db.select({ count: sql<number>`count(*)` })
+        .from(schema.previewInstances)
+        .where(eq(schema.previewInstances.status, 'active'));
+      
+      // Get tier breakdown
+      const tierBreakdown = await db.select({
+        tier: schema.orbitMeta.planTier,
+        count: sql<number>`count(*)`,
+      })
+      .from(schema.orbitMeta)
+      .groupBy(schema.orbitMeta.planTier);
+      
+      res.json({
+        totals: {
+          users: Number(usersResult[0]?.count || 0),
+          orbits: Number(orbitsResult[0]?.count || 0),
+          previews: Number(previewsResult[0]?.count || 0),
+          leads: Number(leadsResult[0]?.count || 0),
+          universes: Number(universesResult[0]?.count || 0),
+        },
+        recent: {
+          usersLast7Days: Number(recentUsers[0]?.count || 0),
+          previewsLast7Days: Number(recentPreviews[0]?.count || 0),
+          activePreviews: Number(activePreviewsResult[0]?.count || 0),
+        },
+        tierBreakdown: tierBreakdown.reduce((acc, t) => {
+          acc[t.tier] = Number(t.count);
+          return acc;
+        }, {} as Record<string, number>),
+      });
+    } catch (error: any) {
+      console.error("Error fetching super admin stats:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch stats" });
+    }
+  });
+  
+  // Super admin: List all users
+  app.get("/api/super-admin/users", requireAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const search = req.query.search as string || '';
+      
+      let query = db.select().from(schema.users).orderBy(desc(schema.users.createdAt));
+      
+      if (search) {
+        query = db.select().from(schema.users)
+          .where(
+            sql`lower(${schema.users.username}) like ${`%${search.toLowerCase()}%`} OR lower(${schema.users.email}) like ${`%${search.toLowerCase()}%`}`
+          )
+          .orderBy(desc(schema.users.createdAt));
+      }
+      
+      const users = await query.limit(limit).offset(offset);
+      const total = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
+      
+      // Properly exclude passwords from response
+      const safeUsers = users.map(({ password, ...rest }) => rest);
+      
+      res.json({
+        users: safeUsers,
+        total: Number(total[0]?.count || 0),
+        limit,
+        offset,
+      });
+    } catch (error: any) {
+      console.error("Error listing users:", error);
+      res.status(500).json({ message: error.message || "Failed to list users" });
+    }
+  });
+  
+  // Super admin: Update user
+  app.patch("/api/super-admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { isAdmin, role, email, username } = req.body;
+      
+      const updateData: Partial<schema.InsertUser> = {};
+      if (typeof isAdmin === 'boolean') updateData.isAdmin = isAdmin;
+      if (role) updateData.role = role;
+      if (email) updateData.email = email;
+      if (username) updateData.username = username;
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Properly exclude password from response
+      const { password, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: error.message || "Failed to update user" });
+    }
+  });
+  
+  // Super admin: List all orbits
+  app.get("/api/super-admin/orbits", requireAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const tier = req.query.tier as string;
+      
+      let query = db.select().from(schema.orbitMeta).orderBy(desc(schema.orbitMeta.createdAt));
+      
+      if (tier) {
+        query = db.select().from(schema.orbitMeta)
+          .where(eq(schema.orbitMeta.planTier, tier))
+          .orderBy(desc(schema.orbitMeta.createdAt));
+      }
+      
+      const orbits = await query.limit(limit).offset(offset);
+      const total = await db.select({ count: sql<number>`count(*)` }).from(schema.orbitMeta);
+      
+      res.json({
+        orbits,
+        total: Number(total[0]?.count || 0),
+        limit,
+        offset,
+      });
+    } catch (error: any) {
+      console.error("Error listing orbits:", error);
+      res.status(500).json({ message: error.message || "Failed to list orbits" });
+    }
+  });
+  
+  // Super admin: Update orbit tier
+  app.patch("/api/super-admin/orbits/:slug", requireAdmin, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { planTier, customTitle, customDescription } = req.body;
+      
+      const updateData: Record<string, any> = {};
+      if (planTier) updateData.planTier = planTier;
+      if (customTitle !== undefined) updateData.customTitle = customTitle;
+      if (customDescription !== undefined) updateData.customDescription = customDescription;
+      
+      const updated = await db.update(schema.orbitMeta)
+        .set({ ...updateData, lastUpdated: new Date() })
+        .where(eq(schema.orbitMeta.businessSlug, slug))
+        .returning();
+      
+      if (!updated.length) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      res.json(updated[0]);
+    } catch (error: any) {
+      console.error("Error updating orbit:", error);
+      res.status(500).json({ message: error.message || "Failed to update orbit" });
+    }
+  });
+  
+  // Super admin: List all previews
+  app.get("/api/super-admin/previews", requireAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const status = req.query.status as string;
+      
+      let query = db.select().from(schema.previewInstances).orderBy(desc(schema.previewInstances.createdAt));
+      
+      if (status) {
+        query = db.select().from(schema.previewInstances)
+          .where(eq(schema.previewInstances.status, status as schema.PreviewStatus))
+          .orderBy(desc(schema.previewInstances.createdAt));
+      }
+      
+      const previews = await query.limit(limit).offset(offset);
+      const total = await db.select({ count: sql<number>`count(*)` }).from(schema.previewInstances);
+      
+      res.json({
+        previews,
+        total: Number(total[0]?.count || 0),
+        limit,
+        offset,
+      });
+    } catch (error: any) {
+      console.error("Error listing previews:", error);
+      res.status(500).json({ message: error.message || "Failed to list previews" });
+    }
+  });
+  
+  // Super admin: List all leads
+  app.get("/api/super-admin/leads", requireAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const leads = await db.select()
+        .from(schema.orbitLeads)
+        .orderBy(desc(schema.orbitLeads.createdAt))
+        .limit(limit)
+        .offset(offset);
+      
+      const total = await db.select({ count: sql<number>`count(*)` }).from(schema.orbitLeads);
+      
+      res.json({
+        leads,
+        total: Number(total[0]?.count || 0),
+        limit,
+        offset,
+      });
+    } catch (error: any) {
+      console.error("Error listing leads:", error);
+      res.status(500).json({ message: error.message || "Failed to list leads" });
+    }
+  });
+  
+  // Super admin: Get feature flags
+  app.get("/api/super-admin/feature-flags", requireAdmin, async (_req, res) => {
+    try {
+      const { featureFlags } = await import("./config/featureFlags");
+      res.json(featureFlags);
+    } catch (error: any) {
+      console.error("Error fetching feature flags:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch feature flags" });
+    }
   });
 
   // Start background jobs

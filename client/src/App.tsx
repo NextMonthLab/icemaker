@@ -27,6 +27,7 @@ import Today from "@/pages/Today";
 import CatchUp from "@/pages/CatchUp";
 import Chat from "@/pages/Chat";
 import Admin from "@/pages/Admin";
+import SuperAdmin from "@/pages/SuperAdmin";
 import AdminCreate from "@/pages/AdminCreate";
 import AdminImport from "@/pages/AdminImport";
 import AdminCardDetail from "@/pages/AdminCardDetail";
@@ -66,6 +67,7 @@ const ProtectedJournal = withAuth(Journal);
 const ProtectedProfile = withAuth(Profile);
 const ProtectedBecomeCreator = withAuth(BecomeCreator);
 const ProtectedAdmin = withAuth(Admin);
+const ProtectedSuperAdmin = withAuth(SuperAdmin);
 const ProtectedAdminCreate = withAuth(AdminCreate);
 const ProtectedAdminImport = withAuth(AdminImport);
 const ProtectedAdminAudio = withAuth(AdminAudio);
@@ -121,6 +123,7 @@ function Router() {
       <Route path="/creator/:slug" component={CreatorProfile} />
       <Route path="/become-creator" component={ProtectedBecomeCreator} />
       <Route path="/admin" component={ProtectedAdmin} />
+      <Route path="/super-admin" component={ProtectedSuperAdmin} />
       <Route path="/admin/create" component={ProtectedAdminCreate} />
       <Route path="/admin/import" component={ProtectedAdminImport} />
       <Route path="/admin/audio" component={ProtectedAdminAudio} />
