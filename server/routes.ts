@@ -5124,7 +5124,7 @@ Keep responses concise (2-3 sentences maximum).`;
   app.get("/api/orbit/:slug/hub", async (req, res) => {
     try {
       const { slug } = req.params;
-      const { days = '30', preview = '' } = req.query;
+      const { days = '30' } = req.query;
       
       const orbitMeta = await storage.getOrbitMeta(slug);
       if (!orbitMeta) {
