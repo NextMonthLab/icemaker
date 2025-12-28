@@ -145,6 +145,61 @@ Act accordingly.**
 
 ---
 
+## 📌 Decision Record: Orbit Claiming & Tier Model (LOCKED)
+
+**Status: LOCKED — Do not reinterpret without explicit decision update**
+
+### Decision Summary
+All businesses can and should claim their Orbit for free. Orbit is the universal home for every business. Capability is tiered, not access.
+
+### Locked Principles
+
+1. **There is only one Orbit per business**
+   - Public
+   - Lives at `/orbit/:slug`
+   - Always exists
+   - Always shareable
+
+2. **Claiming is universal and free**
+   - Claiming does not imply payment
+   - Claiming establishes ownership and identity
+   - Claiming unlocks a free Data Hub (read-only)
+
+3. **Free (Claimed) Orbit includes**
+   - Public Orbit view (NextMonth branded)
+   - Ownership of the Orbit
+   - Read-only Data Hub showing:
+     - Visit counts
+     - Interaction counts
+     - Conversation counts
+     - ICE views
+   - **No access to:**
+     - Conversation transcripts
+     - Insight summaries
+     - Intelligence analysis
+     - ICE Maker
+     - Intelligence curation
+     - Sidebar editing
+
+4. **Paid Orbit = Orbital Intelligence Viewer – Business Hub**
+   Unlocks:
+   - Sidebar (curation layer)
+   - Intelligence expansion (add/prioritise boxes, connect sources)
+   - ICE Maker (express + polish)
+   - Insight access (themes, intent, questions)
+   - Reduced NextMonth branding
+
+5. **Preview is not a separate product**
+   - "Preview" is simply an unclaimed or free claimed Orbit state
+   - Same route, same layout, same pack
+   - Differences are branding and capability gates only
+
+6. **Data philosophy**
+   - Activity is free
+   - Understanding is paid
+
+---
+
 # NextMonth - Meaning-to-Experience Engine
 
 ## Overview
