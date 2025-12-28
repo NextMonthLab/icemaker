@@ -1,6 +1,6 @@
 import { useRoute, useLocation, useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Loader2, Globe, ExternalLink, AlertCircle, CheckCircle, Mail } from "lucide-react";
+import { Loader2, Globe, ExternalLink, AlertCircle, CheckCircle, Mail, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,13 @@ export default function OrbitView() {
   const [claimMessage, setClaimMessage] = useState('');
   const [conversationTracked, setConversationTracked] = useState(false);
   const [lastTrackedSlug, setLastTrackedSlug] = useState<string | null>(null);
+  
+  // Contact form state
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     if (slug && slug !== lastTrackedSlug) {
@@ -504,15 +511,26 @@ export default function OrbitView() {
             <span className="text-xs text-white/60">
               Powered by <span className="text-pink-400 font-medium">NextMonth</span>
             </span>
-            <Button 
-              size="sm"
-              variant="ghost"
-              className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
-              onClick={() => setLocation(`/orbit/${slug}/hub`)}
-              data-testid="button-view-hub"
-            >
-              View Data Hub
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm"
+                className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-3 py-1 h-7"
+                onClick={() => setShowContactModal(true)}
+                data-testid="button-contact-us"
+              >
+                <MessageCircle className="w-3 h-3 mr-1" />
+                Contact Us
+              </Button>
+              <Button 
+                size="sm"
+                variant="ghost"
+                className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
+                onClick={() => setLocation(`/orbit/${slug}/hub`)}
+                data-testid="button-view-hub"
+              >
+                View Data Hub
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -610,6 +628,123 @@ export default function OrbitView() {
                     </>
                   ) : (
                     'Send Magic Link'
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Form Modal */}
+      <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {contactStatus === 'success' ? 'Message Sent!' : 'Get in Touch'}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {contactStatus === 'success'
+                ? 'Your message has been received.'
+                : `Leave your details and we'll connect you with ${preview?.siteIdentity?.validatedContent?.brandName || preview?.siteTitle || 'this business'}.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {contactStatus === 'success' && (
+              <div className="flex flex-col items-center justify-center py-6 gap-2">
+                <CheckCircle className="w-12 h-12 text-green-400" />
+                <p className="text-green-400 text-sm">Thanks for reaching out!</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    setContactStatus('idle');
+                    setContactName('');
+                    setContactEmail('');
+                    setContactMessage('');
+                  }}
+                  data-testid="button-close-contact"
+                >
+                  Close
+                </Button>
+              </div>
+            )}
+
+            {contactStatus === 'error' && (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <p className="text-red-400 text-sm">Failed to send message. Please try again.</p>
+              </div>
+            )}
+
+            {(contactStatus === 'idle' || contactStatus === 'sending' || contactStatus === 'error') && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-400">Your name</label>
+                  <Input
+                    type="text"
+                    placeholder="John Smith"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                    data-testid="input-contact-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-400">Your email</label>
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                    data-testid="input-contact-email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-zinc-400">Message (optional)</label>
+                  <textarea
+                    placeholder="How can we help you?"
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-md px-3 py-2 text-sm min-h-[80px] resize-none"
+                    data-testid="input-contact-message"
+                  />
+                </div>
+                <Button
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                  onClick={async () => {
+                    if (!contactName || !contactEmail) return;
+                    setContactStatus('sending');
+                    try {
+                      const response = await fetch(`/api/orbit/${slug}/leads`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name: contactName,
+                          email: contactEmail,
+                          message: contactMessage || null,
+                          source: 'orbit',
+                        }),
+                      });
+                      if (!response.ok) throw new Error('Failed');
+                      setContactStatus('success');
+                    } catch {
+                      setContactStatus('error');
+                    }
+                  }}
+                  disabled={!contactName || !contactEmail || contactStatus === 'sending'}
+                  data-testid="button-submit-contact"
+                >
+                  {contactStatus === 'sending' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Message'
                   )}
                 </Button>
               </>

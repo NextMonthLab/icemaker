@@ -10,7 +10,11 @@ import {
   TrendingUp,
   Calendar,
   ArrowLeft,
-  BarChart3
+  BarChart3,
+  Users,
+  Mail,
+  Phone,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,6 +44,23 @@ interface HubData {
     topQuestions: string[];
     topTopics: string[];
   } | null;
+}
+
+interface LeadData {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  message?: string;
+  createdAt: string;
+  isRead: boolean;
+}
+
+interface LeadsResponse {
+  count: number;
+  leads: LeadData[] | null;
+  isOwner: boolean;
 }
 
 function MetricCard({ 
@@ -112,6 +133,16 @@ export default function DataHub() {
     queryFn: async () => {
       const response = await fetch(`/api/orbit/${slug}/hub?days=${timeRange}${isPreview ? '&preview=true' : ''}`);
       if (!response.ok) throw new Error("Failed to load hub data");
+      return response.json();
+    },
+    enabled: !!slug,
+  });
+
+  const { data: leadsData } = useQuery<LeadsResponse>({
+    queryKey: ["orbit-leads", slug, isPreview],
+    queryFn: async () => {
+      const response = await fetch(`/api/orbit/${slug}/leads${isPreview ? '?preview=true' : ''}`);
+      if (!response.ok) throw new Error("Failed to load leads");
       return response.json();
     },
     enabled: !!slug,
@@ -207,6 +238,76 @@ export default function DataHub() {
               value={hubData.activity.iceViews}
             />
           </div>
+        </div>
+
+        {/* Leads Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Leads
+            </h2>
+            {leadsData && (
+              <span className="text-sm text-pink-400 font-medium">
+                {leadsData.count} total
+              </span>
+            )}
+          </div>
+          
+          {leadsData?.leads && leadsData.leads.length > 0 ? (
+            <div className="space-y-3">
+              {leadsData.leads.slice(0, 5).map((lead) => (
+                <div 
+                  key={lead.id}
+                  className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4"
+                  data-testid={`lead-${lead.id}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="font-medium text-white">{lead.name}</div>
+                    <div className="text-xs text-zinc-500">
+                      {new Date(lead.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {lead.email}
+                    </div>
+                    {lead.phone && (
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        {lead.phone}
+                      </div>
+                    )}
+                    {lead.company && (
+                      <div className="flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {lead.company}
+                      </div>
+                    )}
+                  </div>
+                  {lead.message && (
+                    <p className="mt-2 text-sm text-zinc-500 line-clamp-2">
+                      {lead.message}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {leadsData.count > 5 && (
+                <p className="text-center text-sm text-zinc-500">
+                  +{leadsData.count - 5} more leads
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-6 text-center">
+              <Users className="w-8 h-8 text-zinc-700 mx-auto mb-2" />
+              <p className="text-sm text-zinc-500 mb-1">No leads yet</p>
+              <p className="text-xs text-zinc-600">
+                Visitors can request contact through your Orbit
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mb-8">
