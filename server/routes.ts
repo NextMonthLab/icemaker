@@ -4694,7 +4694,7 @@ Keep responses concise (2-3 sentences maximum).`;
 
   // ============ ORBIT ROUTES ============
   
-  // Generate Orbit Pack from URL
+  // Generate Orbit from URL - creates/reuses preview and links to orbit
   app.post("/api/orbit/generate", async (req, res) => {
     try {
       const { url } = req.body;
@@ -4703,16 +4703,28 @@ Keep responses concise (2-3 sentences maximum).`;
         return res.status(400).json({ message: "URL is required" });
       }
 
-      const { generateOrbitPack, generateSlug } = await import("./orbitPackGenerator");
-      const { storeOrbitPack } = await import("./orbitStorage");
-
+      const { generateSlug } = await import("./orbitPackGenerator");
       const businessSlug = generateSlug(url);
 
-      // Check if orbit already exists
+      // Check if orbit already exists with a preview
       let orbitMeta = await storage.getOrbitMeta(businessSlug);
       
+      if (orbitMeta?.previewId && orbitMeta.generationStatus === "ready") {
+        // Return existing orbit with preview
+        const preview = await storage.getPreviewInstance(orbitMeta.previewId);
+        if (preview) {
+          return res.json({
+            success: true,
+            businessSlug,
+            previewId: orbitMeta.previewId,
+            status: "ready",
+            brandName: preview.siteIdentity?.validatedContent?.brandName || preview.siteTitle,
+          });
+        }
+      }
+
+      // Create or update orbit meta
       if (!orbitMeta) {
-        // Create new orbit meta
         orbitMeta = await storage.createOrbitMeta({
           businessSlug,
           sourceUrl: url.trim(),
@@ -4720,48 +4732,62 @@ Keep responses concise (2-3 sentences maximum).`;
           requestedAt: new Date(),
         });
       } else {
-        // Update existing orbit to regenerating
         await storage.setOrbitGenerationStatus(businessSlug, "generating");
       }
 
-      // Generate pack
-      const result = await generateOrbitPack(url.trim());
+      // Import preview helpers
+      const { validateUrlSafety, ingestSitePreview: ingestSite, generatePreviewId: genPreviewId } = await import("./previewHelpers");
 
-      if (!result.success || !result.pack || !result.version) {
-        await storage.setOrbitGenerationStatus(businessSlug, "failed", result.error);
-        return res.status(400).json({ 
-          message: result.error || "Pack generation failed",
-          pipelineLog: result.pipelineLog,
-        });
+      // Validate URL (SSRF protection)
+      const validation = await validateUrlSafety(url.trim());
+      if (!validation.safe) {
+        await storage.setOrbitGenerationStatus(businessSlug, "failed", validation.error);
+        return res.status(400).json({ message: validation.error || "Invalid URL" });
       }
 
-      // Store pack in object storage
-      const storeResult = await storeOrbitPack(businessSlug, result.version, result.pack);
-
-      if (!storeResult.success) {
-        await storage.setOrbitGenerationStatus(businessSlug, "failed", storeResult.error);
-        return res.status(500).json({ 
-          message: storeResult.error || "Failed to store pack",
-        });
+      // Ingest site using existing preview pipeline
+      let siteData;
+      try {
+        siteData = await ingestSite(url.trim());
+      } catch (err: any) {
+        await storage.setOrbitGenerationStatus(businessSlug, "failed", err.message);
+        return res.status(400).json({ message: `Could not access website: ${err.message}` });
       }
 
-      // Update orbit meta with pack version
-      await storage.setOrbitPackVersion(businessSlug, result.version, storeResult.key!);
+      // Create preview instance using existing system
+      const preview = await storage.createPreviewInstance({
+        id: genPreviewId(),
+        ownerUserId: null,
+        ownerIp: null,
+        sourceUrl: url.trim(),
+        sourceDomain: validation.domain!,
+        siteTitle: siteData.title,
+        siteSummary: siteData.summary,
+        keyServices: siteData.keyServices,
+        contactInfo: null,
+        siteIdentity: siteData.siteIdentity,
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year for orbits
+        ingestedPagesCount: siteData.pagesIngested,
+        totalCharsIngested: siteData.totalChars,
+        status: "active",
+      });
+
+      // Link preview to orbit
+      await storage.setOrbitPreviewId(businessSlug, preview.id);
       await storage.setOrbitGenerationStatus(businessSlug, "ready");
 
       res.json({
         success: true,
         businessSlug,
-        version: result.version,
-        packKey: storeResult.key,
-        brand: result.pack.brand,
-        boxCount: result.pack.boxes.length,
-        faqCount: result.pack.faqs.length,
-        pipelineLog: result.pipelineLog,
+        previewId: preview.id,
+        status: "ready",
+        brandName: siteData.siteIdentity?.validatedContent?.brandName || siteData.title,
+        pagesIngested: siteData.pagesIngested,
+        totalChars: siteData.totalChars,
       });
     } catch (error) {
-      console.error("Error generating orbit pack:", error);
-      res.status(500).json({ message: "Error generating orbit pack" });
+      console.error("Error generating orbit:", error);
+      res.status(500).json({ message: "Error generating orbit" });
     }
   });
 
@@ -4790,7 +4816,7 @@ Keep responses concise (2-3 sentences maximum).`;
     }
   });
 
-  // Get Orbit Pack (reads DB pointer, loads exact pack from storage)
+  // Get Orbit - returns previewId for rich experience
   app.get("/api/orbit/:slug", async (req, res) => {
     try {
       const orbitMeta = await storage.getOrbitMeta(req.params.slug);
@@ -4808,34 +4834,44 @@ Keep responses concise (2-3 sentences maximum).`;
       }
 
       if (orbitMeta.generationStatus === "failed") {
-        return res.status(400).json({
+        return res.json({
           status: "failed",
           businessSlug: orbitMeta.businessSlug,
           error: orbitMeta.lastError,
         });
       }
 
-      if (!orbitMeta.currentPackKey) {
-        return res.status(404).json({ message: "No pack available" });
+      // Return previewId for rich experience (new approach)
+      if (orbitMeta.previewId) {
+        return res.json({
+          status: "ready",
+          businessSlug: orbitMeta.businessSlug,
+          ownerId: orbitMeta.ownerId,
+          lastUpdated: orbitMeta.lastUpdated,
+          previewId: orbitMeta.previewId,
+        });
       }
 
-      const { fetchOrbitPackByKey } = await import("./orbitStorage");
-      const packResult = await fetchOrbitPackByKey(orbitMeta.currentPackKey);
+      // Legacy fallback: load pack from object storage
+      if (orbitMeta.currentPackKey) {
+        const { fetchOrbitPackByKey } = await import("./orbitStorage");
+        const packResult = await fetchOrbitPackByKey(orbitMeta.currentPackKey);
 
-      if (!packResult.success || !packResult.pack) {
-        return res.status(500).json({ message: packResult.error || "Failed to fetch pack" });
+        if (packResult.success && packResult.pack) {
+          return res.json({
+            status: "ready",
+            businessSlug: orbitMeta.businessSlug,
+            ownerId: orbitMeta.ownerId,
+            lastUpdated: orbitMeta.lastUpdated,
+            pack: packResult.pack,
+          });
+        }
       }
 
-      res.json({
-        status: "ready",
-        businessSlug: orbitMeta.businessSlug,
-        ownerId: orbitMeta.ownerId,
-        lastUpdated: orbitMeta.lastUpdated,
-        pack: packResult.pack,
-      });
+      return res.status(404).json({ message: "No experience available" });
     } catch (error) {
-      console.error("Error fetching orbit pack:", error);
-      res.status(500).json({ message: "Error fetching orbit pack" });
+      console.error("Error fetching orbit:", error);
+      res.status(500).json({ message: "Error fetching orbit" });
     }
   });
 

@@ -175,10 +175,12 @@ export interface IStorage {
   // Orbit Meta
   getOrbitMeta(businessSlug: string): Promise<schema.OrbitMeta | undefined>;
   getOrbitMetaById(id: number): Promise<schema.OrbitMeta | undefined>;
+  getOrbitMetaByPreviewId(previewId: string): Promise<schema.OrbitMeta | undefined>;
   createOrbitMeta(data: schema.InsertOrbitMeta): Promise<schema.OrbitMeta>;
   updateOrbitMeta(businessSlug: string, data: Partial<schema.InsertOrbitMeta>): Promise<schema.OrbitMeta | undefined>;
   setOrbitGenerationStatus(businessSlug: string, status: schema.OrbitGenerationStatus, error?: string): Promise<void>;
   setOrbitPackVersion(businessSlug: string, version: string, key: string): Promise<void>;
+  setOrbitPreviewId(businessSlug: string, previewId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1180,6 +1182,13 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getOrbitMetaByPreviewId(previewId: string): Promise<schema.OrbitMeta | undefined> {
+    const result = await db.query.orbitMeta.findFirst({
+      where: eq(schema.orbitMeta.previewId, previewId),
+    });
+    return result;
+  }
+
   async createOrbitMeta(data: schema.InsertOrbitMeta): Promise<schema.OrbitMeta> {
     const [result] = await db.insert(schema.orbitMeta).values(data as any).returning();
     return result;
@@ -1216,6 +1225,15 @@ export class DatabaseStorage implements IStorage {
         currentPackVersion: version,
         currentPackKey: key,
         totalPackVersions: sql`${schema.orbitMeta.totalPackVersions} + 1`,
+        lastUpdated: new Date(),
+      })
+      .where(eq(schema.orbitMeta.businessSlug, businessSlug));
+  }
+
+  async setOrbitPreviewId(businessSlug: string, previewId: string): Promise<void> {
+    await db.update(schema.orbitMeta)
+      .set({
+        previewId,
         lastUpdated: new Date(),
       })
       .where(eq(schema.orbitMeta.businessSlug, businessSlug));

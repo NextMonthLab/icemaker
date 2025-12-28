@@ -1144,13 +1144,16 @@ export * from "./models/chat";
 // Generation status for Orbit pack generation
 export type OrbitGenerationStatus = 'idle' | 'generating' | 'ready' | 'failed';
 
-// Orbit Meta - tracks business orbits and their current pack version
+// Orbit Meta - tracks business orbits and links to existing preview data
 export const orbitMeta = pgTable("orbit_meta", {
   id: serial("id").primaryKey(),
   businessSlug: text("business_slug").notNull().unique(),
   sourceUrl: text("source_url").notNull(),
   
-  // Pack versioning (DB pointer, no mutable latest.json)
+  // Link to existing preview (uses existing preview system for rich data)
+  previewId: text("preview_id").references(() => previewInstances.id),
+  
+  // Pack versioning (DB pointer, no mutable latest.json) - deprecated, use previewId
   currentPackVersion: text("current_pack_version"),
   currentPackKey: text("current_pack_key"),
   
