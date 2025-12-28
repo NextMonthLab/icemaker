@@ -1,0 +1,90 @@
+This is a good Milestone 1 plan. It’s tight, it respects the boundaries, and it turns your existing “ForBrands” magic into a proper asset.
+
+But I’m going to be a bit ruthless and point out the 2–3 places you can accidentally create future pain if you don’t tighten them now.
+
+What’s strong and should stay
+	•	Orbit Pack schema + Zod validation: non-negotiable. Keep it.
+	•	Immutable versioning: correct. This gives you history and rollback later.
+	•	Public Orbit view renders purely from the pack: this is the whole point.
+	•	Unclaimed experience is view-only + NextMonth branded: right freemium boundary.
+	•	Business slug mapping with ownerId?: clean.
+
+Fix these now (small changes, big impact)
+
+1) Don’t create latest.json as a physical object
+
+It sounds convenient, but it creates consistency bugs (cache races, stale pointers, accidental overwrites).
+
+Better:
+	•	Keep all packs immutable
+	•	Store the “current” pointer only in DB (currentPackVersion)
+	•	Fetch currentPackVersion then load that exact object key
+
+If you do keep latest.json, it must be written atomically and cache-busted properly. DB pointer is safer and simpler.
+
+Recommended change
+	•	Remove latest.json
+	•	Use DB pointer only:
+	•	orbits/{slug}/pack-v1-{version}.json
+
+2) Add “generation job” tracking (even if minimal)
+
+You already have /status. Good. Make sure that’s backed by an actual state, not vibes.
+
+Add fields to orbitMeta (or separate table) like:
+	•	generationStatus: idle | generating | ready | failed
+	•	generationJobId (optional)
+	•	lastError (string)
+	•	requestedAt, completedAt
+
+This will save you from “it’s stuck generating” support hell.
+
+3) Pack schema: include provenance + box-level source references
+
+You have sourceUrl? per box. Keep that, but expand slightly:
+
+Each box should have something like:
+	•	sources: [{ type: "url" | "pdf" | "text", ref: string }]
+
+Even if Milestone 1 only uses URLs, this keeps you future-proof for PDFs/testimonials without schema churn.
+
+4) UI: “click expands” is fine, but keep it tight for unclaimed
+
+In unclaimed mode, you want “this is impressive but limited”.
+
+So:
+	•	Expand to full summary: yes
+	•	But avoid anything that feels like “deep tool usage” (filters, search, chat)
+	•	Keep the CTA always visible after interaction (sticky banner or top strip)
+
+Minor nit: your version filename example uses 2024
+
+Your date example says 2024-12-28... but we’re in 2025. Not a blocker, just don’t bake that into code anywhere.
+
+What I would reply to Replit (copy-paste)
+
+Send this back so RatPlan/Replit adjusts immediately:
+
+⸻
+
+Replit: This Milestone 1 plan is approved. Two required tweaks before implementation:
+	1.	Please avoid writing a mutable latest.json pointer object. Keep packs immutable and store the “current pack version” pointer only in the DB (orbitMeta.currentPackVersion). The public route should fetch the pointer then load that exact pack key.
+	2.	Add minimal generation job tracking fields so /status is real: generationStatus (idle|generating|ready|failed), requestedAt, completedAt, and lastError.
+
+Optional but recommended:
+	•	Add sources[] provenance per box to future-proof multi-source ingestion without schema churn.
+
+Proceed after those adjustments.
+
+⸻
+
+Next decision
+
+Once Milestone 1 ships, the immediate follow-on that will make this feel “real” is:
+	•	Claim flow attaches ownerId to the existing orbitMeta
+	•	Sidebar appears (Business Hub)
+	•	First sidebar action: “Add box” (URL/PDF/Testimonial/Text)
+
+But you’re not there yet. Milestone 1 should land clean and stable.
+
+If you want, paste your current ForBrands URL preview route names/flow, and I’ll tell you the cleanest way to “wrap it” so you reuse code rather than duplicating the ingestion logic.

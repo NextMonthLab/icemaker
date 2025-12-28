@@ -1,0 +1,145 @@
+Absolutely. Here’s a copy-paste prompt to update Replit with the latest locked language, separation, and the new cloud-build / local-power architecture.
+
+⸻
+
+Replit Update Prompt
+
+Project: NextMonth – Orbit + ICE (Language Locked, Architecture Updated)
+
+Context
+
+We’ve refined the product structure and are now locking in language and boundaries. Please treat this as the new ground truth and re-review feasibility and build approach accordingly.
+
+⸻
+
+Locked Product Definitions
+
+Product 1: Orbit – Orbital Intelligence Viewer
+
+Audience: Businesses (primary), Educators (secondary)
+
+Orbit is a public-facing, explorable intelligence view of a business presented as a grid of “intelligence boxes” (signals), such as:
+	•	Website pages
+	•	Blogs/newsletters
+	•	PDFs
+	•	Testimonials/proof
+	•	Social posts (later)
+
+Public users can explore but cannot edit.
+
+⸻
+
+Product 1a: Orbital Intelligence Viewer – Business Hub
+
+This is the logged-in business version of Orbit.
+
+Key rule:
+
+Business sees the same public Orbit view, plus a sidebar (no separate admin page).
+
+Sidebar capabilities (curation-only, not CMS editing):
+	•	Add new grid boxes (start small: URL, PDF, testimonial, text)
+	•	Connect sources (social later)
+	•	Highlight/prioritise/curate what represents the business best
+	•	Finite brand inputs (logo, accent colour, tone)
+
+⸻
+
+Product 2: ICE – Interactive Cinematic Experiences
+
+Audience: Creators (ICE-only), Businesses, Educators
+
+ICE is the only expressive output format:
+	•	Card-based, cinematic, interactive
+	•	Shareable as a self-contained link
+	•	Embeddable via safe iframe/script (later)
+
+Creators primarily use ICE without Orbit.
+
+⸻
+
+Creation Bridge: ICE Maker
+
+ICE Maker is not a third product.
+
+In Business Hub:
+	•	Any Orbit grid box can be clicked/dragged into the ICE Maker
+	•	This triggers an express 5-step ICE creation flow
+	•	Rule: If it’s in Orbit, it can become an ICE
+
+⸻
+
+Orbit State Model (Freemium)
+
+Unclaimed Orbit Preview (Public)
+
+Businesses start with an AI-generated preview from their website that is public and shareable, but:
+	•	Heavily “Powered by NextMonth” branded
+	•	Strong CTA: “Claim this Orbit”
+	•	Strictly limited interactions
+	•	No sidebar
+	•	No expansion/curation
+	•	No ICE Maker from grid boxes
+
+Claimed Orbit (Public + Owner Sidebar)
+
+Claiming attaches ownership and unlocks Business Hub sidebar + ICE Maker bridge. No reset or blank start.
+
+⸻
+
+Updated Architecture: Cloud Builds, Local Powers
+
+We want to use:
+	•	Cloud LLM to build and periodically refresh a structured Orbit Pack (snapshot)
+	•	Local LLM to power day-to-day Orbit interactions using that Orbit Pack
+
+Orbit Pack (Cloud-generated canonical snapshot)
+
+Contains:
+	•	Grid box definitions + metadata
+	•	Extracted themes/entities/services
+	•	FAQs
+	•	Card-ready micro-summaries
+	•	Proof snippets
+	•	Tags/topics + a lightweight index
+	•	“Visual Bible” constraints (tone/style rules)
+
+This pack is versioned and is the source of truth.
+
+Local LLM (runs on-device or small self-hosted model)
+
+Uses the Orbit Pack to:
+	•	Answer questions (“Orbit narrator”)
+	•	Summarise boxes
+	•	Suggest guided tours
+	•	Draft ICE content quickly from the prepared snippets (Express mode)
+
+Optional upgrade action:
+	•	“Polish with Studio Intelligence” (cloud) to improve final ICE copy and structure.
+
+⸻
+
+What We Want You To Do
+	1.	Re-review feasibility and architecture based on this updated model.
+	2.	Propose the cleanest implementation approach for:
+	•	Orbit Pack generation + storage + versioning
+	•	Local model interaction layer that relies on the Orbit Pack (no raw-source parsing locally)
+	3.	Recommend which “local” approach is best for MVP:
+	•	On-device WebLLM/WebGPU
+	•	Or small open model on our servers
+	4.	Re-suggest a build sequence (2–3 milestones) that fits this architecture without scope creep.
+
+Avoid:
+	•	Full social OAuth initially
+	•	Advanced analytics initially
+	•	Team permissions initially
+	•	CMS-style page editing
+
+Output required:
+	•	Updated architecture summary
+	•	MVP milestone plan
+	•	Key risks + mitigations
+
+⸻
+
+If you want, tell me whether you’re treating “local LLM” as on-device or our-server open model and I’ll tailor the prompt even tighter (and choose the right constraints).

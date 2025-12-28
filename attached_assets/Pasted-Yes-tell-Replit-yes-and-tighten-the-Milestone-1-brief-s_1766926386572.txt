@@ -1,0 +1,65 @@
+Yes – tell Replit yes, and tighten the Milestone 1 brief so it matches what you’ve already got working (your URL preview) without rebuilding the world.
+
+Here’s the key: Milestone 1 is not “start Orbit from scratch”. It’s:
+
+Formalise the existing preview into a versioned Orbit Pack, stored in object storage, and render Orbit from the pack.
+
+That turns your current magic into an asset.
+
+Copy-paste this back to Replit:
+
+⸻
+
+Replit: Yes, Build Plan for Milestone 1 (with one constraint)
+
+Yes please. Create the build plan for Milestone 1: Orbit Pack Generator, but apply these constraints:
+
+Ground truth
+
+We already have a working URL ingestion preview (“ForBrands” page) that produces a great Orbit-style preview. We do not want to throw that away.
+
+Milestone 1 should wrap and formalise what exists into a persistent, versioned Orbit Pack that becomes the source of truth for:
+	•	Public Orbit view (read-only grid)
+	•	Future Business Hub sidebar curation
+	•	Future ICE Maker bridge
+	•	Future pack-powered Q&A
+
+Milestone 1 Goals
+	1.	Orbit Pack v1 schema implemented (as you outlined: meta, brand, boxes, entities, faqs, visualBible, index).
+	2.	Pack generation endpoint:
+	•	Input: website URL (+ optional brand fields if available)
+	•	Output: stored orbit-pack-v1.json in Replit object storage (S3 compatible)
+	•	Version naming: include timestamp suffix
+	3.	Public Orbit route:
+	•	GET /orbit/:businessSlug
+	•	Renders grid purely from the latest Orbit Pack
+	•	Unclaimed preview state: NextMonth branding + CTA “Claim this Orbit”, interactions limited (view only)
+	4.	Regeneration strategy:
+	•	For MVP: synchronous if fast, otherwise queued with status (“Generating…”)
+	•	Persist “last updated” timestamp and version
+
+Non-goals for Milestone 1
+	•	No social OAuth
+	•	No team permissions
+	•	No analytics dashboards
+	•	No multi-source ingestion beyond URL
+	•	No complex local LLM interactions (pack-only rendering)
+
+Build Plan Output Requested
+
+Please provide:
+	1.	File-by-file implementation plan (frontend + backend)
+	2.	Data models required (businessSlug mapping → pack key)
+	3.	API routes (generate pack, fetch pack, fetch latest pack)
+	4.	Object storage key conventions
+	5.	Minimal UI spec for the public Orbit grid (and how limited interactions are enforced)
+
+Also note: we will use cloud LLM to generate the pack, and “local” server-side model later. For now, Milestone 1 only needs the pack generator + renderer.
+
+⸻
+
+Two extra thoughts (worth enforcing while you’re here):
+	•	Keep Orbit Pack generation deterministic-ish: constrain prompts to produce structured JSON, validate it, and fail loudly if schema mismatches.
+	•	Make packs immutable: never overwrite; always create a new version. That gives you auditability and future “Orbit history” for free.
+
+If you paste me Replit’s Milestone 1 build plan when it replies, I’ll sanity-check it, call out any scope creep, and turn it into a crisp “Prompt 0 / Prompt 1” set for implementation.

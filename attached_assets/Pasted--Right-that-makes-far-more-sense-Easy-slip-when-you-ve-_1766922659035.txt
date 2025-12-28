@@ -1,0 +1,105 @@
+😄 Right — that makes far more sense. Easy slip when you’ve got RedPlanet, OpenOrbit, NextScene and half a solar system in your head.
+
+Yes, absolutely — Replit is actually a really good lens for this, because it will respond from a builder / system / feasibility perspective rather than a branding one.
+
+Below is a tight, practical prompt you can drop straight into Replit (or a Replit Agent / Replit.md) to ask it to evaluate and respond intelligently.
+
+⸻
+
+Replit Evaluation Prompt
+
+Project: OpenOrbit – Micro-Smart Site + Cinematic Experience Engine
+
+Role
+
+You are an experienced full-stack product engineer and platform architect.
+
+You think in terms of:
+	•	Clear system boundaries
+	•	Reusable components
+	•	Simple deployment paths
+	•	Avoiding over-engineering
+	•	Builder ergonomics and maintainability
+
+Your job is to assess whether the following system is technically coherent, buildable, and scalable, and to flag risks early.
+
+⸻
+
+Product Concept (Ground Truth)
+
+We are building OpenOrbit, a system where businesses can:
+	1.	Claim a micro-smart site (not a traditional website).
+	2.	Configure finite branding:
+	•	Logo
+	•	Accent colour
+	•	Tone of voice
+	•	Short positioning statement
+	3.	Feed an intelligence engine with:
+	•	Website URLs
+	•	Social posts
+	•	Documents (PDFs, decks)
+	•	Emails / newsletters
+	•	Testimonials and case studies
+	4.	Use a Launchpad to turn any input (grid item, page, post, URL, document) into a cinematic, card-based interactive experience.
+	5.	Distribute those experiences as:
+	•	A self-contained immersive link (primary sales asset)
+	•	A simple embed inside existing websites (script or iframe)
+
+Core belief:
+
+Experiences replace websites and PDFs as the primary surface for explanation and sales.
+
+⸻
+
+Your Tasks
+
+Please evaluate this system from a builder’s perspective, covering:
+
+1. Architecture sanity
+	•	Is the separation between micro-smart site, intelligence engine, and experience layer clean?
+	•	What would you modularise first?
+
+2. Feasibility & Scope
+	•	What is realistically buildable as an MVP?
+	•	What would you defer without killing the core value?
+
+3. Embed & Distribution
+	•	Best technical approach for:
+	•	Self-contained experience links
+	•	Website embeds that remain performant and secure
+	•	Any major gotchas?
+
+4. Data & Intelligence Flow
+	•	How would you structure ingestion of URLs, posts, and documents?
+	•	What should be indexed vs summarised vs stored raw?
+
+5. Risk & Complexity
+	•	Where could this spiral into over-engineering?
+	•	What assumptions should be challenged early?
+
+⸻
+
+Final Output Required
+
+End with:
+	•	Build / Simplify / Re-scope recommendation
+	•	A short explanation
+	•	A suggested first build milestone that proves the concept works
+
+Be practical. Avoid buzzwords. Optimise for speed and clarity.
+
+⸻
+
+Why this prompt works
+	•	It keeps Replit in engineering reality
+	•	It forces MVP discipline
+	•	It will naturally surface whether:
+	•	This wants to be multiple services
+	•	Or one tight, opinionated system
+
+If you want, after Replit responds we can:
+	•	Convert the response into a build plan
+	•	Write the actual Replit scaffold prompt
+	•	Or decide what not to build (which will save you weeks)
+
+Good catch correcting that — and yes, this is exactly the right moment to ask Replit rather than keep theorising.

@@ -1,0 +1,145 @@
+Perfect. This is exactly the right moment to re-brief RatPlan with authority, not uncertainty.
+
+Below is a clean, locked-in prompt you can paste straight into RatPlan. It reflects the decisions you’ve made, the language you’re freezing, and what you want reviewed next.
+
+⸻
+
+RatPlan Re-Review Prompt
+
+Project: NextMonth – Orbit + ICE Architecture (Language Locked)
+
+Context Update (Important)
+
+We’ve progressed the thinking and are now locking in language, separation, and product boundaries. This is no longer exploratory.
+
+Please re-review the system based on the clarified structure below and assess:
+	•	What already exists
+	•	What needs adjustment
+	•	How you would proceed with building the remaining pieces cleanly
+
+⸻
+
+Locked Product Definitions (Do Not Reinterpret)
+
+Product 1: Orbit – Orbital Intelligence Viewer
+
+Audience: Businesses (primary), Educators (secondary)
+
+Orbit is a public-facing intelligence view of a business.
+	•	It presents a grid-based, explorable view of:
+	•	Curated content
+	•	Proof
+	•	Thinking
+	•	Signals
+	•	It is calm, transparent, and credibility-led
+	•	No editing controls are visible to the public
+
+⸻
+
+Product 1a: Orbital Intelligence Viewer – Business Hub
+
+This is the logged-in business version of Orbit.
+
+Key rule:
+
+The business sees exactly what the public sees, plus a sidebar.
+
+The Business Hub sidebar allows the business to:
+	•	Add new grid boxes (blogs, pages, PDFs, testimonials, newsletters, etc.)
+	•	Connect social media accounts
+	•	Highlight or prioritise specific items
+	•	Curate what best represents their brand identity
+	•	Manage finite brand inputs (logo, accent colour, tone)
+
+This is not a CMS.
+This is not a dashboard.
+This is an intelligence curation layer.
+
+⸻
+
+Product 2: ICE – Interactive Cinematic Experience
+
+Audience: Creators, Educators, Businesses
+
+ICE is the only expressive output format:
+	•	Card-based
+	•	Cinematic
+	•	Interactive
+	•	Shareable as a self-contained link
+	•	Embeddable on external websites
+
+Creators primarily use ICE directly.
+Businesses use ICE as their outbound storytelling and sales surface.
+
+⸻
+
+Creation Bridge: ICE Maker
+
+ICE Maker is not a third product.
+
+For businesses:
+	•	ICE Maker lives inside the Orbital Intelligence Viewer Business Hub
+	•	Any grid box in Orbit can be:
+	•	Clicked or dragged
+	•	Sent into the ICE Maker
+	•	This triggers an express 5-step ICE creation flow
+	•	All generation capabilities are equivalent to the standalone ICE generator
+
+Rule:
+
+If it’s in Orbit, it can become an ICE.
+
+⸻
+
+What We Want You to Do
+
+1. Re-evaluate What’s Already Built
+	•	What components already align with this structure?
+	•	What needs renaming vs reworking?
+	•	What should be removed or merged?
+
+2. Business Hub Construction
+	•	How would you implement the public Orbit + private sidebar model cleanly?
+	•	How would you manage permissions and state without duplicating views?
+
+3. ICE Maker Integration
+	•	How should drag-to-ICE-Maker or click-to-ICE-Maker work technically?
+	•	How do we ensure zero context loss when initiating ICE creation?
+
+4. Architecture Discipline
+	•	Where must we be careful not to reintroduce CMS or builder complexity?
+	•	What should explicitly not be built yet?
+
+⸻
+
+Output Required
+
+Please respond with:
+	1.	A revised architecture summary using the locked language above
+	2.	A component map (what exists, what’s missing)
+	3.	A recommended next build sequence (2–3 milestones max)
+	4.	Any critical risks or simplifications you would apply now that the separation is clear
+
+Do not rebrand.
+Do not merge products.
+Do not invent additional layers.
+
+⸻
+
+Why this matters
+
+We are deliberately converging on:
+	•	One intelligence hub
+	•	Two outputs
+	•	One creation bridge
+
+Your job is to help us finish this cleanly and coherently, not expand it.
+
+⸻
+
+If you want, once RatPlan responds, I can:
+	•	Translate its answer into a concrete build plan
+	•	Spot where it’s overengineering
+	•	Or help you write the internal “this is now locked” note so the team doesn’t drift again
+
+This is a good moment. You’ve done the hard thinking. Now you’re enforcing clarity.
