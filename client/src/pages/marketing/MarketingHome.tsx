@@ -173,27 +173,17 @@ export default function MarketingHome() {
               </div>
               
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[0.95]" data-testid="text-hero-title">
-                <span className="block text-white">Turn any content into an</span>
-                <span className="block bg-gradient-to-r from-pink-400 via-fuchsia-500 to-purple-500 bg-clip-text text-transparent uppercase tracking-wide">
-                  Interactive
-                </span>
-                <span className="block bg-gradient-to-r from-pink-400 via-fuchsia-500 to-purple-500 bg-clip-text text-transparent uppercase tracking-wide">
-                  Cinematic
-                </span>
-                <span className="block bg-gradient-to-r from-pink-400 via-fuchsia-500 to-purple-500 bg-clip-text text-transparent uppercase tracking-wide">
-                  Experience
-                </span>
+                Turn anything into an interactive experience
               </h1>
               
               <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto mb-12 leading-relaxed" data-testid="text-hero-description">
-                NextMonth transforms scripts, documents, and websites into visual story cards 
-                your audience can explore, feel, and interact with.
+                Transform documents, presentations, and web pages into cinematic, interactive journeys your audience can explore, feel, and remember.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/login?signup=true">
                   <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3 rounded-xl" data-testid="button-hero-cta">
-                    Create a NextMonth
+                    Launch Experience Builder
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>

@@ -1,0 +1,163 @@
+You’re absolutely right. The current CTAs are generic SaaS buttons, and this product is not generic SaaS.
+You’re selling a mode shift, not a signup.
+
+Let’s fix this properly.
+
+⸻
+
+1. First: what the CTA actually needs to do
+
+Right now the button should answer one question in the user’s head:
+
+“What happens when I click this?”
+
+“Start Creating” is vague.
+“Create a NextMonth” is unclear.
+Neither reflects interactive, cinematic, or experience-building.
+
+This is an experience builder, not a document editor.
+
+⸻
+
+2. Strong CTA options (ranked)
+
+Here are the ones that genuinely fit the product. I’ll tell you which I’d choose and why.
+
+🥇 Launch Experience Builder (top recommendation)
+
+Why it works:
+	•	“Launch” implies immediacy and momentum
+	•	“Experience Builder” explains the product without jargon
+	•	Sounds premium, intentional, and purposeful
+	•	Feels closer to Webflow / Framer than Notion / Canva
+
+This is the one I’d ship.
+
+⸻
+
+🥈 Build an Interactive Experience
+
+Why it works:
+	•	Extremely clear
+	•	Slightly less cinematic, more literal
+	•	Very safe choice if you want clarity over theatre
+
+⸻
+
+🥉 Create an Interactive Experience
+
+Good, but:
+	•	“Create” is overused
+	•	Less energy than “Launch” or “Build”
+
+⸻
+
+❌ What I would not use
+	•	Start Creating (too generic)
+	•	Create a NextMonth (unclear noun)
+	•	Get Started (weak, forgettable)
+	•	Try the Builder (too tentative)
+
+⸻
+
+3. Final CTA decision (my strong recommendation)
+
+Primary CTA
+
+Launch Experience Builder
+
+Secondary / top-right CTA
+
+Sign In
+
+Clean. Confident. No confusion.
+
+⸻
+
+4. Updated Hero Copy (with CTA context baked in)
+
+Here’s the full, revised hero section, written as if it were being dropped straight into your prompt or CMS.
+
+⸻
+
+Eyebrow
+
+This is how stories are experienced now
+
+H1
+
+Turn anything into an interactive experience
+
+Supporting copy
+
+Transform documents, presentations, and web pages into cinematic, interactive journeys your audience can explore, feel, and remember.
+
+Primary CTA
+
+Launch Experience Builder
+
+Secondary CTA (optional, subtle)
+
+Sign in
+
+⸻
+
+5. Website-specific callout (lower on page)
+
+This should have its own button too.
+
+Heading
+
+Turn your website into an interactive experience
+
+Copy
+
+Close the gap between where your visitors are and where your information actually lives.
+Guide people through your ideas instead of leaving them to figure it out alone.
+
+CTA
+
+Build a Website Experience
+
+That CTA is contextual, specific, and high-intent.
+
+⸻
+
+6. Prompt-ready version (for Rapplet / Claude / Replit)
+
+You asked for this explicitly, so here it is cleanly:
+
+Update the homepage hero copy to:
+
+Headline: “Turn anything into an interactive experience”
+Supporting text: “Transform documents, presentations, and web pages into cinematic, interactive journeys your audience can explore, feel, and remember.”
+
+Replace the primary CTA button with “Launch Experience Builder”, styled as the main action and clearly positioned as the entry point to the experience-building flow.
+
+Add a secondary section further down the page titled “Turn your website into an interactive experience”, with supporting copy about closing the gap between visitors and information, and a contextual CTA labeled “Build a Website Experience.”
+
+That prompt will not be misunderstood.
+
+⸻
+
+One final coach’s note (important)
+
+You’re doing the right thing by obsessing over this.
+
+CTAs are not decoration.
+They are commitment thresholds.
+
+“Launch Experience Builder” tells the user:
+	•	This is serious
+	•	This is active
+	•	This is different from uploading a file
+
+That’s exactly the signal you want to send.
+
+If you want, next we can:
+	•	Align CTA language across onboarding steps
+	•	Design the first screen after click so it fulfils the promise
+	•	Or tighten this even further for a website-only landing page
+
+But honestly?
+This version is strong enough to ship.
