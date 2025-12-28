@@ -39,15 +39,17 @@ export default function ForCreators() {
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black to-transparent">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           <Link href="/">
-            <img 
-              src="/logo.png" 
-              alt="NextMonth" 
-              className="h-28 md:h-40 cursor-pointer" 
-              style={{ clipPath: 'inset(30% 0 30% 0)' }}
-              data-testid="link-logo"
-            />
+            <div className="h-18 md:h-24 flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="NextMonth" 
+                className="h-30 md:h-36 w-30 md:w-36 cursor-pointer" 
+                style={{ clipPath: 'inset(30% 0 30% 0)' }}
+                data-testid="link-logo"
+              />
+            </div>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">
@@ -55,18 +57,19 @@ export default function ForCreators() {
                 Sign In
               </Button>
             </Link>
-            <a href="#features">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white border-0 shadow-lg shadow-purple-500/25" data-testid="button-signup">
-                Get Started
+            <Link href="/login?signup=true">
+              <Button className="bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/20 gap-2" data-testid="button-signup">
+                <Sparkles className="w-4 h-4" />
+                Build Experience
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </header>
 
       <main>
         {/* Hero */}
-        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-32">
+        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
           <div className="absolute inset-0 bg-gradient-to-b from-purple-950/30 via-black to-black" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-900/20 via-transparent to-transparent" />
           
