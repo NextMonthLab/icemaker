@@ -200,6 +200,69 @@ All businesses can and should claim their Orbit for free. Orbit is the universal
 
 ---
 
+## 📌 Locked Strategic Direction: Pattern Intelligence → Strategic Advice
+
+**Status: LOCKED**
+**Applies to: All future tracking, analytics, insights, and intelligence work**
+
+### Core Evolution Path
+
+NextMonth is intentionally evolving along this value ladder:
+
+1. **Analytics** – what happened
+2. **Insights** – what people asked and did
+3. **Pattern Intelligence** – what tends to happen in sequence
+4. **Strategic Advice** – what this implies the business should do next
+
+The long-term centre of value is **pattern recognition**, not raw metrics.
+
+### Strategic Principle
+
+We are not optimising for dashboards or event counts.
+
+We are optimising for:
+
+> **Understanding behavioural sequences and their commercial implications.**
+
+Patterns, not events, are the primary intelligence unit.
+
+### Architectural Guardrails (Important)
+
+When implementing or modifying tracking, logging, or analytics, engineers must assume future support for:
+
+| Capability | Requirement |
+|------------|-------------|
+| **Session-based journeys** | Events must be linkable into sequences |
+| **Event ordering** | Timestamp + previous event context must be preservable |
+| **Object-level interaction** | Which Orbit box / ICE / CTA was involved |
+| **Outcome linkage** | Leads must be traceable back to the journey that produced them |
+
+This does not require new UI or endpoints now, but **must influence how tracking is structured**.
+
+### Explicit Non-Goals
+
+- We are **not** building generic analytics tooling
+- We are **not** building SEO/content idea generators
+- We are **not** auto-publishing or auto-acting on recommendations
+
+Advice must always be:
+- Evidence-based
+- Referenced to observed behaviour
+- Framed as recommendation, not automation
+
+### Product Philosophy
+
+> We don't just show what happened.
+> We show what tends to happen — and what that implies.
+
+### Validation Question
+
+Every future decision can be checked against:
+
+> "Does this help us understand patterns and implications, or just count things?"
+
+---
+
 # NextMonth - Meaning-to-Experience Engine
 
 ## Overview

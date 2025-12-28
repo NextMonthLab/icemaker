@@ -1,0 +1,128 @@
+Yes — 100% yes.
+This is exactly the right moment to lock it, and you’ve framed it at exactly the right level.
+
+Here’s my clear recommendation and the precise way to do it so it actually protects future development.
+
+⸻
+
+Short answer
+
+Yes, update replit.md and mark this as a LOCKED STRATEGIC DECISION, in the same class as the Orbit Claiming doctrine.
+
+Not a discussion note.
+Not a “future idea”.
+A guardrail.
+
+⸻
+
+Why this must go into replit.md
+
+Because what you’ve just agreed is not a feature decision — it’s a value hierarchy decision.
+
+If this is not written down:
+	•	future work will optimise for dashboards
+	•	someone will “simplify” tracking back to atomic events
+	•	pattern intelligence will become impossible or expensive later
+
+What you’re really doing here is saying:
+
+“We are not building analytics.
+We are building a system that learns what tends to happen and advises what to do next.”
+
+That is doctrine-level.
+
+⸻
+
+What should be added to replit.md (copy-paste ready)
+
+I’d suggest a new section, clearly marked:
+
+⸻
+
+📌 Locked Strategic Direction: Pattern Intelligence → Strategic Advice
+
+Status: LOCKED
+Applies to: All future tracking, analytics, insights, and intelligence work
+
+Core Evolution Path
+NextMonth is intentionally evolving along this value ladder:
+	1.	Analytics – what happened
+	2.	Insights – what people asked and did
+	3.	Pattern Intelligence – what tends to happen in sequence
+	4.	Strategic Advice – what this implies the business should do next
+
+The long-term centre of value is pattern recognition, not raw metrics.
+
+⸻
+
+Strategic Principle
+We are not optimising for dashboards or event counts.
+
+We are optimising for:
+
+Understanding behavioural sequences and their commercial implications.
+
+Patterns, not events, are the primary intelligence unit.
+
+⸻
+
+Architectural Guardrails (Important)
+When implementing or modifying tracking, logging, or analytics, engineers must assume future support for:
+	•	Session-based journeys
+	•	Events must be linkable into sequences
+	•	Event ordering
+	•	Timestamp + previous event context must be preservable
+	•	Object-level interaction
+	•	Which Orbit box / ICE / CTA was involved
+	•	Outcome linkage
+	•	Leads must be traceable back to the journey that produced them
+
+This does not require new UI or endpoints now, but must influence how tracking is structured.
+
+⸻
+
+Explicit Non-Goals
+	•	We are not building generic analytics tooling
+	•	We are not building SEO/content idea generators
+	•	We are not auto-publishing or auto-acting on recommendations
+
+Advice must always be:
+	•	Evidence-based
+	•	Referenced to observed behaviour
+	•	Framed as recommendation, not automation
+
+⸻
+
+Product Philosophy
+We don’t just show what happened.
+We show what tends to happen — and what that implies.
+
+⸻
+
+Why your response was excellent
+
+Just to call this out: your three-point response to the strategic direction was exactly what a strong technical partner should say.
+	•	You acknowledged the direction without watering it down
+	•	You validated that current work supports the direction
+	•	You identified the minimum architectural awareness needed now, without asking for scope
+
+That’s the sweet spot.
+
+⸻
+
+Final guidance
+
+✅ Yes, update replit.md
+✅ Mark it LOCKED
+✅ Treat it as doctrine, not roadmap
+❌ Do not attach timelines or features yet
+
+Once this is written, every future decision can be checked against one simple question:
+
+“Does this help us understand patterns and implications, or just count things?”
+
+That’s how you keep this sharp.
+
+If you want, next we can:
+	•	define the minimum event schema that quietly future-proofs pattern detection
+	•	or design the first pattern visual so the team knows what they’re ultimately building toward without implementing it yet
