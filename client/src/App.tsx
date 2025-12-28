@@ -103,6 +103,7 @@ function Router() {
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />
       <Route path="/preview/:id" component={PreviewPage} />
+      <Route path="/o/:slug" component={OrbitView} />
       <Route path="/orbit/:slug" component={OrbitView} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
