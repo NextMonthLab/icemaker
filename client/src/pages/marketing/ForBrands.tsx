@@ -142,65 +142,91 @@ export default function ForBrands() {
 
       <main>
         {/* Smart Site Preview Section */}
-        <section className="relative py-20 px-6 overflow-hidden pt-20">
+        <section className="relative py-24 px-6 overflow-hidden pt-24">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-pink-900/10 via-transparent to-transparent" />
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm">
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm"
+              >
                 <Sparkles className="w-4 h-4 text-pink-400" />
                 <span className="text-pink-300 text-sm font-medium">Smart Site Preview</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-[1.1]">
+              </motion.div>
+              <motion.h1 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-5xl md:text-6xl font-black tracking-tight mb-6 leading-[1.1]"
+              >
                 Your website is passive.<br />
                 <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
                   See the version that actually talks to customers.
                 </span>
-              </h1>
-              <p className="text-xl text-white/60 max-w-2xl mx-auto mb-6 leading-relaxed">
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed"
+              >
                 Turn your existing website into a Smart Site in under 60 seconds.<br />
                 No changes to your site. No signup. No commitment. Just see it working.
-              </p>
-              <p className="text-sm text-white/50 max-w-lg mx-auto mb-10 italic">
-                Most websites answer nothing. Smart Sites answer everything.
-              </p>
+              </motion.p>
 
-              <div className="max-w-xl mx-auto">
-                <div className="flex flex-col sm:flex-row gap-3 mb-3">
-                  <Input
-                    type="url"
-                    placeholder="yourbrand.com"
-                    value={siteUrl}
-                    onChange={(e) => {
-                      setSiteUrl(e.target.value);
-                      setError("");
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreatePreview()}
-                    disabled={createPreviewMutation.isPending}
-                    className="flex-1 h-14 px-5 text-base bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-pink-500"
-                    data-testid="input-preview-url"
-                  />
-                  <Button
-                    onClick={handleCreatePreview}
-                    disabled={createPreviewMutation.isPending || !siteUrl.trim()}
-                    size="lg"
-                    className="gap-2 h-14 px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30"
-                    data-testid="button-create-preview"
-                  >
-                    {createPreviewMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        Create my Smart Site preview
-                      </>
-                    )}
-                  </Button>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="max-w-xl mx-auto"
+              >
+                <div className="relative mb-6">
+                  {/* Pulsing glow background */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 animate-pulse" />
+                  <div className="absolute inset-0 rounded-lg" style={{
+                    animation: 'pulse-border 3s ease-in-out infinite',
+                  }} />
+                  
+                  <div className="relative flex flex-col sm:flex-row gap-3">
+                    <Input
+                      type="url"
+                      placeholder="yourbrand.com"
+                      value={siteUrl}
+                      onChange={(e) => {
+                        setSiteUrl(e.target.value);
+                        setError("");
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreatePreview()}
+                      disabled={createPreviewMutation.isPending}
+                      className="flex-1 h-14 px-5 text-base bg-white/5 border border-pink-500/30 text-white placeholder:text-white/40 focus-visible:ring-pink-500 focus-visible:border-pink-400 transition-all duration-300 rounded-lg"
+                      data-testid="input-preview-url"
+                    />
+                    <Button
+                      onClick={handleCreatePreview}
+                      disabled={createPreviewMutation.isPending || !siteUrl.trim()}
+                      size="lg"
+                      className="gap-2 h-14 px-6 sm:px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/40 transition-all duration-300 rounded-lg whitespace-nowrap"
+                      data-testid="button-create-preview"
+                    >
+                      {createPreviewMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          Create Preview
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 {error && (
                   <p className="text-sm text-red-400 text-left mb-3" data-testid="text-preview-error">
@@ -210,9 +236,31 @@ export default function ForBrands() {
                 <p className="text-xs text-white/50 text-center">
                   Free preview. Ready in 60 seconds.
                 </p>
-              </div>
+              </motion.div>
+
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="text-sm text-white/40 max-w-lg mx-auto mt-6 italic"
+              >
+                Most websites answer nothing. Smart Sites answer everything.
+              </motion.p>
             </motion.div>
           </div>
+          
+          <style>{`
+            @keyframes pulse-border {
+              0%, 100% {
+                border: 2px solid rgba(236, 72, 153, 0.2);
+                box-shadow: 0 0 20px rgba(236, 72, 153, 0.1);
+              }
+              50% {
+                border: 2px solid rgba(236, 72, 153, 0.4);
+                box-shadow: 0 0 30px rgba(236, 72, 153, 0.2);
+              }
+            }
+          `}</style>
         </section>
 
         {/* Divider */}
