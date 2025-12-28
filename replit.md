@@ -263,6 +263,77 @@ Every future decision can be checked against:
 
 ---
 
+## 📌 Locked Value Ladder: Orbit Tiers (LOCKED)
+
+**Status: LOCKED — Do not rename tiers or collapse the progression**
+
+### The Ladder
+
+| Tier | Name | Core Value |
+|------|------|------------|
+| 0 | **Orbit Free** | Ownership + visibility of activity |
+| 1 | **Orbit Grow** | Control + expression |
+| 2 | **Orbit Understand** | Clarity + insight |
+| 3 | **Orbit Intelligence** | Patterns + strategy |
+
+### Tier Details
+
+**Orbit Free** (Everyone starts here)
+- Claimed public Orbit
+- Free Data Hub with activity counts (visits, interactions, conversations, ICE views)
+- NextMonth branding
+- No editing, no insights, no creation
+
+> *Upgrade sentence: "People are interacting with your Orbit. Unlock the ability to shape and grow it."*
+
+**Orbit Grow** (Control & expression)
+- Business Hub sidebar
+- Edit, expand, and curate the Orbit
+- Add boxes (pages, PDFs, testimonials, etc.)
+- Prioritise and shape intelligence
+- **ICE Maker: pay-as-you-go** (credits)
+- Reduced NextMonth branding
+
+> *Upgrade sentence: "Don't just observe your Orbit. Shape how your business is understood."*
+
+**Orbit Understand** (Clarity & insight)
+- Everything in Grow
+- Conversation transcripts
+- Question clustering
+- Topic frequency
+- Lead context (not just counts)
+- **ICE Maker: bundled** (fair usage)
+
+> *Upgrade sentence: "You can shape your Orbit. Now understand what people are actually asking and why."*
+
+**Orbit Intelligence** (Patterns & strategy)
+- Everything in Understand
+- Pattern Intelligence (journey paths, repeated sequences, conversion vs drop-off)
+- Strategic Advice layer (evidence-based recommendations, content gaps, "what to do next")
+
+> *Upgrade sentence: "You don't just see activity or questions. You see how understanding forms — and what to do next."*
+
+### ICE Maker Placement
+
+| Tier | ICE Maker Model | Rationale |
+|------|-----------------|-----------|
+| Grow | Pay-as-you-go (credits) | Low commitment, try before standardising, sales use cases |
+| Understand+ | Bundled (fair usage) | Removes friction, encourages experimentation, creation becomes habitual |
+
+### Naming Guardrail
+
+**Do NOT use:** Basic / Pro / Enterprise
+
+**Use:** Orbit → Grow → Understand → Intelligence
+
+This is a progression, not access levels.
+
+### The Ladder in One Paragraph
+
+> You start by seeing activity in your Orbit. Then you gain control and can shape how your business is understood. Then you understand what people are actually asking. Then you see the patterns behind their behaviour and get advice on what to do next.
+
+---
+
 # NextMonth - Meaning-to-Experience Engine
 
 ## Overview

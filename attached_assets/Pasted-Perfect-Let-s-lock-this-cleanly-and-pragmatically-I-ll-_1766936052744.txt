@@ -1,0 +1,175 @@
+Perfect. Let’s lock this cleanly and pragmatically.
+
+I’ll do four things:
+	1.	Name the tiers (human, non-SaaS-y)
+	2.	Place ICE Maker correctly as pay-as-you-go → bundled
+	3.	Write the one-sentence upgrade logic for each tier
+	4.	Sanity-check the ladder so it doesn’t collapse under its own weight
+
+⸻
+
+The NextMonth Value Ladder (Named)
+
+This ladder reads like capability maturity, not pricing tiers.
+
+⸻
+
+Orbit Free
+
+(Everyone starts here)
+
+What it is
+Ownership of your Orbit + visibility of activity.
+
+Includes
+	•	Claimed public Orbit
+	•	Free Data Hub
+	•	Activity counts (visits, interactions, conversations, ICE views)
+	•	NextMonth branding
+	•	No editing, no insights, no creation
+
+Upgrade sentence
+
+People are interacting with your Orbit. Unlock the ability to shape and grow it.
+
+⸻
+
+Orbit Grow
+
+(Control & expression)
+
+This is the first paid tier and the most important one commercially.
+
+Includes
+	•	Business Hub sidebar
+	•	Edit, expand, and curate the Orbit
+	•	Add boxes (pages, PDFs, testimonials, etc.)
+	•	Prioritise and shape intelligence
+	•	ICE Maker available as pay-as-you-go
+	•	Reduced NextMonth branding
+
+ICE Maker model here
+	•	Pay per ICE (credits)
+	•	No subscription commitment required
+	•	Great for:
+	•	sales teams
+	•	cautious businesses
+	•	“try before we standardise”
+
+Upgrade sentence
+
+Don’t just observe your Orbit. Shape how your business is understood.
+
+⸻
+
+Orbit Understand
+
+(Clarity & insight)
+
+Now we move from control to understanding.
+
+Includes
+	•	Everything in Grow
+	•	Conversation transcripts
+	•	Question clustering
+	•	Topic frequency
+	•	Lead context (not just lead counts)
+	•	ICE Maker bundled (fair usage)
+
+ICE Maker shift
+	•	No per-ICE anxiety
+	•	Creation becomes habitual, not precious
+	•	Encourages experimentation
+
+Upgrade sentence
+
+You can shape your Orbit. Now understand what people are actually asking and why.
+
+⸻
+
+Orbit Intelligence
+
+(Patterns & strategy)
+
+This is where NextMonth becomes unmistakably different.
+
+Includes
+	•	Everything in Understand
+	•	Pattern Intelligence:
+	•	Journey paths
+	•	Repeated sequences
+	•	Conversion vs drop-off patterns
+	•	Strategic Advice layer
+	•	Evidence-based recommendations
+	•	Content gaps
+	•	“What to do next” guidance
+
+Upgrade sentence
+
+You don’t just see activity or questions. You see how understanding forms – and what to do next.
+
+⸻
+
+ICE Maker: why this placement is exactly right
+
+You made a very good instinctive call here.
+
+Why pay-as-you-go first works
+	•	ICE feels like a creative action
+	•	Businesses want to “try it in the wild”
+	•	It avoids forcing a subscription decision too early
+	•	It aligns with sales use cases (one pitch, one ICE)
+
+Why bundling later is essential
+	•	Once people understand conversations, they’ll want:
+	•	many ICEs
+	•	iteration
+	•	experimentation
+	•	Metering becomes friction
+	•	Bundling reinforces habit
+
+In short
+ICE Maker starts as a tool.
+It becomes a language.
+
+⸻
+
+The ladder in one clean paragraph (this is gold)
+
+You start by seeing activity in your Orbit.
+Then you gain control and can shape how your business is understood.
+Then you understand what people are actually asking.
+Then you see the patterns behind their behaviour and get advice on what to do next.
+
+That’s not SaaS fluff. That’s true.
+
+⸻
+
+One important guardrail (coach voice)
+
+Do not price this like:
+	•	“Basic / Pro / Enterprise”
+
+That language collapses the narrative.
+
+You’re selling progression, not access.
+
+Orbit → Grow → Understand → Intelligence
+reads like a journey. Keep it that way.
+
+⸻
+
+What I’d do next (tight and focused)
+
+Before numbers or checkout flows:
+	1.	Lock these tier names in documentation
+	2.	Decide ICE Maker credit pricing (cheap enough to try, expensive enough to respect)
+	3.	Decide what “fair usage” means when bundled (don’t overthink it)
+
+If you want, next I can:
+	•	Draft the pricing page copy using only these sentences
+	•	Help you set ICE credit pricing without killing margins
+	•	Or design the upgrade prompts so each rung feels inevitable, not pushy
+
+But this ladder?
+This is a strong foundation.
