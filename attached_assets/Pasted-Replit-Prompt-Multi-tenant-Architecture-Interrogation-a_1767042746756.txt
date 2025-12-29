@@ -1,0 +1,183 @@
+Replit Prompt: Multi-tenant Architecture Interrogation and Gap Audit (IceMaker + Orbit)
+
+Role
+You are a senior full-stack engineer performing a security-first, evidence-based audit of our current multi-tenant architecture.
+You must not guess. You must inspect the codebase and report findings with file paths, key functions, and query examples.
+
+Objective
+Interrogate the current multi-tenant implementation end-to-end and identify gaps that could cause:
+- Cross-tenant data leakage
+- Incorrect tenant scoping for analytics and conversations
+- Broken billing and entitlement enforcement per tenant
+- Public share routes resolving the wrong tenant
+- Team membership and role control failures
+- Unsafe use of userId-only ownership instead of tenantId
+
+Scope
+This audit covers:
+- IceMaker app routes and APIs
+- Orbit hub routes and APIs
+- Analytics ingestion and reporting
+- Conversations and messages
+- Subscription and entitlement checks
+- Tenant resolution (token, header, hostname, slug)
+- Database schema and query patterns
+- Background jobs and webhooks (Stripe)
+
+Important constraints
+1) Do not refactor yet. This is read-only analysis plus a recommended patch plan.
+2) Provide a clear “Gap List” with severity and exact fixes.
+3) Include concrete evidence for each claim: file path, function name, and relevant query or middleware usage.
+4) If any area is unclear, search for the closest relevant implementation and state what is missing.
+
+Deliverables
+Return a structured report with:
+A) Current tenancy model summary (how tenants are represented)
+B) Tenant resolution map (how tenant is derived per request type)
+C) Enforcement map (where tenant scoping is enforced, and where it is missing)
+D) High-risk gap list (ranked, with proof and remediation steps)
+E) Recommended implementation plan (minimal changes first)
+
+Audit Steps (perform in this order)
+
+1) Identify the canonical tenant concept
+- Search the repo for: tenant, workspace, organisation, orgId, accountId, teamId, customerId
+- Determine whether we have:
+  - tenants table
+  - tenant_members table
+  - roles (owner, admin, member)
+- Report:
+  - table names
+  - key columns (tenantId, ownerUserId, slug, createdAt)
+  - how “active tenant” is selected for a user
+
+2) Identify request-time tenant resolution
+Locate the middleware or utility that resolves tenant context.
+Search for:
+- getTenantFromRequest
+- resolveTenant
+- requireTenant
+- X-Tenant-Id
+- subdomain parsing
+- hostname mapping
+- auth token claims containing tenantId
+
+Report:
+- The exact resolution order, if any
+- Which routes use tenant context and which do not
+- Whether public routes derive tenant from:
+  - shareSlug lookup
+  - hostname
+  - tenantSlug + iceSlug pattern
+- Any usage where tenantId is accepted from client input (this is often a vulnerability)
+
+3) Database schema audit for tenantId presence
+Inspect schema or Prisma models and list whether tenantId exists on these entities:
+- Ice / Experience
+- Preview
+- Card
+- AnalyticsEvent
+- Conversation
+- Message
+- OrbitKnowledge / Topic / Proof / Action items
+- Domains / Embeds
+- Subscription / Plan / Entitlements
+- ApiKeys / Integrations
+- AuditLog (if present)
+
+Output a table-like list:
+Entity: has tenantId? yes/no. Column name if yes. If no, flag it.
+
+4) API route audit for tenant scoping
+Enumerate the API route folders (server routes or pages/api) and identify:
+- Which routes require auth
+- Which routes require tenant membership
+- Whether queries include tenantId in WHERE clauses
+- Whether resource IDs are validated against tenantId before read/update/delete
+
+You must sample at least:
+- Ice creation, update, publish/activate, pause endpoints
+- Public share render endpoint
+- Analytics ingestion endpoint (public)
+- Analytics summary endpoint (auth)
+- Conversations start/message endpoints
+- Orbit dashboards queries
+
+For each sampled endpoint, provide:
+- file path
+- handler function
+- how tenant is derived
+- whether tenant is enforced in queries
+- what could go wrong if tenant is missing
+
+5) Public route audit (highest risk)
+Inspect the routes that serve public experiences and embedded views:
+- /i/:slug, /share/:id, /embed/:id or equivalent
+
+Verify:
+- Slug uniqueness model (global unique vs tenant-scoped)
+- How tenant is resolved
+- That a paused or inactive experience cannot be served
+- That analytics events cannot be logged for paused or wrong-tenant Ices
+- That conversations cannot be initiated for paused or wrong-tenant Ices
+
+If slug is tenant-scoped, confirm tenant is present in URL or derived from hostname.
+
+6) Billing and entitlements per tenant
+Find the subscription logic and confirm:
+- Subscription belongs to tenantId (not just userId)
+- activeIceLimit is checked per tenant
+- Orbit access is checked per tenant
+- Cancelling subscription pauses Ices for the correct tenant only
+- Stripe webhook handlers map customer or subscription to tenant correctly
+
+Provide evidence from:
+- webhook handler file paths
+- subscription query patterns
+- any entitlement middleware
+
+7) Background jobs and scheduled tasks
+Search for:
+- cron
+- queue
+- jobs
+- worker
+- cleanup
+- retention
+- analytics aggregation
+
+Confirm tenantId is always present in:
+- job payloads
+- job queries
+- retention deletes
+- aggregation writes
+
+8) Cross-tenant attack simulation (static analysis)
+Based on code findings, list at least 5 plausible cross-tenant failure modes, for example:
+- A user can access another tenant’s analytics by passing a different experienceId
+- Public analytics ingestion accepts tenantId from client and can poison data
+- Slug collisions allow resolving the wrong tenant’s experience
+- Orbit dashboard queries are not tenant filtered and leak results
+
+For each, tie it back to a concrete missing enforcement location.
+
+Output Format (must follow)
+1) Executive Summary (5-10 bullet points)
+2) Current Tenancy Model
+3) Tenant Resolution Map
+4) Entity TenantId Coverage
+5) Route Enforcement Audit (sampled endpoints)
+6) Billing and Webhooks Audit
+7) Background Jobs Audit
+8) Gap List (ranked by severity: Critical, High, Medium, Low)
+   - Gap
+   - Evidence (file paths, code behaviour)
+   - Impact
+   - Fix (minimal patch)
+9) Recommended Patch Plan (phased)
+   - Phase 1: critical leakage prevention
+   - Phase 2: entitlement correctness
+   - Phase 3: hardening and audit logs
+
+Final instruction
+Return the report only, with clear headings, and ensure every claim is backed by evidence from the codebase.

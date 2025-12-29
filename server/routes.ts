@@ -5238,6 +5238,12 @@ Guidelines:
         return res.status(404).json({ message: "Experience not found" });
       }
       
+      // Only allow activation by owner or admin
+      // If already owned, check ownership. If unowned (draft), any authenticated creator can claim it.
+      if (universe.ownerUserId && universe.ownerUserId !== req.user.id && !req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized to activate this experience" });
+      }
+      
       // Get entitlements
       const entitlements = await getFullEntitlements(req.user.id);
       
@@ -5310,6 +5316,10 @@ Guidelines:
   
   // Get Ice hosting status
   app.get("/api/experiences/:id/status", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
     try {
       const universeId = parseInt(req.params.id);
       if (isNaN(universeId)) {
@@ -5321,25 +5331,24 @@ Guidelines:
         return res.status(404).json({ message: "Experience not found" });
       }
       
-      // Get owner's current limits if authenticated
-      let entitlements = null;
-      let currentActive = 0;
-      if (req.user) {
-        entitlements = await getFullEntitlements(req.user.id);
-        currentActive = await storage.getActiveIceCount(req.user.id);
+      // Only allow status viewing by owner or admin
+      if (universe.ownerUserId && universe.ownerUserId !== req.user.id && !req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized to view this experience status" });
       }
+      
+      // Get owner's current limits
+      const entitlements = await getFullEntitlements(req.user.id);
+      const currentActive = await storage.getActiveIceCount(req.user.id);
       
       res.json({
         iceStatus: universe.iceStatus,
         activeSince: universe.activeSince,
         pausedAt: universe.pausedAt,
         ownerUserId: universe.ownerUserId,
-        ...(entitlements && {
-          currentActive,
-          limit: entitlements.activeIceLimit,
-          analyticsEnabled: entitlements.analyticsEnabled,
-          chatEnabled: entitlements.chatEnabled,
-        }),
+        currentActive,
+        limit: entitlements.activeIceLimit,
+        analyticsEnabled: entitlements.analyticsEnabled,
+        chatEnabled: entitlements.chatEnabled,
       });
     } catch (error) {
       console.error("Error getting Ice status:", error);
