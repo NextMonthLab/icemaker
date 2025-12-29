@@ -332,6 +332,12 @@ export interface IStorage {
   createBlogPost(data: schema.InsertBlogPost): Promise<schema.BlogPost>;
   updateBlogPost(id: number, data: Partial<schema.InsertBlogPost>): Promise<schema.BlogPost | undefined>;
   deleteBlogPost(id: number): Promise<void>;
+
+  // Active Ice Hosting
+  activateIce(universeId: number, userId: number): Promise<schema.Universe | undefined>;
+  pauseIce(universeId: number): Promise<schema.Universe | undefined>;
+  getActiveIceCount(userId: number): Promise<number>;
+  getIcesToPauseOnDowngrade(userId: number, newLimit: number): Promise<schema.Universe[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2509,6 +2515,58 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBlogPost(id: number): Promise<void> {
     await db.delete(schema.blogPosts).where(eq(schema.blogPosts.id, id));
+  }
+
+  // Active Ice Hosting
+  async activateIce(universeId: number, userId: number): Promise<schema.Universe | undefined> {
+    const [result] = await db.update(schema.universes)
+      .set({
+        iceStatus: 'active',
+        activeSince: new Date(),
+        pausedAt: null,
+        ownerUserId: userId,
+      })
+      .where(eq(schema.universes.id, universeId))
+      .returning();
+    return result;
+  }
+
+  async pauseIce(universeId: number): Promise<schema.Universe | undefined> {
+    const [result] = await db.update(schema.universes)
+      .set({
+        iceStatus: 'paused',
+        pausedAt: new Date(),
+      })
+      .where(eq(schema.universes.id, universeId))
+      .returning();
+    return result;
+  }
+
+  async getActiveIceCount(userId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.universes)
+      .where(
+        and(
+          eq(schema.universes.ownerUserId, userId),
+          eq(schema.universes.iceStatus, 'active')
+        )
+      );
+    return result[0]?.count || 0;
+  }
+
+  async getIcesToPauseOnDowngrade(userId: number, newLimit: number): Promise<schema.Universe[]> {
+    const activeIces = await db.query.universes.findMany({
+      where: and(
+        eq(schema.universes.ownerUserId, userId),
+        eq(schema.universes.iceStatus, 'active')
+      ),
+      orderBy: [asc(schema.universes.activeSince)],
+    });
+    
+    if (activeIces.length <= newLimit) {
+      return [];
+    }
+    return activeIces.slice(newLimit);
   }
 }
 

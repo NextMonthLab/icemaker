@@ -5203,6 +5203,158 @@ Guidelines:
   // ============ PREVIEW INSTANCES (Micro Smart Site) ============
   const { validateUrlSafety: validatePreviewUrl, ingestSitePreview, generatePreviewId, calculateExpiresAt } = await import("./previewHelpers");
 
+  // ============ Active Ice Hosting Endpoints ============
+  
+  // Activate an Ice (make it publicly accessible)
+  app.post("/api/experiences/:id/activate", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const universeId = parseInt(req.params.id);
+      if (isNaN(universeId)) {
+        return res.status(400).json({ message: "Invalid experience ID" });
+      }
+      
+      // Check ownership - get universe and verify user has access
+      const universe = await storage.getUniverse(universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Experience not found" });
+      }
+      
+      // Get entitlements
+      const entitlements = await getFullEntitlements(req.user.id);
+      
+      // Check if already at limit
+      const currentActiveCount = await storage.getActiveIceCount(req.user.id);
+      const limit = entitlements.activeIceLimit;
+      
+      // -1 means unlimited
+      if (limit !== -1 && currentActiveCount >= limit) {
+        return res.status(403).json({
+          message: `You've reached your active experience limit (${limit}). Upgrade your plan or pause another experience.`,
+          currentActive: currentActiveCount,
+          limit,
+        });
+      }
+      
+      // Activate the Ice
+      const updated = await storage.activateIce(universeId, req.user.id);
+      
+      res.json({
+        success: true,
+        iceStatus: updated?.iceStatus,
+        activeSince: updated?.activeSince,
+        currentActive: currentActiveCount + 1,
+        limit,
+      });
+    } catch (error) {
+      console.error("Error activating Ice:", error);
+      res.status(500).json({ message: "Error activating experience" });
+    }
+  });
+  
+  // Pause an Ice (remove from public access)
+  app.post("/api/experiences/:id/pause", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const universeId = parseInt(req.params.id);
+      if (isNaN(universeId)) {
+        return res.status(400).json({ message: "Invalid experience ID" });
+      }
+      
+      // Check ownership
+      const universe = await storage.getUniverse(universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Experience not found" });
+      }
+      
+      if (universe.ownerUserId !== req.user.id && !req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized to pause this experience" });
+      }
+      
+      // Pause the Ice
+      const updated = await storage.pauseIce(universeId);
+      const currentActiveCount = await storage.getActiveIceCount(req.user.id);
+      
+      res.json({
+        success: true,
+        iceStatus: updated?.iceStatus,
+        pausedAt: updated?.pausedAt,
+        currentActive: currentActiveCount,
+      });
+    } catch (error) {
+      console.error("Error pausing Ice:", error);
+      res.status(500).json({ message: "Error pausing experience" });
+    }
+  });
+  
+  // Get Ice hosting status
+  app.get("/api/experiences/:id/status", async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      if (isNaN(universeId)) {
+        return res.status(400).json({ message: "Invalid experience ID" });
+      }
+      
+      const universe = await storage.getUniverse(universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Experience not found" });
+      }
+      
+      // Get owner's current limits if authenticated
+      let entitlements = null;
+      let currentActive = 0;
+      if (req.user) {
+        entitlements = await getFullEntitlements(req.user.id);
+        currentActive = await storage.getActiveIceCount(req.user.id);
+      }
+      
+      res.json({
+        iceStatus: universe.iceStatus,
+        activeSince: universe.activeSince,
+        pausedAt: universe.pausedAt,
+        ownerUserId: universe.ownerUserId,
+        ...(entitlements && {
+          currentActive,
+          limit: entitlements.activeIceLimit,
+          analyticsEnabled: entitlements.analyticsEnabled,
+          chatEnabled: entitlements.chatEnabled,
+        }),
+      });
+    } catch (error) {
+      console.error("Error getting Ice status:", error);
+      res.status(500).json({ message: "Error fetching status" });
+    }
+  });
+  
+  // Get user's Active Ice summary
+  app.get("/api/user/active-ices", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const entitlements = await getFullEntitlements(req.user.id);
+      const currentActive = await storage.getActiveIceCount(req.user.id);
+      
+      res.json({
+        currentActive,
+        limit: entitlements.activeIceLimit,
+        remaining: entitlements.activeIceLimit === -1 ? -1 : entitlements.activeIceLimit - currentActive,
+        analyticsEnabled: entitlements.analyticsEnabled,
+        chatEnabled: entitlements.chatEnabled,
+      });
+    } catch (error) {
+      console.error("Error getting Active Ice summary:", error);
+      res.status(500).json({ message: "Error fetching summary" });
+    }
+  });
+
   // Create a preview instance
   app.post("/api/previews", async (req, res) => {
     try {
