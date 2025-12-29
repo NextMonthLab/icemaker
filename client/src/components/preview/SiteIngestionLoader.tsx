@@ -170,9 +170,13 @@ export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6", isComp
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-2"
         >
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles className="w-6 h-6 text-primary animate-pulse" />
-            <span className="text-lg font-semibold text-primary">NextMonth</span>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/logo.png" 
+              alt="NextMonth" 
+              className="h-12 animate-pulse"
+              style={{ clipPath: 'inset(30% 0 30% 0)' }}
+            />
           </div>
           {brandName && (
             <h1 className="text-2xl font-bold text-foreground">
