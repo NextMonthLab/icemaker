@@ -1,0 +1,68 @@
+Go with Option 2: a guest wrapper.
+
+Making the existing TransformationsPage do both jobs sounds tidy, but it’ll turn into a messy “if guest then…” jungle and you’ll keep tripping over AdminLayout/authenticated APIs/side effects. And do not make the existing page public and “let the API handle it” – that still dumps users into an admin-shaped experience and you risk accidentally triggering the expensive pipeline (even if it errors). That’s like leaving the Death Star superlaser button on the lobby wall and hoping people won’t press it.
+
+Why Option 2 is the right call
+	•	Clean separation of concerns: guest preview is a product funnel, not an admin workflow.
+	•	Lower risk: you avoid accidentally firing the 6-stage pipeline from a guest path.
+	•	Faster iteration: you can tune the preview UX without breaking the authenticated builder.
+	•	Keeps AdminLayout sacred: admin pages stay admin pages.
+
+What Option 2 should look like
+
+New route/page
+	•	/builder (or /experience-builder) = GuestPreviewPage
+	•	/transformations (or existing) = AuthenticatedTransformationsPage (unchanged)
+
+GuestPreviewPage flow
+	1.	Input: URL or upload doc
+	2.	Call public preview endpoint (cheap, rate-limited)
+	3.	Show editable cards (local editing only, autosave optional in-memory)
+	4.	When user clicks any premium action:
+	•	“Upload media”
+	•	“Generate AI images/video”
+	•	“Generate dialogue”
+	•	“Export/share”
+	•	“Run full transformation”
+→ Login gate modal
+	5.	After login, resume:
+	•	either redirect to /transformations?resumePreviewId=...
+	•	or call “promote preview → full transformation” endpoint
+
+The critical backend rule
+
+Create a separate “preview” pipeline that cannot accidentally escalate:
+	•	POST /api/public/preview
+Returns: { previewId, cards[], metadata }
+
+Then after login:
+	•	POST /api/transformations/from-preview (auth required)
+Body: { previewId, tier: "medium" | "long" }
+
+This makes cost control and security dead simple.
+
+What NOT to do
+
+“Make TransformationsPage public and gate on the API”
+
+Bad because:
+	•	UX is wrong (admin shell)
+	•	You still do authenticated API calls that will fail noisily
+	•	Someone will eventually trigger expensive work, even by accident, unless you add a tonne of guards
+	•	You’ll end up refactoring it anyway
+
+Tiny bonus: reuse the form component safely
+
+Option 2 can still reuse the nice input UI:
+	•	Extract the input form into TransformationInputForm
+	•	Use it in both:
+	•	GuestPreviewPage (submits to /public/preview)
+	•	TransformationsPage (submits to full pipeline)
+
+Same UI, different submit handlers.
+
+⸻
+
+If you want the “one-line instruction” to give Replit:
+
+Create a new GuestPreviewPage (no AdminLayout, no auth) that reuses the input form UI but submits to a lightweight public preview endpoint, renders editable cards, and gates premium actions behind login, then promotes preview → full transformation after authentication. Keep TransformationsPage admin-only and unchanged.

@@ -4968,24 +4968,190 @@ Guidelines:
       // Generate unique ID for this preview
       const previewId = `ice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       
-      const preview = {
-        id: previewId,
-        title: sourceTitle,
-        cards: cards.map((card, idx) => ({
-          id: `${previewId}_card_${idx}`,
-          title: card.title,
-          content: card.content,
-          order: idx,
-        })),
-        sourceType: type,
-        sourceValue: type === "url" ? value : value.slice(0, 100) + "...",
-        createdAt: new Date().toISOString(),
-      };
+      // Rate limiting by IP (userIp defined earlier)
+      const dailyCount = await storage.countIpIcePreviewsToday(userIp);
+      if (dailyCount >= 10) {
+        return res.status(429).json({ message: "Daily preview limit reached (10 per day)" });
+      }
       
-      res.json(preview);
+      const previewCards = cards.map((card, idx) => ({
+        id: `${previewId}_card_${idx}`,
+        title: card.title,
+        content: card.content,
+        order: idx,
+      }));
+      
+      // Persist to database
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry for guest previews
+      
+      const savedPreview = await storage.createIcePreview({
+        id: previewId,
+        ownerIp: userIp,
+        ownerUserId: req.user?.id || null,
+        sourceType: type as any,
+        sourceValue: type === "url" ? value : value.slice(0, 500),
+        title: sourceTitle,
+        cards: previewCards,
+        tier: "short",
+        status: "active",
+        expiresAt,
+      });
+      
+      res.json({
+        id: savedPreview.id,
+        title: savedPreview.title,
+        cards: savedPreview.cards,
+        sourceType: savedPreview.sourceType,
+        sourceValue: savedPreview.sourceValue,
+        createdAt: savedPreview.createdAt.toISOString(),
+      });
     } catch (error) {
       console.error("Error creating ICE preview:", error);
       res.status(500).json({ message: "Error creating preview" });
+    }
+  });
+  
+  // Get a specific ICE preview by ID (public)
+  app.get("/api/ice/preview/:id", async (req, res) => {
+    try {
+      const preview = await storage.getIcePreview(req.params.id);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check expiry
+      if (preview.expiresAt < new Date() && preview.status !== "promoted") {
+        return res.status(410).json({ message: "Preview has expired" });
+      }
+      
+      res.json({
+        id: preview.id,
+        title: preview.title,
+        cards: preview.cards,
+        sourceType: preview.sourceType,
+        sourceValue: preview.sourceValue,
+        status: preview.status,
+        createdAt: preview.createdAt.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching ICE preview:", error);
+      res.status(500).json({ message: "Error fetching preview" });
+    }
+  });
+  
+  // Update cards for an ICE preview (reordering, editing)
+  app.put("/api/ice/preview/:id/cards", async (req, res) => {
+    try {
+      const { cards } = req.body;
+      if (!Array.isArray(cards)) {
+        return res.status(400).json({ message: "Cards array is required" });
+      }
+      
+      const preview = await storage.getIcePreview(req.params.id);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Only owner IP or authenticated owner can edit
+      const userIp = req.ip || req.socket.remoteAddress || "unknown";
+      const isOwner = preview.ownerIp === userIp || (req.user?.id && preview.ownerUserId === req.user.id);
+      if (!isOwner) {
+        return res.status(403).json({ message: "Not authorized to edit this preview" });
+      }
+      
+      // Validate and sanitize cards
+      const sanitizedCards = cards.map((card: any, idx: number) => ({
+        id: card.id || `${preview.id}_card_${idx}`,
+        title: String(card.title || "").slice(0, 100),
+        content: String(card.content || "").slice(0, 2000),
+        order: idx,
+      }));
+      
+      const updated = await storage.updateIcePreview(req.params.id, { cards: sanitizedCards });
+      
+      res.json({
+        id: updated!.id,
+        title: updated!.title,
+        cards: updated!.cards,
+      });
+    } catch (error) {
+      console.error("Error updating ICE preview cards:", error);
+      res.status(500).json({ message: "Error updating preview" });
+    }
+  });
+  
+  // Promote ICE preview to full transformation (requires auth)
+  app.post("/api/transformations/from-preview", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required to save your experience" });
+    }
+    
+    try {
+      const { previewId } = req.body;
+      if (!previewId || typeof previewId !== "string") {
+        return res.status(400).json({ message: "Preview ID is required" });
+      }
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check expiry
+      if (preview.expiresAt < new Date()) {
+        return res.status(410).json({ message: "Preview has expired" });
+      }
+      
+      if (preview.status === "promoted") {
+        // If already promoted by this user, return the existing job
+        if (preview.ownerUserId === req.user.id && preview.promotedToJobId) {
+          return res.json({
+            success: true,
+            jobId: preview.promotedToJobId,
+            message: "Experience already saved",
+          });
+        }
+        return res.status(400).json({ message: "Preview already promoted by another user" });
+      }
+      
+      // Verify ownership - must match original creator IP or be the authenticated owner
+      const userIp = req.ip || req.socket.remoteAddress || "unknown";
+      const isAuthenticatedOwner = preview.ownerUserId === req.user.id;
+      const isOriginalIpCreator = preview.ownerIp === userIp;
+      
+      // Allow if: (1) already associated with this user, OR (2) created from same IP (same session)
+      if (!isAuthenticatedOwner && !isOriginalIpCreator) {
+        return res.status(403).json({ message: "You are not the owner of this preview" });
+      }
+      
+      // Create a transformation job from the preview
+      const job = await storage.createTransformationJob({
+        userId: req.user.id,
+        sourceType: preview.sourceType as any,
+        sourceValue: preview.sourceValue,
+        title: preview.title,
+        status: "completed",
+        currentStage: 5,
+        totalStages: 6,
+        artifacts: {
+          extractedCards: preview.cards,
+          fromPreview: true,
+          previewId: preview.id,
+        },
+      });
+      
+      // Mark preview as promoted
+      await storage.promoteIcePreview(previewId, req.user.id, job.id);
+      
+      res.json({
+        success: true,
+        jobId: job.id,
+        message: "Experience saved successfully",
+      });
+    } catch (error) {
+      console.error("Error promoting ICE preview:", error);
+      res.status(500).json({ message: "Error saving experience" });
     }
   });
 

@@ -1,0 +1,142 @@
+Yes. It absolutely should, and if it doesn’t, you’ll feel the conversion pain immediately.
+
+But it has to be done deliberately, not “magically”.
+
+Let me give you the clean, correct way to do it, and then the shortcuts you should avoid.
+
+⸻
+
+The Principle (non-negotiable)
+
+When someone upgrades or logs in:
+
+Their work must follow them.
+
+If they see a blank builder after paying, that’s a trust break. That’s the moment people think “oh… this is just another tool.”
+
+So: preview → promote → continue is the mental model.
+
+⸻
+
+The Correct Mechanism: Preview Promotion
+
+During guest mode
+
+When the preview is created, the backend returns:
+
+{
+  "previewId": "prev_abc123",
+  "cards": [...],
+  "source": { "type": "url", "value": "https://..." },
+  "tier": "short"
+}
+
+Key rule:
+	•	The preview is persisted server-side, not just in local state.
+	•	TTL it if you want (eg 24–72 hours), but don’t rely on localStorage alone.
+
+⸻
+
+When the user clicks a gated action
+
+Example: “Generate AI images” or “Upgrade to Medium Experience”
+
+You do not run the full pipeline yet.
+
+Instead you:
+	1.	Open login / signup
+	2.	Store previewId in:
+	•	URL param (?resumePreview=prev_abc123)
+	•	or a short-lived cookie
+
+⸻
+
+After login (this is the crucial bit)
+
+On successful auth:
+
+Option A (cleanest UX)
+	•	Redirect to:
+
+/transformations?resumePreview=prev_abc123
+
+
+
+The authenticated TransformationsPage:
+	1.	Detects resumePreview
+	2.	Calls:
+
+POST /api/transformations/from-preview
+
+
+	3.	Backend:
+	•	Attaches preview to the user
+	•	Creates a full transformation record
+	•	Rehydrates cards + edits
+	4.	Page loads with their cards already there
+
+To the user, it feels seamless.
+
+⸻
+
+Option B (inline continuation)
+
+Stay on the same page, but behind the scenes:
+	•	Promote preview → full transformation
+	•	Swap APIs
+	•	Unlock premium tools
+
+This is harder to get right and easier to break.
+I’d only do this later.
+
+⸻
+
+What gets transferred (be explicit)
+
+At minimum:
+	•	Cards (order, text edits, deletions)
+	•	Experience title
+	•	Source metadata (URL/doc)
+	•	Tier = short → medium/long
+
+Optionally:
+	•	Theme choices
+	•	Tone sliders
+	•	Chosen narrative structure
+
+Do not regenerate anything unless the user explicitly asks.
+
+⸻
+
+What NOT to do (these cause rage-quits)
+
+❌ Re-run extraction after login
+❌ “Start fresh” full transformation
+❌ Force the user to paste the URL again
+❌ Say “Your preview is temporary” without carrying it over
+
+If someone has already edited cards, they feel ownership.
+Deleting that work is like deleting a draft doc.
+
+⸻
+
+The cost-control reassurance (important for you)
+
+You are not paying twice.
+	•	Preview pipeline = cheap, capped, no media gen
+	•	Full pipeline only runs once, after login + intent
+
+This is why preview promotion exists.
+
+⸻
+
+One sentence you can give Replit
+
+On login or upgrade, the user’s guest preview (identified by previewId) should be promoted to a full authenticated transformation, with all cards and edits preserved and loaded into the TransformationsPage, so the user continues exactly where they left off.
+
+⸻
+
+If you want, next we can:
+	•	Define the exact preview schema vs full schema
+	•	Decide what gets locked at “Short” tier
+	•	Or write the upgrade copy that explains this in human language without sounding technical

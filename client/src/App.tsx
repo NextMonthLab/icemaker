@@ -53,6 +53,7 @@ import TransformationsPage from "@/pages/admin/TransformationsPage";
 import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
 import BlogPublisherPage from "@/pages/admin/BlogPublisherPage";
+import GuestIceBuilderPage from "@/pages/GuestIceBuilderPage";
 import AdminUniverseDetail from "@/pages/AdminUniverseDetail";
 import VisualBible from "@/pages/VisualBible";
 import Login from "@/pages/Login";
@@ -131,6 +132,8 @@ function Router() {
       <Route path="/orbit/:slug/claim" component={OrbitView} />
       <Route path="/orbit/:slug/hub" component={DataHub} />
       <Route path="/ice/new" component={TransformationsPage} />
+      <Route path="/try" component={GuestIceBuilderPage} />
+      <Route path="/ice/preview/:id" component={GuestIceBuilderPage} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />

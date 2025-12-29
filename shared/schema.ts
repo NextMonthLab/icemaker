@@ -823,6 +823,50 @@ export const insertTransformationJobSchema = createInsertSchema(transformationJo
 export type InsertTransformationJob = z.infer<typeof insertTransformationJobSchema>;
 export type TransformationJob = typeof transformationJobs.$inferSelect;
 
+// ============ ICE PREVIEW (Guest Builder) ============
+// Stores lightweight card previews for guest users before login
+
+export type IcePreviewStatus = 'active' | 'promoted' | 'expired';
+export type IcePreviewSourceType = 'url' | 'text' | 'file';
+export type IcePreviewTier = 'short' | 'medium' | 'long';
+
+export const icePreviewCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  order: z.number(),
+});
+
+export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;
+
+export const icePreviews = pgTable("ice_previews", {
+  id: text("id").primaryKey(), // e.g., ice_1234567890_abc123
+  ownerIp: text("owner_ip"), // For rate limiting anonymous previews
+  ownerUserId: integer("owner_user_id").references(() => users.id), // Linked after login
+  
+  // Source content
+  sourceType: text("source_type").$type<IcePreviewSourceType>().notNull(),
+  sourceValue: text("source_value").notNull(), // URL or text content
+  
+  // Preview data
+  title: text("title").notNull(),
+  cards: jsonb("cards").$type<IcePreviewCard[]>().notNull(),
+  tier: text("tier").$type<IcePreviewTier>().default("short").notNull(),
+  
+  // Status
+  status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
+  promotedToJobId: integer("promoted_to_job_id").references(() => transformationJobs.id),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(), // 72 hours from creation
+  promotedAt: timestamp("promoted_at"),
+});
+
+export const insertIcePreviewSchema = createInsertSchema(icePreviews).omit({ createdAt: true });
+export type InsertIcePreview = z.infer<typeof insertIcePreviewSchema>;
+export type IcePreview = typeof icePreviews.$inferSelect;
+
 // ============ SUBSCRIPTION & ENTITLEMENTS ============
 
 // Plans table (Free, Pro, Business)

@@ -108,6 +108,13 @@ export interface IStorage {
   updateTransformationJob(id: number, job: Partial<schema.InsertTransformationJob>): Promise<schema.TransformationJob | undefined>;
   deleteTransformationJob(id: number): Promise<void>;
   
+  // ICE Previews (Guest Builder)
+  getIcePreview(id: string): Promise<schema.IcePreview | undefined>;
+  createIcePreview(preview: schema.InsertIcePreview): Promise<schema.IcePreview>;
+  updateIcePreview(id: string, data: Partial<schema.InsertIcePreview>): Promise<schema.IcePreview | undefined>;
+  countIpIcePreviewsToday(ip: string): Promise<number>;
+  promoteIcePreview(id: string, userId: number, jobId: number): Promise<schema.IcePreview | undefined>;
+  
   // Reference Assets (Visual Bible)
   getReferenceAsset(id: number): Promise<schema.UniverseReferenceAsset | undefined>;
   getReferenceAssetsByUniverse(universeId: number): Promise<schema.UniverseReferenceAsset[]>;
@@ -905,6 +912,52 @@ export class DatabaseStorage implements IStorage {
   
   async deleteTransformationJob(id: number): Promise<void> {
     await db.delete(schema.transformationJobs).where(eq(schema.transformationJobs.id, id));
+  }
+  
+  // ICE Previews (Guest Builder)
+  async getIcePreview(id: string): Promise<schema.IcePreview | undefined> {
+    const result = await db.query.icePreviews.findFirst({
+      where: eq(schema.icePreviews.id, id),
+    });
+    return result;
+  }
+  
+  async createIcePreview(preview: schema.InsertIcePreview): Promise<schema.IcePreview> {
+    const [result] = await db.insert(schema.icePreviews).values(preview).returning();
+    return result;
+  }
+  
+  async updateIcePreview(id: string, data: Partial<schema.InsertIcePreview>): Promise<schema.IcePreview | undefined> {
+    const [result] = await db.update(schema.icePreviews)
+      .set(data as any)
+      .where(eq(schema.icePreviews.id, id))
+      .returning();
+    return result;
+  }
+  
+  async countIpIcePreviewsToday(ip: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(schema.icePreviews)
+      .where(and(
+        eq(schema.icePreviews.ownerIp, ip),
+        gte(schema.icePreviews.createdAt, today)
+      ));
+    return Number(result[0]?.count || 0);
+  }
+  
+  async promoteIcePreview(id: string, userId: number, jobId: number): Promise<schema.IcePreview | undefined> {
+    const [result] = await db.update(schema.icePreviews)
+      .set({
+        ownerUserId: userId,
+        status: 'promoted' as schema.IcePreviewStatus,
+        promotedToJobId: jobId,
+        promotedAt: new Date(),
+      })
+      .where(eq(schema.icePreviews.id, id))
+      .returning();
+    return result;
   }
   
   // Reference Assets (Visual Bible)

@@ -27,6 +27,15 @@ Key architectural patterns and design decisions include:
     -   Optional HMAC signing via `ORBIT_SCHEMA_SIGNING_SECRET` env var
     -   Caching headers for efficient AI crawler access
     -   Schema includes: business identity, positioning, services, proof points, FAQs, AI guidance, and contact info
+-   **Guest ICE Builder (Try Before Login)**: Anonymous users can create ICE previews at `/try` without authentication. Features include:
+    -   URL or text input → AI-generated story cards
+    -   Server-persisted previews in `ice_previews` table (7-day expiry for guests)
+    -   Drag-drop card reordering and inline editing
+    -   Deep-linking support via `/ice/preview/:id` route
+    -   IP-based rate limiting (10 previews/day per IP)
+    -   Ownership enforcement on promotion (requires matching IP or authenticated owner)
+    -   Login redirect with return URL for seamless resume flow
+    -   Premium feature upsell (AI images, video, narration, export) requiring authentication
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
