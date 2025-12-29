@@ -1060,6 +1060,55 @@ export const validatedContentSchema = z.object({
 
 export type ValidatedContent = z.infer<typeof validatedContentSchema>;
 
+export const testimonialSchema = z.object({
+  quote: z.string(),
+  author: z.string().nullable(),
+  role: z.string().nullable(),
+  company: z.string().nullable(),
+  rating: z.number().nullable(),
+  imageUrl: z.string().nullable(),
+});
+
+export type Testimonial = z.infer<typeof testimonialSchema>;
+
+export const faqPairSchema = z.object({
+  question: z.string(),
+  answer: z.string(),
+});
+
+export type FaqPair = z.infer<typeof faqPairSchema>;
+
+export const structuredDataSchema = z.object({
+  organization: z.object({
+    name: z.string().nullable(),
+    description: z.string().nullable(),
+    url: z.string().nullable(),
+    logo: z.string().nullable(),
+    sameAs: z.array(z.string()).default([]),
+  }).nullable(),
+  products: z.array(z.object({
+    name: z.string(),
+    description: z.string().nullable(),
+    price: z.string().nullable(),
+    imageUrl: z.string().nullable(),
+  })).default([]),
+  faqs: z.array(faqPairSchema).default([]),
+  events: z.array(z.object({
+    name: z.string(),
+    description: z.string().nullable(),
+    startDate: z.string().nullable(),
+    location: z.string().nullable(),
+  })).default([]),
+  people: z.array(z.object({
+    name: z.string(),
+    jobTitle: z.string().nullable(),
+    description: z.string().nullable(),
+    imageUrl: z.string().nullable(),
+  })).default([]),
+});
+
+export type StructuredData = z.infer<typeof structuredDataSchema>;
+
 export const siteIdentitySchema = z.object({
   sourceDomain: z.string(),
   title: z.string().nullable(),
@@ -1075,6 +1124,9 @@ export const siteIdentitySchema = z.object({
   imagePool: z.array(z.string()).default([]),
   extractedAt: z.string(),
   validatedContent: validatedContentSchema,
+  structuredData: structuredDataSchema.nullable().optional(),
+  testimonials: z.array(testimonialSchema).default([]),
+  enhancedFaqs: z.array(faqPairSchema).default([]),
 });
 
 export type SiteIdentity = z.infer<typeof siteIdentitySchema>;

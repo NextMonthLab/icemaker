@@ -435,6 +435,306 @@ function extractFaqCandidates(html: string): string[] {
   return faqs;
 }
 
+// Extract JSON-LD structured data
+interface StructuredDataResult {
+  organization: {
+    name: string | null;
+    description: string | null;
+    url: string | null;
+    logo: string | null;
+    sameAs: string[];
+  } | null;
+  products: Array<{
+    name: string;
+    description: string | null;
+    price: string | null;
+    imageUrl: string | null;
+  }>;
+  faqs: Array<{ question: string; answer: string }>;
+  events: Array<{
+    name: string;
+    description: string | null;
+    startDate: string | null;
+    location: string | null;
+  }>;
+  people: Array<{
+    name: string;
+    jobTitle: string | null;
+    description: string | null;
+    imageUrl: string | null;
+  }>;
+}
+
+function extractJsonLd(html: string, baseUrl: string): StructuredDataResult {
+  const result: StructuredDataResult = {
+    organization: null,
+    products: [],
+    faqs: [],
+    events: [],
+    people: [],
+  };
+  
+  // Find all JSON-LD script tags
+  const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  
+  for (const match of jsonLdMatches) {
+    const contentMatch = match.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+    if (!contentMatch) continue;
+    
+    try {
+      const data = JSON.parse(contentMatch[1]);
+      const items = Array.isArray(data) ? data : [data];
+      
+      for (const item of items) {
+        const type = item['@type'];
+        
+        // Handle Organization/LocalBusiness
+        if (type === 'Organization' || type === 'LocalBusiness' || type === 'Corporation') {
+          result.organization = {
+            name: item.name || null,
+            description: item.description || null,
+            url: item.url || null,
+            logo: typeof item.logo === 'string' ? item.logo : item.logo?.url || null,
+            sameAs: Array.isArray(item.sameAs) ? item.sameAs : (item.sameAs ? [item.sameAs] : []),
+          };
+        }
+        
+        // Handle Products
+        if (type === 'Product') {
+          result.products.push({
+            name: item.name || 'Product',
+            description: item.description || null,
+            price: item.offers?.price ? `${item.offers.priceCurrency || '£'}${item.offers.price}` : null,
+            imageUrl: typeof item.image === 'string' ? resolveUrl(item.image, baseUrl) : null,
+          });
+        }
+        
+        // Handle FAQPage
+        if (type === 'FAQPage' && item.mainEntity) {
+          const entities = Array.isArray(item.mainEntity) ? item.mainEntity : [item.mainEntity];
+          for (const entity of entities) {
+            if (entity['@type'] === 'Question' && entity.acceptedAnswer) {
+              result.faqs.push({
+                question: cleanText(entity.name || ''),
+                answer: cleanText(entity.acceptedAnswer?.text || ''),
+              });
+            }
+          }
+        }
+        
+        // Handle Event
+        if (type === 'Event') {
+          result.events.push({
+            name: item.name || 'Event',
+            description: item.description || null,
+            startDate: item.startDate || null,
+            location: typeof item.location === 'string' ? item.location : item.location?.name || null,
+          });
+        }
+        
+        // Handle Person
+        if (type === 'Person') {
+          result.people.push({
+            name: item.name || 'Person',
+            jobTitle: item.jobTitle || null,
+            description: item.description || null,
+            imageUrl: typeof item.image === 'string' ? resolveUrl(item.image, baseUrl) : null,
+          });
+        }
+      }
+    } catch (e) {
+      // JSON parse failed, skip this block
+    }
+  }
+  
+  return result;
+}
+
+// Enhanced FAQ extraction with Q&A pairs
+interface FaqPair {
+  question: string;
+  answer: string;
+}
+
+function extractEnhancedFaqs(html: string): FaqPair[] {
+  const faqs: FaqPair[] = [];
+  const seenQuestions = new Set<string>();
+  
+  // Remove nav, header, footer
+  const mainContent = html
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
+    .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "");
+  
+  // 1. Look for <details><summary> patterns (common accordion FAQ)
+  const detailsPattern = /<details[^>]*>\s*<summary[^>]*>([^<]+)<\/summary>\s*([\s\S]*?)<\/details>/gi;
+  let detailsMatch;
+  while ((detailsMatch = detailsPattern.exec(mainContent)) !== null) {
+    const question = cleanText(detailsMatch[1]);
+    const answerHtml = detailsMatch[2];
+    const answer = cleanText(answerHtml.replace(/<[^>]+>/g, ' '));
+    
+    if (question.length > 10 && answer.length > 20 && !seenQuestions.has(question.toLowerCase())) {
+      faqs.push({ question, answer: answer.substring(0, 500) });
+      seenQuestions.add(question.toLowerCase());
+    }
+    if (faqs.length >= 10) break;
+  }
+  
+  // 2. Look for common FAQ accordion patterns (divs with question/answer classes)
+  const accordionPatterns = [
+    /<div[^>]*class="[^"]*(?:faq|accordion)[^"]*"[^>]*>[\s\S]*?<(?:h[2-4]|button|div)[^>]*class="[^"]*(?:question|title|header)[^"]*"[^>]*>([^<]+)<\/(?:h[2-4]|button|div)>[\s\S]*?<(?:div|p)[^>]*class="[^"]*(?:answer|content|body)[^"]*"[^>]*>([\s\S]*?)<\/(?:div|p)>/gi,
+    /<div[^>]*class="[^"]*faq-item[^"]*"[^>]*>[\s\S]*?>([^<]*\?[^<]*)<[\s\S]*?<(?:div|p)[^>]*>([\s\S]*?)<\/(?:div|p)>/gi,
+  ];
+  
+  for (const pattern of accordionPatterns) {
+    let match;
+    while ((match = pattern.exec(mainContent)) !== null && faqs.length < 10) {
+      const question = cleanText(match[1]);
+      const answer = cleanText(match[2].replace(/<[^>]+>/g, ' '));
+      
+      if (question.length > 10 && answer.length > 20 && !seenQuestions.has(question.toLowerCase())) {
+        faqs.push({ question, answer: answer.substring(0, 500) });
+        seenQuestions.add(question.toLowerCase());
+      }
+    }
+  }
+  
+  // 3. Look for heading followed by paragraph (H3/H4 with ? followed by p)
+  const headingAnswerPattern = /<h[3-4][^>]*>([^<]*\?)<\/h[3-4]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let headingMatch;
+  while ((headingMatch = headingAnswerPattern.exec(mainContent)) !== null && faqs.length < 10) {
+    const question = cleanText(headingMatch[1]);
+    const answer = cleanText(headingMatch[2].replace(/<[^>]+>/g, ' '));
+    
+    if (question.length > 10 && answer.length > 20 && !seenQuestions.has(question.toLowerCase())) {
+      faqs.push({ question, answer: answer.substring(0, 500) });
+      seenQuestions.add(question.toLowerCase());
+    }
+  }
+  
+  return faqs;
+}
+
+// Extract testimonials and reviews
+interface Testimonial {
+  quote: string;
+  author: string | null;
+  role: string | null;
+  company: string | null;
+  rating: number | null;
+  imageUrl: string | null;
+}
+
+function extractTestimonials(html: string, baseUrl: string): Testimonial[] {
+  const testimonials: Testimonial[] = [];
+  const seenQuotes = new Set<string>();
+  
+  // Remove nav, header, footer
+  const mainContent = html
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
+    .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "");
+  
+  // 1. Look for blockquote elements (classic testimonial pattern)
+  const blockquotePattern = /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi;
+  let blockquoteMatch;
+  while ((blockquoteMatch = blockquotePattern.exec(mainContent)) !== null && testimonials.length < 8) {
+    const content = blockquoteMatch[1];
+    const quoteText = cleanText(content.replace(/<[^>]+>/g, ' '));
+    
+    // Skip if too short or already seen
+    if (quoteText.length < 30 || seenQuotes.has(quoteText.substring(0, 50).toLowerCase())) continue;
+    
+    // Try to find author nearby
+    const citeMatch = content.match(/<cite[^>]*>([^<]+)<\/cite>/i);
+    const authorMatch = content.match(/[-–—]\s*([^<,]+)/);
+    
+    testimonials.push({
+      quote: quoteText.substring(0, 400),
+      author: citeMatch ? cleanText(citeMatch[1]) : (authorMatch ? cleanText(authorMatch[1]) : null),
+      role: null,
+      company: null,
+      rating: null,
+      imageUrl: null,
+    });
+    seenQuotes.add(quoteText.substring(0, 50).toLowerCase());
+  }
+  
+  // 2. Look for testimonial/review classes
+  const testimonialPatterns = [
+    /<div[^>]*class="[^"]*(?:testimonial|review|quote)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+    /<article[^>]*class="[^"]*(?:testimonial|review)[^"]*"[^>]*>([\s\S]*?)<\/article>/gi,
+  ];
+  
+  for (const pattern of testimonialPatterns) {
+    let match;
+    while ((match = pattern.exec(mainContent)) !== null && testimonials.length < 8) {
+      const content = match[1];
+      
+      // Extract quote (look for p tag or text content)
+      const quoteMatch = content.match(/<p[^>]*class="[^"]*(?:quote|text|content)[^"]*"[^>]*>([^<]+)/i) ||
+                         content.match(/<p[^>]*>([^<]{30,})/i);
+      if (!quoteMatch) continue;
+      
+      const quoteText = cleanText(quoteMatch[1]);
+      if (quoteText.length < 30 || seenQuotes.has(quoteText.substring(0, 50).toLowerCase())) continue;
+      
+      // Try to find author
+      const authorMatch = content.match(/<(?:span|p|cite)[^>]*class="[^"]*(?:author|name)[^"]*"[^>]*>([^<]+)/i);
+      const roleMatch = content.match(/<(?:span|p)[^>]*class="[^"]*(?:role|title|position)[^"]*"[^>]*>([^<]+)/i);
+      const companyMatch = content.match(/<(?:span|p)[^>]*class="[^"]*(?:company|org)[^"]*"[^>]*>([^<]+)/i);
+      
+      // Look for star ratings (count star characters or look for rating class)
+      let rating: number | null = null;
+      const starsMatch = content.match(/[★⭐]{1,5}/);
+      if (starsMatch) {
+        rating = starsMatch[0].length;
+      }
+      const ratingClassMatch = content.match(/rating[^>]*>(\d)/i);
+      if (ratingClassMatch) {
+        rating = parseInt(ratingClassMatch[1]);
+      }
+      
+      // Look for avatar image
+      const imgMatch = content.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+      
+      testimonials.push({
+        quote: quoteText.substring(0, 400),
+        author: authorMatch ? cleanText(authorMatch[1]) : null,
+        role: roleMatch ? cleanText(roleMatch[1]) : null,
+        company: companyMatch ? cleanText(companyMatch[1]) : null,
+        rating,
+        imageUrl: imgMatch ? resolveUrl(imgMatch[1], baseUrl) : null,
+      });
+      seenQuotes.add(quoteText.substring(0, 50).toLowerCase());
+    }
+  }
+  
+  // 3. Look for Schema.org Review markup in JSON-LD (already handled in extractJsonLd)
+  // 4. Look for inline review patterns
+  const inlineReviewPattern = /"([^"]{50,300})"\s*[-–—]\s*([^<,\n]+)/g;
+  let inlineMatch;
+  while ((inlineMatch = inlineReviewPattern.exec(mainContent)) !== null && testimonials.length < 8) {
+    const quoteText = cleanText(inlineMatch[1]);
+    const author = cleanText(inlineMatch[2]);
+    
+    if (quoteText.length >= 30 && !seenQuotes.has(quoteText.substring(0, 50).toLowerCase())) {
+      testimonials.push({
+        quote: quoteText.substring(0, 400),
+        author,
+        role: null,
+        company: null,
+        rating: null,
+        imageUrl: null,
+      });
+      seenQuotes.add(quoteText.substring(0, 50).toLowerCase());
+    }
+  }
+  
+  return testimonials;
+}
+
 // Helper: resolve relative URLs to absolute
 function resolveUrl(url: string, baseUrl: string): string {
   try {
@@ -465,12 +765,27 @@ export async function extractSiteIdentity(url: string, html: string): Promise<Si
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const title = titleMatch ? cleanText(titleMatch[1]) : null;
   
+  // Extract structured data from JSON-LD
+  const structuredData = extractJsonLd(html, url);
+  
+  // Extract enhanced FAQs (Q&A pairs)
+  const enhancedFaqs = extractEnhancedFaqs(html);
+  
+  // Merge JSON-LD FAQs with HTML-extracted FAQs
+  const allEnhancedFaqs = [...structuredData.faqs, ...enhancedFaqs].slice(0, 10);
+  
+  // Extract testimonials
+  const testimonials = extractTestimonials(html, url);
+  
+  // Use organization name from structured data if available
+  const orgName = structuredData.organization?.name;
+  
   return {
     sourceDomain: domain,
-    title,
+    title: orgName || title,
     heroHeadline: extractHeroHeadline(html),
-    heroDescription: extractHeroDescription(html),
-    logoUrl: extractLogoUrl(html, url),
+    heroDescription: structuredData.organization?.description || extractHeroDescription(html),
+    logoUrl: structuredData.organization?.logo || extractLogoUrl(html, url),
     faviconUrl: extractFaviconUrl(html, url),
     heroImageUrl: extractHeroImageUrl(html, url),
     primaryColour: extractPrimaryColour(html),
@@ -479,6 +794,9 @@ export async function extractSiteIdentity(url: string, html: string): Promise<Si
     faqCandidates: extractFaqCandidates(html),
     imagePool: extractImagePool(html, url),
     extractedAt: new Date().toISOString(),
+    structuredData,
+    testimonials,
+    enhancedFaqs: allEnhancedFaqs,
   };
 }
 
