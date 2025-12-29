@@ -28,6 +28,49 @@ interface ValidatedContent {
   issues: string[];
 }
 
+interface Testimonial {
+  quote: string;
+  author: string | null;
+  role: string | null;
+  company: string | null;
+  rating: number | null;
+  imageUrl: string | null;
+}
+
+interface FaqPair {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  organization: {
+    name: string | null;
+    description: string | null;
+    url: string | null;
+    logo: string | null;
+    sameAs: string[];
+  } | null;
+  products: Array<{
+    name: string;
+    description: string | null;
+    price: string | null;
+    imageUrl: string | null;
+  }>;
+  faqs: FaqPair[];
+  events: Array<{
+    name: string;
+    description: string | null;
+    startDate: string | null;
+    location: string | null;
+  }>;
+  people: Array<{
+    name: string;
+    jobTitle: string | null;
+    description: string | null;
+    imageUrl: string | null;
+  }>;
+}
+
 interface SiteIdentity {
   sourceDomain: string;
   title: string | null;
@@ -43,6 +86,9 @@ interface SiteIdentity {
   extractedAt: string;
   imagePool?: string[];
   validatedContent?: ValidatedContent;
+  structuredData?: StructuredData | null;
+  testimonials?: Testimonial[];
+  enhancedFaqs?: FaqPair[];
 }
 
 interface PreviewInstance {
@@ -301,7 +347,7 @@ export default function OrbitView() {
     const imagePool = siteIdentity?.imagePool || [];
     
     const topics = [
-      ...(siteIdentity?.serviceBullets || []).slice(0, 6).map((bullet, i) => ({
+      ...(siteIdentity?.serviceBullets || []).slice(0, 12).map((bullet, i) => ({
         id: `t_${i}`,
         label: bullet.length > 40 ? bullet.slice(0, 40) + '...' : bullet,
         keywords: bullet.toLowerCase().split(/\s+/).filter(w => w.length > 3),
@@ -309,7 +355,7 @@ export default function OrbitView() {
         summary: bullet,
         imageUrl: imagePool[i % imagePool.length],
       })),
-      ...(validatedContent?.whatWeDo || []).slice(0, 4).map((item, i) => ({
+      ...(validatedContent?.whatWeDo || []).slice(0, 10).map((item, i) => ({
         id: `tw_${i}`,
         label: item.length > 40 ? item.slice(0, 40) + '...' : item,
         keywords: item.toLowerCase().split(/\s+/).filter(w => w.length > 3),
@@ -329,7 +375,7 @@ export default function OrbitView() {
         type: 'page' as const,
         imageUrl: siteIdentity?.heroImageUrl || imagePool[0],
       },
-      ...(siteIdentity?.serviceHeadings || []).slice(0, 5).map((heading, i) => ({
+      ...(siteIdentity?.serviceHeadings || []).slice(0, 10).map((heading, i) => ({
         id: `p_${i + 1}`,
         title: heading,
         url: preview.sourceUrl,
@@ -340,16 +386,79 @@ export default function OrbitView() {
       })),
     ];
 
-    const proof = (validatedContent?.commonQuestions || siteIdentity?.faqCandidates || []).slice(0, 4).map((faq, i) => {
-      const question = typeof faq === 'string' ? faq : faq.question;
-      return {
-        id: `pr_${i}`,
-        label: question.length > 50 ? question.slice(0, 50) + '...' : question,
-        summary: question,
-        keywords: question.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+    const proof: SiteKnowledge['proof'] = [];
+    
+    // Add testimonials as proof tiles (highest value)
+    const testimonials = siteIdentity?.testimonials || [];
+    testimonials.slice(0, 8).forEach((testimonial, i) => {
+      const label = testimonial.author 
+        ? `${testimonial.author}${testimonial.company ? ` - ${testimonial.company}` : ''}`
+        : 'Customer Testimonial';
+      proof.push({
+        id: `pt_${i}`,
+        label: label.length > 50 ? label.slice(0, 50) + '...' : label,
+        summary: testimonial.quote.length > 200 ? testimonial.quote.slice(0, 200) + '...' : testimonial.quote,
+        keywords: ['testimonial', 'review', 'customer', ...(testimonial.author?.toLowerCase().split(/\s+/) || [])],
+        type: 'proof' as const,
+        imageUrl: testimonial.imageUrl || imagePool[(i + 5) % imagePool.length],
+      });
+    });
+    
+    // Add enhanced FAQs as proof tiles
+    const enhancedFaqs = siteIdentity?.enhancedFaqs || [];
+    enhancedFaqs.slice(0, 8).forEach((faq, i) => {
+      proof.push({
+        id: `pf_${i}`,
+        label: faq.question.length > 50 ? faq.question.slice(0, 50) + '...' : faq.question,
+        summary: faq.answer.length > 200 ? faq.answer.slice(0, 200) + '...' : faq.answer,
+        keywords: [...faq.question.toLowerCase().split(/\s+/).filter(w => w.length > 3), 'faq', 'question'],
         type: 'proof' as const,
         imageUrl: imagePool[(i + 3) % imagePool.length],
-      };
+      });
+    });
+    
+    // Fallback to old FAQ candidates if no enhanced data
+    if (proof.length === 0) {
+      (validatedContent?.commonQuestions || siteIdentity?.faqCandidates || []).slice(0, 8).forEach((faq, i) => {
+        const question = typeof faq === 'string' ? faq : faq.question;
+        proof.push({
+          id: `pr_${i}`,
+          label: question.length > 50 ? question.slice(0, 50) + '...' : question,
+          summary: question,
+          keywords: question.toLowerCase().split(/\s+/).filter(w => w.length > 3),
+          type: 'proof' as const,
+          imageUrl: imagePool[(i + 3) % imagePool.length],
+        });
+      });
+    }
+
+    // Extract people from structured data
+    const people: SiteKnowledge['people'] = [];
+    const structuredPeople = siteIdentity?.structuredData?.people || [];
+    structuredPeople.slice(0, 10).forEach((person, i) => {
+      people.push({
+        id: `pe_${i}`,
+        name: person.name,
+        role: person.jobTitle || 'Team Member',
+        email: '',
+        phone: null,
+        avatar: person.imageUrl || null,
+        keywords: [person.name.toLowerCase(), ...(person.jobTitle?.toLowerCase().split(/\s+/) || []), 'team', 'person'],
+        type: 'person' as const,
+      });
+    });
+
+    // Add products as topics if available
+    const structuredProducts = siteIdentity?.structuredData?.products || [];
+    structuredProducts.slice(0, 10).forEach((product, i) => {
+      topics.push({
+        id: `tpr_${i}`,
+        label: product.name.length > 40 ? product.name.slice(0, 40) + '...' : product.name,
+        keywords: [...product.name.toLowerCase().split(/\s+/).filter(w => w.length > 3), 'product'],
+        type: 'topic' as const,
+        summary: product.description || `${product.name}${product.price ? ` - ${product.price}` : ''}`,
+        imageUrl: product.imageUrl || imagePool[(i + 4) % imagePool.length],
+      });
     });
 
     return {
@@ -361,7 +470,7 @@ export default function OrbitView() {
       },
       topics,
       pages,
-      people: [],
+      people,
       proof,
       actions: [
         {
@@ -570,6 +679,7 @@ export default function OrbitView() {
         <RadarGrid
           knowledge={generateSiteKnowledge(preview)}
           accentColor={brandPreferences?.accentColor || preview.siteIdentity.primaryColour || '#3b82f6'}
+          lightMode={brandPreferences?.theme === 'light'}
           onInteraction={() => trackMetric('interactions')}
           onSendMessage={async (message) => {
             if (isUnclaimed) {

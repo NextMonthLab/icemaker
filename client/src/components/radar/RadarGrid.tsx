@@ -37,6 +37,7 @@ interface RadarGridProps {
   onSendMessage: (message: string) => Promise<string>;
   accentColor?: string;
   onInteraction?: () => void;
+  lightMode?: boolean;
 }
 
 function generateTilePositions(count: number, ringSpacing: number = 180): { x: number; y: number }[] {
@@ -64,7 +65,7 @@ function generateTilePositions(count: number, ringSpacing: number = 180): { x: n
   return positions;
 }
 
-export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', onInteraction }: RadarGridProps) {
+export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', onInteraction, lightMode = false }: RadarGridProps) {
   const [isHubMinimized, setIsHubMinimized] = useState(false);
   const [conversationKeywords, setConversationKeywords] = useState<string[]>([]);
   const [selectedItem, setSelectedItem] = useState<AnyKnowledgeItem | null>(null);
@@ -372,12 +373,16 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
   const gridOffsetX = canvasOffset.x % gridSize;
   const gridOffsetY = canvasOffset.y % gridSize;
 
+  const bgColor = lightMode ? '#f8fafc' : '#0a0a0a';
+  const gridLineColor = lightMode ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.03)';
+  const edgeFadeColor = lightMode ? '#f8fafc' : '#0a0a0a';
+
   return (
     <div
       ref={containerRef}
       className="fixed inset-0 overflow-hidden select-none"
       style={{
-        background: '#0a0a0a',
+        background: bgColor,
         cursor: isDragging ? 'grabbing' : 'grab',
         touchAction: 'none',
       }}
@@ -394,8 +399,8 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            linear-gradient(${gridLineColor} 1px, transparent 1px),
+            linear-gradient(90deg, ${gridLineColor} 1px, transparent 1px)
           `,
           backgroundSize: `${gridSize}px ${gridSize}px`,
           backgroundPosition: `${gridOffsetX}px ${gridOffsetY}px`,
@@ -432,19 +437,20 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
               relevanceScore={score}
               position={{ x: pos.x, y: pos.y }}
               accentColor={accentColor}
+              lightMode={lightMode}
               zoomLevel={zoomLevel}
             />
           );
         })}
       </div>
 
-      {/* Feather edge - fade to black at screen edges for infinite universe feel */}
+      {/* Feather edge - fade at screen edges for infinite universe feel */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `
-            radial-gradient(ellipse 85% 75% at 50% 50%, transparent 35%, rgba(10,10,10,0.3) 55%, rgba(10,10,10,0.7) 75%, #0a0a0a 100%)
-          `,
+          background: lightMode
+            ? `radial-gradient(ellipse 85% 75% at 50% 50%, transparent 35%, rgba(248,250,252,0.3) 55%, rgba(248,250,252,0.7) 75%, ${edgeFadeColor} 100%)`
+            : `radial-gradient(ellipse 85% 75% at 50% 50%, transparent 35%, rgba(10,10,10,0.3) 55%, rgba(10,10,10,0.7) 75%, ${edgeFadeColor} 100%)`,
           zIndex: 10,
         }}
       />

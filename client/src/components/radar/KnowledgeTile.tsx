@@ -8,6 +8,7 @@ interface KnowledgeTileProps {
   position: { x: number; y: number };
   accentColor?: string;
   zoomLevel?: number;
+  lightMode?: boolean;
 }
 
 const typeIcons: Record<string, LucideIcon> = {
@@ -144,7 +145,7 @@ function getActionIcon(actionType: string) {
   }
 }
 
-export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoomLevel = 1 }: KnowledgeTileProps) {
+export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoomLevel = 1, lightMode = false }: KnowledgeTileProps) {
   const shouldReduceMotion = useReducedMotion();
   const CategoryIcon = getCategoryIcon(item);
   
@@ -228,12 +229,12 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
       style={{
         width: tileWidth,
         height: tileHeight,
-        backgroundColor: 'rgba(20, 20, 20, 0.95)',
+        backgroundColor: lightMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(20, 20, 20, 0.95)',
         backdropFilter: 'blur(8px)',
         border: `1px solid ${color}${Math.floor(30 + glowIntensity * 40).toString(16)}`,
         boxShadow: glowIntensity > 0.2 
-          ? `0 0 ${20 + glowIntensity * 40}px ${color}${Math.floor(glowIntensity * 50).toString(16)}, 0 4px 20px rgba(0,0,0,0.4)`
-          : '0 4px 20px rgba(0,0,0,0.3)',
+          ? `0 0 ${20 + glowIntensity * 40}px ${color}${Math.floor(glowIntensity * 50).toString(16)}, 0 4px 20px ${lightMode ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.4)'}`
+          : lightMode ? '0 4px 20px rgba(0,0,0,0.1)' : '0 4px 20px rgba(0,0,0,0.3)',
         left: '50%',
         top: '50%',
         marginLeft: -tileWidth / 2,
@@ -281,10 +282,10 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
           <TypeIcon className="w-3 h-3" style={{ color: 'white' }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white text-[9px] font-medium leading-tight line-clamp-2">
+          <p className={`text-[9px] font-medium leading-tight line-clamp-2 ${lightMode ? 'text-gray-900' : 'text-white'}`}>
             {getLabel()}
           </p>
-          <p className="text-white/60 text-[7px] line-clamp-2 mt-0.5 leading-tight">
+          <p className={`text-[7px] line-clamp-2 mt-0.5 leading-tight ${lightMode ? 'text-gray-600' : 'text-white/60'}`}>
             {getSummary()}
           </p>
         </div>
