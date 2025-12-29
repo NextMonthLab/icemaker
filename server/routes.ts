@@ -889,6 +889,51 @@ export async function registerRoutes(
     }
   });
   
+  // ============ ANALYTICS ROUTES ============
+  
+  app.post("/api/public/analytics/event", async (req, res) => {
+    try {
+      const { type, universeId, cardId, metadata } = req.body;
+      
+      if (!type || !universeId) {
+        return res.status(400).json({ message: "type and universeId are required" });
+      }
+      
+      const validTypes = ['experience_view', 'card_view', 'conversation_start', 'question_asked', 'chat_message'];
+      if (!validTypes.includes(type)) {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+      
+      await storage.logEvent({
+        type,
+        userId: (req.user as any)?.id || null,
+        metadataJson: {
+          universeId,
+          cardId,
+          ...metadata,
+        },
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error logging analytics event:", error);
+      res.status(500).json({ message: "Error logging event" });
+    }
+  });
+  
+  app.get("/api/analytics/experience/:id/summary", requireAdmin, async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const days = parseInt(req.query.days as string) || 30;
+      
+      const summary = await storage.getExperienceAnalyticsSummary(universeId, days);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching analytics summary:", error);
+      res.status(500).json({ message: "Error fetching analytics" });
+    }
+  });
+  
   // ============ CHARACTER ROUTES ============
   
   app.get("/api/characters", async (req, res) => {
