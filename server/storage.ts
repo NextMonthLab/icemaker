@@ -264,6 +264,43 @@ export interface IStorage {
   getMagicLink(token: string): Promise<schema.MagicLink | undefined>;
   markMagicLinkUsed(token: string): Promise<void>;
   cleanupExpiredMagicLinks(): Promise<number>;
+
+  // Phase 5: Data Sources (API Snapshot Ingestion)
+  // Secrets
+  createApiSecret(data: schema.InsertApiSecret): Promise<schema.ApiSecret>;
+  getApiSecret(id: number): Promise<schema.ApiSecret | undefined>;
+  getApiSecretsByOrbit(orbitSlug: string): Promise<schema.ApiSecret[]>;
+  deleteApiSecret(id: number): Promise<void>;
+  
+  // Connections
+  createApiConnection(data: schema.InsertApiConnection): Promise<schema.ApiConnection>;
+  getApiConnection(id: number): Promise<schema.ApiConnection | undefined>;
+  getApiConnectionsByOrbit(orbitSlug: string): Promise<schema.ApiConnection[]>;
+  updateApiConnection(id: number, data: Partial<schema.InsertApiConnection>): Promise<schema.ApiConnection | undefined>;
+  deleteApiConnection(id: number): Promise<void>;
+  
+  // Endpoints
+  createApiEndpoint(data: schema.InsertApiEndpoint): Promise<schema.ApiEndpoint>;
+  getApiEndpoint(id: number): Promise<schema.ApiEndpoint | undefined>;
+  getApiEndpointsByConnection(connectionId: number): Promise<schema.ApiEndpoint[]>;
+  updateApiEndpoint(id: number, data: Partial<schema.InsertApiEndpoint>): Promise<schema.ApiEndpoint | undefined>;
+  deleteApiEndpoint(id: number): Promise<void>;
+  
+  // Snapshots
+  createApiSnapshot(data: schema.InsertApiSnapshot): Promise<schema.ApiSnapshot>;
+  getApiSnapshot(id: number): Promise<schema.ApiSnapshot | undefined>;
+  getApiSnapshotsByEndpoint(endpointId: number, limit?: number): Promise<schema.ApiSnapshot[]>;
+  getLatestSnapshot(endpointId: number): Promise<schema.ApiSnapshot | undefined>;
+  updateApiSnapshot(id: number, data: Partial<schema.InsertApiSnapshot>): Promise<schema.ApiSnapshot | undefined>;
+  getNextSnapshotVersion(endpointId: number): Promise<number>;
+  findSnapshotByHash(endpointId: number, requestHash: string): Promise<schema.ApiSnapshot | undefined>;
+  
+  // Curated Items
+  createApiCuratedItem(data: schema.InsertApiCuratedItem): Promise<schema.ApiCuratedItem>;
+  createApiCuratedItems(data: schema.InsertApiCuratedItem[]): Promise<schema.ApiCuratedItem[]>;
+  getApiCuratedItemsBySnapshot(snapshotId: number): Promise<schema.ApiCuratedItem[]>;
+  getApiCuratedItemsByOrbit(orbitSlug: string, limit?: number): Promise<schema.ApiCuratedItem[]>;
+  getLatestCuratedItemsByConnection(connectionId: number): Promise<schema.ApiCuratedItem[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1785,6 +1822,189 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${schema.magicLinks.expiresAt} < NOW()`)
       .returning();
     return result.length;
+  }
+
+  // Phase 5: Data Sources (API Snapshot Ingestion)
+  // Secrets
+  async createApiSecret(data: schema.InsertApiSecret): Promise<schema.ApiSecret> {
+    const [secret] = await db.insert(schema.apiSecrets).values(data).returning();
+    return secret;
+  }
+
+  async getApiSecret(id: number): Promise<schema.ApiSecret | undefined> {
+    return db.query.apiSecrets.findFirst({
+      where: eq(schema.apiSecrets.id, id),
+    });
+  }
+
+  async getApiSecretsByOrbit(orbitSlug: string): Promise<schema.ApiSecret[]> {
+    return db.query.apiSecrets.findMany({
+      where: eq(schema.apiSecrets.orbitSlug, orbitSlug),
+      orderBy: [desc(schema.apiSecrets.createdAt)],
+    });
+  }
+
+  async deleteApiSecret(id: number): Promise<void> {
+    await db.delete(schema.apiSecrets).where(eq(schema.apiSecrets.id, id));
+  }
+
+  // Connections
+  async createApiConnection(data: schema.InsertApiConnection): Promise<schema.ApiConnection> {
+    const [connection] = await db.insert(schema.apiConnections).values(data).returning();
+    return connection;
+  }
+
+  async getApiConnection(id: number): Promise<schema.ApiConnection | undefined> {
+    return db.query.apiConnections.findFirst({
+      where: eq(schema.apiConnections.id, id),
+    });
+  }
+
+  async getApiConnectionsByOrbit(orbitSlug: string): Promise<schema.ApiConnection[]> {
+    return db.query.apiConnections.findMany({
+      where: eq(schema.apiConnections.orbitSlug, orbitSlug),
+      orderBy: [desc(schema.apiConnections.createdAt)],
+    });
+  }
+
+  async updateApiConnection(id: number, data: Partial<schema.InsertApiConnection>): Promise<schema.ApiConnection | undefined> {
+    const [connection] = await db.update(schema.apiConnections)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.apiConnections.id, id))
+      .returning();
+    return connection;
+  }
+
+  async deleteApiConnection(id: number): Promise<void> {
+    await db.delete(schema.apiConnections).where(eq(schema.apiConnections.id, id));
+  }
+
+  // Endpoints
+  async createApiEndpoint(data: schema.InsertApiEndpoint): Promise<schema.ApiEndpoint> {
+    const [endpoint] = await db.insert(schema.apiEndpoints).values(data).returning();
+    return endpoint;
+  }
+
+  async getApiEndpoint(id: number): Promise<schema.ApiEndpoint | undefined> {
+    return db.query.apiEndpoints.findFirst({
+      where: eq(schema.apiEndpoints.id, id),
+    });
+  }
+
+  async getApiEndpointsByConnection(connectionId: number): Promise<schema.ApiEndpoint[]> {
+    return db.query.apiEndpoints.findMany({
+      where: eq(schema.apiEndpoints.connectionId, connectionId),
+      orderBy: [asc(schema.apiEndpoints.createdAt)],
+    });
+  }
+
+  async updateApiEndpoint(id: number, data: Partial<schema.InsertApiEndpoint>): Promise<schema.ApiEndpoint | undefined> {
+    const [endpoint] = await db.update(schema.apiEndpoints)
+      .set(data)
+      .where(eq(schema.apiEndpoints.id, id))
+      .returning();
+    return endpoint;
+  }
+
+  async deleteApiEndpoint(id: number): Promise<void> {
+    await db.delete(schema.apiEndpoints).where(eq(schema.apiEndpoints.id, id));
+  }
+
+  // Snapshots
+  async createApiSnapshot(data: schema.InsertApiSnapshot): Promise<schema.ApiSnapshot> {
+    const [snapshot] = await db.insert(schema.apiSnapshots).values(data).returning();
+    return snapshot;
+  }
+
+  async getApiSnapshot(id: number): Promise<schema.ApiSnapshot | undefined> {
+    return db.query.apiSnapshots.findFirst({
+      where: eq(schema.apiSnapshots.id, id),
+    });
+  }
+
+  async getApiSnapshotsByEndpoint(endpointId: number, limit: number = 30): Promise<schema.ApiSnapshot[]> {
+    return db.query.apiSnapshots.findMany({
+      where: eq(schema.apiSnapshots.endpointId, endpointId),
+      orderBy: [desc(schema.apiSnapshots.fetchedAt)],
+      limit,
+    });
+  }
+
+  async getLatestSnapshot(endpointId: number): Promise<schema.ApiSnapshot | undefined> {
+    return db.query.apiSnapshots.findFirst({
+      where: and(
+        eq(schema.apiSnapshots.endpointId, endpointId),
+        eq(schema.apiSnapshots.status, 'ready')
+      ),
+      orderBy: [desc(schema.apiSnapshots.version)],
+    });
+  }
+
+  async updateApiSnapshot(id: number, data: Partial<schema.InsertApiSnapshot>): Promise<schema.ApiSnapshot | undefined> {
+    const [snapshot] = await db.update(schema.apiSnapshots)
+      .set(data)
+      .where(eq(schema.apiSnapshots.id, id))
+      .returning();
+    return snapshot;
+  }
+
+  async getNextSnapshotVersion(endpointId: number): Promise<number> {
+    const result = await db.select({ maxVersion: sql<number>`COALESCE(MAX(${schema.apiSnapshots.version}), 0)` })
+      .from(schema.apiSnapshots)
+      .where(eq(schema.apiSnapshots.endpointId, endpointId));
+    return (result[0]?.maxVersion || 0) + 1;
+  }
+
+  async findSnapshotByHash(endpointId: number, requestHash: string): Promise<schema.ApiSnapshot | undefined> {
+    return db.query.apiSnapshots.findFirst({
+      where: and(
+        eq(schema.apiSnapshots.endpointId, endpointId),
+        eq(schema.apiSnapshots.requestHash, requestHash)
+      ),
+    });
+  }
+
+  // Curated Items
+  async createApiCuratedItem(data: schema.InsertApiCuratedItem): Promise<schema.ApiCuratedItem> {
+    const [item] = await db.insert(schema.apiCuratedItems).values(data).returning();
+    return item;
+  }
+
+  async createApiCuratedItems(data: schema.InsertApiCuratedItem[]): Promise<schema.ApiCuratedItem[]> {
+    if (data.length === 0) return [];
+    return db.insert(schema.apiCuratedItems).values(data).returning();
+  }
+
+  async getApiCuratedItemsBySnapshot(snapshotId: number): Promise<schema.ApiCuratedItem[]> {
+    return db.query.apiCuratedItems.findMany({
+      where: eq(schema.apiCuratedItems.snapshotId, snapshotId),
+      orderBy: [asc(schema.apiCuratedItems.id)],
+    });
+  }
+
+  async getApiCuratedItemsByOrbit(orbitSlug: string, limit: number = 100): Promise<schema.ApiCuratedItem[]> {
+    return db.query.apiCuratedItems.findMany({
+      where: eq(schema.apiCuratedItems.orbitSlug, orbitSlug),
+      orderBy: [desc(schema.apiCuratedItems.indexedAt)],
+      limit,
+    });
+  }
+
+  async getLatestCuratedItemsByConnection(connectionId: number): Promise<schema.ApiCuratedItem[]> {
+    // Get the latest snapshot for each endpoint in this connection
+    const snapshots = await db.query.apiSnapshots.findMany({
+      where: and(
+        eq(schema.apiSnapshots.connectionId, connectionId),
+        eq(schema.apiSnapshots.status, 'ready')
+      ),
+      orderBy: [desc(schema.apiSnapshots.version)],
+    });
+    
+    if (snapshots.length === 0) return [];
+    
+    // Get items from the latest snapshot
+    const latestSnapshot = snapshots[0];
+    return this.getApiCuratedItemsBySnapshot(latestSnapshot.id);
   }
 }
 
