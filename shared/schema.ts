@@ -1655,3 +1655,67 @@ export const deviceRateLimits = pgTable("device_rate_limits", {
 export const insertDeviceRateLimitSchema = createInsertSchema(deviceRateLimits).omit({ id: true });
 export type InsertDeviceRateLimit = z.infer<typeof insertDeviceRateLimitSchema>;
 export type DeviceRateLimit = typeof deviceRateLimits.$inferSelect;
+
+// ============================================
+// ORBIT CUBES (Physical Hardware Devices)
+// ============================================
+
+// Orbit Cube status
+export type OrbitCubeStatus = 'pending_pairing' | 'online' | 'sleeping' | 'offline' | 'revoked';
+
+// Orbit Cubes - hardware devices for kiosk display
+export const orbitCubes = pgTable("orbit_cubes", {
+  id: serial("id").primaryKey(),
+  cubeUuid: text("cube_uuid").unique().notNull(), // Server-issued UUID
+  orbitSlug: text("orbit_slug").references(() => orbitMeta.businessSlug).notNull(),
+  ownerUserId: integer("owner_user_id").references(() => users.id),
+  
+  name: text("name").default("Orbit Cube").notNull(),
+  status: text("status").$type<OrbitCubeStatus>().default("pending_pairing").notNull(),
+  
+  // Pairing
+  pairingCode: text("pairing_code"), // Short-lived, regeneratable (6-10 chars uppercase)
+  pairingCodeExpiresAt: timestamp("pairing_code_expires_at"),
+  deviceTokenHash: text("device_token_hash"), // Null until paired
+  
+  // Settings
+  sleepTimeoutMinutes: integer("sleep_timeout_minutes").default(30).notNull(),
+  
+  // Activity tracking
+  lastSeenAt: timestamp("last_seen_at"),
+  lastSeenIp: text("last_seen_ip"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+});
+
+export const insertOrbitCubeSchema = createInsertSchema(orbitCubes).omit({ id: true, createdAt: true });
+export type InsertOrbitCube = z.infer<typeof insertOrbitCubeSchema>;
+export type OrbitCube = typeof orbitCubes.$inferSelect;
+
+// Orbit Cube order status
+export type OrbitCubeOrderStatus = 'created' | 'paid' | 'failed' | 'refunded';
+
+// Orbit Cube Orders - purchase tracking
+export const orbitCubeOrders = pgTable("orbit_cube_orders", {
+  id: serial("id").primaryKey(),
+  orbitSlug: text("orbit_slug").references(() => orbitMeta.businessSlug).notNull(),
+  cubeId: integer("cube_id").references(() => orbitCubes.id),
+  
+  // Stripe integration
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  
+  // Pricing (in GBP pence for precision)
+  hardwarePriceGbp: integer("hardware_price_gbp").default(29900).notNull(), // £299.00
+  monthlyPriceGbp: integer("monthly_price_gbp").default(2900).notNull(), // £29.00
+  
+  status: text("status").$type<OrbitCubeOrderStatus>().default("created").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrbitCubeOrderSchema = createInsertSchema(orbitCubeOrders).omit({ id: true, createdAt: true });
+export type InsertOrbitCubeOrder = z.infer<typeof insertOrbitCubeOrderSchema>;
+export type OrbitCubeOrder = typeof orbitCubeOrders.$inferSelect;

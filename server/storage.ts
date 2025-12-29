@@ -2136,6 +2136,122 @@ export class DatabaseStorage implements IStorage {
     await this.updateRateLimit(limit.id, newTokens - 1);
     return { allowed: true, tokensRemaining: newTokens - 1 };
   }
+
+  // ============================================
+  // ORBIT CUBES (Physical Hardware Devices)
+  // ============================================
+
+  async createOrbitCube(data: schema.InsertOrbitCube): Promise<schema.OrbitCube> {
+    const [cube] = await db.insert(schema.orbitCubes).values(data).returning();
+    return cube;
+  }
+
+  async getOrbitCube(cubeUuid: string): Promise<schema.OrbitCube | undefined> {
+    return db.query.orbitCubes.findFirst({
+      where: eq(schema.orbitCubes.cubeUuid, cubeUuid),
+    });
+  }
+
+  async getOrbitCubeById(id: number): Promise<schema.OrbitCube | undefined> {
+    return db.query.orbitCubes.findFirst({
+      where: eq(schema.orbitCubes.id, id),
+    });
+  }
+
+  async getOrbitCubesByOrbit(orbitSlug: string): Promise<schema.OrbitCube[]> {
+    return db.query.orbitCubes.findMany({
+      where: and(
+        eq(schema.orbitCubes.orbitSlug, orbitSlug),
+        sql`${schema.orbitCubes.revokedAt} IS NULL`
+      ),
+      orderBy: [desc(schema.orbitCubes.createdAt)],
+    });
+  }
+
+  async getOrbitCubeByPairingCode(pairingCode: string): Promise<schema.OrbitCube | undefined> {
+    return db.query.orbitCubes.findFirst({
+      where: and(
+        eq(schema.orbitCubes.pairingCode, pairingCode),
+        sql`${schema.orbitCubes.pairingCodeExpiresAt} > NOW()`,
+        sql`${schema.orbitCubes.revokedAt} IS NULL`
+      ),
+    });
+  }
+
+  async updateOrbitCube(cubeUuid: string, data: Partial<schema.InsertOrbitCube>): Promise<schema.OrbitCube | undefined> {
+    const [cube] = await db.update(schema.orbitCubes)
+      .set(data)
+      .where(eq(schema.orbitCubes.cubeUuid, cubeUuid))
+      .returning();
+    return cube;
+  }
+
+  async updateOrbitCubeById(id: number, data: Partial<schema.InsertOrbitCube>): Promise<schema.OrbitCube | undefined> {
+    const [cube] = await db.update(schema.orbitCubes)
+      .set(data)
+      .where(eq(schema.orbitCubes.id, id))
+      .returning();
+    return cube;
+  }
+
+  async revokeOrbitCube(cubeUuid: string): Promise<void> {
+    await db.update(schema.orbitCubes)
+      .set({ status: 'revoked', revokedAt: new Date() })
+      .where(eq(schema.orbitCubes.cubeUuid, cubeUuid));
+  }
+
+  async regenerateCubePairingCode(cubeUuid: string): Promise<{ code: string; expiresAt: Date }> {
+    const code = this.generatePairingCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    await db.update(schema.orbitCubes)
+      .set({ pairingCode: code, pairingCodeExpiresAt: expiresAt })
+      .where(eq(schema.orbitCubes.cubeUuid, cubeUuid));
+    
+    return { code, expiresAt };
+  }
+
+  private generatePairingCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars (0, O, 1, I)
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  // Orbit Cube Orders
+  async createOrbitCubeOrder(data: schema.InsertOrbitCubeOrder): Promise<schema.OrbitCubeOrder> {
+    const [order] = await db.insert(schema.orbitCubeOrders).values(data).returning();
+    return order;
+  }
+
+  async getOrbitCubeOrder(id: number): Promise<schema.OrbitCubeOrder | undefined> {
+    return db.query.orbitCubeOrders.findFirst({
+      where: eq(schema.orbitCubeOrders.id, id),
+    });
+  }
+
+  async getOrbitCubeOrderByCheckoutSession(sessionId: string): Promise<schema.OrbitCubeOrder | undefined> {
+    return db.query.orbitCubeOrders.findFirst({
+      where: eq(schema.orbitCubeOrders.stripeCheckoutSessionId, sessionId),
+    });
+  }
+
+  async getOrbitCubeOrdersByOrbit(orbitSlug: string): Promise<schema.OrbitCubeOrder[]> {
+    return db.query.orbitCubeOrders.findMany({
+      where: eq(schema.orbitCubeOrders.orbitSlug, orbitSlug),
+      orderBy: [desc(schema.orbitCubeOrders.createdAt)],
+    });
+  }
+
+  async updateOrbitCubeOrder(id: number, data: Partial<schema.InsertOrbitCubeOrder>): Promise<schema.OrbitCubeOrder | undefined> {
+    const [order] = await db.update(schema.orbitCubeOrders)
+      .set(data)
+      .where(eq(schema.orbitCubeOrders.id, id))
+      .returning();
+    return order;
+  }
 }
 
 export const storage = new DatabaseStorage();

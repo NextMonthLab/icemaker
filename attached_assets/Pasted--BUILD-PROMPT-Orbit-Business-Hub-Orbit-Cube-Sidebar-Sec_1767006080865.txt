@@ -1,0 +1,163 @@
+# BUILD PROMPT — Orbit Business Hub: “Orbit Cube” Sidebar Section + Order Flow (START BUILD)
+
+## Context
+We have a working **Orbit Business Hub** (left sidebar + main content area) inside the current NextMonth build (Orbit + IceMaker).
+We are adding a new sidebar section called **“Orbit Cube”** which lets users:
+1) Learn what the NextMonth Orbit Cube is
+2) Order a Cube (one-off hardware + monthly subscription)
+3) Manage their Cube(s) once purchased (pairing, name, sleep timeout, revoke)
+
+This is an Orbit-side feature (NOT the Raspberry Pi client). It must integrate with our existing auth/tenant model.
+
+## Goal
+Add an **Orbit Cube** nav item in the left sidebar.
+Clicking it opens a dedicated page that has:
+- A sales/benefits “empty state” when the user has no Cubes
+- An “Order Orbit Cube” modal with pricing + checkout
+- A management UI once a Cube exists
+
+We want users to be able to **order directly from inside Orbit**.
+
+---
+
+# A) UI Requirements
+
+## 1) Sidebar
+- Add sidebar item: **Orbit Cube**
+- Place it **below “Data Sources”** and **above “Settings”**
+- Icon: cube (simple)
+
+## 2) Orbit Cube page: two states
+
+### State A: No Cube yet (Empty state, but premium)
+Hero:
+- Title: **Bring Orbit into the room**
+- Subline: “The NextMonth Orbit Cube is a dedicated, always-on interface for your business intelligence — voice-enabled, secure, and built to live on your desk or boardroom table.”
+
+Primary CTA button: **Order Orbit Cube**
+Secondary: **See how it works** (opens a simple info modal for now)
+
+Below hero, show 3 benefit tiles:
+1) **Always-on intelligence** — “Your latest snapshots and insights, ready without logging in.”
+2) **Voice-first access** — “Ask questions, explore data, and get answers out loud.”
+3) **One brain, many surfaces** — “Same Orbit experience as web — now physical.”
+
+### State B: User has Cube(s)
+Show a list of Cube cards:
+Each card includes:
+- Cube name (editable)
+- Status badge: Online / Sleeping / Offline / Pending pairing
+- Last activity timestamp
+Actions:
+- View pairing code
+- Rename
+- Sleep settings (timeout selector)
+- Revoke device (security)
+
+Global CTA: **Order another Cube** (optional but OK)
+
+---
+
+# B) Order Flow (Modal)
+
+Click “Order Orbit Cube” opens a multi-step modal (do NOT navigate away).
+
+### Step 1: Overview
+Title: **NextMonth Orbit Cube**
+Short description: “A dedicated physical interface for Orbit. Always on. Voice enabled. Built for decision-making, not dashboards.”
+Includes list:
+- Pre-configured Orbit Cube (Raspberry Pi 5 based)
+- Secure device pairing to your Orbit Business Hub
+- Automatic updates and monitoring
+- Voice interaction (text + speech)
+- Kiosk-mode Orbit experience
+CTA: Continue
+
+### Step 2: Pricing
+Hardware (one-off): **£299**
+Subscription (monthly): **£29 / month per Cube**
+Note: “Requires an active Orbit Business subscription. Subscription covers secure connectivity, device management, voice features, and ongoing Orbit integration.”
+CTA: Order now
+
+### Step 3: Checkout
+Implement Stripe Checkout (preferred) OR a stubbed “Checkout placeholder” if Stripe wiring is not ready.
+- If Stripe is ready: create a Checkout Session for:
+  - One-time hardware line item (£299)
+  - Recurring subscription line item (£29/month)
+- On success, create Cube record in DB with status “Pending pairing”
+- Then show success state:
+  - “Order placed — your Cube is now ready to pair.”
+  - CTA: “View pairing code”
+
+---
+
+# C) Data Model + API (Required)
+
+## 1) DB tables (or Prisma models / whichever the app uses)
+Create `orbit_cubes` table:
+- id (UUID)
+- orbit_slug / tenant/business identifier (use existing canonical tenant key)
+- owner_user_id (if needed)
+- name (default: “Orbit Cube”)
+- status (enum: pending_pairing | online | sleeping | offline | revoked)
+- pairing_code (short-lived or regeneratable)
+- pairing_code_expires_at
+- device_token_hash (null until paired)
+- sleep_timeout_minutes (default 30)
+- last_seen_at
+- created_at
+
+Create `orbit_cube_orders` table (optional but recommended):
+- id
+- orbit_slug
+- cube_id
+- stripe_checkout_session_id
+- stripe_payment_intent_id
+- stripe_subscription_id
+- hardware_price_gbp
+- monthly_price_gbp
+- status (created | paid | failed | refunded)
+- created_at
+
+## 2) API routes
+Implement:
+- GET `/api/orbit/:slug/cubes` → list cubes
+- POST `/api/orbit/:slug/cubes` → create cube (internal, called after paid)
+- POST `/api/orbit/:slug/cubes/:id/pairing-code/regenerate`
+- PATCH `/api/orbit/:slug/cubes/:id` → rename, sleep timeout
+- POST `/api/orbit/:slug/cubes/:id/revoke`
+
+For ordering:
+- POST `/api/orbit/:slug/cubes/checkout` → creates Stripe Checkout Session (or placeholder)
+
+## 3) Pairing code logic
+- Pairing code should be easy to type (6–10 chars), uppercase alphanumeric.
+- Expires (e.g. 15 mins) and can be regenerated.
+- Store hashed token if it becomes a long-lived device token.
+
+---
+
+# D) Non-negotiable UX + Safety
+- Keep it premium and minimal; do not overload with technical controls.
+- Revoke should require confirmation.
+- Display “Last active” and “Status” clearly.
+- Make sure the Cube section works on mobile, tablet, desktop.
+
+---
+
+# E) Implementation Notes
+- Use existing styling system and layout components.
+- Reuse existing modal component.
+- Prefer feature-flagging Stripe if needed:
+  - If STRIPE_SECRET_KEY not present, show placeholder checkout UI but keep the flow.
+
+---
+
+# F) Deliverables
+1) Working sidebar item + Orbit Cube page with both states.
+2) Working “Order Orbit Cube” modal (with Stripe or placeholder).
+3) DB + API endpoints implemented and wired.
+4) Pairing code generation + regeneration working.
+5) Basic management actions: rename, sleep timeout, revoke.
+
+Start implementing now. If any part is missing in the codebase, make reasonable assumptions and keep changes minimal and consistent.
