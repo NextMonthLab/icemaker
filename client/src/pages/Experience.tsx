@@ -5,8 +5,9 @@ import CardPlayer from "@/components/CardPlayer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { trackExperienceView, trackCardView } from "@/lib/analytics";
 
 export default function Experience() {
   const { slug } = useParams<{ slug: string }>();
@@ -37,6 +38,18 @@ export default function Experience() {
   }, [selectedIndex, startCard, availableCards]);
 
   const currentCard = availableCards[cardIndex];
+
+  useEffect(() => {
+    if (universe?.id) {
+      trackExperienceView(universe.id);
+    }
+  }, [universe?.id]);
+
+  useEffect(() => {
+    if (universe?.id && currentCard?.id) {
+      trackCardView(universe.id, currentCard.id);
+    }
+  }, [universe?.id, currentCard?.id]);
 
   const { data: cardCharacters } = useQuery({
     queryKey: ["card-characters", currentCard?.id],
