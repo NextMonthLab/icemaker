@@ -7135,6 +7135,238 @@ GUIDELINES:
     }
   });
 
+  // ==========================================
+  // Orbit Cube Routes (Physical Hardware Orders & Management)
+  // ==========================================
+
+  // List cubes for an orbit (owner only)
+  app.get("/api/orbit/:slug/cubes", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const cubes = await storage.getOrbitCubesByOrbit(slug);
+      res.json(cubes);
+    } catch (error: any) {
+      console.error("Error fetching cubes:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch cubes" });
+    }
+  });
+
+  // Get single cube details
+  app.get("/api/orbit/:slug/cubes/:cubeId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { cubeId } = req.params;
+      const cube = await storage.getOrbitCubeById(parseInt(cubeId));
+      if (!cube) {
+        return res.status(404).json({ message: "Cube not found" });
+      }
+      res.json(cube);
+    } catch (error: any) {
+      console.error("Error fetching cube:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch cube" });
+    }
+  });
+
+  // Create checkout session for ordering a cube
+  app.post("/api/orbit/:slug/cubes/checkout", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Create cube record in pending_pairing status
+      const cubeUuid = `cube_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+      const pairingCode = generateCubePairingCode();
+      const pairingCodeExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      
+      const cube = await storage.createOrbitCube({
+        cubeUuid,
+        orbitSlug: slug,
+        ownerUserId: userId,
+        name: 'Orbit Cube',
+        status: 'pending_pairing',
+        pairingCode,
+        pairingCodeExpiresAt,
+      });
+      
+      // Create order record
+      const order = await storage.createOrbitCubeOrder({
+        orbitSlug: slug,
+        cubeId: cube.id,
+        hardwarePriceGbp: 29900, // £299.00
+        monthlyPriceGbp: 2900, // £29.00
+        status: 'created',
+      });
+      
+      // Check if Stripe is configured
+      const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+      
+      if (stripeSecretKey) {
+        // Create real Stripe checkout session
+        try {
+          const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-12-18.acacia' });
+          
+          const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            line_items: [
+              {
+                price_data: {
+                  currency: 'gbp',
+                  product_data: {
+                    name: 'NextMonth Orbit Cube',
+                    description: 'Physical hardware device with voice-enabled kiosk display',
+                  },
+                  unit_amount: 29900, // £299.00 one-time
+                  recurring: undefined,
+                },
+                quantity: 1,
+              },
+              {
+                price_data: {
+                  currency: 'gbp',
+                  product_data: {
+                    name: 'Orbit Cube Subscription',
+                    description: 'Monthly connectivity, updates, and voice features',
+                  },
+                  unit_amount: 2900, // £29.00/month
+                  recurring: { interval: 'month' },
+                },
+                quantity: 1,
+              },
+            ],
+            success_url: `${req.protocol}://${req.get('host')}/orbit/${slug}/hub?panel=cubes&success=true&orderId=${order.id}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/orbit/${slug}/hub?panel=cubes&cancelled=true`,
+            metadata: {
+              orderId: order.id.toString(),
+              cubeId: cube.id.toString(),
+              orbitSlug: slug,
+            },
+          });
+          
+          // Update order with session ID
+          await storage.updateOrbitCubeOrder(order.id, {
+            stripeCheckoutSessionId: session.id,
+          });
+          
+          res.json({
+            checkoutUrl: session.url,
+            orderId: order.id,
+            cubeId: cube.id,
+          });
+        } catch (stripeError: any) {
+          console.error("Stripe error:", stripeError);
+          // Fall back to placeholder mode
+          res.json({
+            checkoutUrl: null,
+            orderId: order.id,
+            cubeId: cube.id,
+            placeholder: true,
+            message: "Stripe checkout is temporarily unavailable. Order created.",
+          });
+        }
+      } else {
+        // Placeholder checkout (Stripe not configured)
+        // Auto-mark order as paid for demo purposes
+        await storage.updateOrbitCubeOrder(order.id, { status: 'paid' });
+        
+        res.json({
+          checkoutUrl: null,
+          orderId: order.id,
+          cubeId: cube.id,
+          pairingCode: cube.pairingCode,
+          placeholder: true,
+          message: "Order placed successfully (demo mode - no payment required)",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error creating checkout:", error);
+      res.status(500).json({ message: error.message || "Failed to create checkout" });
+    }
+  });
+
+  // Regenerate pairing code for a cube
+  app.post("/api/orbit/:slug/cubes/:cubeId/pairing-code/regenerate", requireOrbitOwner, async (req, res) => {
+    try {
+      const { cubeId } = req.params;
+      
+      const cube = await storage.getOrbitCubeById(parseInt(cubeId));
+      if (!cube) {
+        return res.status(404).json({ message: "Cube not found" });
+      }
+      
+      if (cube.status === 'revoked') {
+        return res.status(400).json({ message: "Cannot regenerate code for revoked cube" });
+      }
+      
+      const result = await storage.regenerateCubePairingCode(cube.cubeUuid);
+      
+      res.json({
+        pairingCode: result.code,
+        expiresAt: result.expiresAt.toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Error regenerating pairing code:", error);
+      res.status(500).json({ message: error.message || "Failed to regenerate pairing code" });
+    }
+  });
+
+  // Update cube settings (rename, sleep timeout)
+  app.patch("/api/orbit/:slug/cubes/:cubeId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { cubeId } = req.params;
+      const { name, sleepTimeoutMinutes } = req.body;
+      
+      const cube = await storage.getOrbitCubeById(parseInt(cubeId));
+      if (!cube) {
+        return res.status(404).json({ message: "Cube not found" });
+      }
+      
+      const updates: Partial<typeof cube> = {};
+      if (name !== undefined) updates.name = name;
+      if (sleepTimeoutMinutes !== undefined) {
+        updates.sleepTimeoutMinutes = Math.max(5, Math.min(480, sleepTimeoutMinutes)); // 5 min to 8 hours
+      }
+      
+      const updated = await storage.updateOrbitCubeById(cube.id, updates);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating cube:", error);
+      res.status(500).json({ message: error.message || "Failed to update cube" });
+    }
+  });
+
+  // Revoke cube
+  app.post("/api/orbit/:slug/cubes/:cubeId/revoke", requireOrbitOwner, async (req, res) => {
+    try {
+      const { cubeId } = req.params;
+      
+      const cube = await storage.getOrbitCubeById(parseInt(cubeId));
+      if (!cube) {
+        return res.status(404).json({ message: "Cube not found" });
+      }
+      
+      await storage.revokeOrbitCube(cube.cubeUuid);
+      
+      res.json({ message: "Cube revoked successfully" });
+    } catch (error: any) {
+      console.error("Error revoking cube:", error);
+      res.status(500).json({ message: error.message || "Failed to revoke cube" });
+    }
+  });
+
+  // Helper function for generating pairing codes
+  function generateCubePairingCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
 
