@@ -3,6 +3,10 @@ import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { enforceProductionSecurity } from "./startup";
+
+// Run security checks on startup (will exit in production if critical vars missing)
+enforceProductionSecurity();
 
 const app = express();
 const httpServer = createServer(app);

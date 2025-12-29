@@ -1,0 +1,132 @@
+Replit Prompt: Security Hardening Phase 1.1 – Beta Readiness for First 100 Users
+
+Context
+Phase 1 security hardening is complete and verified:
+- Signed public access tokens (story + preview, aud + ver)
+- Rate limiting on analytics, activation/pause, and chat
+- Public story hardening (active-only, signed tokens)
+- Preview chat token validation
+- Automated security tests passing
+
+The platform is still single-tenant by design (userId = implicit tenant).
+This phase (1.1) is NOT about adding tenants or teams.
+It is about tightening the system to safely support a closed beta of ~100 real users.
+
+Goal
+Raise the platform from “secure enough technically” to “operationally safe for a small beta”.
+Focus on guardrails, observability, and failure handling, not new features.
+
+Non-goals
+- Do NOT implement full tenants/workspaces
+- Do NOT add team membership or roles
+- Do NOT redesign UI
+- Do NOT expand Orbit functionality
+- Do NOT change pricing or plans
+
+---
+
+Scope of work (Phase 1.1)
+
+1) Environment safety and startup checks
+- Ensure PUBLIC_TOKEN_SECRET is REQUIRED in production.
+- On server boot:
+  - If NODE_ENV=production and PUBLIC_TOKEN_SECRET is missing:
+    - Log a loud error
+    - Either fail fast or clearly warn (choose one, document it)
+- Add a startup log confirming token system is active and stable.
+
+2) Database constraints and data integrity
+- Enforce database-level uniqueness where assumed:
+  - Experience / universe slug must be globally unique OR
+  - Explicitly document and enforce a namespaced alternative.
+- Add NOT NULL constraints where required for security-critical fields.
+- Add reasonable length limits to:
+  - Chat message text
+  - Analytics payload fields
+- Ensure all public-facing IDs are non-sequential (UUIDs or equivalent).
+
+3) CORS and request surface tightening
+- Audit CORS configuration:
+  - Public endpoints: allow only required methods and headers
+  - Authenticated endpoints: no wildcard origins
+- Explicitly reject unexpected content-types on:
+  - Analytics ingestion
+  - Chat endpoints
+- Set max request body sizes for:
+  - Analytics
+  - Chat messages
+  - Preview inputs
+
+4) Logging and observability for beta
+Add structured logging (or improve existing logs) for:
+- Token validation failures (401 vs 403)
+- Rate limit hits (429)
+- Activation/pause attempts
+- Public story access failures
+- Chat errors
+
+Logs must include:
+- endpoint
+- status code
+- resource id (universeId or previewId)
+- userId if authenticated
+- timestamp
+
+Goal: allow fast diagnosis if a beta user reports “something broke”.
+
+5) Admin safety controls (minimal)
+Implement at least one of the following:
+- Ability to pause an experience server-side via admin flag, OR
+- Ability to invalidate a public share token / disable public access
+
+This is for emergency response only, not a full admin panel.
+
+6) Data retention and hygiene (beta-level)
+- Explicitly define retention behaviour for:
+  - Chat messages
+  - Analytics events
+- Implement at least one of:
+  - Soft delete support
+  - Retention window (even if large)
+- Ensure deleting an experience stops:
+  - Public access
+  - Analytics ingestion
+  - Chat ingestion
+
+7) Documentation for beta
+Add short internal docs (markdown is fine):
+- Security Phase 1 + 1.1 summary
+- Token system contract (story vs preview, aud, ver)
+- Rate limits per endpoint
+- Known limitations:
+  - Single-user accounts only
+  - No shared workspaces
+  - No cross-user visibility
+
+These docs are for developers and future maintainers, not marketing.
+
+---
+
+Acceptance criteria
+Phase 1.1 is complete when:
+- App fails or warns loudly if security-critical env vars are missing
+- Slug uniqueness or namespacing is enforced at DB or route level
+- Public endpoints reject malformed or oversized payloads
+- Logs clearly show auth failures, rate limiting, and access errors
+- An admin can disable a problematic experience quickly
+- Data deletion or pause fully stops public activity
+- No new features were added during this phase
+
+---
+
+Output required
+Return:
+1) List of files changed
+2) Any migrations added
+3) Summary of new guards added (bulleted)
+4) Manual test checklist to verify Phase 1.1
+5) Anything explicitly deferred to Phase 2
+
+Final instruction
+This phase is about trust, not expansion.
+If a change does not reduce risk for a 100-user beta, do not include it.

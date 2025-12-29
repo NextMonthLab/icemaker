@@ -22,7 +22,9 @@ import {
   FREE_CONVERSATION_SOFT_LIMIT, 
   conversationLimitCopy 
 } from "@shared/uxCopy";
-import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter } from "./rateLimit";
+import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter, getClientIp } from "./rateLimit";
+import { logAuthFailure, logAccessDenied, logTokenError, logAdminAction } from "./securityLogger";
+import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, analyticsMetadataValidator, analyticsTypeValidator, analyticsMetadataStringValidator, adminRequestValidator, adminReasonValidator } from "./requestValidation";
 
 // Echo response post-processing utilities
 function dedupeText(text: string): string {
@@ -196,6 +198,9 @@ export async function registerRoutes(
     if (req.isAuthenticated() && req.user.isAdmin) {
       return next();
     }
+    const ip = getClientIp(req);
+    const userId = req.user?.id;
+    logAccessDenied(req.path, 'Admin access required', undefined, undefined, ip, userId);
     res.status(403).json({ message: "Forbidden - Admin access required" });
   };
 
@@ -910,9 +915,10 @@ export async function registerRoutes(
   
   // ============ ANALYTICS ROUTES ============
   
-  app.post("/api/public/analytics/event", analyticsRateLimiter, async (req, res) => {
+  app.post("/api/public/analytics/event", analyticsRateLimiter, analyticsRequestValidator, analyticsTypeValidator, analyticsMetadataValidator, analyticsMetadataStringValidator, async (req, res) => {
     try {
       const { type, universeId, cardId, metadata, publicAccessToken } = req.body;
+      const ip = getClientIp(req);
       
       if (!type || !universeId) {
         return res.status(400).json({ message: "type and universeId are required" });
@@ -920,11 +926,13 @@ export async function registerRoutes(
       
       // Validate public access token to prevent cross-tenant analytics poisoning
       if (!publicAccessToken) {
+        logAuthFailure('/api/public/analytics/event', 'Missing access token', 'story', universeId, ip);
         return res.status(401).json({ message: "Public access token required" });
       }
       
       const { validateStoryToken } = await import('./publicAccessToken');
       if (!validateStoryToken(publicAccessToken, universeId)) {
+        logTokenError('/api/public/analytics/event', 'Invalid or mismatched token', 'story', universeId, ip);
         return res.status(403).json({ message: "Invalid access token" });
       }
       
@@ -969,6 +977,117 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching analytics summary:", error);
       res.status(500).json({ message: "Error fetching analytics" });
+    }
+  });
+
+  // ============ ADMIN EMERGENCY CONTROLS ============
+  
+  // Admin: Emergency pause any experience (bypasses ownership checks)
+  app.post("/api/admin/experiences/:id/emergency-pause", requireAdmin, adminRequestValidator, adminReasonValidator, async (req, res) => {
+    try {
+      const universeId = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      if (isNaN(universeId)) {
+        return res.status(400).json({ message: "Invalid experience ID" });
+      }
+      
+      const universe = await storage.getUniverse(universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Experience not found" });
+      }
+      
+      // Log the admin action
+      logAdminAction('/api/admin/experiences/:id/emergency-pause', 
+        `Emergency pause: ${reason || 'No reason provided'}`, 
+        req.user!.id, 
+        'experience', 
+        universeId,
+        { previousStatus: universe.iceStatus, reason }
+      );
+      
+      const updated = await storage.pauseIce(universeId);
+      
+      res.json({
+        success: true,
+        message: "Experience emergency paused",
+        iceStatus: updated?.iceStatus,
+        pausedAt: updated?.pausedAt,
+        pausedBy: req.user!.id,
+        reason,
+      });
+    } catch (error) {
+      console.error("Error emergency pausing experience:", error);
+      res.status(500).json({ message: "Error pausing experience" });
+    }
+  });
+
+  // Admin: Emergency disable orbit public access
+  app.post("/api/admin/orbits/:slug/emergency-disable", requireAdmin, adminRequestValidator, adminReasonValidator, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { reason } = req.body;
+      
+      const orbit = await storage.getOrbitMeta(slug);
+      if (!orbit) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Log the admin action
+      logAdminAction('/api/admin/orbits/:slug/emergency-disable',
+        `Emergency disable orbit: ${reason || 'No reason provided'}`,
+        req.user!.id,
+        'orbit',
+        slug,
+        { previousStatus: orbit.isActive, reason }
+      );
+      
+      // Disable the orbit by setting isActive to false
+      await storage.updateOrbitMeta(slug, { isActive: false });
+      
+      res.json({
+        success: true,
+        message: "Orbit emergency disabled",
+        disabledBy: req.user!.id,
+        reason,
+      });
+    } catch (error) {
+      console.error("Error emergency disabling orbit:", error);
+      res.status(500).json({ message: "Error disabling orbit" });
+    }
+  });
+
+  // Admin: Emergency archive/delete preview
+  app.post("/api/admin/previews/:id/emergency-archive", requireAdmin, adminRequestValidator, adminReasonValidator, async (req, res) => {
+    try {
+      const previewId = req.params.id;
+      const { reason } = req.body;
+      
+      const preview = await storage.getPreviewInstance(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Log the admin action
+      logAdminAction('/api/admin/previews/:id/emergency-archive',
+        `Emergency archive preview: ${reason || 'No reason provided'}`,
+        req.user!.id,
+        'preview',
+        previewId,
+        { previousStatus: preview.status, reason }
+      );
+      
+      await storage.archivePreviewInstance(previewId);
+      
+      res.json({
+        success: true,
+        message: "Preview emergency archived",
+        archivedBy: req.user!.id,
+        reason,
+      });
+    } catch (error) {
+      console.error("Error emergency archiving preview:", error);
+      res.status(500).json({ message: "Error archiving preview" });
     }
   });
   
@@ -5545,9 +5664,11 @@ Guidelines:
   });
 
   // Chat with preview
-  app.post("/api/previews/:id/chat", chatRateLimiter, async (req, res) => {
+  app.post("/api/previews/:id/chat", chatRateLimiter, chatRequestValidator, chatMessageValidator, async (req, res) => {
     try {
       const { message, previewAccessToken } = req.body;
+      const ip = getClientIp(req);
+      const previewId = req.params.id;
 
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Message is required" });
@@ -5555,11 +5676,13 @@ Guidelines:
       
       // Validate preview access token
       if (!previewAccessToken) {
+        logAuthFailure('/api/previews/:id/chat', 'Missing access token', 'preview', previewId, ip);
         return res.status(401).json({ message: "Access token required" });
       }
       
       const { validatePreviewToken } = await import("./publicAccessToken");
-      if (!validatePreviewToken(previewAccessToken, req.params.id)) {
+      if (!validatePreviewToken(previewAccessToken, previewId)) {
+        logTokenError('/api/previews/:id/chat', 'Invalid or mismatched token', 'preview', previewId, ip);
         return res.status(403).json({ message: "Invalid access token" });
       }
 

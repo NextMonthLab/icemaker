@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { logRateLimitHit } from './securityLogger';
 
 interface RateLimitEntry {
   count: number;
@@ -14,7 +15,7 @@ interface RateLimitOptions {
   message?: string;
 }
 
-function getClientKey(req: Request): string {
+export function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   const ip = typeof forwarded === 'string' 
     ? forwarded.split(',')[0].trim() 
@@ -23,7 +24,7 @@ function getClientKey(req: Request): string {
 }
 
 export function createRateLimiter(name: string, options: RateLimitOptions) {
-  const { windowMs, maxRequests, keyGenerator = getClientKey, message = 'Too many requests' } = options;
+  const { windowMs, maxRequests, keyGenerator = getClientIp, message = 'Too many requests' } = options;
   
   if (!stores.has(name)) {
     stores.set(name, new Map());
@@ -62,6 +63,9 @@ export function createRateLimiter(name: string, options: RateLimitOptions) {
     res.setHeader('X-RateLimit-Reset', resetSeconds.toString());
     
     if (entry.count > maxRequests) {
+      const ip = getClientIp(req);
+      const userId = (req as any).user?.id;
+      logRateLimitHit(req.path, ip, userId);
       res.setHeader('Retry-After', resetSeconds.toString());
       return res.status(429).json({ message, retryAfter: resetSeconds });
     }
