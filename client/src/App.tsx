@@ -130,6 +130,7 @@ function Router() {
       <Route path="/orbit/:slug" component={OrbitRouter} />
       <Route path="/orbit/:slug/claim" component={OrbitView} />
       <Route path="/orbit/:slug/hub" component={DataHub} />
+      <Route path="/ice/new" component={TransformationsPage} />
       <Route path="/app" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />

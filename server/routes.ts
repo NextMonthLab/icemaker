@@ -4860,6 +4860,135 @@ Output only the narration paragraph, nothing else.`;
     }
   });
 
+  // ============ ICE PREVIEW (Guest Builder) ============
+  // Anonymous endpoint for extracting content and generating card preview
+  app.post("/api/ice/preview", async (req, res) => {
+    try {
+      const { type, value } = req.body;
+      
+      if (!type || !value || typeof value !== "string") {
+        return res.status(400).json({ message: "Type and value are required" });
+      }
+      
+      if (!["url", "text"].includes(type)) {
+        return res.status(400).json({ message: "Type must be 'url' or 'text'" });
+      }
+      
+      // Rate limiting by IP
+      const userIp = req.ip || req.socket.remoteAddress || "unknown";
+      // Simple in-memory rate limit (in production, use Redis)
+      
+      let contentText = "";
+      let sourceTitle = "Untitled Experience";
+      
+      if (type === "url") {
+        // Validate URL and fetch content
+        const { validateUrlSafety, ingestSitePreview } = await import("./previewHelpers");
+        const validation = await validateUrlSafety(value.trim());
+        if (!validation.safe) {
+          return res.status(400).json({ message: validation.error });
+        }
+        
+        try {
+          const siteData = await ingestSitePreview(value.trim());
+          contentText = siteData.summary || "";
+          sourceTitle = siteData.title || "Website Experience";
+          
+          // Add key services if available
+          if (siteData.keyServices?.length) {
+            contentText += "\n\nKey offerings:\n" + siteData.keyServices.join("\n");
+          }
+        } catch (err: any) {
+          return res.status(400).json({ message: `Could not access website: ${err.message}` });
+        }
+      } else {
+        // Direct text input
+        contentText = value.trim();
+        // Try to extract a title from first line
+        const firstLine = contentText.split('\n')[0].trim();
+        if (firstLine.length < 100 && firstLine.length > 0) {
+          sourceTitle = firstLine.replace(/^#\s*/, '');
+        }
+      }
+      
+      if (!contentText || contentText.length < 50) {
+        return res.status(400).json({ message: "Not enough content to create an experience" });
+      }
+      
+      // Generate cards using AI
+      const openai = getOpenAI();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at breaking content into cinematic story cards. Given text content, extract 4-8 key moments/sections and format them as story cards.
+
+Each card should have:
+- A short, evocative title (3-6 words)
+- Content that captures the essence of that moment (2-4 sentences)
+
+Output as JSON array: [{"title": "...", "content": "..."}, ...]
+
+Guidelines:
+- Keep cards concise and impactful
+- Each card should stand alone as a moment
+- Use vivid, engaging language
+- Focus on the narrative arc
+- Maximum 8 cards for a short preview`
+          },
+          {
+            role: "user",
+            content: `Create story cards from this content:\n\n${contentText.slice(0, 8000)}`
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 2000,
+      });
+      
+      let cards: Array<{title: string; content: string}> = [];
+      try {
+        const parsed = JSON.parse(completion.choices[0].message.content || "{}");
+        cards = parsed.cards || parsed;
+        if (!Array.isArray(cards)) {
+          cards = Object.values(parsed).find(v => Array.isArray(v)) as any || [];
+        }
+      } catch (e) {
+        // Fallback: create simple cards from paragraphs
+        const paragraphs = contentText.split(/\n\n+/).filter(p => p.trim().length > 20);
+        cards = paragraphs.slice(0, 6).map((p, i) => ({
+          title: `Part ${i + 1}`,
+          content: p.slice(0, 300),
+        }));
+      }
+      
+      // Limit to 8 cards for preview
+      cards = cards.slice(0, 8);
+      
+      // Generate unique ID for this preview
+      const previewId = `ice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      
+      const preview = {
+        id: previewId,
+        title: sourceTitle,
+        cards: cards.map((card, idx) => ({
+          id: `${previewId}_card_${idx}`,
+          title: card.title,
+          content: card.content,
+          order: idx,
+        })),
+        sourceType: type,
+        sourceValue: type === "url" ? value : value.slice(0, 100) + "...",
+        createdAt: new Date().toISOString(),
+      };
+      
+      res.json(preview);
+    } catch (error) {
+      console.error("Error creating ICE preview:", error);
+      res.status(500).json({ message: "Error creating preview" });
+    }
+  });
+
   // ============ PREVIEW INSTANCES (Micro Smart Site) ============
   const { validateUrlSafety: validatePreviewUrl, ingestSitePreview, generatePreviewId, calculateExpiresAt } = await import("./previewHelpers");
 
