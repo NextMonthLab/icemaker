@@ -36,6 +36,8 @@ export class WebhookHandlers {
       return;
     }
 
+    const oldPlanId = subscription.planId;
+
     await storage.updateSubscription(subscription.id, {
       status: status as any,
       planId: plan.id,
@@ -54,6 +56,39 @@ export class WebhookHandlers {
           features.monthlyVoiceCredits || 0
         );
       }
+    }
+
+    // Handle auto-pause on downgrade or cancellation
+    if (status === 'canceled' || status === 'unpaid' || status === 'past_due') {
+      await WebhookHandlers.autoPauseExcessIces(subscription.userId, 0);
+    } else if (oldPlanId !== plan.id) {
+      // Plan changed - check if downgrade
+      const newLimit = WebhookHandlers.getActiveIceLimit(plan.name);
+      await WebhookHandlers.autoPauseExcessIces(subscription.userId, newLimit);
+    }
+  }
+
+  static getActiveIceLimit(planName: string): number {
+    const normalizedName = planName.toLowerCase();
+    if (normalizedName.includes('business') || normalizedName.includes('intelligence')) return 10;
+    if (normalizedName.includes('pro') || normalizedName.includes('grow') || normalizedName.includes('understand')) return 3;
+    return 0; // Free tier
+  }
+
+  static async autoPauseExcessIces(userId: number, limit: number): Promise<void> {
+    if (limit === -1) return; // Unlimited
+    
+    try {
+      const icesToPause = await storage.getIcesToPauseOnDowngrade(userId, limit);
+      for (const ice of icesToPause) {
+        await storage.pauseIce(ice.id);
+        console.log(`Auto-paused ICE ${ice.id} (${ice.name}) for user ${userId} due to plan limit`);
+      }
+      if (icesToPause.length > 0) {
+        console.log(`Auto-paused ${icesToPause.length} ICEs for user ${userId} (new limit: ${limit})`);
+      }
+    } catch (error) {
+      console.error(`Error auto-pausing ICEs for user ${userId}:`, error);
     }
   }
 
