@@ -43,6 +43,15 @@ Key architectural patterns and design decisions include:
     -   Admin summary endpoint: `GET /api/analytics/experience/:id/summary`
     -   ExperienceInsightsPanel component showing total views, conversations, completion rate, top card
     -   Integrated into AdminUniverseDetail page with Orbit CTA for deeper analytics
+-   **Multi-Tenant Security (Phase 1)**: Implemented to prevent cross-tenant data leakage and abuse. Features include:
+    -   **Signed Access Tokens** (`server/publicAccessToken.ts`): HMAC-SHA256 signed tokens with 1-hour expiry for both story and preview access. Tokens include resource type and ID to prevent cross-resource attacks.
+    -   **Token Issuance**: `/api/story/:slug` generates story tokens, `/api/previews/:id` generates preview tokens
+    -   **Token Validation**: Analytics ingestion requires story tokens, preview chat requires preview tokens
+    -   **Rate Limiting** (`server/rateLimit.ts`): Per-IP throttling with configurable limits:
+        -   Analytics: 100 requests/minute
+        -   Activation/Pause: 10 requests/minute  
+        -   Chat: 30 requests/minute per user/IP
+    -   **Environment Variable**: Set `PUBLIC_TOKEN_SECRET` in production for stable tokens across restarts
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

@@ -106,6 +106,7 @@ interface PreviewInstance {
   maxMessages: number;
   expiresAt: string;
   createdAt: string;
+  previewAccessToken?: string;
 }
 
 interface ChatMessage {
@@ -724,7 +725,10 @@ export default function PreviewPage() {
       const response = await fetch(`/api/previews/${previewId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ 
+          message: userMessage,
+          previewAccessToken: preview?.previewAccessToken,
+        }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -907,7 +911,7 @@ export default function PreviewPage() {
             const response = await fetch(`/api/previews/${previewId}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
             });
             if (!response.ok) throw new Error("Failed");
             const data = await response.json();
@@ -939,7 +943,7 @@ export default function PreviewPage() {
             const response = await fetch(`/api/previews/${previewId}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
             });
             if (!response.ok) throw new Error("Failed");
             const data = await response.json();

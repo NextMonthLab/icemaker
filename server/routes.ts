@@ -22,6 +22,7 @@ import {
   FREE_CONVERSATION_SOFT_LIMIT, 
   conversationLimitCopy 
 } from "@shared/uxCopy";
+import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter } from "./rateLimit";
 
 // Echo response post-processing utilities
 function dedupeText(text: string): string {
@@ -823,13 +824,17 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Story not found" });
       }
       
-      // Check if Ice is paused (not publicly available)
-      if (universe.iceStatus === 'paused') {
-        return res.status(410).json({
-          message: "This experience is currently paused",
-          status: "paused",
-          name: universe.name,
-        });
+      // Check if Ice is active - only active experiences are publicly served
+      if (universe.iceStatus !== 'active') {
+        if (universe.iceStatus === 'paused') {
+          return res.status(410).json({
+            message: "This experience is currently paused",
+            status: "paused",
+            name: universe.name,
+          });
+        }
+        // Draft or other status - not publicly accessible
+        return res.status(404).json({ message: "Story not found" });
       }
       
       const cards = await storage.getCardsByUniverse(universe.id);
@@ -848,11 +853,16 @@ export async function registerRoutes(
         .filter(c => c.status === 'published' && (!c.publishAt || new Date(c.publishAt) <= now))
         .sort((a, b) => a.dayIndex - b.dayIndex);
       
+      // Generate signed public access token for analytics/chat ingestion
+      const { generatePublicAccessToken } = await import('./publicAccessToken');
+      const publicAccessToken = generatePublicAccessToken(universe.id, 'story');
+      
       res.json({
         universe,
         cards: publishedCards,
         characters,
         creator,
+        publicAccessToken, // Client must include this token for analytics/chat calls
       });
     } catch (error) {
       console.error("Error fetching story by slug:", error);
@@ -900,18 +910,31 @@ export async function registerRoutes(
   
   // ============ ANALYTICS ROUTES ============
   
-  app.post("/api/public/analytics/event", async (req, res) => {
+  app.post("/api/public/analytics/event", analyticsRateLimiter, async (req, res) => {
     try {
-      const { type, universeId, cardId, metadata } = req.body;
+      const { type, universeId, cardId, metadata, publicAccessToken } = req.body;
       
       if (!type || !universeId) {
         return res.status(400).json({ message: "type and universeId are required" });
       }
       
-      // Check if Ice is paused - reject analytics for paused Ices
+      // Validate public access token to prevent cross-tenant analytics poisoning
+      if (!publicAccessToken) {
+        return res.status(401).json({ message: "Public access token required" });
+      }
+      
+      const { validateStoryToken } = await import('./publicAccessToken');
+      if (!validateStoryToken(publicAccessToken, universeId)) {
+        return res.status(403).json({ message: "Invalid access token" });
+      }
+      
+      // Verify universe exists and is active
       const universe = await storage.getUniverse(universeId);
-      if (universe && universe.iceStatus === 'paused') {
-        return res.status(410).json({ message: "Experience is paused" });
+      if (!universe) {
+        return res.status(404).json({ message: "Experience not found" });
+      }
+      if (universe.iceStatus !== 'active') {
+        return res.status(410).json({ message: "Experience is not active" });
       }
       
       const validTypes = ['experience_view', 'card_view', 'conversation_start', 'question_asked', 'chat_message'];
@@ -1450,7 +1473,7 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/chat/threads/:threadId/messages", requireAuth, async (req, res) => {
+  app.post("/api/chat/threads/:threadId/messages", requireAuth, chatRateLimiter, async (req, res) => {
     try {
       const threadId = parseInt(req.params.threadId);
       const { role, content } = req.body;
@@ -1565,7 +1588,7 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/chat/send", requireAuth, async (req, res) => {
+  app.post("/api/chat/send", requireAuth, chatRateLimiter, async (req, res) => {
     try {
       const { threadId, message, characterId, universeId, cardId } = req.body;
       
@@ -5221,7 +5244,7 @@ Guidelines:
   // ============ Active Ice Hosting Endpoints ============
   
   // Activate an Ice (make it publicly accessible)
-  app.post("/api/experiences/:id/activate", async (req, res) => {
+  app.post("/api/experiences/:id/activate", activationRateLimiter, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -5277,7 +5300,7 @@ Guidelines:
   });
   
   // Pause an Ice (remove from public access)
-  app.post("/api/experiences/:id/pause", async (req, res) => {
+  app.post("/api/experiences/:id/pause", activationRateLimiter, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -5481,6 +5504,10 @@ Guidelines:
         await storage.archivePreviewInstance(preview.id);
         preview.status = "archived";
       }
+      
+      // Generate preview access token for chat
+      const { generatePublicAccessToken } = await import("./publicAccessToken");
+      const previewAccessToken = generatePublicAccessToken(preview.id, "preview");
 
       res.json({
         id: preview.id,
@@ -5495,6 +5522,7 @@ Guidelines:
         maxMessages: preview.maxMessages,
         expiresAt: preview.expiresAt,
         createdAt: preview.createdAt,
+        previewAccessToken,
       });
     } catch (error) {
       console.error("Error getting preview:", error);
@@ -5517,12 +5545,22 @@ Guidelines:
   });
 
   // Chat with preview
-  app.post("/api/previews/:id/chat", async (req, res) => {
+  app.post("/api/previews/:id/chat", chatRateLimiter, async (req, res) => {
     try {
-      const { message } = req.body;
+      const { message, previewAccessToken } = req.body;
 
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Message is required" });
+      }
+      
+      // Validate preview access token
+      if (!previewAccessToken) {
+        return res.status(401).json({ message: "Access token required" });
+      }
+      
+      const { validatePreviewToken } = await import("./publicAccessToken");
+      if (!validatePreviewToken(previewAccessToken, req.params.id)) {
+        return res.status(403).json({ message: "Invalid access token" });
       }
 
       const preview = await storage.getPreviewInstance(req.params.id);

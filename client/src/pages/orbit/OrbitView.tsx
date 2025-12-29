@@ -104,6 +104,7 @@ interface PreviewInstance {
   maxMessages: number;
   expiresAt: string;
   createdAt: string;
+  previewAccessToken?: string;
 }
 
 interface OrbitBox {
@@ -723,7 +724,7 @@ export default function OrbitView() {
             const response = await fetch(`/api/previews/${preview.id}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
             });
             if (!response.ok) {
               return "Sorry, I couldn't process that request.";
@@ -764,7 +765,7 @@ export default function OrbitView() {
             const response = await fetch(`/api/previews/${preview.id}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
             });
             if (!response.ok) {
               return "Sorry, I couldn't process that request.";

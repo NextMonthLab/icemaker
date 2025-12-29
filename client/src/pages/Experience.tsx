@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ChevronLeft, ChevronRight, User, PauseCircle } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { trackExperienceView, trackCardView } from "@/lib/analytics";
+import { trackExperienceView, trackCardView, setPublicAccessToken } from "@/lib/analytics";
 
 export default function Experience() {
   const { slug } = useParams<{ slug: string }>();
@@ -30,6 +30,14 @@ export default function Experience() {
   const availableCards = storyData?.cards || [];
   const allCharacters = storyData?.characters || [];
   const creator = storyData?.creator;
+  const publicAccessToken = storyData?.publicAccessToken;
+
+  // Store the token for analytics when story loads
+  useEffect(() => {
+    if (universe?.id && publicAccessToken) {
+      setPublicAccessToken(universe.id, publicAccessToken);
+    }
+  }, [universe?.id, publicAccessToken]);
 
   const cardIndex = useMemo(() => {
     if (selectedIndex !== null) return selectedIndex;
@@ -43,16 +51,16 @@ export default function Experience() {
   const currentCard = availableCards[cardIndex];
 
   useEffect(() => {
-    if (universe?.id) {
-      trackExperienceView(universe.id);
+    if (universe?.id && publicAccessToken) {
+      trackExperienceView(universe.id, publicAccessToken);
     }
-  }, [universe?.id]);
+  }, [universe?.id, publicAccessToken]);
 
   useEffect(() => {
-    if (universe?.id && currentCard?.id) {
-      trackCardView(universe.id, currentCard.id);
+    if (universe?.id && currentCard?.id && publicAccessToken) {
+      trackCardView(universe.id, currentCard.id, publicAccessToken);
     }
-  }, [universe?.id, currentCard?.id]);
+  }, [universe?.id, currentCard?.id, publicAccessToken]);
 
   const { data: cardCharacters } = useQuery({
     queryKey: ["card-characters", currentCard?.id],

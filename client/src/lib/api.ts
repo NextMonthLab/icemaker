@@ -63,6 +63,7 @@ class ApiClient {
       cards: Card[]; 
       characters: Character[];
       creator?: { displayName: string; slug: string | null; headline: string | null; avatarUrl: string | null } | null;
+      publicAccessToken?: string;
     }>(`/story/${slug}`);
   }
 
