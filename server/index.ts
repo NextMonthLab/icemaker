@@ -18,7 +18,13 @@ declare module "http" {
   }
 }
 
-// Initialize Stripe schema and sync on startup
+function hasReplitConnector(): boolean {
+  return !!(
+    process.env.REPLIT_CONNECTORS_HOSTNAME &&
+    (process.env.REPL_IDENTITY || process.env.WEB_REPL_RENEWAL)
+  );
+}
+
 async function initStripe() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -27,41 +33,52 @@ async function initStripe() {
   }
 
   try {
-    const { runMigrations } = await import('stripe-replit-sync');
     const { getStripeSync } = await import('./stripeClient');
 
-    console.log('[stripe] Initializing Stripe schema...');
-    await runMigrations({ databaseUrl, schema: 'stripe' });
-    console.log('[stripe] Stripe schema ready');
+    if (hasReplitConnector()) {
+      const { runMigrations } = await import('stripe-replit-sync');
+      console.log('[stripe] Initializing Stripe schema (Replit mode)...');
+      await runMigrations({ databaseUrl });
+      console.log('[stripe] Stripe schema ready');
 
-    // Get StripeSync instance for webhook setup
-    const stripeSync = await getStripeSync();
+      const stripeSync = await getStripeSync();
 
-    // Set up managed webhook
-    const domains = process.env.REPLIT_DOMAINS?.split(',');
-    if (domains && domains.length > 0) {
-      const webhookBaseUrl = `https://${domains[0]}`;
-      console.log('[stripe] Setting up managed webhook...');
-      try {
-        const webhook = await stripeSync.findOrCreateManagedWebhook(
-          `${webhookBaseUrl}/api/stripe/webhook`
-        );
-        console.log(`[stripe] Webhook configured: ${webhook?.url || 'unknown'}`);
-      } catch (webhookError: any) {
-        console.error('[stripe] Webhook setup error:', webhookError.message);
+      const domains = process.env.REPLIT_DOMAINS?.split(',');
+      if (domains && domains.length > 0) {
+        const webhookBaseUrl = `https://${domains[0]}`;
+        console.log('[stripe] Setting up managed webhook...');
+        try {
+          const webhook = await stripeSync.findOrCreateManagedWebhook(
+            `${webhookBaseUrl}/api/stripe/webhook`
+          );
+          console.log(`[stripe] Webhook configured: ${webhook?.url || 'unknown'}`);
+        } catch (webhookError: any) {
+          console.error('[stripe] Webhook setup error:', webhookError.message);
+        }
       }
-    } else {
-      console.log('[stripe] REPLIT_DOMAINS not set, skipping webhook setup');
-    }
 
-    // Sync all existing Stripe data in background
-    console.log('[stripe] Starting background data sync...');
-    stripeSync.syncBackfill()
-      .then(() => console.log('[stripe] Data sync complete'))
-      .catch((err: Error) => console.error('[stripe] Data sync error:', err.message));
+      console.log('[stripe] Starting background data sync...');
+      stripeSync.syncBackfill()
+        .then(() => console.log('[stripe] Data sync complete'))
+        .catch((err: Error) => console.error('[stripe] Data sync error:', err.message));
+    } else {
+      console.log('[stripe] Running in standard mode (Render/other)');
+      console.log('[stripe] Webhook URL must be configured in Stripe Dashboard');
+      console.log('[stripe] Required: POST /api/stripe/webhook');
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        console.warn('[stripe] STRIPE_SECRET_KEY not set - Stripe will not work');
+        return;
+      }
+      
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        console.warn('[stripe] STRIPE_WEBHOOK_SECRET not set - webhook signature verification may fail');
+      }
+      
+      console.log('[stripe] Stripe initialized with environment variables');
+    }
   } catch (error: any) {
     console.error('[stripe] Initialization error:', error.message);
-    // Don't throw - allow server to start even if Stripe init fails
   }
 }
 

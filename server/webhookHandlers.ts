@@ -1,6 +1,10 @@
-import { getStripeSync, getUncachableStripeClient } from './stripeClient';
+import Stripe from 'stripe';
+import { getStripeSync, getUncachableStripeClient, getWebhookSecret } from './stripeClient';
 import { storage } from './storage';
 import type { Plan, PlanFeatures } from '@shared/schema';
+
+const processedEventIds = new Set<string>();
+const MAX_PROCESSED_EVENTS = 1000;
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -12,19 +16,48 @@ export class WebhookHandlers {
       );
     }
 
-    const sync = await getStripeSync();
-    
-    // First, sync to stripe schema
-    await sync.processWebhook(payload, signature);
-    
-    // Then, handle events that affect our local subscriptions/entitlements
+    const webhookSecret = getWebhookSecret();
+    let event: Stripe.Event;
+
+    if (webhookSecret) {
+      const stripe = await getUncachableStripeClient();
+      try {
+        event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      } catch (err: any) {
+        console.error('[webhook] Signature verification failed:', err.message);
+        throw new Error('Webhook signature verification failed');
+      }
+    } else {
+      console.warn('[webhook] STRIPE_WEBHOOK_SECRET not set - using stripe-replit-sync for verification');
+      const sync = await getStripeSync();
+      await sync.processWebhook(payload, signature);
+      event = JSON.parse(payload.toString());
+    }
+
+    if (WebhookHandlers.isDuplicateEvent(event.id)) {
+      console.log(`[webhook] Ignoring duplicate event: ${event.id}`);
+      return;
+    }
+
+    WebhookHandlers.markEventProcessed(event.id);
+
     try {
-      const event = JSON.parse(payload.toString());
       await WebhookHandlers.handleEvent(event);
     } catch (error) {
       console.error('[webhook] Error handling event:', error);
-      // Don't throw - the sync already succeeded
     }
+  }
+
+  static isDuplicateEvent(eventId: string): boolean {
+    return processedEventIds.has(eventId);
+  }
+
+  static markEventProcessed(eventId: string): void {
+    if (processedEventIds.size >= MAX_PROCESSED_EVENTS) {
+      const firstKey = processedEventIds.values().next().value;
+      if (firstKey) processedEventIds.delete(firstKey);
+    }
+    processedEventIds.add(eventId);
   }
   
   static async handleEvent(event: any): Promise<void> {
@@ -32,6 +65,8 @@ export class WebhookHandlers {
     const data = event.data?.object;
     
     if (!data) return;
+
+    console.log(`[webhook] Processing event: ${eventType} (${event.id})`);
     
     switch (eventType) {
       case 'customer.subscription.created':
@@ -44,12 +79,10 @@ export class WebhookHandlers {
         break;
         
       case 'checkout.session.completed':
-        // Checkout completion is handled by /api/checkout/verify
         console.log(`[webhook] Checkout session completed: ${data.id}`);
         break;
         
       case 'invoice.payment_succeeded':
-        // Could handle invoice payment for renewal
         console.log(`[webhook] Invoice payment succeeded: ${data.id}`);
         break;
         
@@ -58,7 +91,6 @@ export class WebhookHandlers {
         break;
         
       default:
-        // Ignore other events
         break;
     }
   }
@@ -100,13 +132,11 @@ export class WebhookHandlers {
       status: 'canceled',
     });
     
-    // Downgrade to free tier entitlements
     const freePlan = await storage.getPlanByName('free');
     if (freePlan) {
       await WebhookHandlers.recomputeEntitlements(subscription.userId, freePlan);
     }
     
-    // Auto-pause all ICEs
     await WebhookHandlers.autoPauseExcessIces(subscription.userId, 0);
     
     console.log(`[webhook] Subscription ${subscription.id} canceled for user ${subscription.userId}`);
@@ -158,13 +188,10 @@ export class WebhookHandlers {
 
     await WebhookHandlers.recomputeEntitlements(subscription.userId, plan);
 
-    // Grant monthly credits with idempotency check using lastCreditGrantPeriodEnd
-    // Only grant if: status is active AND this period hasn't been credited yet
     if (status === 'active' && plan.features) {
       const features = plan.features as PlanFeatures;
       const hasCredits = (features.monthlyVideoCredits || 0) > 0 || (features.monthlyVoiceCredits || 0) > 0;
       
-      // Check if this billing period has already received credits
       const alreadyGranted = lastCreditGrant && 
         currentPeriodEnd.getTime() <= lastCreditGrant.getTime();
       
@@ -174,7 +201,6 @@ export class WebhookHandlers {
           features.monthlyVideoCredits || 0,
           features.monthlyVoiceCredits || 0
         );
-        // Update the lastCreditGrantPeriodEnd to prevent duplicate grants
         await storage.updateSubscription(subscription.id, {
           lastCreditGrantPeriodEnd: currentPeriodEnd,
         });
@@ -182,11 +208,9 @@ export class WebhookHandlers {
       }
     }
 
-    // Handle auto-pause on downgrade or cancellation
     if (status === 'canceled' || status === 'unpaid' || status === 'past_due') {
       await WebhookHandlers.autoPauseExcessIces(subscription.userId, 0);
     } else if (oldPlanId !== plan.id) {
-      // Plan changed - check if downgrade
       const newLimit = WebhookHandlers.getActiveIceLimit(plan.name);
       await WebhookHandlers.autoPauseExcessIces(subscription.userId, newLimit);
     }
@@ -195,38 +219,45 @@ export class WebhookHandlers {
   static getActiveIceLimit(planName: string): number {
     const normalizedName = planName.toLowerCase();
     if (normalizedName.includes('business') || normalizedName.includes('intelligence')) return 10;
-    if (normalizedName.includes('pro') || normalizedName.includes('grow') || normalizedName.includes('understand')) return 3;
-    return 0; // Free tier
+    if (normalizedName.includes('pro') || normalizedName.includes('understand')) return 3;
+    if (normalizedName.includes('grow')) return 1;
+    return 0;
   }
 
   static async autoPauseExcessIces(userId: number, limit: number): Promise<void> {
-    if (limit === -1) return; // Unlimited
-    
     try {
-      const icesToPause = await storage.getIcesToPauseOnDowngrade(userId, limit);
-      for (const ice of icesToPause) {
-        await storage.pauseIce(ice.id);
-        console.log(`Auto-paused ICE ${ice.id} (${ice.name}) for user ${userId} due to plan limit`);
+      const allUniverses = await storage.getUniversesByCreator(userId);
+      const activeUniverses = allUniverses.filter(u => u.iceStatus === 'active');
+      
+      if (limit === -1 || activeUniverses.length <= limit) {
+        return;
       }
-      if (icesToPause.length > 0) {
-        console.log(`Auto-paused ${icesToPause.length} ICEs for user ${userId} (new limit: ${limit})`);
+      
+      const excessCount = activeUniverses.length - limit;
+      const toRemove = activeUniverses.slice(-excessCount);
+      
+      for (const universe of toRemove) {
+        await storage.updateUniverse(universe.id, { iceStatus: 'paused', pausedAt: new Date() });
+        console.log(`[webhook] Auto-paused ICE ${universe.id} for user ${userId} (limit: ${limit})`);
       }
     } catch (error) {
-      console.error(`Error auto-pausing ICEs for user ${userId}:`, error);
+      console.error(`[webhook] Error auto-pausing ICEs for user ${userId}:`, error);
     }
   }
 
   static async recomputeEntitlements(userId: number, plan: Plan): Promise<void> {
-    const features = (plan.features as PlanFeatures) || {};
+    const features = plan.features as PlanFeatures | null;
     
     await storage.upsertEntitlements(userId, {
-      canUseCloudLlm: features.canUseCloudLlm || false,
-      canGenerateImages: features.canGenerateImages || false,
-      canExport: features.canExport || false,
-      canUseCharacterChat: features.canUseCharacterChat || false,
-      maxCardsPerStory: features.maxCardsPerStory || 5,
-      storageDays: features.storageDays || 7,
-      collaborationRoles: features.collaborationRoles || false,
+      canUseCloudLlm: features?.canUseCloudLlm || false,
+      canGenerateImages: features?.canGenerateImages || false,
+      canExport: features?.canExport || false,
+      canUseCharacterChat: features?.canUseCharacterChat || false,
+      maxCardsPerStory: features?.maxCardsPerStory || 5,
+      storageDays: features?.storageDays || 7,
+      collaborationRoles: features?.collaborationRoles || false,
     });
+    
+    console.log(`[webhook] Updated entitlements for user ${userId} to plan ${plan.name}`);
   }
 }

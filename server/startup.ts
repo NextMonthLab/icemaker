@@ -1,7 +1,14 @@
 import crypto from 'crypto';
 
-const REQUIRED_IN_PRODUCTION = ['PUBLIC_TOKEN_SECRET'];
-const RECOMMENDED_IN_PRODUCTION = ['DATABASE_URL', 'SESSION_SECRET'];
+const REQUIRED_IN_PRODUCTION = ['PUBLIC_TOKEN_SECRET', 'DATABASE_URL'];
+const RECOMMENDED_IN_PRODUCTION = ['SESSION_SECRET', 'STRIPE_WEBHOOK_SECRET'];
+
+function hasReplitConnector(): boolean {
+  return !!(
+    process.env.REPLIT_CONNECTORS_HOSTNAME &&
+    (process.env.REPL_IDENTITY || process.env.WEB_REPL_RENEWAL)
+  );
+}
 
 interface StartupCheckResult {
   success: boolean;
@@ -21,6 +28,7 @@ export function runStartupSecurityChecks(): StartupCheckResult {
   console.log('  Security Startup Checks (Phase 1.1)');
   console.log('========================================');
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Platform: ${hasReplitConnector() ? 'Replit' : 'Standard (Render/other)'}`);
   console.log('');
 
   // Check required environment variables in production
@@ -52,6 +60,31 @@ export function runStartupSecurityChecks(): StartupCheckResult {
   console.log(`  - Token expiry: 3600 seconds (1 hour)`);
   console.log(`  - Resource types: story, preview`);
   console.log(`  - Audiences: analytics, chat`);
+  console.log('');
+
+  // Stripe configuration status
+  const stripeSecretSet = !!process.env.STRIPE_SECRET_KEY;
+  const stripeWebhookSecretSet = !!process.env.STRIPE_WEBHOOK_SECRET;
+  const usingReplitConnector = hasReplitConnector();
+  
+  console.log('[Stripe Configuration]');
+  if (usingReplitConnector) {
+    console.log('  - Mode: Replit Connector (auto-managed)');
+    console.log('  - Credentials: Via Replit integration');
+    console.log('  - Webhook secret: Managed by stripe-replit-sync');
+  } else {
+    console.log('  - Mode: Standard environment variables');
+    console.log(`  - STRIPE_SECRET_KEY: ${stripeSecretSet ? 'SET' : 'NOT SET'}`);
+    console.log(`  - STRIPE_WEBHOOK_SECRET: ${stripeWebhookSecretSet ? 'SET' : 'NOT SET'}`);
+    
+    if (!stripeSecretSet && isProduction) {
+      result.errors.push('CRITICAL: STRIPE_SECRET_KEY is required in production');
+      result.success = false;
+    }
+    if (!stripeWebhookSecretSet && isProduction) {
+      result.warnings.push('WARNING: STRIPE_WEBHOOK_SECRET not set - webhook verification may fail');
+    }
+  }
   console.log('');
 
   // Rate limiting status

@@ -1,0 +1,168 @@
+Replit Prompt: Render Deployment Hardening – Stripe + Environment Decoupling (One-Click Deploy Ready)
+
+Context
+The application is currently production-ready on Replit but has several Replit-specific assumptions that prevent safe, repeatable deployment on Render.
+
+Stripe integration, environment detection, and webhook configuration must be made platform-agnostic.
+
+This task is NOT about adding features.
+It is about removing Replit coupling and making deployment deterministic across environments.
+
+Goal
+Enable a one-click, reliable deployment to Render with:
+- No Replit-specific dependencies
+- Stripe fully functional with live keys
+- Webhooks correctly verified
+- Environment detection based on standard variables
+- No hardcoded hostnames or platform assumptions
+
+Non-goals
+- Do NOT change pricing logic
+- Do NOT add VAT or tax logic
+- Do NOT introduce multi-tenant schema changes
+- Do NOT redesign UI or checkout flow
+
+---
+
+Scope of work
+
+1) Stripe client decoupling (CRITICAL)
+Refactor `server/stripeClient.ts` so that:
+
+- Primary source of truth is standard environment variables:
+  - STRIPE_SECRET_KEY
+  - STRIPE_PUBLISHABLE_KEY
+- Replit connector logic becomes optional fallback ONLY:
+  - Used only if STRIPE_SECRET_KEY is missing AND Replit connector env vars exist
+- Remove hard dependency on:
+  - REPLIT_CONNECTORS_HOSTNAME
+  - REPL_IDENTITY
+- Stripe initialization must succeed on Render with only env vars set
+
+Explicitly document which env vars are required for Stripe to function.
+
+---
+
+2) Environment detection (CRITICAL)
+Replace all Replit-specific production detection:
+
+❌ `process.env.REPLIT_DEPLOYMENT === "1"`
+
+With standard detection:
+- `process.env.NODE_ENV === "production"`
+
+Ensure:
+- Stripe live keys are used only when NODE_ENV === "production"
+- Test keys are used in development
+- No ambiguity between environments
+
+---
+
+3) Webhook configuration for Render
+Ensure webhook handling works identically on Render:
+
+- Confirm `/api/stripe/webhook`:
+  - Uses raw body middleware
+  - Verifies signature using STRIPE_WEBHOOK_SECRET
+- Remove any logic that relies on:
+  - REPLIT_DOMAINS
+  - Replit-hosted callback assumptions
+
+Document:
+- Required Stripe Dashboard webhook URL
+- Required events to subscribe to
+
+---
+
+4) Success and cancel URL safety
+Current logic uses:
+`${req.protocol}://${req.get("host")}`
+
+Verify and harden:
+- This works correctly behind Render proxies
+- If needed, add optional override:
+  - `PUBLIC_APP_URL`
+- Use fallback logic:
+  - If PUBLIC_APP_URL exists, prefer it
+  - Otherwise derive from request
+
+This ensures:
+- Checkout redirects correctly in all environments
+- No broken redirects during beta
+
+---
+
+5) Required environment variables (Render contract)
+Create a single documented list of required env vars for Render:
+
+Minimum required:
+- NODE_ENV=production
+- DATABASE_URL
+- PUBLIC_TOKEN_SECRET
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- STRIPE_PUBLISHABLE_KEY (if client uses it)
+- OPTIONAL: PUBLIC_APP_URL
+
+Ensure:
+- Server fails fast or logs loudly if required vars are missing
+- Stripe errors are clear and actionable
+
+---
+
+6) Webhook robustness (non-breaking improvement)
+Without changing behaviour:
+- Add Stripe event ID deduplication
+- Store last processed `stripeEventId`
+- Ignore repeated webhook deliveries safely
+
+This prevents future double-processing issues.
+
+---
+
+7) Render deployment sanity checks
+Add a lightweight startup log in production:
+- Confirm NODE_ENV
+- Confirm Stripe initialized
+- Confirm webhook secret present
+- Confirm token system active
+
+No secrets should be logged.
+
+---
+
+8) Documentation
+Update or add:
+- `docs/render-deployment.md`
+Include:
+- Required env vars
+- Stripe setup steps
+- Webhook configuration
+- Common failure cases
+- One-click deployment checklist
+
+---
+
+Acceptance criteria
+This task is complete when:
+- App runs on Render with no Replit env vars present
+- Stripe checkout works with live keys
+- Webhooks verify successfully on Render
+- Checkout success/cancel redirects work
+- No Replit-specific logic is required in production
+- Missing env vars fail loudly and clearly
+- No functional regressions in Replit environment
+
+---
+
+Output required
+Return:
+1) Files changed
+2) Summary of Replit coupling removed
+3) Render env var checklist
+4) Stripe webhook setup steps
+5) Confirmation that one-click Render deployment is now safe
+
+Final instruction
+This is a deployment-hardening pass.
+If a change does not improve cross-platform reliability, do not include it.

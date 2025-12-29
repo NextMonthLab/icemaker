@@ -26,6 +26,15 @@ import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter, getClient
 import { logAuthFailure, logAccessDenied, logTokenError, logAdminAction } from "./securityLogger";
 import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, analyticsMetadataValidator, analyticsTypeValidator, analyticsMetadataStringValidator, adminRequestValidator, adminReasonValidator } from "./requestValidation";
 
+function getAppBaseUrl(req: any): string {
+  if (process.env.PUBLIC_APP_URL) {
+    return process.env.PUBLIC_APP_URL.replace(/\/$/, '');
+  }
+  const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const host = req.get('x-forwarded-host') || req.get('host');
+  return `${protocol}://${host}`;
+}
+
 // Echo response post-processing utilities
 function dedupeText(text: string): string {
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
@@ -4221,8 +4230,8 @@ export async function registerRoutes(
         payment_method_types: ["card"],
         line_items: [{ price: priceId, quantity: 1 }],
         mode: "subscription",
-        success_url: `${req.protocol}://${req.get("host")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.protocol}://${req.get("host")}/checkout/cancel`,
+        success_url: `${getAppBaseUrl(req)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getAppBaseUrl(req)}/checkout/cancel`,
         metadata: {
           userId: String(req.user!.id),
           planId: String(plan.id),
@@ -4371,7 +4380,7 @@ export async function registerRoutes(
       
       const session = await stripe.billingPortal.sessions.create({
         customer: subscription.stripeCustomerId,
-        return_url: `${req.protocol}://${req.get("host")}/settings`,
+        return_url: `${getAppBaseUrl(req)}/settings`,
       });
       
       res.json({ url: session.url });
@@ -4428,8 +4437,8 @@ export async function registerRoutes(
           quantity: 1,
         }],
         mode: "payment",
-        success_url: `${req.protocol}://${req.get("host")}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.protocol}://${req.get("host")}/credits/cancel`,
+        success_url: `${getAppBaseUrl(req)}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getAppBaseUrl(req)}/credits/cancel`,
         metadata: {
           userId: String(req.user!.id),
           creditType,
@@ -6044,8 +6053,8 @@ STRICT RULES:
             quantity: 1,
           },
         ],
-        success_url: `${req.protocol}://${req.get("host")}/preview/${preview.id}?claimed=true`,
-        cancel_url: `${req.protocol}://${req.get("host")}/preview/${preview.id}`,
+        success_url: `${getAppBaseUrl(req)}/preview/${preview.id}?claimed=true`,
+        cancel_url: `${getAppBaseUrl(req)}/preview/${preview.id}`,
         metadata: {
           userId: String(req.user!.id),
           previewId: preview.id,
@@ -8716,8 +8725,8 @@ GUIDELINES:
                 },
               ],
             },
-            success_url: `${req.protocol}://${req.get('host')}/orbit/${slug}/hub?panel=cubes&success=true&orderId=${order.id}`,
-            cancel_url: `${req.protocol}://${req.get('host')}/orbit/${slug}/hub?panel=cubes&cancelled=true`,
+            success_url: `${getAppBaseUrl(req)}/orbit/${slug}/hub?panel=cubes&success=true&orderId=${order.id}`,
+            cancel_url: `${getAppBaseUrl(req)}/orbit/${slug}/hub?panel=cubes&cancelled=true`,
             metadata: {
               orderId: order.id.toString(),
               cubeId: cube.id.toString(),
