@@ -1,0 +1,145 @@
+Replit Prompt: IceMaker UI refinement – align with NextMonth, preserve cinematic individuality
+
+Context
+IceMaker is an intentional, cinematic part of the NextMonth platform. It is distinct from Orbit and should remain emotionally expressive, story-led, and immersive.
+
+We do NOT want to redesign IceMaker.
+We do NOT want to make it look like Orbit.
+We do NOT want to flatten its personality.
+
+The goal is subtle alignment, not homogenisation.
+
+This work is about polish, discipline, and consistency, not reinvention.
+
+---
+
+Core design principle
+IceMaker should feel like:
+- The cinema or stage
+Orbit should feel like:
+- The control room or intelligence layer
+
+They are part of the same system, but they operate in different emotional modes.
+
+---
+
+Non-negotiables
+1. Preserve IceMaker’s individuality and cinematic tone.
+2. Keep the existing IceMaker layout and interaction patterns.
+3. Do NOT introduce Orbit UI patterns into IceMaker.
+4. Do NOT add analytics, admin language, or business framing into IceMaker.
+5. Changes should be subtle and incremental, not disruptive.
+6. Avoid long dash characters in UI copy.
+
+---
+
+Typography rules
+IceMaker currently uses a theatrical / cinematic font.
+
+Refine usage as follows:
+- Cinematic font:
+  - Allowed ONLY for:
+    - Primary headings
+    - Experience titles
+    - Section headers that signal narrative or story context
+- System / standard UI font:
+  - Use for:
+    - Body copy
+    - Buttons
+    - Inputs
+    - Labels
+    - Navigation
+    - Helper text
+    - Modals
+
+This keeps the cinematic feel intentional and premium, not overwhelming.
+
+Do not remove the cinematic font entirely.
+Do not apply it globally.
+
+---
+
+Colour system alignment
+Align IceMaker with the NextMonth colour system while preserving mood.
+
+Rules:
+- Use the same base blacks, neutrals, and accent colours as the wider platform.
+- IceMaker may use:
+  - Higher contrast
+  - Deeper shadows
+  - Slightly richer saturation
+- Orbit uses:
+  - More whitespace
+  - Lighter contrast
+  - More restraint
+
+IceMaker should feel darker, richer, and more immersive, but not disconnected.
+
+Avoid introducing new colours unless already part of the NextMonth palette.
+
+---
+
+Spacing and rhythm
+Make subtle refinements only:
+- Slightly standardise spacing between sections where it improves readability.
+- Maintain generous vertical spacing to preserve cinematic pacing.
+- Avoid dense or “dashboard-like” layouts.
+
+IceMaker should breathe.
+
+---
+
+UI components
+Where IceMaker uses buttons, inputs, or controls:
+- Reuse the same underlying component styles as NextMonth where possible.
+- Allow IceMaker-specific treatments:
+  - Softer edges
+  - Slight glow or gradient usage
+  - Darker surfaces
+
+Components should feel related, not identical.
+
+---
+
+Motion and interaction
+If motion exists:
+- Keep it slow, deliberate, and minimal.
+- No flashy or distracting animations.
+- Focus on subtle fades, transitions, and easing that reinforce immersion.
+
+IceMaker motion should feel like film pacing, not UI flair.
+
+---
+
+What not to change
+- Do not change the IceMaker library layout at /app.
+- Do not add Orbit language, metrics, or business terminology.
+- Do not change the core navigation structure.
+- Do not remove the sense that IceMaker is its own “mode” within NextMonth.
+
+---
+
+Success criteria
+The IceMaker UI should:
+- Feel clearly part of NextMonth
+- Retain its cinematic and emotional identity
+- Feel more disciplined and intentional
+- Avoid feeling generic or corporate
+- Avoid feeling experimental or unstable
+
+If a user moves from IceMaker to Orbit, it should feel like:
+“I’ve stepped into a different room of the same building.”
+
+---
+
+Implementation note
+This is a refinement pass, not a redesign.
+
+If a change does not clearly improve:
+- clarity
+- cohesion
+- or intentionality
+
+Do not make it.
+
+Return only the updated UI refinements, not exploratory variants.
