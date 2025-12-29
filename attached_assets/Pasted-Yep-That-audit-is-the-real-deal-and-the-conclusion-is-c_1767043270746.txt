@@ -1,0 +1,179 @@
+Yep. That audit is the real deal, and the conclusion is correct: you’re effectively single-tenant right now (userId is the tenant), and there are a couple of genuinely dangerous gaps on the public and ingestion surfaces.
+
+On the “Would you like me to start implementing any phases?” question: Yes. Start Phase 1 immediately. Phase 2 is a schema migration and you only do that once you’ve stopped the bleeding.
+
+Here’s what I’d do, in a tight, practical order, with minimal disruption.
+
+Phase 1 you should implement first (the minimum safety net)
+
+1) Lock down public story resolution
+
+Right now: GET /api/story/:slug is global and unscoped.
+
+Fix now:
+	•	Ensure slugs are globally unique, enforced at DB level.
+	•	Unique index on universes.slug (or whatever table holds it).
+	•	If you cannot guarantee uniqueness quickly, add a namespace to the URL now:
+	•	/api/story/:creatorHandle/:slug or /api/story/:universeId
+	•	Add an explicit “status must be active” gate for public reads.
+
+This stops accidental leaks and reduces ambiguity.
+
+2) Stop analytics poisoning and chat injection
+
+Right now: ingestion accepts universeId from the client without ownership validation.
+
+Fix now (best MVP approach): signed public token
+	•	When you render the public experience page, the server issues a short-lived signed token bound to:
+	•	universeId
+	•	issuedAt
+	•	expiresAt
+	•	optional origin or shareSlug
+	•	The client must include this token when calling:
+	•	POST /api/public/analytics/event
+	•	chat endpoints
+	•	Server verifies signature and that the token universeId matches the request universeId.
+
+This prevents cross-tenant poisoning without needing tenants yet.
+
+3) Rate-limit enumeration surfaces
+
+Even with ownership checks, ID guessing is still a risk.
+
+Add rate limiting to:
+	•	activate/pause endpoints
+	•	public analytics event endpoint
+	•	public chat endpoints
+
+4) Ensure every mutating endpoint checks ownership robustly
+
+You’ve got some partial checks. Make them consistent.
+
+Pattern for mutations:
+	•	Load universe by id
+	•	Verify current user is allowed to modify it (owner check for now)
+	•	Only then mutate
+
+No direct “update where id = X” without the verification step first.
+
+⸻
+
+Phase 2 is the real multi-tenant move (do after Phase 1)
+
+Once Phase 1 is in, you can migrate safely:
+	•	Create tenants and tenant_members
+	•	Add tenant_id to the core tables first:
+	•	universes
+	•	subscriptions
+	•	entitlements
+	•	analytics_events
+	•	chat_threads
+	•	Backfill: create one tenant per existing user, attach their data
+	•	Then start enforcing tenantId in queries and middleware
+
+That’s the point where teams become possible.
+
+⸻
+
+The key decision: don’t “half-migrate”
+
+Do not add tenantId to one or two tables and leave others floating. That’s how you end up with a false sense of safety.
+
+Either:
+	•	Phase 1 safety net (signed tokens + rate limits + global uniqueness), then
+	•	A deliberate Phase 2 migration where tenant_id becomes mandatory.
+
+⸻
+
+A clean Replit prompt to implement Phase 1 now
+
+Paste this into Replit:
+
+Replit Prompt: Implement Phase 1 Leakage Prevention for current single-tenant system (signed public tokens + slug safety + rate limiting)
+
+Context
+We have an audit confirming the platform is currently single-tenant: ownership is userId-based, no tenants/workspaces exist.
+There are critical risks on public and ingestion surfaces:
+- GET /api/story/:slug resolves globally and may leak wrong content if slugs collide
+- POST /api/public/analytics/event accepts universeId from client without validation, allowing analytics poisoning
+- Chat endpoints accept universeId without strong validation, allowing message injection
+We must implement a Phase 1 safety net before adding true multi-tenant schema.
+
+Goal
+Implement immediate leakage prevention without introducing a full tenant model yet.
+
+Work required
+
+1) Public story resolution hardening
+- Identify the canonical universe/story slug field and its DB table.
+- Enforce global uniqueness for slug at database level (unique index).
+- Update GET /api/story/:slug to:
+  - Return 404 if not found
+  - Enforce status checks (only active experiences can be served publicly)
+- If global uniqueness cannot be guaranteed quickly, update routing to include a namespace:
+  - /api/story/:creatorHandle/:slug OR /api/story/:universeId
+  - Ensure the lookup includes both parts.
+
+2) Signed public access token for ingestion calls
+- When serving the public story page payload, generate a short-lived signed token:
+  - Claims: universeId, iat, exp, optional slug
+  - Signing: HMAC using server secret (do not expose secret)
+- Client must include this token on:
+  - POST /api/public/analytics/event
+  - Chat conversation start and message endpoints
+- Server must verify:
+  - token signature
+  - token not expired
+  - token universeId matches request universeId
+- Reject ingestion calls without valid token.
+
+3) Analytics ingestion validation
+- Modify POST /api/public/analytics/event:
+  - Remove any trust in client-supplied tenant or ownership.
+  - Accept universeId only if token validates and matches.
+  - Enforce that the referenced universe exists and is active.
+  - Apply rate limiting.
+
+4) Chat endpoints validation
+- For any chat endpoint that accepts universeId:
+  - Require the signed public token for public chat usage.
+  - Verify universe exists and is active.
+  - Apply rate limiting.
+
+5) Rate limiting and enumeration defence
+- Add rate limiting middleware to:
+  - activate/pause endpoints
+  - public analytics endpoint
+  - public chat endpoints
+- Ensure rate limiting keys use IP plus a lightweight fingerprint where possible.
+
+6) Ownership verification consistency for authenticated mutations
+- For activate/pause and any mutating endpoints:
+  - Load universe by id
+  - Verify user is owner or has appropriate creator record
+  - Only then mutate
+- Avoid direct update queries without prior ownership verification.
+
+Deliverables
+- Code changes with clear comments and minimal disruption.
+- A short summary of which endpoints were updated and how to test:
+  - Attempt to post analytics for a universe without a token should fail.
+  - Attempt to post analytics with a token for a different universe should fail.
+  - Public story fetch should not serve inactive experiences.
+  - Slug uniqueness enforced or namespace route added.
+
+Constraints
+- Do not implement full tenants yet.
+- Focus only on Phase 1 safety net.
+- Do not add analytics or Orbit UI changes in this task.
+
+Output
+Return:
+- list of changed files
+- testing steps (curl or postman examples)
+- any migration steps for the slug uniqueness index
+
+
+⸻
+
+If you want my blunt opinion: do Phase 1 this week before adding any more features. It’s not glamorous, but it stops you building a castle with the front door wide open.

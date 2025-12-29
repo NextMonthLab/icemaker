@@ -84,13 +84,13 @@ export default function Experience() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md"
         >
-          <PauseCircle className="w-16 h-16 text-yellow-500/60 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Experience Paused</h1>
-          <p className="text-white/60 mb-6">
+          <PauseCircle className="w-16 h-16 text-yellow-500/60 mx-auto mb-6" />
+          <h1 className="text-3xl font-display font-bold text-white mb-3 tracking-wide">Experience Paused</h1>
+          <p className="text-white/70 mb-6 max-w-sm leading-relaxed">
             This interactive experience is currently paused. 
             The creator may be updating content or making improvements.
           </p>
-          <p className="text-white/40 text-sm">
+          <p className="text-white/50 text-sm">
             Check back soon or explore other experiences.
           </p>
           <Link href="/">
@@ -105,8 +105,8 @@ export default function Experience() {
 
   if (!universe) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-4">
-        <h1 className="text-2xl font-bold text-white mb-2">Story Not Found</h1>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center justify-center text-center p-4">
+        <h1 className="text-3xl font-display font-bold text-white mb-3 tracking-wide">Story Not Found</h1>
         <p className="text-white/60">This experience doesn't exist or has been removed.</p>
       </div>
     );
@@ -114,8 +114,8 @@ export default function Experience() {
 
   if (availableCards.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-4">
-        <h1 className="text-2xl font-bold text-white mb-2">{universe.name}</h1>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center justify-center text-center p-4">
+        <h1 className="text-3xl font-display font-bold text-white mb-3 tracking-wide">{universe.name}</h1>
         <p className="text-white/60">This story is coming soon.</p>
       </div>
     );

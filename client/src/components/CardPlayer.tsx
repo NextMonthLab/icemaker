@@ -424,7 +424,7 @@ export default function CardPlayer({
                 >
                   {captionIndex < card.captions.length ? (
                     <p 
-                      className={`font-bold text-center leading-snug px-4 text-white ${fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
+                      className={`font-display font-bold text-center leading-snug px-4 text-white tracking-wide ${fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
                       style={{ 
                         textShadow: '0 2px 10px rgba(0,0,0,0.9)'
                       }}
@@ -488,8 +488,8 @@ export default function CardPlayer({
             <div className="flex-1 min-h-0 bg-gradient-to-b from-black via-zinc-900 to-zinc-900 p-5 pb-28 flex flex-col overflow-y-auto">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <span className="text-xs font-mono text-primary/80">DAY {card.dayIndex}</span>
-                  <h2 className="text-xl font-bold text-white mt-0.5" data-testid="context-title">
+                  <span className="text-xs font-mono text-primary/80 tracking-widest">DAY {card.dayIndex}</span>
+                  <h2 className="text-xl font-display font-bold text-white mt-1 tracking-wide" data-testid="context-title">
                     {card.title}
                   </h2>
                 </div>

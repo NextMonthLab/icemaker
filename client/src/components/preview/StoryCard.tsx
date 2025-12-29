@@ -36,7 +36,7 @@ export function StoryCard({ card, onAskAbout, onCta, isLast }: StoryCardProps) {
       data-testid={`story-card-${card.id}`}
     >
       <div className="p-6 pb-8 space-y-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-lg">
+        <h2 className="text-2xl md:text-3xl font-display font-bold text-white leading-tight tracking-wide drop-shadow-lg">
           {card.headline}
         </h2>
 
