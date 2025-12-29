@@ -148,7 +148,7 @@ export function BrandCustomizationScreen({
             {brandName}
           </h1>
           <p className="text-sm" style={{ color: mutedColor }}>
-            Customize your Smart Site appearance
+            Customize your Orbit appearance
           </p>
         </motion.div>
 

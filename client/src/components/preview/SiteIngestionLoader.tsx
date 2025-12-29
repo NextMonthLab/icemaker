@@ -26,7 +26,7 @@ const educationalSlides = [
     icon: Globe,
     title: "Extracting Visual Identity",
     description: "Capturing your brand colours, logos, and imagery for a cohesive experience.",
-    detail: "Your Smart Site will feel authentically yours from the first glance.",
+    detail: "Your Orbit will feel authentically yours from the first glance.",
   },
   {
     icon: BarChart3,
@@ -37,20 +37,20 @@ const educationalSlides = [
   {
     icon: Users,
     title: "Engaging Your Audience",
-    description: "Smart Sites convert 3x more visitors into leads than static websites.",
+    description: "Orbits convert 3x more visitors into leads than static websites.",
     detail: "Interactive conversations build trust and capture intent naturally.",
   },
   {
     icon: Shield,
     title: "Protecting Your Brand",
     description: "AI responses are guardrailed to always represent your business accurately.",
-    detail: "You stay in control of what your Smart Site says about you.",
+    detail: "You stay in control of what your Orbit says about you.",
   },
   {
     icon: Lightbulb,
     title: "Finding Customer Questions",
     description: "We identify the questions your customers commonly ask.",
-    detail: "Your Smart Site will proactively address visitor concerns.",
+    detail: "Your Orbit will proactively address visitor concerns.",
   },
   {
     icon: Target,
@@ -61,7 +61,7 @@ const educationalSlides = [
   {
     icon: TrendingUp,
     title: "Continuous Learning",
-    description: "Your Smart Site gets smarter over time based on real conversations.",
+    description: "Your Orbit gets smarter over time based on real conversations.",
     detail: "Insights help you improve your messaging and offerings.",
   },
   {
@@ -73,19 +73,19 @@ const educationalSlides = [
   {
     icon: Award,
     title: "Professional Presentation",
-    description: "Your Smart Site presents your business at its absolute best.",
+    description: "Your Orbit presents your business at its absolute best.",
     detail: "Clean, modern design that works on any device.",
   },
   {
     icon: Clock,
     title: "24/7 Availability",
-    description: "Your Smart Site never sleeps - it's always ready to help visitors.",
+    description: "Your Orbit never sleeps - it's always ready to help visitors.",
     detail: "Capture leads and answer questions around the clock.",
   },
   {
     icon: Rocket,
     title: "Ready to Launch",
-    description: "In moments, your Smart Site will be ready to share with the world.",
+    description: "In moments, your Orbit will be ready to share with the world.",
     detail: "Embed it, link to it, or use it as your new digital front door.",
   },
 ];
@@ -99,7 +99,7 @@ const progressStages = [
   { progress: 55, label: "Extracting structured data..." },
   { progress: 65, label: "Building knowledge base..." },
   { progress: 75, label: "Validating content quality..." },
-  { progress: 85, label: "Preparing your Smart Site..." },
+  { progress: 85, label: "Preparing your Orbit..." },
   { progress: 95, label: "Final optimizations..." },
 ];
 
@@ -176,12 +176,12 @@ export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6", isComp
           </div>
           {brandName && (
             <h1 className="text-2xl font-bold text-foreground">
-              Creating Smart Site for <span style={{ color: accentColor }}>{brandName}</span>
+              Creating Your Orbit for <span style={{ color: accentColor }}>{brandName}</span>
             </h1>
           )}
           {!brandName && (
             <h1 className="text-2xl font-bold text-foreground">
-              Creating Your Smart Site
+              Creating Your Orbit
             </h1>
           )}
         </motion.div>
@@ -213,7 +213,7 @@ export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6", isComp
               {isComplete ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  <span className="text-green-500 font-medium">Ready! Loading your Smart Site...</span>
+                  <span className="text-green-500 font-medium">Ready! Loading your Orbit...</span>
                 </>
               ) : (
                 progressStages[currentStage]?.label || "Processing..."
