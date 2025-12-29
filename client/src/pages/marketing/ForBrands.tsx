@@ -5,7 +5,7 @@ import { ArrowRight, Globe, Wand2, MessageCircle, Share2, Code, QrCode, CheckCir
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ScanProgressScreen } from "@/components/preview/ScanProgressScreen";
+import { SiteIngestionLoader } from "@/components/preview/SiteIngestionLoader";
 
 const benefits = [
   {
@@ -128,7 +128,7 @@ export default function ForBrands() {
   const scanDomain = siteUrl.replace(/^https?:\/\//, '').split('/')[0] || 'your site';
 
   if (showProgress) {
-    return <ScanProgressScreen domain={scanDomain} onComplete={handleAnimationComplete} />;
+    return <SiteIngestionLoader onComplete={handleAnimationComplete} />;
   }
 
   return (

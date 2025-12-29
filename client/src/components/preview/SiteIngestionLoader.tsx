@@ -5,6 +5,7 @@ import { Sparkles, Globe, Brain, MessageCircle, BarChart3, Zap, Shield, Users } 
 interface SiteIngestionLoaderProps {
   brandName?: string;
   accentColor?: string;
+  onComplete?: () => void;
 }
 
 const educationalSlides = [
@@ -57,10 +58,11 @@ const progressStages = [
   { progress: 100, label: "Almost ready..." },
 ];
 
-export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6" }: SiteIngestionLoaderProps) {
+export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6", onComplete }: SiteIngestionLoaderProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentStage, setCurrentStage] = useState(0);
   const [displayProgress, setDisplayProgress] = useState(0);
+  const [hasCalledComplete, setHasCalledComplete] = useState(false);
 
   useEffect(() => {
     const slideInterval = setInterval(() => {
@@ -78,6 +80,18 @@ export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6" }: Site
     }, 2500);
     return () => clearInterval(stageInterval);
   }, []);
+
+  // Call onComplete when we reach the final stage
+  useEffect(() => {
+    if (currentStage === progressStages.length - 1 && onComplete && !hasCalledComplete) {
+      setHasCalledComplete(true);
+      // Small delay for the final animation
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStage, onComplete, hasCalledComplete]);
 
   useEffect(() => {
     const targetProgress = progressStages[currentStage].progress;
