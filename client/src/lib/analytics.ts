@@ -13,26 +13,32 @@ interface AnalyticsEvent {
 }
 
 const sentEvents = new Set<string>();
+const pendingEvents = new Set<string>();
 
 export async function trackEvent(event: AnalyticsEvent): Promise<void> {
-  const eventKey = `${event.type}-${event.universeId}-${event.cardId || ''}-${Date.now()}`;
+  const dedupKey = `${event.type}-${event.universeId}-${event.cardId || ''}`;
   
   if (event.type === 'experience_view' || event.type === 'card_view') {
-    const dedupKey = `${event.type}-${event.universeId}-${event.cardId || ''}`;
-    if (sentEvents.has(dedupKey)) {
+    if (sentEvents.has(dedupKey) || pendingEvents.has(dedupKey)) {
       return;
     }
-    sentEvents.add(dedupKey);
+    pendingEvents.add(dedupKey);
   }
   
   try {
-    await fetch('/api/public/analytics/event', {
+    const response = await fetch('/api/public/analytics/event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(event),
     });
+    
+    if (response.ok && (event.type === 'experience_view' || event.type === 'card_view')) {
+      sentEvents.add(dedupKey);
+    }
   } catch (error) {
     console.debug('Analytics event failed:', error);
+  } finally {
+    pendingEvents.delete(dedupKey);
   }
 }
 
