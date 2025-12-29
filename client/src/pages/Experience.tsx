@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import CardPlayer from "@/components/CardPlayer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, User, PauseCircle } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { trackExperienceView, trackCardView } from "@/lib/analytics";
@@ -17,11 +17,14 @@ export default function Experience() {
   const startCard = params.get("card") ? parseInt(params.get("card")!) : undefined;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const { data: storyData, isLoading } = useQuery({
+  const { data: storyData, isLoading, error } = useQuery({
     queryKey: ["story-by-slug", slug],
     queryFn: () => api.getStoryBySlug(slug!),
     enabled: !!slug,
+    retry: false,
   });
+  
+  const isPaused = error?.message?.includes("paused");
 
   const universe = storyData?.universe;
   const availableCards = storyData?.cards || [];
@@ -69,6 +72,33 @@ export default function Experience() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isPaused) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center justify-center text-center p-4" data-testid="experience-paused">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md"
+        >
+          <PauseCircle className="w-16 h-16 text-yellow-500/60 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Experience Paused</h1>
+          <p className="text-white/60 mb-6">
+            This interactive experience is currently paused. 
+            The creator may be updating content or making improvements.
+          </p>
+          <p className="text-white/40 text-sm">
+            Check back soon or explore other experiences.
+          </p>
+          <Link href="/">
+            <Button variant="outline" className="mt-6" data-testid="button-home">
+              Explore More
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     );
   }

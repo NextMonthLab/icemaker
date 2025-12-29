@@ -823,6 +823,15 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Story not found" });
       }
       
+      // Check if Ice is paused (not publicly available)
+      if (universe.iceStatus === 'paused') {
+        return res.status(410).json({
+          message: "This experience is currently paused",
+          status: "paused",
+          name: universe.name,
+        });
+      }
+      
       const cards = await storage.getCardsByUniverse(universe.id);
       const characters = await storage.getCharactersByUniverse(universe.id);
       
@@ -897,6 +906,12 @@ export async function registerRoutes(
       
       if (!type || !universeId) {
         return res.status(400).json({ message: "type and universeId are required" });
+      }
+      
+      // Check if Ice is paused - reject analytics for paused Ices
+      const universe = await storage.getUniverse(universeId);
+      if (universe && universe.iceStatus === 'paused') {
+        return res.status(410).json({ message: "Experience is paused" });
       }
       
       const validTypes = ['experience_view', 'card_view', 'conversation_start', 'question_asked', 'chat_message'];
