@@ -4,7 +4,7 @@ import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wan
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-const LOGO_URL = "/logo.png";
+import MarketingHeader from "@/components/MarketingHeader";
 
 const useCases = [
   {
@@ -132,40 +132,7 @@ export default function MarketingHome() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black to-transparent">
-        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-          <Link href="/">
-            <div className="h-18 md:h-24 flex items-center">
-              <img 
-                src={LOGO_URL} 
-                alt="NextMonth" 
-                className="h-30 md:h-36 w-auto cursor-pointer" 
-                style={{ clipPath: 'inset(30% 0 30% 0)' }}
-                data-testid="link-logo"
-              />
-            </div>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/ai-discovery-control">
-              <Button variant="ghost" className="hidden md:inline-flex text-white/80 hover:text-white hover:bg-white/10" data-testid="link-ai-discovery">
-                AI Discovery
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10" data-testid="button-login">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/login?signup=true">
-              <Button className="bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/20 gap-2" data-testid="button-signup">
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Launch Experience Builder</span>
-                <span className="sm:hidden">Launch Builder</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader />
 
       <main>
         {/* Hero Section - reduced ambient gradients */}
@@ -535,7 +502,7 @@ export default function MarketingHome() {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <img 
-                src={LOGO_URL} 
+                src="/logo.png" 
                 alt="NextMonth" 
                 className="h-[48px]"
               />
