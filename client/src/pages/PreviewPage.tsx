@@ -527,7 +527,7 @@ export default function PreviewPage() {
     const imagePool = siteIdentity?.imagePool || [];
     
     const topics = [
-      ...(siteIdentity?.serviceBullets || []).slice(0, 6).map((bullet, i) => ({
+      ...(siteIdentity?.serviceBullets || []).slice(0, 12).map((bullet, i) => ({
         id: `t_${i}`,
         label: bullet.length > 40 ? bullet.slice(0, 40) + '...' : bullet,
         keywords: bullet.toLowerCase().split(/\s+/).filter(w => w.length > 3),
@@ -535,7 +535,7 @@ export default function PreviewPage() {
         summary: bullet,
         imageUrl: imagePool[i % imagePool.length],
       })),
-      ...(validatedContent?.whatWeDo || []).slice(0, 4).map((item, i) => ({
+      ...(validatedContent?.whatWeDo || []).slice(0, 10).map((item, i) => ({
         id: `tw_${i}`,
         label: item.length > 40 ? item.slice(0, 40) + '...' : item,
         keywords: item.toLowerCase().split(/\s+/).filter(w => w.length > 3),
@@ -555,7 +555,7 @@ export default function PreviewPage() {
         type: 'page' as const,
         imageUrl: siteIdentity?.heroImageUrl || imagePool[0],
       },
-      ...(siteIdentity?.serviceHeadings || []).slice(0, 5).map((heading, i) => ({
+      ...(siteIdentity?.serviceHeadings || []).slice(0, 10).map((heading, i) => ({
         id: `p_${i + 1}`,
         title: heading,
         url: preview.sourceUrl,
@@ -570,7 +570,7 @@ export default function PreviewPage() {
     
     // Add testimonials as proof tiles (highest value)
     const testimonials = siteIdentity?.testimonials || [];
-    testimonials.slice(0, 4).forEach((testimonial, i) => {
+    testimonials.slice(0, 8).forEach((testimonial, i) => {
       const label = testimonial.author 
         ? `${testimonial.author}${testimonial.company ? ` - ${testimonial.company}` : ''}`
         : 'Customer Testimonial';
@@ -586,7 +586,7 @@ export default function PreviewPage() {
     
     // Add enhanced FAQs as proof tiles
     const enhancedFaqs = siteIdentity?.enhancedFaqs || [];
-    enhancedFaqs.slice(0, 3).forEach((faq, i) => {
+    enhancedFaqs.slice(0, 8).forEach((faq, i) => {
       proof.push({
         id: `pf_${i}`,
         label: faq.question.length > 50 ? faq.question.slice(0, 50) + '...' : faq.question,
@@ -599,7 +599,7 @@ export default function PreviewPage() {
     
     // Fallback to old FAQ candidates if no enhanced data
     if (proof.length === 0) {
-      (validatedContent?.commonQuestions || siteIdentity?.faqCandidates || []).slice(0, 4).forEach((faq, i) => {
+      (validatedContent?.commonQuestions || siteIdentity?.faqCandidates || []).slice(0, 8).forEach((faq, i) => {
         const question = typeof faq === 'string' ? faq : faq.question;
         proof.push({
           id: `pr_${i}`,
@@ -615,7 +615,7 @@ export default function PreviewPage() {
     // Extract people from structured data
     const people: SiteKnowledge['people'] = [];
     const structuredPeople = siteIdentity?.structuredData?.people || [];
-    structuredPeople.slice(0, 4).forEach((person, i) => {
+    structuredPeople.slice(0, 10).forEach((person, i) => {
       people.push({
         id: `pe_${i}`,
         name: person.name,
@@ -630,7 +630,7 @@ export default function PreviewPage() {
 
     // Add products as topics if available
     const structuredProducts = siteIdentity?.structuredData?.products || [];
-    structuredProducts.slice(0, 3).forEach((product, i) => {
+    structuredProducts.slice(0, 10).forEach((product, i) => {
       topics.push({
         id: `tpr_${i}`,
         label: product.name.length > 40 ? product.name.slice(0, 40) + '...' : product.name,
