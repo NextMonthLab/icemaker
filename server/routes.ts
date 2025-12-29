@@ -6592,12 +6592,59 @@ ANTI-PATTERNS TO AVOID:
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
+        // 5MB payload limit check
+        const MAX_PAYLOAD_SIZE = 5 * 1024 * 1024;
         const contentLength = response.headers.get('content-length');
-        if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+        if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
           throw new Error('Response too large (max 5MB)');
         }
         
-        const data = await response.json();
+        // Read response with size limit (handles missing content-length)
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Unable to read response');
+        }
+        
+        const chunks: Uint8Array[] = [];
+        let totalSize = 0;
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          totalSize += value.length;
+          if (totalSize > MAX_PAYLOAD_SIZE) {
+            reader.cancel();
+            throw new Error('Response too large (max 5MB)');
+          }
+          chunks.push(value);
+        }
+        
+        const buffer = new Uint8Array(totalSize);
+        let offset = 0;
+        for (const chunk of chunks) {
+          buffer.set(chunk, offset);
+          offset += chunk.length;
+        }
+        
+        const text = new TextDecoder().decode(buffer);
+        const data = JSON.parse(text);
+        
+        // Store raw payload to object storage if configured
+        let rawPayloadRef: string | null = null;
+        try {
+          const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
+          if (isObjectStorageConfigured()) {
+            const payloadKey = `data-sources/${slug}/${connection.id}/${snapshot.id}.json`;
+            rawPayloadRef = await putObject(
+              payloadKey,
+              Buffer.from(text, 'utf-8'),
+              'application/json'
+            );
+          }
+        } catch (storageErr) {
+          console.warn('Object storage not configured or failed:', storageErr);
+        }
         
         // Extract items based on response mapping
         let items = data;
@@ -6614,6 +6661,7 @@ ANTI-PATTERNS TO AVOID:
         
         // Update snapshot with data
         await storage.updateApiSnapshot(snapshot.id, {
+          rawPayloadRef,
           rawPayloadPreview: JSON.parse(preview.length < JSON.stringify(data).length ? preview + '..."truncated"' : preview),
           recordCount: itemArray.length,
           status: 'ready',
