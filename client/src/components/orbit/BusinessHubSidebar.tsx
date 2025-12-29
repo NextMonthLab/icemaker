@@ -14,12 +14,13 @@ import {
   UserCheck,
   Bell,
   Database,
-  Box
+  Box,
+  Radar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads' | 'notifications' | 'data-sources' | 'cubes';
+export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads' | 'notifications' | 'data-sources' | 'cubes' | 'ai-discovery';
 
 interface BusinessHubSidebarProps {
   isOwner: boolean;
@@ -129,6 +130,14 @@ export function BusinessHubSidebar({
       label: 'Brand', 
       icon: Palette,
       description: 'Customize appearance',
+      available: isPaidTier,
+      tierRequired: 'grow',
+    },
+    { 
+      id: 'ai-discovery' as HubPanel, 
+      label: 'AI Discovery', 
+      icon: Radar,
+      description: 'Control how AI sees you',
       available: isPaidTier,
       tierRequired: 'grow',
     },
