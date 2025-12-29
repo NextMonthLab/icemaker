@@ -61,6 +61,14 @@ Key architectural patterns and design decisions include:
         -   Renewal: webhook checks if currentPeriodEnd > lastCreditGrantPeriodEnd before granting
     -   **Entitlements Recompute**: Automatically updates user entitlements when subscription status changes
     -   **Auto-Pause on Downgrade**: Excess ICEs are paused when subscription downgrades or cancels
+-   **Platform-Agnostic Deployment (Render-Ready)**: Stripe and hosting configuration now works on any platform:
+    -   **Environment Variables**: Uses `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` with Replit connector fallback
+    -   **Platform Detection**: Uses `NODE_ENV=production` instead of Replit-specific vars
+    -   **URL Override**: `PUBLIC_APP_URL` env var overrides checkout redirect URLs for external hosts
+    -   **Webhook Verification**: Direct Stripe signature verification via `STRIPE_WEBHOOK_SECRET` or stripe-replit-sync fallback
+    -   **Event Deduplication**: In-memory Set tracks last 1000 webhook event IDs to prevent double-processing
+    -   **Startup Validation**: `server/startup.ts` validates required env vars and logs platform detection
+    -   **Documentation**: See `docs/render-deployment.md` for complete setup guide
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
