@@ -302,6 +302,22 @@ export interface IStorage {
   getApiCuratedItemsBySnapshot(snapshotId: number): Promise<schema.ApiCuratedItem[]>;
   getApiCuratedItemsByOrbit(orbitSlug: string, limit?: number): Promise<schema.ApiCuratedItem[]>;
   getLatestCuratedItemsByConnection(connectionId: number): Promise<schema.ApiCuratedItem[]>;
+
+  // Orbit Signal Access Log (AI Discovery Metrics)
+  logOrbitSignalAccess(data: schema.InsertOrbitSignalAccessLog): Promise<schema.OrbitSignalAccessLog>;
+  getOrbitSignalAccessMetrics(orbitSlug: string, days?: number): Promise<{
+    totalAccesses: number;
+    lastAccessAt: Date | null;
+    topUserAgents: { agent: string; count: number }[];
+  }>;
+
+  // Blog Posts
+  getBlogPost(id: number): Promise<schema.BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<schema.BlogPost | undefined>;
+  getAllBlogPosts(includeUnpublished?: boolean): Promise<schema.BlogPost[]>;
+  createBlogPost(data: schema.InsertBlogPost): Promise<schema.BlogPost>;
+  updateBlogPost(id: number, data: Partial<schema.InsertBlogPost>): Promise<schema.BlogPost | undefined>;
+  deleteBlogPost(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2271,6 +2287,87 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.orbitCubeOrders.id, id))
       .returning();
     return order;
+  }
+
+  // Orbit Signal Access Log (AI Discovery Metrics)
+  async logOrbitSignalAccess(data: schema.InsertOrbitSignalAccessLog): Promise<schema.OrbitSignalAccessLog> {
+    const [log] = await db.insert(schema.orbitSignalAccessLog).values(data).returning();
+    return log;
+  }
+
+  async getOrbitSignalAccessMetrics(orbitSlug: string, days: number = 30): Promise<{
+    totalAccesses: number;
+    lastAccessAt: Date | null;
+    topUserAgents: { agent: string; count: number }[];
+  }> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    
+    const logs = await db.query.orbitSignalAccessLog.findMany({
+      where: and(
+        eq(schema.orbitSignalAccessLog.orbitSlug, orbitSlug),
+        gte(schema.orbitSignalAccessLog.accessedAt, cutoff)
+      ),
+      orderBy: [desc(schema.orbitSignalAccessLog.accessedAt)],
+    });
+    
+    const totalAccesses = logs.length;
+    const lastAccessAt = logs.length > 0 ? logs[0].accessedAt : null;
+    
+    const agentCounts = new Map<string, number>();
+    for (const log of logs) {
+      const agent = log.userAgentTruncated || 'Unknown';
+      agentCounts.set(agent, (agentCounts.get(agent) || 0) + 1);
+    }
+    
+    const topUserAgents = Array.from(agentCounts.entries())
+      .map(([agent, count]) => ({ agent, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    
+    return { totalAccesses, lastAccessAt, topUserAgents };
+  }
+
+  // Blog Posts
+  async getBlogPost(id: number): Promise<schema.BlogPost | undefined> {
+    return db.query.blogPosts.findFirst({
+      where: eq(schema.blogPosts.id, id),
+    });
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<schema.BlogPost | undefined> {
+    return db.query.blogPosts.findFirst({
+      where: eq(schema.blogPosts.slug, slug),
+    });
+  }
+
+  async getAllBlogPosts(includeUnpublished: boolean = false): Promise<schema.BlogPost[]> {
+    if (includeUnpublished) {
+      return db.query.blogPosts.findMany({
+        orderBy: [desc(schema.blogPosts.createdAt)],
+      });
+    }
+    return db.query.blogPosts.findMany({
+      where: eq(schema.blogPosts.status, 'published'),
+      orderBy: [desc(schema.blogPosts.publishedAt)],
+    });
+  }
+
+  async createBlogPost(data: schema.InsertBlogPost): Promise<schema.BlogPost> {
+    const [post] = await db.insert(schema.blogPosts).values(data).returning();
+    return post;
+  }
+
+  async updateBlogPost(id: number, data: Partial<schema.InsertBlogPost>): Promise<schema.BlogPost | undefined> {
+    const [post] = await db.update(schema.blogPosts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.blogPosts.id, id))
+      .returning();
+    return post;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(schema.blogPosts).where(eq(schema.blogPosts.id, id));
   }
 }
 

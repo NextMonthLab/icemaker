@@ -1771,3 +1771,68 @@ export const orbitCubeOrders = pgTable("orbit_cube_orders", {
 export const insertOrbitCubeOrderSchema = createInsertSchema(orbitCubeOrders).omit({ id: true, createdAt: true });
 export type InsertOrbitCubeOrder = z.infer<typeof insertOrbitCubeOrderSchema>;
 export type OrbitCubeOrder = typeof orbitCubeOrders.$inferSelect;
+
+// ============ ORBIT SIGNAL ACCESS LOGGING ============
+
+// Orbit Signal Access Log - tracks access to /.well-known/orbit.json for AI discovery metrics
+export const orbitSignalAccessLog = pgTable("orbit_signal_access_log", {
+  id: serial("id").primaryKey(),
+  orbitSlug: text("orbit_slug").references(() => orbitMeta.businessSlug, { onDelete: "cascade" }).notNull(),
+  
+  // Access metadata
+  accessedAt: timestamp("accessed_at").defaultNow().notNull(),
+  userAgent: text("user_agent"),
+  userAgentTruncated: text("user_agent_truncated"), // First 100 chars for display
+  
+  // Request info (no IP exposed in UI)
+  requestMethod: text("request_method").default("GET").notNull(),
+  responseStatus: integer("response_status").default(200).notNull(),
+});
+
+export const insertOrbitSignalAccessLogSchema = createInsertSchema(orbitSignalAccessLog).omit({ id: true, accessedAt: true });
+export type InsertOrbitSignalAccessLog = z.infer<typeof insertOrbitSignalAccessLogSchema>;
+export type OrbitSignalAccessLog = typeof orbitSignalAccessLog.$inferSelect;
+
+// ============ BLOG SYSTEM ============
+
+// Blog post status
+export type BlogPostStatus = 'draft' | 'published';
+
+// Blog posts - admin-managed content
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  
+  // Content
+  contentMarkdown: text("content_markdown").notNull(),
+  contentHtml: text("content_html"), // Cached rendered HTML
+  
+  // Hero section
+  heroImageUrl: text("hero_image_url"),
+  heroAlt: text("hero_alt"),
+  heroCaption: text("hero_caption"),
+  
+  // CTA
+  ctaPrimaryLabel: text("cta_primary_label"),
+  ctaPrimaryUrl: text("cta_primary_url"),
+  ctaSecondaryLabel: text("cta_secondary_label"),
+  ctaSecondaryUrl: text("cta_secondary_url"),
+  
+  // Metadata
+  author: text("author"),
+  tags: text("tags").array(),
+  canonicalUrl: text("canonical_url"),
+  internalLinks: text("internal_links").array(),
+  
+  // Status and timestamps
+  status: text("status").$type<BlogPostStatus>().default("draft").notNull(),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
