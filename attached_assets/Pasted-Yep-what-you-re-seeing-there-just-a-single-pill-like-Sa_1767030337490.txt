@@ -1,0 +1,174 @@
+Yep – what you’re seeing there (just a single “pill” like “Satisfy Trustees” / “Use a proven process” and then nothing) means the chat renderer is successfully receiving a title, but the body/summary is empty (or being stripped out) and you’ve got no fallback.
+
+So the long-term “tone” fix is good, but you still need a hard guardrail in the pipeline:
+	1.	Never allow an assistant message to render without summary
+	2.	If content is too short / missing, auto-generate a 1–2 sentence summary from metadata
+	3.	If generation fails, use deterministic fallback copy based on content type
+
+Below is a Replit-ready patch prompt that specifically fixes this blank-message issue permanently.
+
+⸻
+
+Replit Prompt: Fix “Title-only / Empty chat bubble” responses (Hard Guardrail)
+
+Copy/paste:
+
+# Replit Prompt: Fix Title-only / Empty Echo Responses (Hard Guardrail)
+
+## Problem
+In Orbit chat, some knowledge items render as a single title pill (e.g. "Satisfy Trustees", "Use a proven process") with no message body.
+This creates a broken conversational experience and damages perceived intelligence.
+
+This means:
+- We have a title/label available
+- But the body (summary/content) is empty, missing, or removed by formatting filters
+- And we have no fallback logic to ensure a minimum viable assistant response
+
+## Goal
+Echo must NEVER output a message with an empty body.
+
+## Requirements (Non-negotiable)
+1) Every assistant response must include a non-empty `summary` string.
+2) If `summary` is empty or missing, auto-create it using a deterministic fallback builder.
+3) If the content item is short (<= 6 words), treat it as a "Proof Point" and generate a short explanation + next-step options.
+4) Add a regression test that fails if a rendered assistant message has no body text.
+
+---
+
+## Implementation Plan
+
+### A) Enforce a Structured Response Contract
+Create / confirm a schema:
+
+```ts
+export type EchoResponse = {
+  title: string;           // required
+  summary: string;         // required (must be non-empty)
+  bullets?: string[];      // optional
+  link?: { label: string; url: string }; // optional
+  chips?: string[];        // optional
+  sourceId?: string;
+  contentType?: "service" | "proof" | "page" | "topic";
+};
+
+B) Add a Normaliser that Guarantees summary
+
+Wherever the response is assembled (server route OR client), add:
+
+export function normaliseEchoResponse(
+  input: Partial<EchoResponse>,
+  ctx: {
+    brandName?: string;
+    itemLabel?: string;
+    itemType?: string;
+    itemText?: string;
+    pageUrl?: string;
+  }
+): EchoResponse {
+  const title = (input.title || ctx.itemLabel || "Details").trim();
+
+  // If summary missing/empty, generate fallback.
+  let summary = (input.summary || "").trim();
+
+  if (!summary) {
+    summary = buildFallbackSummary({
+      title,
+      itemText: ctx.itemText,
+      brandName: ctx.brandName,
+      itemType: input.contentType || inferContentType(title, ctx.itemText, ctx.pageUrl),
+    });
+  }
+
+  return {
+    title,
+    summary,
+    bullets: input.bullets?.filter(Boolean),
+    link: input.link,
+    chips: input.chips?.filter(Boolean) || buildDefaultChips(title, ctx.brandName),
+    sourceId: input.sourceId,
+    contentType: input.contentType || inferContentType(title, ctx.itemText, ctx.pageUrl),
+  };
+}
+
+C) Content Type Inference (catch “Proof Points”)
+
+function inferContentType(title: string, itemText?: string, pageUrl?: string) {
+  const t = (itemText || "").trim();
+  if (pageUrl) return "page";
+  if (t.length === 0 && title.split(" ").length <= 6) return "proof";
+  if (t.length > 0 && t.length < 80 && title.split(" ").length <= 6) return "proof";
+  return "topic";
+}
+
+D) Deterministic Fallback Summary Builder
+
+function buildFallbackSummary(args: {
+  title: string;
+  itemText?: string;
+  brandName?: string;
+  itemType: "service" | "proof" | "page" | "topic";
+}) {
+  const brand = args.brandName || "this team";
+  const text = (args.itemText || "").trim();
+
+  if (text) {
+    // If we have text, use first meaningful sentence but avoid repeating title.
+    return sanitiseToOneOrTwoSentences(text, args.title);
+  }
+
+  // If no text, generate based on type:
+  if (args.itemType === "proof") {
+    return `${args.title} is a key outcome we focus on. If you tell me what matters most to you (deadlines, risk, cost, or clarity), I’ll point you to the most relevant information.`;
+  }
+
+  if (args.itemType === "page") {
+    return `This links to a page with more detail. I can summarise it here, or you can open it directly.`;
+  }
+
+  // Default:
+  return `I can explain what "${args.title}" means in practice and what to do next.`;
+}
+
+E) UI Rendering Rule: never render title-only
+
+In the ChatMessage component:
+	•	If summary is empty, DO NOT render the message; replace with a safe fallback, or call normaliseEchoResponse before rendering.
+
+F) Add Regression Tests
+
+Add a test case (unit or integration):
+	•	Given itemLabel: “Use a proven process”
+	•	Given itemText: “” (empty)
+	•	The final rendered assistant message must contain body text length > 20 characters
+
+Also test:
+	•	No all-caps headings
+	•	No duplicate lines
+
+⸻
+
+Definition of Done
+	•	It is impossible to see the “title pill only” message in production
+	•	Every assistant response always has summary text
+	•	Proof points (short labels) generate a helpful sentence + chips
+	•	Tests added and passing
+
+---
+
+## Why this happens (so you can spot it instantly)
+Those items (“Satisfy Trustees”, “Use a proven process”) are almost certainly **proof-point tiles** where your scraper/indexer stored only:
+- a label/title
+- maybe a type
+- but no supporting text
+
+So Echo is basically being handed: `title="Satisfy Trustees"`, `content=""` and your chat renderer doesn’t know what to do, so it prints the title and shrugs.
+
+This guardrail stops that forever.
+
+---
+
+If you want the *fastest* immediate improvement (even before the schema refactor), tell Replit to add one brutal line:
+
+> **If assistantText.trim().length < 10, replace with a proof-point template string.**
+
+But the structured approach above is the proper fix that won’t keep resurfacing.

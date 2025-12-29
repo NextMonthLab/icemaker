@@ -134,13 +134,11 @@ export function ChatHub({
   lightMode = false,
 }: ChatHubProps) {
   const getProactiveWelcome = () => {
-    if (initialMessage) return initialMessage;
-    
     return `${brandName}\n\nTap any tile to learn more, or ask me a question.`;
   };
 
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: getProactiveWelcome() }
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { role: 'assistant', content: initialMessage || getProactiveWelcome() }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -150,6 +148,12 @@ export function ChatHub({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (initialMessage) {
+      setMessages([{ role: 'assistant', content: initialMessage }]);
+    }
+  }, [initialMessage]);
 
   const extractKeywords = (text: string): string[] => {
     const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while', 'although', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am']);

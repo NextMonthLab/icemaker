@@ -4,6 +4,7 @@ import { ChatHub } from "./ChatHub";
 import { KnowledgeTile } from "./KnowledgeTile";
 import type { SiteKnowledge, AnyKnowledgeItem } from "@/lib/siteKnowledge";
 import { getAllItems, rankByRelevance, scoreRelevance } from "@/lib/siteKnowledge";
+import { ensureMessageBody, type EchoContext } from "@/lib/echoUtils";
 
 const TAP_THRESHOLD_MS = 200;
 const TAP_MOVE_THRESHOLD = 8;
@@ -207,6 +208,17 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
     
     const itemName = getItemLabel(selectedItem);
     const summary = getItemSummary(selectedItem);
+    const brandName = knowledge.brand?.name || "this team";
+    
+    const ctx: EchoContext = {
+      brandName,
+      itemLabel: itemName,
+      itemType: selectedItem.type,
+      itemText: summary,
+      pageUrl: 'url' in selectedItem ? (selectedItem as { url?: string }).url : undefined,
+    };
+    
+    let message: string;
     
     switch (selectedItem.type) {
       case 'page': {
@@ -215,15 +227,19 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
           ['weather', 'forecast', 'temperature', 'climate'].includes(k.toLowerCase())
         );
         if (hasWeatherKeywords) {
-          return `${itemName}\n\n${summary}\n\nTell me your location for specific information, or visit: ${page.url}`;
+          message = `${itemName}\n\n${summary}\n\nTell me your location for specific information, or visit: ${page.url}`;
+        } else {
+          message = `${itemName}\n\n${summary}\n\nVisit: ${page.url}`;
         }
-        return `${itemName}\n\n${summary}\n\nVisit: ${page.url}`;
+        break;
       }
       case 'topic': {
         if (summary && summary.toLowerCase() !== itemName.toLowerCase()) {
-          return `${itemName}\n\n${summary}`;
+          message = `${itemName}\n\n${summary}`;
+        } else {
+          message = itemName;
         }
-        return itemName;
+        break;
       }
       case 'action': {
         const action = selectedItem as import('@/lib/siteKnowledge').Action;
@@ -233,7 +249,8 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
           'email': `Send a message\n\n${summary}`,
           'quote': `Get a quote\n\n${summary}\n\nTell me what you need.`
         };
-        return actionPrompts[action.actionType] || `${itemName}\n\n${summary}`;
+        message = actionPrompts[action.actionType] || `${itemName}\n\n${summary}`;
+        break;
       }
       case 'person': {
         const person = selectedItem as import('@/lib/siteKnowledge').Person;
@@ -241,28 +258,35 @@ export function RadarGrid({ knowledge, onSendMessage, accentColor = '#3b82f6', o
         if (person.email) contactParts.push(person.email);
         if (person.phone) contactParts.push(person.phone);
         const contactLine = contactParts.length > 0 ? `\n\nContact: ${contactParts.join(' · ')}` : '';
-        return `${person.name}, ${person.role}${contactLine}`;
+        message = `${person.name}, ${person.role}${contactLine}`;
+        break;
       }
       case 'proof': {
-        return `${itemName}\n\n${summary || ''}`;
+        message = `${itemName}\n\n${summary || ''}`;
+        break;
       }
       case 'blog': {
         const blog = selectedItem as import('@/lib/siteKnowledge').Blog;
-        return `${itemName}\n\n${summary}\n\nRead more: ${blog.url}`;
+        message = `${itemName}\n\n${summary}\n\nRead more: ${blog.url}`;
+        break;
       }
       case 'social': {
         const social = selectedItem as import('@/lib/siteKnowledge').Social;
         const platformName = social.platform.charAt(0).toUpperCase() + social.platform.slice(1);
         if (social.connected) {
           const followerInfo = social.followerCount ? ` · ${social.followerCount.toLocaleString()} followers` : '';
-          return `${platformName} (@${social.handle})${followerInfo}\n\n${social.url}`;
+          message = `${platformName} (@${social.handle})${followerInfo}\n\n${social.url}`;
+        } else {
+          message = `Connect ${platformName} to display your feed here.`;
         }
-        return `Connect ${platformName} to display your feed here.`;
+        break;
       }
       default:
-        return `${itemName}\n\n${summary}`;
+        message = `${itemName}\n\n${summary}`;
     }
-  }, [selectedItem]);
+    
+    return ensureMessageBody(message, ctx);
+  }, [selectedItem, knowledge.brand?.name]);
 
   const nearbyTileLabels = useMemo(() => {
     return visibleItems.slice(0, 5).map(({ item }) => getItemLabel(item));
