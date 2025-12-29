@@ -7,6 +7,7 @@ import { HubIcePanel } from "./HubIcePanel";
 import { HubNotificationsPanel } from "./HubNotificationsPanel";
 import { HubDataSourcesPanel } from "./HubDataSourcesPanel";
 import { HubCubesPanel } from "./HubCubesPanel";
+import { HubAIDiscoveryPanel } from "./HubAIDiscoveryPanel";
 import type { HubPanel } from "./BusinessHubSidebar";
 
 interface HubPanelContainerProps {
@@ -62,6 +63,9 @@ export function HubPanelContainer({
     
     case 'cubes':
       return <HubCubesPanel businessSlug={businessSlug} planTier={planTier} />;
+    
+    case 'ai-discovery':
+      return <HubAIDiscoveryPanel businessSlug={businessSlug} planTier={planTier} />;
     
     case 'settings':
       return (

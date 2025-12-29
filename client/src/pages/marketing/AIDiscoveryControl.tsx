@@ -66,7 +66,8 @@ export default function AIDiscoveryControl() {
               </div>
               
               <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-8 leading-[1.1]" data-testid="text-hero-title">
-                When AI answers questions about your business, who decides what it says?
+                <span className="text-white">When AI answers questions about your business, </span>
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">who decides what it says?</span>
               </h1>
 
               <div className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed space-y-4 text-left" data-testid="text-hero-intro">
@@ -481,7 +482,7 @@ export default function AIDiscoveryControl() {
               <img
                 src="/logo.png"
                 alt="NextMonth"
-                className="h-12 w-12 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
+                className="h-24 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
                 style={{ clipPath: 'inset(30% 0 30% 0)' }}
               />
             </Link>

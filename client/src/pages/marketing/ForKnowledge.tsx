@@ -208,7 +208,7 @@ export default function ForKnowledge() {
               <img 
                 src="/logo.png" 
                 alt="NextMonth" 
-                className="h-20"
+                className="h-40"
                 style={{ clipPath: 'inset(30% 0 30% 0)' }}
               />
               <div className="flex items-center gap-8">

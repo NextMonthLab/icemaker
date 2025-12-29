@@ -135,7 +135,7 @@ export default function ForBrands() {
       <MarketingHeader />
 
       <main>
-        {/* Smart Site Preview Section */}
+        {/* Orbit Preview Section */}
         <section className="relative py-24 px-6 overflow-hidden pt-24">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-pink-900/10 via-transparent to-transparent" />
@@ -152,7 +152,7 @@ export default function ForBrands() {
                 className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-pink-500/10 border border-pink-500/20 rounded-full backdrop-blur-sm"
               >
                 <Sparkles className="w-4 h-4 text-pink-400" />
-                <span className="text-pink-300 text-sm font-medium">Smart Site Preview</span>
+                <span className="text-pink-300 text-sm font-medium">Orbit Preview</span>
               </motion.div>
               <motion.h1 
                 initial={{ opacity: 0, y: 10 }}
@@ -162,7 +162,7 @@ export default function ForBrands() {
               >
                 Your website is passive.<br />
                 <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
-                  See the version that actually talks to customers.
+                  Launch your Orbit.
                 </span>
               </motion.h1>
               <motion.p 
@@ -171,7 +171,7 @@ export default function ForBrands() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-4 leading-relaxed"
               >
-                Enter your URL. We generate a temporary Smart Site layer. Your visitors can explore and ask questions based on your real content.
+                Enter your URL. We generate your Orbit - an intelligent layer that lets visitors explore and ask questions based on your real content.
               </motion.p>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -263,7 +263,7 @@ export default function ForBrands() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="text-sm text-white/40 max-w-lg mx-auto mt-6 italic"
               >
-                Most websites answer nothing. Smart Sites answer everything.
+                Most websites answer nothing. Orbit changes that.
               </motion.p>
             </motion.div>
           </div>
@@ -313,14 +313,14 @@ export default function ForBrands() {
               </div>
               
               <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[0.9]" data-testid="text-hero-title">
-                <span className="block text-white">How Smart Sites</span>
+                <span className="block text-white">How Orbit</span>
                 <span className="block bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">
-                  work
+                  works
                 </span>
               </h1>
 
               <p className="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto mb-12 leading-relaxed" data-testid="text-hero-description">
-                Smart Sites present your content as a guided, cinematic experience customers can explore or talk to.
+                Orbit presents your content as a guided, cinematic experience customers can explore or talk to.
               </p>
               
               <Link href="/login?signup=true">
@@ -342,7 +342,7 @@ export default function ForBrands() {
                 What happens when you <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">create a preview</span>
               </h2>
               <p className="text-white/50 text-lg max-w-3xl mx-auto mt-4">
-                We create a temporary Smart Site that sits on top of your existing website. Customers can ask it questions. It answers using your real content. You see what your website would do if it could actually respond.
+                We create your Orbit - an intelligent layer on top of your existing website. Customers can ask it questions. It answers using your real content. You see what your website would do if it could actually respond.
               </p>
             </div>
             
@@ -476,7 +476,7 @@ export default function ForBrands() {
               className="text-center"
             >
               <h2 className="text-2xl md:text-3xl font-bold mb-8">
-                What you unlock when you <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">claim your Smart Site</span>
+                What you unlock when you <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">claim your Orbit</span>
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="p-6 rounded-xl bg-white/5 border border-white/10">
@@ -530,7 +530,7 @@ export default function ForBrands() {
                 </Link>
                 <Link href="/orbit/progress-accountants-accountin-1766789673893">
                   <Button size="lg" variant="outline" className="h-16 px-8 text-lg bg-transparent border-white/30 text-white hover:bg-white/10 hover:border-white/50 gap-3" data-testid="button-sample-cta">
-                    Explore a sample Smart Site
+                    Explore a sample Orbit
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
@@ -546,7 +546,7 @@ export default function ForBrands() {
               <img
                 src="/logo.png"
                 alt="NextMonth"
-                className="h-20"
+                className="h-40"
                 style={{ clipPath: 'inset(30% 0 30% 0)' }}
               />
               <div className="flex items-center gap-8">
