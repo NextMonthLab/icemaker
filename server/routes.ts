@@ -6334,6 +6334,374 @@ ANTI-PATTERNS TO AVOID:
     }
   });
 
+  // ============ Phase 5: Data Sources (API Snapshot Ingestion) ============
+  
+  const { validateUrlForSSRF } = await import("./services/ssrfProtection");
+  const crypto = await import("crypto");
+  
+  // Helper: Check orbit ownership
+  const requireOrbitOwner = async (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const { slug } = req.params;
+    const orbitMeta = await storage.getOrbitMeta(slug);
+    if (!orbitMeta) {
+      return res.status(404).json({ message: "Orbit not found" });
+    }
+    if (orbitMeta.ownerId !== (req.user as any)?.id) {
+      return res.status(403).json({ message: "You don't have permission to manage this Orbit" });
+    }
+    (req as any).orbitMeta = orbitMeta;
+    next();
+  };
+  
+  // List all connections for an Orbit
+  app.get("/api/orbit/:slug/data-sources", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const connections = await storage.getApiConnectionsByOrbit(slug);
+      
+      // Get endpoint and latest snapshot info for each connection
+      const connectionsWithInfo = await Promise.all(
+        connections.map(async (conn) => {
+          const endpoints = await storage.getApiEndpointsByConnection(conn.id);
+          const endpoint = endpoints[0]; // v1: 1 endpoint per connection
+          let latestSnapshot = null;
+          let snapshotCount = 0;
+          
+          if (endpoint) {
+            latestSnapshot = await storage.getLatestSnapshot(endpoint.id);
+            const snapshots = await storage.getApiSnapshotsByEndpoint(endpoint.id, 100);
+            snapshotCount = snapshots.length;
+          }
+          
+          return {
+            ...conn,
+            endpoint,
+            latestSnapshot,
+            snapshotCount,
+          };
+        })
+      );
+      
+      res.json(connectionsWithInfo);
+    } catch (error: any) {
+      console.error("Error fetching data sources:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch data sources" });
+    }
+  });
+  
+  // Create a new connection (with endpoint)
+  app.post("/api/orbit/:slug/data-sources", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { name, description, baseUrl, authType, authValue, endpointPath, responseMapping } = req.body;
+      
+      if (!name || !baseUrl || !endpointPath) {
+        return res.status(400).json({ message: "Name, base URL, and endpoint path are required" });
+      }
+      
+      // Validate URL for SSRF
+      const fullUrl = new URL(endpointPath, baseUrl).toString();
+      const ssrfCheck = await validateUrlForSSRF(fullUrl);
+      if (!ssrfCheck.safe) {
+        return res.status(400).json({ message: ssrfCheck.error || "Invalid URL" });
+      }
+      
+      // Create secret if auth provided
+      let authSecretId = null;
+      if (authType && authType !== 'none' && authValue) {
+        const secret = await storage.createApiSecret({
+          orbitSlug: slug,
+          name: `${name} credentials`,
+          encryptedValue: authValue, // In production, encrypt this
+          authType,
+        });
+        authSecretId = secret.id;
+      }
+      
+      // Create connection
+      const connection = await storage.createApiConnection({
+        orbitSlug: slug,
+        name,
+        description,
+        baseUrl,
+        authSecretId,
+        status: 'active',
+      });
+      
+      // Create endpoint (v1: 1 endpoint per connection)
+      const endpoint = await storage.createApiEndpoint({
+        connectionId: connection.id,
+        path: endpointPath,
+        responseMapping: responseMapping || null,
+      });
+      
+      res.json({ connection, endpoint });
+    } catch (error: any) {
+      console.error("Error creating data source:", error);
+      res.status(500).json({ message: error.message || "Failed to create data source" });
+    }
+  });
+  
+  // Get connection details
+  app.get("/api/orbit/:slug/data-sources/:connectionId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      const connection = await storage.getApiConnection(parseInt(connectionId));
+      
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+      
+      const endpoints = await storage.getApiEndpointsByConnection(connection.id);
+      const endpoint = endpoints[0];
+      
+      let snapshots: schema.ApiSnapshot[] = [];
+      if (endpoint) {
+        snapshots = await storage.getApiSnapshotsByEndpoint(endpoint.id, 30);
+      }
+      
+      res.json({ connection, endpoint, snapshots });
+    } catch (error: any) {
+      console.error("Error fetching connection:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch connection" });
+    }
+  });
+  
+  // Update connection
+  app.patch("/api/orbit/:slug/data-sources/:connectionId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      const { name, description, status } = req.body;
+      
+      const connection = await storage.updateApiConnection(parseInt(connectionId), {
+        name,
+        description,
+        status,
+      });
+      
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+      
+      res.json(connection);
+    } catch (error: any) {
+      console.error("Error updating connection:", error);
+      res.status(500).json({ message: error.message || "Failed to update connection" });
+    }
+  });
+  
+  // Delete connection
+  app.delete("/api/orbit/:slug/data-sources/:connectionId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      await storage.deleteApiConnection(parseInt(connectionId));
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting connection:", error);
+      res.status(500).json({ message: error.message || "Failed to delete connection" });
+    }
+  });
+  
+  // Trigger manual snapshot
+  app.post("/api/orbit/:slug/data-sources/:connectionId/snapshot", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug, connectionId } = req.params;
+      
+      const connection = await storage.getApiConnection(parseInt(connectionId));
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+      
+      const endpoints = await storage.getApiEndpointsByConnection(connection.id);
+      const endpoint = endpoints[0];
+      if (!endpoint) {
+        return res.status(400).json({ message: "No endpoint configured" });
+      }
+      
+      // Build request URL
+      const fullUrl = new URL(endpoint.path, connection.baseUrl).toString();
+      
+      // SSRF re-validation at request time
+      const ssrfCheck = await validateUrlForSSRF(fullUrl);
+      if (!ssrfCheck.safe) {
+        return res.status(400).json({ message: ssrfCheck.error || "URL validation failed" });
+      }
+      
+      // Generate request hash for idempotency
+      const requestHash = crypto.createHash('sha256')
+        .update(`${connection.id}:${endpoint.id}:${endpoint.path}:${new Date().toISOString().slice(0, 13)}`)
+        .digest('hex');
+      
+      // Check for duplicate in same hour
+      const existingSnapshot = await storage.findSnapshotByHash(endpoint.id, requestHash);
+      if (existingSnapshot) {
+        return res.json({ 
+          message: "Snapshot already exists for this hour",
+          snapshot: existingSnapshot 
+        });
+      }
+      
+      // Get next version
+      const version = await storage.getNextSnapshotVersion(endpoint.id);
+      
+      // Create pending snapshot
+      const snapshot = await storage.createApiSnapshot({
+        endpointId: endpoint.id,
+        connectionId: connection.id,
+        version,
+        requestHash,
+        status: 'processing',
+      });
+      
+      // Fetch data (with timeout)
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+        
+        // Build headers with auth
+        const headers: Record<string, string> = {
+          'Accept': 'application/json',
+          'User-Agent': 'NextMonth-Orbit/1.0',
+        };
+        
+        if (connection.authSecretId) {
+          const secret = await storage.getApiSecret(connection.authSecretId);
+          if (secret) {
+            if (secret.authType === 'bearer') {
+              headers['Authorization'] = `Bearer ${secret.encryptedValue}`;
+            } else if (secret.authType === 'api_key') {
+              headers['X-API-Key'] = secret.encryptedValue;
+            } else if (secret.authType === 'basic') {
+              headers['Authorization'] = `Basic ${Buffer.from(secret.encryptedValue).toString('base64')}`;
+            }
+          }
+        }
+        
+        const response = await fetch(fullUrl, {
+          method: 'GET',
+          headers,
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+          throw new Error('Response too large (max 5MB)');
+        }
+        
+        const data = await response.json();
+        
+        // Extract items based on response mapping
+        let items = data;
+        const mapping = endpoint.responseMapping as { itemsPath?: string; idField?: string; titleField?: string; summaryField?: string } | null;
+        if (mapping?.itemsPath) {
+          const pathParts = mapping.itemsPath.split('.');
+          items = pathParts.reduce((obj: any, key: string) => obj?.[key], data);
+        }
+        
+        const itemArray = Array.isArray(items) ? items : [items];
+        
+        // Create preview (first 10KB)
+        const preview = JSON.stringify(data).slice(0, 10000);
+        
+        // Update snapshot with data
+        await storage.updateApiSnapshot(snapshot.id, {
+          rawPayloadPreview: JSON.parse(preview.length < JSON.stringify(data).length ? preview + '..."truncated"' : preview),
+          recordCount: itemArray.length,
+          status: 'ready',
+          processedAt: new Date(),
+        });
+        
+        // Create curated items
+        const curatedItems = itemArray.slice(0, 1000).map((item: any, index: number) => ({
+          snapshotId: snapshot.id,
+          connectionId: connection.id,
+          endpointId: endpoint.id,
+          snapshotVersion: version,
+          orbitSlug: slug,
+          sourceType: connection.name.toLowerCase().replace(/\s+/g, '_'),
+          externalId: mapping?.idField ? item[mapping.idField]?.toString() : index.toString(),
+          title: mapping?.titleField ? item[mapping.titleField] : item.name || item.title || `Item ${index + 1}`,
+          summary: mapping?.summaryField ? item[mapping.summaryField] : null,
+          content: item,
+          metadata: { source: connection.name, fetchedAt: new Date().toISOString() },
+        }));
+        
+        if (curatedItems.length > 0) {
+          await storage.createApiCuratedItems(curatedItems);
+        }
+        
+        // Update connection last run
+        await storage.updateApiConnection(connection.id, { lastRunAt: new Date(), lastError: null });
+        
+        const updatedSnapshot = await storage.getApiSnapshot(snapshot.id);
+        res.json({ snapshot: updatedSnapshot, itemCount: curatedItems.length });
+        
+      } catch (fetchError: any) {
+        // Update snapshot with error
+        await storage.updateApiSnapshot(snapshot.id, {
+          status: 'failed',
+          error: fetchError.message,
+        });
+        
+        await storage.updateApiConnection(connection.id, { 
+          lastError: fetchError.message,
+          status: 'error',
+        });
+        
+        res.status(400).json({ 
+          message: `Fetch failed: ${fetchError.message}`,
+          snapshot: await storage.getApiSnapshot(snapshot.id),
+        });
+      }
+      
+    } catch (error: any) {
+      console.error("Error creating snapshot:", error);
+      res.status(500).json({ message: error.message || "Failed to create snapshot" });
+    }
+  });
+  
+  // Get snapshot details
+  app.get("/api/orbit/:slug/data-sources/:connectionId/snapshots/:snapshotId", requireOrbitOwner, async (req, res) => {
+    try {
+      const { snapshotId } = req.params;
+      
+      const snapshot = await storage.getApiSnapshot(parseInt(snapshotId));
+      if (!snapshot) {
+        return res.status(404).json({ message: "Snapshot not found" });
+      }
+      
+      const items = await storage.getApiCuratedItemsBySnapshot(snapshot.id);
+      
+      res.json({ snapshot, items });
+    } catch (error: any) {
+      console.error("Error fetching snapshot:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch snapshot" });
+    }
+  });
+  
+  // Get curated items for an Orbit (for conversation context)
+  app.get("/api/orbit/:slug/curated-items", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const limit = parseInt(req.query.limit as string) || 100;
+      
+      const items = await storage.getApiCuratedItemsByOrbit(slug, limit);
+      res.json(items);
+    } catch (error: any) {
+      console.error("Error fetching curated items:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch curated items" });
+    }
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
 
