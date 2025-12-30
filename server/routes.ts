@@ -1295,8 +1295,18 @@ export async function registerRoutes(
             }
             const parser = new PDFParse({ data: req.file.buffer });
             await parser.load();
-            const text = await parser.getText();
-            fileContent = text.slice(0, 50000);
+            const textResult = await parser.getText();
+            let extractedText = '';
+            if (typeof textResult === 'string') {
+              extractedText = textResult;
+            } else if (textResult && Array.isArray(textResult.pages)) {
+              extractedText = textResult.pages.map((p: any) => p.text || '').join('\n\n');
+            } else if (textResult && typeof textResult === 'object') {
+              extractedText = JSON.stringify(textResult);
+            } else {
+              extractedText = String(textResult || '');
+            }
+            fileContent = extractedText.slice(0, 50000);
           } else {
             // Plain text files
             fileContent = req.file.buffer.toString("utf-8").slice(0, 50000);
@@ -5507,7 +5517,17 @@ Stay engaging, reference story details, and help the audience understand the nar
         }
         const parser = new PDFParse({ data: file.buffer });
         await parser.load();
-        contentText = await parser.getText();
+        const textResult = await parser.getText();
+        // getText returns an object with pages array - extract text from all pages
+        if (typeof textResult === 'string') {
+          contentText = textResult;
+        } else if (textResult && Array.isArray(textResult.pages)) {
+          contentText = textResult.pages.map((p: any) => p.text || '').join('\n\n');
+        } else if (textResult && typeof textResult === 'object') {
+          contentText = JSON.stringify(textResult);
+        } else {
+          contentText = String(textResult || '');
+        }
       } else if (ext === "txt") {
         contentText = file.buffer.toString("utf-8");
       } else if (ext === "doc" || ext === "docx" || ext === "ppt" || ext === "pptx") {
