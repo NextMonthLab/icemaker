@@ -17,6 +17,7 @@ import {
 import { PreviewExperienceOrchestrator } from "@/components/preview/PreviewExperienceOrchestrator";
 import { BrandCustomizationScreen, type BrandPreferences } from "@/components/preview/BrandCustomizationScreen";
 import { SiteIngestionLoader } from "@/components/preview/SiteIngestionLoader";
+import { PreviewShareBar } from "@/components/preview/PreviewShareBar";
 import { SpatialSmartSite } from "@/components/spatial";
 import { RadarGrid } from "@/components/radar";
 import type { SiteKnowledge } from "@/lib/siteKnowledge";
@@ -900,6 +901,14 @@ export default function PreviewPage() {
           defaultAccentColor={preview.siteIdentity.primaryColour || '#ffffff'}
           imagePool={preview.siteIdentity.imagePool || []}
           onConfirm={handleCustomizationConfirm}
+        />
+      )}
+
+      {!showCustomization && previewId && (
+        <PreviewShareBar
+          previewId={previewId}
+          expiresAt={preview.expiresAt}
+          brandName={preview.siteIdentity?.validatedContent?.brandName || preview.siteIdentity?.title?.split(' - ')[0]?.split(' | ')[0] || preview.sourceDomain}
         />
       )}
 

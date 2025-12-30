@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { RadarGrid } from "@/components/radar";
 import { SpatialSmartSite } from "@/components/spatial";
 import { BrandCustomizationScreen, type BrandPreferences } from "@/components/preview/BrandCustomizationScreen";
+import { PreviewShareBar } from "@/components/preview/PreviewShareBar";
 import { BusinessHubSidebar } from "@/components/orbit/BusinessHubSidebar";
 import { HubPanelContainer } from "@/components/orbit/HubPanelContainer";
 import type { SiteKnowledge } from "@/lib/siteKnowledge";
@@ -696,6 +697,15 @@ export default function OrbitView() {
 
       {/* Main content area (when hub is closed or not owner) */}
       <div className={cn("flex-1 flex flex-col", isOwner && isPaidTier && showHub && "hidden")}>
+        {/* Share bar for unclaimed orbits */}
+        {isUnclaimed && !showCustomization && preview && (
+          <PreviewShareBar
+            previewId={preview.id}
+            expiresAt={preview.expiresAt}
+            brandName={preview.siteIdentity?.validatedContent?.brandName || preview.siteIdentity?.title?.split(' - ')[0]?.split(' | ')[0] || preview.sourceDomain}
+          />
+        )}
+
         {showCustomization && (
         <BrandCustomizationScreen
           logoUrl={preview.siteIdentity.logoUrl}
