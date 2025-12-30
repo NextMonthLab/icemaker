@@ -1294,8 +1294,9 @@ export async function registerRoutes(
               throw new Error("PDFParse class not found in pdf-parse module");
             }
             const parser = new PDFParse({ data: req.file.buffer });
-            const pdfData = await parser.parse();
-            fileContent = pdfData.text.slice(0, 50000);
+            await parser.load();
+            const text = await parser.getText();
+            fileContent = text.slice(0, 50000);
           } else {
             // Plain text files
             fileContent = req.file.buffer.toString("utf-8").slice(0, 50000);
@@ -5505,8 +5506,8 @@ Stay engaging, reference story details, and help the audience understand the nar
           throw new Error("PDFParse class not found in pdf-parse module");
         }
         const parser = new PDFParse({ data: file.buffer });
-        const pdfData = await parser.parse();
-        contentText = pdfData.text;
+        await parser.load();
+        contentText = await parser.getText();
       } else if (ext === "txt") {
         contentText = file.buffer.toString("utf-8");
       } else if (ext === "doc" || ext === "docx" || ext === "ppt" || ext === "pptx") {
