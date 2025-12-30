@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CardPlayer from "@/components/CardPlayer";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import previewCardBackground from "@assets/862A9257-4030-4448-8B97-794E470A41DB_1767124443705.png";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -657,7 +658,7 @@ export default function GuestIceBuilderPage() {
                     id: cards[previewCardIndex].id,
                     dayIndex: previewCardIndex + 1,
                     title: cards[previewCardIndex].title,
-                    image: `https://placehold.co/1080x1920/1a1a2e/ffffff?text=${encodeURIComponent(cards[previewCardIndex].title.slice(0, 20))}`,
+                    image: previewCardBackground,
                     captions: cards[previewCardIndex].content.split('. ').filter(s => s.trim()).slice(0, 3),
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,
