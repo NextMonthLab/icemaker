@@ -49,42 +49,42 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-foreground flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-foreground flex flex-col items-center justify-center p-3 relative overflow-hidden">
         
         {/* Background Ambience */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-black to-black opacity-50 pointer-events-none" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
 
-        <div className="w-full max-w-md space-y-8 relative z-10">
-            <div className="text-center space-y-4">
+        <div className="w-full max-w-md space-y-4 md:space-y-6 relative z-10">
+            <div className="text-center space-y-1">
                 <img 
                   src={LOGO_URL} 
                   alt="NextMonth" 
-                  className="h-48 md:h-60 mx-auto object-contain"
+                  className="h-28 md:h-48 mx-auto object-contain"
                   style={{ clipPath: 'inset(35% 0 35% 0)' }}
                   data-testid="img-logo"
                 />
-                <p className="text-muted-foreground font-mono text-sm tracking-widest uppercase">
+                <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest uppercase">
                     Create Experiences. Control AI Discovery.
                 </p>
             </div>
 
             <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-2xl">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold text-center">
+                <CardHeader className="space-y-1 pb-2 md:pb-4">
+                    <CardTitle className="text-xl md:text-2xl font-bold text-center">
                       {isRegister ? "Create Your Account" : "Sign In"}
                     </CardTitle>
-                    <CardDescription className="text-center">
+                    <CardDescription className="text-center text-xs md:text-sm">
                         {isRegister 
                           ? "Get started with IceMaker and Orbit" 
                           : "Access your IceMaker projects and Orbit dashboard"
                         }
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
+                <CardContent className="pt-0">
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div className="space-y-1">
+                            <Label htmlFor="username" className="text-sm">Username</Label>
                             <Input 
                                 id="username"
                                 data-testid="input-username"
@@ -93,11 +93,11 @@ export default function Login() {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required 
-                                className="bg-black/50 border-white/10 h-11"
+                                className="bg-black/50 border-white/10 h-10"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                        <div className="space-y-1">
+                            <Label htmlFor="password" className="text-sm">Password</Label>
                             <Input 
                                 id="password"
                                 data-testid="input-password"
@@ -106,11 +106,11 @@ export default function Login() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required 
-                                className="bg-black/50 border-white/10 h-11"
+                                className="bg-black/50 border-white/10 h-10"
                             />
                         </div>
                         <Button 
-                          className="w-full h-11 font-bold tracking-wide" 
+                          className="w-full h-10 font-bold tracking-wide" 
                           disabled={isLoading}
                           data-testid="button-submit"
                         >
@@ -125,7 +125,7 @@ export default function Login() {
                         </Button>
                     </form>
 
-                    <div className="relative my-6">
+                    <div className="relative my-3 md:my-5">
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t border-white/10" />
                         </div>
@@ -138,7 +138,7 @@ export default function Login() {
 
                     <Button 
                       variant="outline" 
-                      className="w-full border-white/10 hover:bg-white/5"
+                      className="w-full h-9 border-white/10 hover:bg-white/5"
                       data-testid="button-toggle-mode"
                       onClick={() => setIsRegister(!isRegister)}
                       type="button"
@@ -146,9 +146,10 @@ export default function Login() {
                         {isRegister ? "Log In Instead" : "Create Account"}
                     </Button>
                     
-                    <div className="mt-4">
+                    <div className="mt-2">
                       <Button 
                         variant="ghost" 
+                        size="sm"
                         className="w-full text-muted-foreground hover:text-white"
                         data-testid="button-guest"
                         onClick={() => setLocation("/")}
@@ -160,14 +161,14 @@ export default function Login() {
                 </CardContent>
             </Card>
 
-            <div className="flex justify-center gap-8 text-xs text-muted-foreground font-mono tracking-widest uppercase opacity-50">
-                <div className="flex items-center gap-2">
+            <div className="flex justify-center gap-4 md:gap-8 text-[10px] md:text-xs text-muted-foreground font-mono tracking-widest uppercase opacity-50">
+                <div className="flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> IceMaker
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <Globe className="w-3 h-3" /> Orbit
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <User className="w-3 h-3" /> One Account
                 </div>
             </div>
