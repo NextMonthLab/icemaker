@@ -60,7 +60,8 @@ export default function Login() {
                 <img 
                   src={LOGO_URL} 
                   alt="NextMonth" 
-                  className="h-16 md:h-20 mx-auto object-contain"
+                  className="h-32 md:h-40 mx-auto object-contain"
+                  style={{ clipPath: 'inset(35% 0 35% 0)' }}
                   data-testid="img-logo"
                 />
                 <p className="text-muted-foreground font-mono text-sm tracking-widest uppercase">
