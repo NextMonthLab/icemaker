@@ -1287,10 +1287,14 @@ export async function registerRoutes(
           let fileContent = "";
           
           if (req.file.mimetype === "application/pdf") {
-            // Parse PDF
+            // Parse PDF using PDFParse class
             const pdfParseModule = await import("pdf-parse") as any;
-            const pdfParse = pdfParseModule.default || pdfParseModule;
-            const pdfData = await pdfParse(req.file.buffer);
+            const PDFParse = pdfParseModule.PDFParse || pdfParseModule.default?.PDFParse;
+            if (!PDFParse) {
+              throw new Error("PDFParse class not found in pdf-parse module");
+            }
+            const parser = new PDFParse({ data: req.file.buffer });
+            const pdfData = await parser.parse();
             fileContent = pdfData.text.slice(0, 50000);
           } else {
             // Plain text files
@@ -5494,10 +5498,14 @@ Stay engaging, reference story details, and help the audience understand the nar
       const ext = file.originalname.toLowerCase().split('.').pop();
       
       if (ext === "pdf") {
-        // Parse PDF
+        // Parse PDF using PDFParse class
         const pdfParseModule = await import("pdf-parse") as any;
-        const pdfParse = pdfParseModule.default || pdfParseModule;
-        const pdfData = await pdfParse(file.buffer);
+        const PDFParse = pdfParseModule.PDFParse || pdfParseModule.default?.PDFParse;
+        if (!PDFParse) {
+          throw new Error("PDFParse class not found in pdf-parse module");
+        }
+        const parser = new PDFParse({ data: file.buffer });
+        const pdfData = await parser.parse();
         contentText = pdfData.text;
       } else if (ext === "txt") {
         contentText = file.buffer.toString("utf-8");
