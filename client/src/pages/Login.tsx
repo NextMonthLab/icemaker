@@ -14,6 +14,11 @@ export default function Login() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const returnUrl = params.get("return");
+  
+  // If return URL is a checkout page, redirect to preview instead (checkout requires login)
+  const guestReturnUrl = returnUrl?.includes("/checkout") 
+    ? returnUrl.replace("/checkout", "") 
+    : (returnUrl || "/try");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState("");
@@ -156,7 +161,7 @@ export default function Login() {
                         size="sm"
                         className="w-full text-muted-foreground hover:text-white"
                         data-testid="button-guest"
-                        onClick={() => setLocation("/")}
+                        onClick={() => setLocation(guestReturnUrl)}
                         type="button"
                       >
                           Continue as Guest
