@@ -1,0 +1,88 @@
+Perfect. This is the right order: record first, then act.
+
+What you want Replit to do right now is memory capture, not design, not implementation.
+
+Below is a clean, authoritative instruction you can give Replit to record these two things properly in Replit.md.
+
+You can paste this verbatim.
+
+⸻
+
+Instruction to Replit: Record New Confirmed Behaviours
+
+Planning Mode – Documentation Update Required
+
+Before any further work, record the following as confirmed system behaviour in Replit.md.
+
+This is not a proposal. These behaviours are agreed and must be treated as canonical.
+
+⸻
+
+1. Interactivity Nodes Between Cards
+	•	The system supports interactivity nodes that exist between cards, not on cards.
+	•	These nodes represent conversational or interactive moments (pause, reflection, dialogue).
+	•	Each interactivity node can invoke an AI character interaction.
+	•	Interactivity nodes use the existing, production-tested AI runtime logic.
+	•	There are no placeholders or mock interactions.
+
+Preview behaviour:
+	•	Interactivity nodes are fully live in preview.
+	•	Users can speak to the AI character during preview.
+	•	Preview interactions are session-limited and non-persistent.
+
+Published behaviour:
+	•	Interactivity nodes are available to the public.
+	•	AI character interaction is persistent and requires a subscription.
+
+Preview and Published modes share the same execution path.
+Preview only limits access and persistence.
+
+⸻
+
+2. Shopping List / Production Manifest
+	•	The system can calculate, at any moment:
+	•	Number of cards
+	•	Number of interactivity nodes
+	•	Number of AI characters
+	•	Media counts by type (images, video, music, voice)
+	•	This information is presented to the user as a shopping list / production manifest, not as credits or tokens.
+	•	Media generation is itemised by type (images, video, music, voice).
+	•	AI character interaction is itemised separately from media.
+	•	Users can:
+	•	Toggle media types on or off
+	•	See the price update in real time
+	•	Users may download a non-interactive cinematic experience (rendered media only).
+	•	AI interactivity is not downloadable and is only available in published experiences.
+
+⸻
+
+Confirm once this is fully documented in Replit.md.
+Do not proceed with design or implementation until confirmation is given.
+
+⸻
+
+Why this works
+	•	It clearly says “record this”, not “think about this”
+	•	It anchors:
+	•	Interactivity nodes
+	•	Preview behaviour
+	•	Shopping list pricing
+	•	It prevents Replit from:
+	•	Re-designing
+	•	Simplifying
+	•	Forgetting context again
+
+Once Replit confirms this is written into Replit.md, you’re safe to move forward.
+
+⸻
+
+Next step (when you’re ready)
+
+After Replit confirms, the only valid next actions are:
+	•	UX surfacing
+	•	Copy
+	•	Guardrails
+
+No new systems.
+
+Say the word when Replit replies, and we’ll handle the next move with the same discipline.
