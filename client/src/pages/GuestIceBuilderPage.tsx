@@ -185,7 +185,7 @@ export default function GuestIceBuilderPage() {
             <span className="text-sm text-purple-300">Try ICE Free</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            Create Your Cinematic Experience
+            Create Your Interactive Cinematic Experience
           </h1>
           <p className="text-slate-400 max-w-2xl mx-auto">
             Transform any content into an interactive story. Paste a URL or your script, and we'll generate story cards you can edit and reorder.
