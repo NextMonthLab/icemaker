@@ -25,6 +25,7 @@ import {
 import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter, getClientIp } from "./rateLimit";
 import { logAuthFailure, logAccessDenied, logTokenError, logAdminAction } from "./securityLogger";
 import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, analyticsMetadataValidator, analyticsTypeValidator, analyticsMetadataStringValidator, adminRequestValidator, adminReasonValidator } from "./requestValidation";
+import { canReadUniverse, canWriteUniverse, canReadIcePreview, canWriteIcePreview, canReadOrbit, canWriteOrbit, logAuditEvent, extractRequestInfo } from "./authPolicies";
 
 function getAppBaseUrl(req: any): string {
   if (process.env.PUBLIC_APP_URL) {
@@ -808,8 +809,23 @@ export async function registerRoutes(
   
   app.get("/api/universes", async (req, res) => {
     try {
-      const universes = await storage.getAllUniverses();
-      res.json(universes);
+      const allUniverses = await storage.getAllUniverses();
+      const user = req.user as schema.User | undefined;
+      
+      // Filter universes based on visibility and ownership
+      const visibleUniverses = allUniverses.filter(universe => {
+        // Admins see everything
+        if (user?.isAdmin || user?.role === 'admin') return true;
+        // Public universes visible to all
+        if (universe.visibility === 'public') return true;
+        // Unlisted universes visible to all (discoverable by URL)
+        if (universe.visibility === 'unlisted') return true;
+        // Private universes only visible to owner
+        if (user && universe.ownerUserId === user.id) return true;
+        return false;
+      });
+      
+      res.json(visibleUniverses);
     } catch (error) {
       console.error("Error fetching universes:", error);
       res.status(500).json({ message: "Error fetching universes" });
@@ -823,6 +839,23 @@ export async function registerRoutes(
       if (!universe) {
         return res.status(404).json({ message: "Universe not found" });
       }
+      
+      // Check read permission
+      const user = req.user as schema.User | undefined;
+      const policy = canReadUniverse(user, universe);
+      if (!policy.allowed) {
+        const { userIp, userAgent } = extractRequestInfo(req);
+        await logAuditEvent('permission.denied', 'universe', String(id), {
+          userId: user?.id,
+          userIp,
+          userAgent,
+          details: { action: 'read', reason: policy.reason },
+          success: false,
+          errorCode: String(policy.statusCode),
+        });
+        return res.status(policy.statusCode).json({ message: policy.reason });
+      }
+      
       res.json(universe);
     } catch (error) {
       console.error("Error fetching universe:", error);
@@ -5475,12 +5508,28 @@ Guidelines:
     }
   });
   
-  // Get a specific ICE preview by ID (public)
+  // Get a specific ICE preview by ID (visibility-controlled)
   app.get("/api/ice/preview/:id", async (req, res) => {
     try {
       const preview = await storage.getIcePreview(req.params.id);
       if (!preview) {
         return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check read permission
+      const user = req.user as schema.User | undefined;
+      const policy = canReadIcePreview(user, preview);
+      if (!policy.allowed) {
+        const { userIp, userAgent } = extractRequestInfo(req);
+        await logAuditEvent('permission.denied', 'ice_preview', preview.id, {
+          userId: user?.id,
+          userIp,
+          userAgent,
+          details: { action: 'read', reason: policy.reason },
+          success: false,
+          errorCode: String(policy.statusCode),
+        });
+        return res.status(policy.statusCode).json({ message: policy.reason });
       }
       
       // Check expiry
@@ -5495,6 +5544,7 @@ Guidelines:
         sourceType: preview.sourceType,
         sourceValue: preview.sourceValue,
         status: preview.status,
+        visibility: preview.visibility,
         createdAt: preview.createdAt.toISOString(),
       });
     } catch (error) {
@@ -5516,11 +5566,25 @@ Guidelines:
         return res.status(404).json({ message: "Preview not found" });
       }
       
-      // Only owner IP or authenticated owner can edit
+      // Check write permission using policy function
+      const user = req.user as schema.User | undefined;
+      const policy = canWriteIcePreview(user, preview);
+      
+      // For guest previews (no owner yet), allow editing by original IP
       const userIp = req.ip || req.socket.remoteAddress || "unknown";
-      const isOwner = preview.ownerIp === userIp || (req.user?.id && preview.ownerUserId === req.user.id);
-      if (!isOwner) {
-        return res.status(403).json({ message: "Not authorized to edit this preview" });
+      const isGuestOwner = !preview.ownerUserId && preview.ownerIp === userIp;
+      
+      if (!policy.allowed && !isGuestOwner) {
+        const { userIp: ip, userAgent } = extractRequestInfo(req);
+        await logAuditEvent('permission.denied', 'ice_preview', preview.id, {
+          userId: user?.id,
+          userIp: ip,
+          userAgent,
+          details: { action: 'edit', reason: policy.reason },
+          success: false,
+          errorCode: String(policy.statusCode),
+        });
+        return res.status(policy.statusCode).json({ message: policy.reason || "Not authorized to edit this preview" });
       }
       
       // Validate and sanitize cards
@@ -5532,6 +5596,15 @@ Guidelines:
       }));
       
       const updated = await storage.updateIcePreview(req.params.id, { cards: sanitizedCards });
+      
+      // Log successful edit
+      const { userIp: logIp, userAgent } = extractRequestInfo(req);
+      await logAuditEvent('content.edited', 'ice_preview', preview.id, {
+        userId: user?.id,
+        userIp: logIp,
+        userAgent,
+        details: { cardCount: sanitizedCards.length },
+      });
       
       res.json({
         id: updated!.id,
