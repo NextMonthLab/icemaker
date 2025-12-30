@@ -85,8 +85,7 @@ export default function GlobalNav({
               <img 
                 src={LOGO_URL} 
                 alt="NextMonth" 
-                className="h-14 w-auto" 
-                style={{ clipPath: 'inset(30% 0 30% 0)' }}
+                className="h-8 w-auto" 
               />
             </div>
           </Link>

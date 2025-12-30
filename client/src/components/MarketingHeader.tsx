@@ -6,11 +6,8 @@ import {
   Film, 
   GraduationCap, 
   Radio, 
-  Menu,
-  X,
   ChevronDown
 } from "lucide-react";
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +24,6 @@ const useCaseLinks = [
 ];
 
 export default function MarketingHeader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user } = useAuth();
 
@@ -35,9 +31,9 @@ export default function MarketingHeader() {
     <div className="fixed top-0 left-0 right-0 z-50">
       <GlobalNav context="marketing" />
       
-      <nav className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-sm border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
-          <div className="hidden md:flex items-center gap-1">
+      <nav className="hidden md:block bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-sm border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-10 flex items-center justify-between">
+          <div className="flex items-center gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -77,7 +73,7 @@ export default function MarketingHeader() {
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
             {!user && (
               <>
                 <Link href="/login">
@@ -101,85 +97,7 @@ export default function MarketingHeader() {
               </Link>
             )}
           </div>
-
-          <button 
-            className="md:hidden p-2 text-white/80 hover:text-white ml-auto"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            data-testid="button-mobile-menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-black/95 border-t border-white/10 px-4 py-4 space-y-2">
-            <p className="text-xs uppercase text-white/40 px-3 mb-2">Use Cases</p>
-            {useCaseLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <div 
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
-                  onClick={() => setMobileMenuOpen(false)}
-                  data-testid={`mobile-nav-${link.href.split('/').pop()}`}
-                >
-                  <link.icon className="w-5 h-5" />
-                  {link.label}
-                </div>
-              </Link>
-            ))}
-            
-            <div className="border-t border-white/10 pt-2 mt-2">
-              <Link href="/ai-discovery-control">
-                <div 
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
-                  onClick={() => setMobileMenuOpen(false)}
-                  data-testid="mobile-nav-ai-discovery"
-                >
-                  <Radio className="w-5 h-5" />
-                  AI Discovery
-                </div>
-              </Link>
-            </div>
-            
-            {!user && (
-              <div className="border-t border-white/10 pt-4 mt-2 space-y-2">
-                <Link href="/login">
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-white/20 text-white hover:bg-white/10"
-                    onClick={() => setMobileMenuOpen(false)}
-                    data-testid="mobile-button-login"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/login?signup=true">
-                  <Button 
-                    className="w-full bg-pink-500 hover:bg-pink-400 text-white gap-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                    data-testid="mobile-button-signup"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
-            )}
-            
-            {user && (
-              <div className="border-t border-white/10 pt-4 mt-2">
-                <Link href="/app">
-                  <Button 
-                    className="w-full bg-primary hover:bg-primary/90 text-white"
-                    onClick={() => setMobileMenuOpen(false)}
-                    data-testid="mobile-button-go-to-app"
-                  >
-                    Go to App
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
       </nav>
     </div>
   );
