@@ -1,0 +1,166 @@
+You fix this in two tracks: (A) make it safe (ownership + visibility + hard boundaries) and (B) make it feel intuitive (clear states + predictable routing + no “where am I?” moments). Do A first. If you polish UX on top of leaky permissions, you’re just putting mood lighting on a bank vault with the door off.
+
+A) Make it safe (real access control)
+
+1) Introduce a single, explicit Visibility model everywhere
+
+Add two fields to every content table that can be viewed:
+	•	owner_id (UUID FK → users.id, nullable for unclaimed/guest)
+	•	visibility (enum) OR published boolean (enum is better)
+
+Recommended enum:
+	•	private – only owner (+ admins)
+	•	unlisted – anyone with link (optional)
+	•	public – visible to everyone
+
+Why enum > boolean: you’ll want “unlisted” soon, and “draft/public” alone becomes a mess.
+
+2) Enforce authorisation on the server for every content fetch/mutation
+
+Client checks are for UX. Server checks are the lock.
+Create one reusable policy function per resource type:
+	•	canReadIce(req.user, ice)
+	•	canWriteIce(req.user, ice)
+	•	canReadOrbit(req.user, orbit)
+	•	etc.
+
+Rules:
+	•	If not logged in:
+	•	allow only visibility=public (and maybe unlisted with token)
+	•	If logged in:
+	•	allow if owner_id === user.id OR visibility=public OR user is admin
+	•	Writes:
+	•	allow only if owner_id === user.id OR admin
+
+Return codes:
+	•	401 = not logged in (no session)
+	•	403 = logged in but not allowed
+	•	404 = optionally used to avoid leaking existence (common pattern for private resources)
+
+3) Fix guest preview “claiming” so it can’t be hijacked
+
+Right now, /ice/preview/:id is a risk: if IDs leak, anyone can “claim” or view.
+
+Use one of these (best → simplest):
+
+Best: claim token
+	•	When a guest creates a preview, generate claim_token (random, long, single-use)
+	•	Store hashed token server-side
+	•	The guest can view/edit using the token (cookie or query string)
+	•	On login, require the token to claim:
+	•	POST /api/ice/:id/claim { token }
+
+Simpler: guest session ownership
+	•	Store guest_session_id in server session when preview created
+	•	Only that session can edit/claim until login
+	•	On login, convert to real ownership
+
+Either way: don’t allow claiming just because someone is authenticated.
+
+4) Add audit logging for content access and claims
+
+Minimum events:
+	•	content.viewed
+	•	content.edited
+	•	content.claimed
+	•	visibility.changed
+	•	permission.denied
+
+This is your CCTV. You don’t need fancy dashboards yet — just persist logs.
+
+5) Add CSRF protection (because you’re cookie-session based)
+
+With cookie sessions, CSRF becomes relevant for state-changing requests.
+
+Do one:
+	•	SameSite cookies set to Lax or Strict (usually Lax)
+	•	Add CSRF tokens for POST/PUT/DELETE (double-submit cookie or csurf)
+
+Also ensure:
+	•	HttpOnly, Secure (in prod), proper domain, proper path
+
+⸻
+
+B) Make it intuitive (navigation that always makes sense)
+
+1) Treat navigation as a “Global Shell + Product Shell”
+
+You already described this — now enforce it as a rule in code:
+	•	GlobalNav always visible
+	•	Inside product routes, render a ProductHeader/Subnav
+	•	Marketing routes render MarketingHeader (still includes GlobalNav)
+
+A user should always see:
+	•	“Where am I?” (active product)
+	•	“How do I switch?” (global nav)
+	•	“What can I do here?” (product submenu)
+
+2) Use predictable landing rules (defaults that feel obvious)
+	•	Logged out visiting /icemaker/* or /orbit/* → redirect to login with return param
+	•	Logged in visiting / → keep them on marketing (don’t auto-throw them into app)
+	•	After login:
+	•	if return exists → go there
+	•	else → /icemaker (your current default is fine)
+
+3) Make public vs private content visually explicit
+
+This is where most products feel “dodgy” if they don’t do it.
+
+Every piece of content should display a clear badge:
+	•	Draft / Private / Unlisted / Public
+And the sharing UI should match that state.
+
+Also: Don’t allow public URLs that look identical to private URLs if the behaviour differs. Users get confused.
+
+4) Split “Public viewing” routes from “App editing” routes cleanly
+
+Right now you have both /orbit/:slug (public) and /orbit/* (app).
+
+Make it dead obvious:
+	•	Public: /u/:handle/orbit/:slug or /public/orbit/:slug
+	•	App: /orbit/...
+
+Same for Ice:
+	•	Public: /story/:slug (fine)
+	•	Editing: /icemaker/projects/:id
+
+This prevents accidental permission holes and reduces mental load.
+
+5) Add a “Switch Product” moment in submenus (redundant on purpose)
+
+Yes you already have GlobalNav. Still add a lightweight switch inside product subnav/header.
+Redundancy is good UX when the platform has multiple “worlds”.
+
+⸻
+
+The quickest “safe + intuitive” implementation plan (no fluff)
+
+Phase 1 — Security foundations (do this first)
+	1.	Add owner_id + visibility to IceMaker + Orbit entities
+	2.	Backfill existing data:
+	•	assign owner to created-by user
+	•	set default private
+	3.	Implement server authorisation middleware / policy functions
+	4.	Lock down preview claiming with claim token or guest session owner
+	5.	Add basic audit logging
+	6.	Add CSRF protection / SameSite settings
+
+Phase 2 — UX clarity
+	7.	Standardise route split for public vs app
+	8.	Add visibility badges + share UI
+	9.	Make GlobalShell/ProductShell consistent on every route
+	10.	Validate all redirects (return param, onboarding, default landing)
+
+Phase 3 — Hardening
+	11.	Rate-limit auth + claim endpoints
+	12.	Add “404 for unauthorised private” pattern if you want anti-enumeration
+	13.	Write 15–20 API tests covering access rules (worth it)
+
+⸻
+
+A straight talking sanity check
+
+If you do only one thing this week: ownership + server-side enforcement.
+That’s the difference between “prototype” and “platform”.
+
+If you want, I can also write the exact policy matrix (who can do what on which route) and the Express middleware layout you should implement so Claude/Replit can patch it cleanly without breaking your existing structure.
