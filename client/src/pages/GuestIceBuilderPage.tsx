@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CardPlayer from "@/components/CardPlayer";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import previewCardBackground from "@assets/862A9257-4030-4448-8B97-794E470A41DB_1767124443705.png";
+import previewCardBackground from "@assets/generated_images/clean_sunset_background_for_cards.png";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
