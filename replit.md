@@ -1,102 +1,46 @@
 # NextMonth – Claude Code Operating Context
 
 ## Overview
-NextMonth is a Meaning-to-Experience Engine that converts source content (scripts, PDFs, websites) into interactive, cinematic story cards. It's designed for brand storytelling, creative narratives, and knowledge transfer, featuring AI-generated visuals, guardrailed AI character interaction, a Visual Bible system for consistency, TTS narration, and a Daily Drop Engine. The platform supports role-based access and a tiered subscription model, aiming for a stable and monetisable MVP. The long-term vision is to evolve from basic analytics to providing strategic advice based on pattern intelligence, focusing on understanding behavioral sequences and their commercial implications.
+NextMonth is a Meaning-to-Experience Engine designed for brand storytelling, creative narratives, and knowledge transfer. It converts various content sources into interactive, cinematic story cards featuring AI-generated visuals, guardrailed AI character interaction, a Visual Bible system for consistency, TTS narration, and a Daily Drop Engine. The platform supports role-based access and a tiered subscription model, aiming for a monetizable MVP. The long-term vision involves evolving from basic analytics to strategic advice based on pattern intelligence and behavioral sequences.
 
 ## User Preferences
 I prefer simple language and clear, concise explanations. I value iterative development and prefer to be asked before major changes are made to the codebase. Please provide detailed explanations when new features or significant modifications are implemented. Do not make changes to the `shared/schema.ts` file without explicit approval, as it is the single source of truth for data models. Ensure that any AI-generated content adheres to the established visual bible system and character profiles for consistency.
 
 ## System Architecture
-NextMonth's architecture is a multi-stage pipeline: Input Normalisation, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and final QA/Validation. The frontend uses React 18 with Vite, TailwindCSS (shadcn/ui), Wouter for routing, and TanStack Query. The backend is Node.js and Express, with Drizzle ORM for type-safe PostgreSQL interactions (Neon-backed) and Passport.js for authentication.
+NextMonth employs a multi-stage pipeline: Input Normalisation, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18 with Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is Node.js and Express, utilizing Drizzle ORM with Neon-backed PostgreSQL and Passport.js for authentication.
 
-Key architectural patterns and design decisions include:
--   **Schema-First Development**: `shared/schema.ts` defines all data models, generating types for both client and server.
--   **Storage Abstraction**: All database operations are managed via an `IStorage` interface (`server/storage.ts`).
--   **Three-Layer Chat Prompt Composition**: AI chat prompts are built from a Universe Policy, Character Profile, and Card Overrides.
--   **Visual Bible System**: Ensures visual consistency using a Design Guide, Reference Assets, and a Prompt Builder.
--   **Lens-Based User Experience**: Users select a "lens" (Brand, Creative, Knowledge) during onboarding to customize their experience.
--   **Tiered Capability Model**: The "Orbit" tier model (Free, Grow, Understand, Intelligence) gates features rather than access, with a focus on making the free tier a profitable acquisition channel.
--   **Pattern Intelligence Focus**: All analytics and tracking are designed to support future pattern recognition and strategic advice, emphasizing session-based journeys, event ordering, object-level interaction, and outcome linkage.
--   **UI/UX**: Emphasizes a cinematic feel with a dark theme, using Cinzel for headlines and Inter for body text, and a pink-purple-blue gradient accent.
--   **Three-Tier Navigation System**: Global navigation plus product-specific submenus for seamless product switching:
-    -   **Global Nav** (`client/src/components/GlobalNav.tsx`): Always visible with Home (/), IceMaker (/icemaker), Orbit (/orbit) links
-    -   **IceMaker Layout** (`client/src/components/IceMakerLayout.tsx`): Wraps all /icemaker/* pages with submenu: Dashboard, Create Experience, My Projects, Templates, Settings
-    -   **Orbit Layout** (`client/src/components/OrbitLayout.tsx`): Wraps all /orbit/* pages with submenu: Dashboard, Knowledge Map, Intelligence View, Actions, Settings
-    -   **Important**: Future /icemaker/* or /orbit/* routes MUST be wrapped in their respective layout components to preserve navigation
--   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection and encrypted credentials for conversational intelligence.
--   **AgoraCube Device System**: Enables Orbit display on dedicated thin clients (e.g., Raspberry Pi 5) with kiosk mode and optional voice interaction (STT/TTS), including device authentication and rate limiting.
--   **Orbit Signal Schema v0.1**: Machine-readable JSON endpoint at `/.well-known/orbit.json` that exposes structured business identity for AI systems. Features include:
-    -   Domain resolution via host header to map requests to the correct Orbit
-    -   Claimed-only publishing by default (controlled by `ORBIT_SCHEMA_ALLOW_UNCLAIMED` env var)
-    -   Alternative access via `/api/orbit/:slug/signal-schema` for testing
-    -   Optional HMAC signing via `ORBIT_SCHEMA_SIGNING_SECRET` env var
-    -   Caching headers for efficient AI crawler access
-    -   Schema includes: business identity, positioning, services, proof points, FAQs, AI guidance, and contact info
--   **Guest ICE Builder (Try Before Login)**: Anonymous users can create ICE previews at `/try` without authentication. Features include:
-    -   URL or text input → AI-generated story cards
-    -   Server-persisted previews in `ice_previews` table (7-day expiry for guests)
-    -   Drag-drop card reordering and inline editing
-    -   Deep-linking support via `/ice/preview/:id` route
-    -   IP-based rate limiting (10 previews/day per IP)
-    -   Ownership enforcement on promotion (requires matching IP or authenticated owner)
-    -   Login redirect with return URL for seamless resume flow
-    -   Premium feature upsell (AI images, video, narration, export) requiring authentication
--   **Preview Share Bar**: Enables stakeholder sharing of unclaimed Orbits before claiming. Features include:
-    -   Fixed bar at top of unclaimed Orbit pages showing time remaining until expiry
-    -   "Share link" button copies preview URL to clipboard with visual confirmation
-    -   "Preview info" modal with detailed sharing instructions and countdown
-    -   Only visible on unclaimed orbits after customization screen is dismissed
-    -   Component: `client/src/components/preview/PreviewShareBar.tsx`
--   **Experience Analytics System**: Per-experience analytics tracking and insights. Features include:
-    -   Client-side tracking for experience views and card views (`client/src/lib/analytics.ts`)
-    -   Session-level deduplication to avoid duplicate counts
-    -   Public event endpoint: `POST /api/public/analytics/event`
-    -   Admin summary endpoint: `GET /api/analytics/experience/:id/summary`
-    -   ExperienceInsightsPanel component showing total views, conversations, completion rate, top card
-    -   Integrated into AdminUniverseDetail page with Orbit CTA for deeper analytics
--   **Multi-Tenant Security (Phase 1)**: Implemented to prevent cross-tenant data leakage and abuse. Features include:
-    -   **Signed Access Tokens** (`server/publicAccessToken.ts`): HMAC-SHA256 signed tokens with 1-hour expiry for both story and preview access. Tokens include resource type and ID to prevent cross-resource attacks.
-    -   **Token Issuance**: `/api/story/:slug` generates story tokens, `/api/previews/:id` generates preview tokens
-    -   **Token Validation**: Analytics ingestion requires story tokens, preview chat requires preview tokens
-    -   **Rate Limiting** (`server/rateLimit.ts`): Per-IP throttling with configurable limits:
-        -   Analytics: 100 requests/minute
-        -   Activation/Pause: 10 requests/minute  
-        -   Chat: 30 requests/minute per user/IP
-    -   **Environment Variable**: Set `PUBLIC_TOKEN_SECRET` in production for stable tokens across restarts
--   **Stripe Subscription System (Beta-Ready)**: Full subscription billing with webhook-based synchronization:
-    -   **Products**: Pro ($19/mo) and Business ($49/mo) plans seeded in Stripe with linked price IDs
-    -   **Checkout Flow**: `/api/checkout` creates Stripe sessions, `/api/checkout/verify` confirms and creates local subscriptions
-    -   **Webhook Processing** (`server/webhookHandlers.ts`): Handles subscription.created/updated/deleted, invoice.payment_failed events
-    -   **Credit Grant Idempotency**: Uses `lastCreditGrantPeriodEnd` column to ensure credits are granted exactly once per billing cycle
-        -   Initial subscription: checkout verify grants credits + sets marker
-        -   Renewal: webhook checks if currentPeriodEnd > lastCreditGrantPeriodEnd before granting
-    -   **Entitlements Recompute**: Automatically updates user entitlements when subscription status changes
-    -   **Auto-Pause on Downgrade**: Excess ICEs are paused when subscription downgrades or cancels
--   **Platform-Agnostic Deployment (Render-Ready)**: Stripe and hosting configuration now works on any platform:
-    -   **Environment Variables**: Uses `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` with Replit connector fallback
-    -   **Platform Detection**: Uses `NODE_ENV=production` instead of Replit-specific vars
-    -   **URL Override**: `PUBLIC_APP_URL` env var overrides checkout redirect URLs for external hosts
-    -   **Webhook Verification**: Direct Stripe signature verification via `STRIPE_WEBHOOK_SECRET` or stripe-replit-sync fallback
-    -   **Event Deduplication**: In-memory Set tracks last 1000 webhook event IDs to prevent double-processing
-    -   **Startup Validation**: `server/startup.ts` validates required env vars and logs platform detection
-    -   **Documentation**: See `docs/render-deployment.md` for complete setup guide
--   **Email & Notifications System (Beta-Ready)**: Transactional email via Resend and in-app notifications. Features include:
-    -   **Email Provider**: `server/services/email/` with Resend integration (Replit connector or `RESEND_API_KEY` env var)
-    -   **Email Templates**: `orbitClaimMagicLink`, `orbitClaimConfirmed`, `subscriptionChanged`, `leadCapturedDigest`
-    -   **Orbit Claim Magic Link Flow**: 
-        -   POST `/api/orbit/:slug/claim/request` - sends magic link email with 30-min expiry
-        -   POST `/api/orbit/:slug/claim/verify` - validates single-use token, claims orbit, sends confirmation
-        -   Free email domain detection with warnings
-        -   Email domain vs business domain matching
-    -   **In-App Notifications**: Bell icon + preferences panel, tier-gated alert types (lead_captured, conversation_spike, pattern_shift, friction_detected, high_performing_ice)
-    -   **Startup Validation**: Email config logged on startup, warns if not configured in production
-    -   **Documentation**: See `docs/email-and-notifications.md` for complete setup guide
+Key architectural decisions include:
+-   **Schema-First Development**: `shared/schema.ts` defines all data models, generating types for client and server.
+-   **Storage Abstraction**: Database operations are managed via an `IStorage` interface.
+-   **Three-Layer Chat Prompt Composition**: AI prompts are built from Universe Policy, Character Profile, and Card Overrides.
+-   **Visual Bible System**: Ensures visual consistency via a Design Guide, Reference Assets, and a Prompt Builder.
+-   **Lens-Based User Experience**: Onboarding allows users to select a "lens" (Brand, Creative, Knowledge) for a customized experience.
+-   **Tiered Capability Model**: Features are gated by an "Orbit" tier model (Free, Grow, Understand, Intelligence).
+-   **Pattern Intelligence Focus**: Analytics are designed for future pattern recognition, focusing on session journeys, event ordering, object interaction, and outcome linkage.
+-   **UI/UX**: Cinematic dark theme with Cinzel and Inter fonts, and a pink-purple-blue gradient accent.
+-   **Three-Tier Navigation System**: Global navigation and product-specific submenus (`GlobalNav`, `IceMakerLayout`, `OrbitLayout`).
+-   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection.
+-   **AgoraCube Device System**: Enables Orbit display on thin clients (e.g., Raspberry Pi 5) with kiosk mode and voice interaction.
+-   **Orbit Signal Schema v0.1**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems, exposing structured business identity.
+-   **Guest ICE Builder**: Allows anonymous users to create ICE previews at `/try` with server-persisted, time-limited previews and rate limiting.
+-   **Preview Share Bar**: Facilitates stakeholder sharing of unclaimed Orbits with time remaining and sharing options.
+-   **Experience Analytics System**: Client-side tracking for experience and card views, with public event and admin summary endpoints.
+-   **Multi-Tenant Security (Phase 1)**: Implemented with HMAC-SHA256 signed access tokens for story and preview access, and per-IP rate limiting.
+-   **Stripe Subscription System**: Full subscription billing with webhook-based synchronization for product plans (Pro, Business), checkout flow, and credit granting idempotency.
+-   **Platform-Agnostic Deployment**: Configurable via environment variables for various hosting platforms (e.g., Render), including URL overrides and webhook verification.
+-   **Email & Notifications System**: Transactional emails via Resend (e.g., Orbit Claim Magic Link) and in-app notifications (tier-gated).
+-   **Interactivity Nodes Between Cards**: Supports interactive nodes *between* cards for conversational moments and AI character interaction, fully live in preview and requiring subscription for published persistence.
+-   **Guided First-Run Experience**: A light, skippable walkthrough on first preview explaining cards, interactivity nodes, and the distinction between downloading and publishing.
+-   **Login Does Not Unlock Features**: Login saves progress and allows checkout; payment via Stripe unlocks media generation, AI interactivity, and publishing.
+-   **Shopping List / Production Manifest**: Calculates and displays media counts (cards, interactivity nodes, AI characters, images, video, music, voice) with real-time price updates before checkout.
+-   **Download vs Publish**: Download produces a non-interactive video artifact; Publish creates a public, interactive experience with AI, requiring a subscription.
+-   **Editor Transition**: Users transition from a Preview Editor to a Professional/Production Editor post-upgrade, with an explicit explanation and orientation.
 
 ## External Dependencies
--   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
--   **Kling AI API**: Integrated for video generation.
--   **Replicate API**: Used for alternative video generation models.
+-   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
+-   **Kling AI API**: For video generation.
+-   **Replicate API**: For alternative video generation models.
 -   **Stripe**: For subscription billing and payment processing.
--   **Resend**: Transactional email delivery for magic links and notifications.
+-   **Resend**: For transactional email delivery.
 -   **Replit Object Storage (R2/S3-compatible)**: For file storage.
 -   **Neon (PostgreSQL)**: Managed PostgreSQL database service.

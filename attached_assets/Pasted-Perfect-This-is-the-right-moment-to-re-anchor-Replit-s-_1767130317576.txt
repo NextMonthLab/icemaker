@@ -1,0 +1,114 @@
+Perfect. This is the right moment to re-anchor Replit’s understanding before anything else drifts.
+
+What you want here is a single, authoritative “context correction + focus” message. Not a brainstorm. Not a proposal. A memory update.
+
+Below is a clean, structured instruction you can paste directly into Replit (or into Replit.md if that’s the channel it reads from). It explicitly calls out what was missing and what must now be treated as canonical.
+
+⸻
+
+Instruction to Replit: Context Alignment & Missing Concepts
+
+Planning Mode – Context Alignment Required
+
+Before any further design or implementation, align your understanding with the following confirmed behaviours and UX requirements. These are not new features; they clarify what already exists or what must be explicitly surfaced to users.
+
+⸻
+
+1. Interactivity Nodes Must Be Explicitly Introduced
+	•	Users must be explicitly shown that they can add AI interaction nodes between cards.
+	•	This is a first-class creative action, not an implicit or automatic behaviour.
+	•	The preview UI must visibly afford adding an interactivity node (e.g. a ➕ between cards).
+	•	When added, the node invokes a live AI character interaction, using the existing, production-tested AI runtime.
+	•	There are no placeholders or mock interactions.
+
+Interactivity nodes are experienced before pricing is shown, so users understand what they are adding.
+
+⸻
+
+2. Guided First-Run Experience Is Required
+	•	The system requires a light, skippable guided walkthrough on first preview.
+	•	Purpose:
+	•	Explain cards
+	•	Explain interactivity nodes between cards
+	•	Let users experience a live AI interaction
+	•	Explain the difference between downloading a cinematic vs publishing an interactive experience
+
+This guided layer exists to teach the mental model before any upsell or pricing.
+
+⸻
+
+3. Login Does Not Unlock Features
+	•	Login exists to:
+	•	Save progress
+	•	Preserve the preview state
+	•	Allow access to checkout
+	•	Login does not unlock media generation, AI interactivity, or publishing.
+	•	Payment via Stripe is what unlocks those capabilities.
+
+CTA copy and UX must reflect this distinction.
+
+⸻
+
+4. Shopping List / Production Manifest Positioning
+	•	The Shopping List appears before Stripe checkout.
+	•	It itemises:
+	•	Cards
+	•	Interactivity nodes
+	•	AI characters
+	•	Media by type (images, video, music, voice), each toggleable
+	•	Prices update in real time as options are toggled.
+
+This is a production manifest, not a credit or token system.
+
+⸻
+
+5. Download vs Publish Is a Core Distinction
+	•	Download:
+	•	Produces a non-interactive cinematic artefact (video).
+	•	Includes rendered media only.
+	•	No AI interactivity.
+	•	Publish:
+	•	Produces a public, interactive experience.
+	•	Includes AI character interaction.
+	•	Requires hosting and an active subscription.
+
+AI interactivity cannot be downloaded.
+
+⸻
+
+6. Editor Transition Must Be Explained
+	•	Users move from a Preview Editor to a Professional / Production Editor after upgrade.
+	•	This UI change must be explicitly explained to avoid confusion.
+	•	Upgrade includes access to the Professional Editor.
+	•	A short orientation moment is required on first entry to the production editor.
+
+⸻
+
+Confirm that these concepts are now fully understood and reflected in Replit.md.
+Do not propose new systems or implementations until this alignment is complete.
+
+⸻
+
+Why this message works
+	•	It clearly states what was missing
+	•	It corrects incorrect assumptions
+	•	It separates:
+	•	Preview vs Production
+	•	Login vs Payment
+	•	Download vs Publish
+	•	It prevents Replit from “helpfully” redesigning things you already decided
+
+Once Replit acknowledges and confirms this is reflected in Replit.md, you’re back in control.
+
+⸻
+
+Next step (when Replit replies)
+
+When they confirm, the only valid next actions are:
+	•	Writing or reviewing Replit.md
+	•	Designing the guided walkthrough UX
+	•	Refining copy and transitions
+
+No logic work. No refactors.
+
+If you want, once Replit replies, paste their response here and I’ll help you sanity-check it before you move forward.
