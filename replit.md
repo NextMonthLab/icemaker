@@ -31,7 +31,7 @@ Key architectural decisions include:
 -   **Email & Notifications System**: Transactional emails via Resend (e.g., Orbit Claim Magic Link) and in-app notifications (tier-gated).
 -   **Interactivity Nodes Between Cards**: Supports interactive nodes *between* cards for conversational moments and AI character interaction, fully live in preview and requiring subscription for published persistence.
 -   **Story-Specific Character AI**: During preview creation, characters are automatically extracted from story content (detective, victim, suspects, witnesses, etc.) with unique personas, system prompts, and in-character responses. Characters appear in interactivity nodes with dropdown selection when multiple are available.
--   **Card Pace Controls**: Preview modal includes Slow/Normal/Fast pace controls (8s/5s/3s) for card auto-advance timing, allowing users to control the viewing experience.
+-   **Card Pace Controls**: Preview modal includes Slow/Normal/Fast pace controls (12s/5s/3s) for card auto-advance timing, allowing users to control the viewing experience. Mobile-optimized layout prevents overlap.
 -   **Guided First-Run Experience**: A light, skippable walkthrough on first preview explaining cards, interactivity nodes, and the distinction between downloading and publishing.
 -   **Login Does Not Unlock Features**: Login saves progress and allows checkout; payment via Stripe unlocks media generation, AI interactivity, and publishing.
 -   **Shopping List / Production Manifest**: Calculates and displays media counts (cards, interactivity nodes, AI characters, images, video, music, voice) with real-time price updates before checkout.

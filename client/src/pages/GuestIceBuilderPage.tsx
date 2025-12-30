@@ -78,7 +78,7 @@ export default function GuestIceBuilderPage() {
   const [cardPace, setCardPace] = useState<"slow" | "normal" | "fast">("normal");
   const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState(true);
   
-  const paceDelays = { slow: 8000, normal: 5000, fast: 3000 };
+  const paceDelays = { slow: 12000, normal: 5000, fast: 3000 };
   
   const [lastManualNav, setLastManualNav] = useState(0);
   
@@ -807,29 +807,32 @@ export default function GuestIceBuilderPage() {
             )}
           </AnimatePresence>
           
-          {/* Premium upsell overlay */}
-          <div className="absolute top-4 left-4 z-[60] bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-2">
-            <Lock className="w-3 h-3 text-purple-400" />
-            <span className="text-xs text-white/80">AI images & video with Pro</span>
-          </div>
-          
-          {/* Pace controls */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-black/50 backdrop-blur rounded-full px-2 py-1 flex items-center gap-1">
-            <span className="text-[10px] text-white/60 mr-1">Pace:</span>
-            {(["slow", "normal", "fast"] as const).map((pace) => (
-              <button
-                key={pace}
-                onClick={() => setCardPace(pace)}
-                className={`px-2 py-0.5 text-[10px] rounded-full transition-all ${
-                  cardPace === pace
-                    ? "bg-purple-500 text-white"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-                data-testid={`button-pace-${pace}`}
-              >
-                {pace.charAt(0).toUpperCase() + pace.slice(1)}
-              </button>
-            ))}
+          {/* Top controls bar - mobile optimized */}
+          <div className="absolute top-4 left-4 right-14 z-[60] flex flex-col sm:flex-row sm:items-center gap-2">
+            {/* Premium upsell - hidden on very small screens, shown abbreviated on mobile */}
+            <div className="hidden sm:flex bg-black/50 backdrop-blur rounded-full px-3 py-1.5 items-center gap-2 shrink-0">
+              <Lock className="w-3 h-3 text-purple-400" />
+              <span className="text-xs text-white/80 whitespace-nowrap">AI images & video with Pro</span>
+            </div>
+            
+            {/* Pace controls */}
+            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
+              <span className="text-[10px] text-white/60 mr-1">Pace:</span>
+              {(["slow", "normal", "fast"] as const).map((pace) => (
+                <button
+                  key={pace}
+                  onClick={() => setCardPace(pace)}
+                  className={`px-2 py-0.5 text-[10px] rounded-full transition-all ${
+                    cardPace === pace
+                      ? "bg-purple-500 text-white"
+                      : "text-white/60 hover:text-white hover:bg-white/10"
+                  }`}
+                  data-testid={`button-pace-${pace}`}
+                >
+                  {pace.charAt(0).toUpperCase() + pace.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
