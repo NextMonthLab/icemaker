@@ -145,10 +145,40 @@ export default function IceCheckoutPage() {
     },
   });
   
-  if (!user) {
-    navigate(`/login?return=${encodeURIComponent(`/ice/preview/${params.id}/checkout`)}`);
-    return null;
-  }
+  // Restore selections from sessionStorage when returning from login
+  useEffect(() => {
+    if (typeof window === "undefined" || !params.id) return;
+    const savedState = sessionStorage.getItem(`checkout_state_${params.id}`);
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        if (state.mediaOptions) setMediaOptions(state.mediaOptions);
+        if (state.outputChoice) setOutputChoice(state.outputChoice);
+        if (state.expansionScope) setExpansionScope(state.expansionScope);
+        if (state.interactivityNodeCount !== undefined) setInteractivityNodeCount(state.interactivityNodeCount);
+        sessionStorage.removeItem(`checkout_state_${params.id}`);
+      } catch (e) {
+        console.error("Failed to restore checkout state:", e);
+      }
+    }
+  }, [params.id]);
+  
+  const handleProceedToPayment = () => {
+    if (!user) {
+      // Save selections before redirecting to login
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`checkout_state_${params.id}`, JSON.stringify({
+          mediaOptions,
+          outputChoice,
+          expansionScope,
+          interactivityNodeCount,
+        }));
+      }
+      navigate(`/login?return=${encodeURIComponent(`/ice/preview/${params.id}/checkout`)}`);
+      return;
+    }
+    checkoutMutation.mutate();
+  };
   
   if (isLoading) {
     return (
@@ -424,7 +454,7 @@ export default function IceCheckoutPage() {
               </div>
               
               <Button
-                onClick={() => checkoutMutation.mutate()}
+                onClick={handleProceedToPayment}
                 disabled={!outputChoice || checkoutMutation.isPending}
                 className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg font-semibold"
                 data-testid="button-proceed-to-payment"
@@ -435,7 +465,7 @@ export default function IceCheckoutPage() {
                     Processing...
                   </>
                 ) : (
-                  "Proceed to Payment"
+                  user ? "Proceed to Payment" : "Sign In to Pay"
                 )}
               </Button>
               

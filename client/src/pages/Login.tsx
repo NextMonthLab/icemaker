@@ -15,10 +15,8 @@ export default function Login() {
   const params = new URLSearchParams(searchString);
   const returnUrl = params.get("return");
   
-  // If return URL is a checkout page, redirect to preview instead (checkout requires login)
-  const guestReturnUrl = returnUrl?.includes("/checkout") 
-    ? returnUrl.replace("/checkout", "") 
-    : (returnUrl || "/try");
+  // Guests can now view checkout pages, so use return URL directly
+  const guestReturnUrl = returnUrl || "/try";
   const [isLoading, setIsLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState("");
