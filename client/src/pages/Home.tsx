@@ -65,9 +65,14 @@ export default function Home() {
     return (
       <Layout>
         <div className="p-4 pt-8 md:p-8 space-y-6 animate-in fade-in duration-500">
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-4">
             <span className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Choose Your Story</span>
-            <h1 className="text-3xl font-display font-black">NextMonth</h1>
+            <img 
+              src="/logo.png" 
+              alt="NextMonth" 
+              className="h-16 md:h-20 mx-auto" 
+              style={{ clipPath: 'inset(30% 0 30% 0)' }} 
+            />
           </div>
 
           <div className="grid gap-4 max-w-lg mx-auto">
