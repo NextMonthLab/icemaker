@@ -142,14 +142,22 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  // Session middleware
+  // Trust proxy for secure cookies behind TLS-terminating proxies (Render, Replit, etc.)
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) {
+    app.set("trust proxy", 1);
+  }
+  
+  // Session middleware with secure cookie settings
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "storyflix-secret-change-in-production",
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
+        httpOnly: true, // Prevents client-side JavaScript access
+        sameSite: isProduction ? "strict" : "lax", // CSRF protection: strict in prod, lax for dev
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       },
     })
