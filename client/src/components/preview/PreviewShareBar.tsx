@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Clock, Check, Copy, Info, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface PreviewShareBarProps {
   previewId: string;
@@ -55,45 +54,43 @@ export function PreviewShareBar({ previewId, expiresAt, brandName }: PreviewShar
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/70 to-transparent"
+        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent"
       >
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
-                <Clock className="w-3 h-3" />
-                <span className="text-xs font-medium">{timeRemaining}</span>
+        <div className="max-w-4xl mx-auto px-3 py-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+                <Clock className="w-2.5 h-2.5" />
+                <span className="text-[10px] font-medium">{timeRemaining}</span>
               </div>
               
               <button
                 onClick={() => setShowInfo(true)}
-                className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1"
+                className="text-[10px] text-white/50 hover:text-white/80 transition-colors flex items-center gap-0.5"
                 data-testid="button-preview-info"
               >
-                <Info className="w-3 h-3" />
-                <span className="hidden sm:inline">Preview info</span>
+                <Info className="w-2.5 h-2.5" />
+                <span className="hidden sm:inline">Info</span>
               </button>
             </div>
             
-            <Button
+            <button
               onClick={handleCopyLink}
-              size="sm"
-              variant="outline"
-              className="bg-white/10 border-white/20 hover:bg-white/20 text-white shrink-0"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors shrink-0"
               data-testid="button-share-preview"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 mr-1.5 text-green-400" />
-                  <span className="text-green-400">Copied!</span>
+                  <Check className="w-2.5 h-2.5 text-green-400" />
+                  <span className="text-green-400">Copied</span>
                 </>
               ) : (
                 <>
-                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
-                  <span>Share link</span>
+                  <Share2 className="w-2.5 h-2.5" />
+                  <span>Share</span>
                 </>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </motion.div>
@@ -152,23 +149,23 @@ export function PreviewShareBar({ previewId, expiresAt, brandName }: PreviewShar
                     <span className="text-xs text-white/60 truncate flex-1">{shareUrl}</span>
                   </div>
                   
-                  <Button
+                  <button
                     onClick={handleCopyLink}
-                    className="w-full"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-white text-black font-medium text-sm hover:bg-white/90 transition-colors"
                     data-testid="button-copy-link-modal"
                   >
                     {copied ? (
                       <>
-                        <Check className="w-4 h-4 mr-2 text-green-400" />
+                        <Check className="w-4 h-4 text-green-600" />
                         Link copied!
                       </>
                     ) : (
                       <>
-                        <Share2 className="w-4 h-4 mr-2" />
+                        <Share2 className="w-4 h-4" />
                         Copy share link
                       </>
                     )}
-                  </Button>
+                  </button>
                 </div>
                 
                 <p className="text-xs text-white/40 text-center pt-2">
