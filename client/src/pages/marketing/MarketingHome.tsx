@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wand2, MessageCircle, Share2, Shield, Eye, Lock, CheckCircle2, Radio, Clock, DollarSign, Zap, BookOpen, Megaphone, Lightbulb } from "lucide-react";
+import ScenarioCarousel from "@/components/ScenarioCarousel";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
@@ -410,6 +411,38 @@ export default function MarketingHome() {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Scenario Case Studies Section */}
+        <section className="py-20 px-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-neutral-950 to-black" />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-scenarios-title">
+                See how{' '}
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">real people</span>{' '}
+                use ICE
+              </h2>
+              <p className="text-white/50 text-lg max-w-xl mx-auto">
+                From technical documents to creative stories, these scenarios show what's possible
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <ScenarioCarousel filter="all" />
             </motion.div>
           </div>
         </section>

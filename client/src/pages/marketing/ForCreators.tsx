@@ -4,6 +4,7 @@ import { ArrowRight, Film, Clapperboard, Sparkles, MessageCircle, Calendar, Zap,
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
+import ScenarioCarousel from "@/components/ScenarioCarousel";
 
 const features = [
   {
@@ -209,6 +210,30 @@ export default function ForCreators() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Creator Scenarios */}
+        <section className="py-24 px-6 relative scroll-mt-24" data-nm-section="creator-scenarios">
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-neutral-950" />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold mb-4">
+                Creator <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">Stories</span>
+              </h2>
+              <p className="text-white/50 text-lg max-w-xl mx-auto">
+                See how filmmakers and writers bring their visions to life
+              </p>
+            </div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <ScenarioCarousel filter="creator" />
+            </motion.div>
           </div>
         </section>
 

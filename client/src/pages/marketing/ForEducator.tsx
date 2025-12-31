@@ -9,6 +9,7 @@ const educatorPersona = {
   description: "Educators use NextMonth to create engaging learning experiences through serialized lessons, interactive characters, and visual storytelling.",
   icon: GraduationCap,
   color: "from-green-500/10 via-transparent to-emerald-500/10",
+  scenarioFilter: "educator" as const,
   useCases: [
     {
       title: "Curriculum Storytelling",

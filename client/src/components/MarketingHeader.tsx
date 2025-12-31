@@ -23,6 +23,12 @@ const useCaseLinks = [
   { href: "/for/knowledge", label: "For Knowledge & Learning", icon: GraduationCap },
 ];
 
+const audienceLinks = [
+  { href: "/for/business", label: "Businesses", icon: Building2 },
+  { href: "/for/creators", label: "Creators", icon: Film },
+  { href: "/for/educator", label: "Educators", icon: GraduationCap },
+];
+
 export default function MarketingHeader() {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -34,31 +40,21 @@ export default function MarketingHeader() {
       <nav className="hidden md:block bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-10 flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {audienceLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="text-white/70 hover:text-white hover:bg-white/10 gap-1 h-8"
-                  data-testid="nav-use-cases"
+                  className={`text-white/70 hover:text-white hover:bg-white/10 gap-1.5 h-8 ${location === link.href ? 'text-white bg-white/10' : ''}`}
+                  data-testid={`nav-${link.href.split('/').pop()}`}
                 >
-                  Use Cases
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <link.icon className="w-3.5 h-3.5" />
+                  {link.label}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-neutral-900 border-white/10">
-                {useCaseLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>
-                      <div className="flex items-center gap-2 cursor-pointer w-full text-white/80 hover:text-white" data-testid={`nav-${link.href.split('/').pop()}`}>
-                        <link.icon className="w-4 h-4" />
-                        {link.label}
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+            ))}
+            
+            <div className="w-px h-4 bg-white/20 mx-2" />
             
             <Link href="/ai-discovery-control">
               <Button 

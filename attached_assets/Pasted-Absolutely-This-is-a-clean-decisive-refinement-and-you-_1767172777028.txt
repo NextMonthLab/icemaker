@@ -1,0 +1,128 @@
+Absolutely. This is a clean, decisive refinement, and you’re right to bundle both changes together. They reinforce each other.
+
+Below is a revised, authoritative prompt you can give Repl.it that:
+	1.	Updates the sliding scenario case studies with human imagery
+	2.	Makes the component reusable across sub-pages
+	3.	Adds Businesses / Creators / Educators as first-class destinations in the global menu
+	4.	Keeps everything aligned with your canonical behaviours and homepage strategy
+
+You can paste this verbatim.
+
+⸻
+
+Revised Prompt to Repl.it: Scenario Case Studies + Audience Pages
+
+Homepage & Navigation Update – Scenario Proof + Audience Clarity
+
+We are refining the homepage and global navigation to make it immediately clear who NextMonth is for and how ICE experiences are used in the real world.
+
+This update has two parts:
+	1.	A revised sliding scenario case study component with imagery
+	2.	Clear audience sub-pages added to the global menu
+
+⸻
+
+Part 1: Sliding Scenario Case Studies (With Images)
+
+Implement a prominent sliding scenario / case study component on the homepage (below the hero and value framing).
+
+These are illustrative scenarios, not real testimonials.
+
+Component Requirements
+	•	Horizontal slider / carousel
+	•	One scenario per slide
+	•	Each slide includes:
+	•	A strong, situational image
+	•	A short title (who this is for)
+	•	A concise description covering:
+	•	What they already have
+	•	What they do with ICE
+	•	The outcome
+
+Avoid metrics, logos, or exaggerated claims.
+
+⸻
+
+Scenario Images (Important)
+
+Each scenario must include a human, real-world image to help visitors visually self-identify.
+
+Image guidelines:
+	•	Editorial, grounded, and realistic
+	•	Human environments (workshop, desk, classroom, creative space)
+	•	No product UI screenshots
+	•	No abstract or futuristic AI art
+	•	Avoid obvious corporate stock
+
+Images should feel cohesive as a set (similar tone, grading, framing).
+
+⸻
+
+Initial Scenarios to Include
+	1.	Innovative Business / Manufacturer
+Turning technical documents into an interactive experience, with an AI engineer answering questions about new technology.
+	2.	Established Business with Legacy Content
+Converting years of high-quality blog posts into cinematic, video-first content for LinkedIn, TikTok, YouTube Shorts, and Instagram Reels.
+	3.	Teacher / Educator
+Turning fact sheets into engaging, character-driven interactive lessons (including historical figures explaining science concepts).
+	4.	Independent Filmmaker
+Using ICE as a living storyboard to align a creative team with generated scenes before production.
+	5.	Amateur Writer / Creator
+Bringing unpublished short stories to life and sharing them publicly via video platforms.
+
+⸻
+
+Reusability
+
+This scenario component should be reusable on audience-specific sub-pages, showing only the most relevant scenarios for that audience.
+
+⸻
+
+Part 2: Audience Sub-Pages & Global Menu Update
+
+Add clear audience-focused sub-pages and include them in the global navigation menu:
+	•	Businesses
+	•	Creators
+	•	Educators
+
+Purpose
+	•	Allow visitors to self-select immediately
+	•	Reduce cognitive load on the homepage
+	•	Let people go directly to the context that resonates most with them
+
+Each sub-page should:
+	•	Reuse the scenario component (filtered appropriately)
+	•	Reinforce time-saving and outcome-driven value
+	•	Speak in the language of that audience (not generic product features)
+
+⸻
+
+Tone & Intent
+	•	Show real-world applicability, not abstract capability
+	•	Emphasise time compression, clarity, and creative leverage
+	•	Make NextMonth feel immediately relevant to different types of users
+
+This is a core positioning update, not decorative content.
+
+Please implement and confirm once the homepage section and global menu updates are in place.
+
+⸻
+
+Why this is the right move (quick reassurance)
+	•	The homepage now:
+	•	Explains value
+	•	Shows believable use
+	•	Lets people self-identify fast
+	•	The global menu now:
+	•	Reduces friction
+	•	Prevents “is this for me?” doubt
+	•	Gives visitors a clear next click
+
+This is how strong platforms move from “interesting” to “obvious”.
+
+Once Repl.it comes back with a first pass, the next step will simply be:
+	•	tightening copy,
+	•	ordering scenarios,
+	•	and checking visual consistency.
+
+You’ve framed this extremely well.

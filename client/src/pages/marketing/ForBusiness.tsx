@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import ScenarioCarousel from "@/components/ScenarioCarousel";
 
 const businessPersona = {
   id: "business",
@@ -262,7 +263,22 @@ export default function ForBusiness() {
           </div>
         </section>
 
+        {/* Scenario Case Studies */}
         <section className="py-20 px-4 bg-card/50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">
+                Real Business Scenarios
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                See how businesses like yours use ICE to transform content into experiences
+              </p>
+            </div>
+            <ScenarioCarousel filter="business" />
+          </div>
+        </section>
+
+        <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4" data-testid="text-benefits-title">
