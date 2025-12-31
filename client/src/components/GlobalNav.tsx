@@ -9,7 +9,10 @@ import {
   User,
   ChevronDown,
   Menu,
-  X
+  X,
+  Building2,
+  Film,
+  GraduationCap
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -67,6 +70,12 @@ export default function GlobalNav({
     { href: '/', label: 'Home', icon: Home, context: 'marketing' as NavContext },
     { href: '/icemaker', label: 'IceMaker', icon: Sparkles, context: 'ice' as NavContext },
     { href: '/orbit', label: 'Orbit', icon: Orbit, context: 'orbit' as NavContext },
+  ];
+
+  const audienceLinks = [
+    { href: '/for/business', label: 'For Businesses', icon: Building2 },
+    { href: '/for/creators', label: 'For Creators', icon: Film },
+    { href: '/for/educator', label: 'For Educators', icon: GraduationCap },
   ];
   
   const showTryFree = !user && context === 'marketing';
@@ -236,6 +245,24 @@ export default function GlobalNav({
               </Link>
             );
           })}
+          
+          {context === 'marketing' && (
+            <>
+              <div className="border-t border-white/10 my-2" />
+              {audienceLinks.map((link) => (
+                <Link key={link.href} href={link.href}>
+                  <div 
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    data-testid={`global-mobile-${link.href.split('/').pop()}`}
+                  >
+                    <link.icon className="w-4 h-4" />
+                    {link.label}
+                  </div>
+                </Link>
+              ))}
+            </>
+          )}
         </div>
       )}
     </header>
