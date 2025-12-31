@@ -1,0 +1,99 @@
+Brilliant. You’re right to make this prominent – this is homepage, above-the-fold thinking, not a footer experiment.
+
+Below is a clean, authoritative prompt you can give RepTilt. It tells them what to build, where to put it, and why, without drifting back into feature soup.
+
+You can paste this verbatim.
+
+⸻
+
+Prompt to RepTilt: Homepage Value Framing (Time + Use Cases)
+
+Homepage Update – Priority Section (Above the Fold / Early Scroll)
+
+We need to add a prominent value-framing section to the homepage that clearly communicates:
+	1.	How much time and cost NextMonth saves
+	2.	What ICE experiences are used for, in plain language
+
+This section should appear immediately after the hero (or integrated into the hero stack if space allows).
+
+⸻
+
+Part 1: Time–Cost Comparison (Simple Calculator)
+
+Add a lightweight, single-screen comparison that answers:
+“How long does this usually take – and how long with NextMonth?”
+
+Requirements:
+	•	Keep it intentionally simple (no complex forms)
+	•	One selector or set of preset examples (e.g. Website page, Blog post, Case study, Training content, Campaign story)
+	•	Use sensible defaults (no user input required to understand value)
+
+Comparison should show three paths:
+	•	Traditional production / agency
+	•	Time: weeks
+	•	Cost: thousands
+	•	DIY tools
+	•	Time: tens of hours
+	•	Cost: multiple subscriptions
+	•	NextMonth
+	•	Time: minutes
+	•	Cost: tens
+
+Primary emphasis is TIME saved, with cost as secondary reinforcement.
+
+This is not a financial calculator – it is a value mirror.
+
+Copy should focus on:
+	•	“Weeks → minutes”
+	•	“30+ hours → under an hour”
+
+⸻
+
+Part 2: Clear ICE Use Cases (Immediate Self-Identification)
+
+Directly below (or alongside) the comparison, add a clear section:
+
+“What people use ICE experiences for”
+
+Present 4 concise use cases, each with:
+	•	A short title
+	•	One sentence explaining the outcome (not features)
+
+The four use cases are:
+	1.	Marketing & Sales
+(e.g. interactive landing pages, explainers, pitch experiences)
+	2.	Content & Publishing
+(e.g. turning articles, blogs, or scripts into interactive stories)
+	3.	Training & Knowledge
+(e.g. onboarding, education, internal explainers)
+	4.	Creative & Storytelling
+(e.g. narrative prototypes, interactive films, character-driven stories)
+
+Do not list features.
+Focus on situations and outcomes so visitors instantly think “this is for me”.
+
+⸻
+
+Tone & Intent
+	•	This section should make the value of NextMonth obvious in under 10 seconds
+	•	Avoid AI hype language
+	•	Emphasise time compression, simplicity, and creative leverage
+	•	This is a core positioning section, not a secondary explainer
+
+⸻
+
+Implement this as a first-class homepage section and confirm once placed and styled consistently with the existing brand.
+
+⸻
+
+Why this prompt works
+	•	It anchors the why, not just the what
+	•	It prevents RepTilt from over-engineering the calculator
+	•	It keeps the homepage focused on value, not mechanics
+	•	It reinforces your premium-but-accessible positioning
+
+Once RepTilt comes back with a draft, the next step will be:
+	•	tightening the copy for punch, and
+	•	deciding whether the calculator itself becomes an ICE demo later.
+
+But this is exactly the right move, at exactly the right time.

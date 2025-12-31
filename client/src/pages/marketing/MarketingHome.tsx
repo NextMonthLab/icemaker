@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wand2, MessageCircle, Share2, Shield, Eye, Lock, CheckCircle2, Radio } from "lucide-react";
+import { ArrowRight, Play, Sparkles, Building2, Film, GraduationCap, Upload, Wand2, MessageCircle, Share2, Shield, Eye, Lock, CheckCircle2, Radio, Clock, DollarSign, Zap, BookOpen, Megaphone, Lightbulb } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
@@ -116,6 +116,60 @@ const trustFeatures = [
   },
 ];
 
+const valueComparison = [
+  {
+    path: "Traditional Agency",
+    time: "2-4 weeks",
+    cost: "$5,000+",
+    timeLabel: "Weeks of waiting",
+    costLabel: "Thousands spent",
+    highlight: false,
+  },
+  {
+    path: "DIY Tools",
+    time: "30+ hours",
+    cost: "$100+/mo",
+    timeLabel: "Hours of learning",
+    costLabel: "Multiple subscriptions",
+    highlight: false,
+  },
+  {
+    path: "NextMonth",
+    time: "Under 1 hour",
+    cost: "From $9.99",
+    timeLabel: "Minutes to create",
+    costLabel: "Pay per experience",
+    highlight: true,
+  },
+];
+
+const iceUseCases = [
+  {
+    title: "Marketing & Sales",
+    description: "Interactive landing pages, product explainers, and pitch experiences that convert.",
+    icon: Megaphone,
+    color: "from-pink-500 to-rose-500",
+  },
+  {
+    title: "Content & Publishing",
+    description: "Turn articles, blogs, or scripts into interactive stories people actually finish.",
+    icon: BookOpen,
+    color: "from-purple-500 to-violet-500",
+  },
+  {
+    title: "Training & Knowledge",
+    description: "Onboarding, education, and internal explainers that stick in memory.",
+    icon: GraduationCap,
+    color: "from-blue-500 to-cyan-500",
+  },
+  {
+    title: "Creative & Storytelling",
+    description: "Narrative prototypes, interactive films, and character-driven experiences.",
+    icon: Lightbulb,
+    color: "from-amber-500 to-orange-500",
+  },
+];
+
 export default function MarketingHome() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -207,6 +261,157 @@ export default function MarketingHome() {
           </div>
           
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+        </section>
+
+        {/* Value Framing Section - Time Comparison */}
+        <section className="py-20 px-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-neutral-950 to-black" />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-value-title">
+                <span className="text-white/80">Weeks</span>{' '}
+                <span className="text-white/40">→</span>{' '}
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">Minutes</span>
+              </h2>
+              <p className="text-white/50 text-lg max-w-xl mx-auto">
+                Creating interactive experiences used to take forever. Not anymore.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {valueComparison.map((item, index) => (
+                <motion.div
+                  key={item.path}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`p-6 rounded-2xl border transition-all ${
+                    item.highlight 
+                      ? 'bg-gradient-to-b from-purple-900/30 to-pink-900/20 border-purple-500/50 shadow-lg shadow-purple-500/10' 
+                      : 'bg-white/5 border-white/10'
+                  }`}
+                  data-testid={`card-comparison-${index}`}
+                >
+                  <p className={`text-sm font-medium mb-4 ${item.highlight ? 'text-purple-400' : 'text-white/40'}`}>
+                    {item.path}
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        item.highlight ? 'bg-purple-500/20' : 'bg-white/10'
+                      }`}>
+                        <Clock className={`w-5 h-5 ${item.highlight ? 'text-purple-400' : 'text-white/40'}`} />
+                      </div>
+                      <div>
+                        <p className={`text-2xl font-bold ${item.highlight ? 'text-white' : 'text-white/70'}`}>
+                          {item.time}
+                        </p>
+                        <p className="text-xs text-white/40">{item.timeLabel}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        item.highlight ? 'bg-pink-500/20' : 'bg-white/10'
+                      }`}>
+                        <DollarSign className={`w-5 h-5 ${item.highlight ? 'text-pink-400' : 'text-white/40'}`} />
+                      </div>
+                      <div>
+                        <p className={`text-2xl font-bold ${item.highlight ? 'text-white' : 'text-white/70'}`}>
+                          {item.cost}
+                        </p>
+                        <p className="text-xs text-white/40">{item.costLabel}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {item.highlight && (
+                    <div className="mt-6 pt-4 border-t border-purple-500/20">
+                      <Link href="/try">
+                        <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-0" data-testid="button-comparison-cta">
+                          Try it now <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ICE Use Cases Section */}
+        <section className="py-20 px-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-neutral-950" />
+          <div className="max-w-5xl mx-auto relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-usecases-title">
+                What people use{' '}
+                <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">ICE</span>{' '}
+                for
+              </h2>
+              <p className="text-white/50 text-lg max-w-xl mx-auto">
+                Interactive Cinematic Experiences for every storytelling need
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {iceUseCases.map((useCase, index) => (
+                <motion.div
+                  key={useCase.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group"
+                  data-testid={`card-iceuse-${index}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${useCase.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                      <useCase.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">
+                        {useCase.title}
+                      </h3>
+                      <p className="text-white/50 text-sm leading-relaxed">
+                        {useCase.description}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-10 text-center"
+            >
+              <Link href="/try">
+                <Button size="lg" className="h-12 px-8 bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-2" data-testid="button-usecases-cta">
+                  Start building your experience
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
         </section>
 
         {/* AI Discovery Shift Section */}
