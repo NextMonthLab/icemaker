@@ -1,0 +1,57 @@
+Absolutely. Here’s a clear, authoritative instruction you can send to Replit that locks Option A and explains why, so it doesn’t get second-guessed later.
+
+You can paste this verbatim.
+
+⸻
+
+Instruction to Replit: Flow Correction – Launch Interactive Builder
+
+Flow Decision Confirmed – Option A (Canonical)
+
+We are confirming Option A for the “Launch Interactive Builder” flow.
+
+Decision
+	•	Launch Interactive Builder → /try
+	•	This route must start the guest preview builder immediately, with no login required.
+
+Rationale (important)
+	•	Our product follows a guest-first, preview-led conversion model.
+	•	Users must be able to create and experience value within seconds before identity or payment is requested.
+	•	Routing to /login at this point introduces unnecessary friction and contradicts the canonical upsell journey.
+
+Correct Use of /login
+
+/login should only be shown when the user explicitly chooses to:
+	•	Save progress
+	•	Upgrade
+	•	Review publishing options
+	•	Enter the Professional Editor / Dashboard
+
+At those points, login serves identity and continuity, not gatekeeping.
+
+Why Option A Is Required
+	•	Aligns with documented canonical behaviours:
+	•	Guest preview creation
+	•	Experience before identity
+	•	Conversion through interaction
+	•	Prevents misleading CTAs (no “start creating” → login mismatch)
+	•	Preserves flow integrity and reduces drop-off
+
+This decision is now canonical and should be treated as final.
+Do not re-route “Launch Interactive Builder” to /login or equivalent entry points.
+
+If a CTA routes to /login, it must be explicitly labelled as Sign in, Dashboard, or Account access.
+
+⸻
+
+Why this wording works
+	•	It states the decision unambiguously
+	•	It ties the choice back to your canonical behaviours
+	•	It explains the product logic, not just preference
+	•	It prevents future “helpful” rewrites that break the flow
+
+If you want, next we can:
+	•	Audit every CTA → route → intent in the app
+	•	Or write a short routing rules section for replit.md so this never regresses
+
+But yes — Option A is the right call, and this locks it in cleanly.

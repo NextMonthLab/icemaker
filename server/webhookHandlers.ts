@@ -128,8 +128,20 @@ export class WebhookHandlers {
       return;
     }
     
+    const oldStatus = subscription.status;
+    
     await storage.updateSubscription(subscription.id, {
       status: 'canceled',
+    });
+    
+    // Log cancellation
+    await storage.createBillingAuditLog({
+      userId: subscription.userId,
+      eventType: 'subscription_status_changed',
+      subscriptionId: stripeSubscriptionId,
+      statusBefore: oldStatus,
+      statusAfter: 'canceled',
+      metadata: { reason: 'subscription_deleted' },
     });
     
     const freePlan = await storage.getPlanByName('free');
@@ -149,8 +161,20 @@ export class WebhookHandlers {
     const subscription = await storage.getSubscriptionByStripeId(stripeSubscriptionId);
     if (!subscription) return;
     
+    const oldStatus = subscription.status;
+    
     await storage.updateSubscription(subscription.id, {
       status: 'past_due',
+    });
+    
+    // Log payment failure status change
+    await storage.createBillingAuditLog({
+      userId: subscription.userId,
+      eventType: 'subscription_status_changed',
+      subscriptionId: stripeSubscriptionId,
+      statusBefore: oldStatus,
+      statusAfter: 'past_due',
+      metadata: { reason: 'invoice_payment_failed', invoiceId: invoice.id },
     });
     
     console.log(`[webhook] Payment failed for subscription ${subscription.id}, user ${subscription.userId}`);
@@ -181,6 +205,16 @@ export class WebhookHandlers {
               status: 'failed' as any,
               stripePaymentIntentId: paymentIntentId || null,
             });
+            // Log rejected payment
+            await storage.createBillingAuditLog({
+              userId: transaction.userId || undefined,
+              eventType: 'payment_rejected_amount_mismatch',
+              checkoutSessionId,
+              paymentIntentId: paymentIntentId || undefined,
+              expectedAmountCents: transaction.amountCents || undefined,
+              stripeAmountCents: amountTotal,
+              metadata: { reason: 'no_discount_but_amount_mismatch' },
+            });
             return;
           }
           
@@ -190,6 +224,17 @@ export class WebhookHandlers {
             await storage.updateCheckoutTransaction(transaction.id, {
               status: 'failed' as any,
               stripePaymentIntentId: paymentIntentId || null,
+            });
+            // Log rejected payment
+            await storage.createBillingAuditLog({
+              userId: transaction.userId || undefined,
+              eventType: 'payment_rejected_amount_mismatch',
+              checkoutSessionId,
+              paymentIntentId: paymentIntentId || undefined,
+              expectedAmountCents: transaction.amountCents || undefined,
+              stripeAmountCents: amountTotal,
+              discountAmountCents: totalDiscount,
+              metadata: { reason: 'discount_but_amount_exceeds_expected' },
             });
             return;
           }
@@ -203,6 +248,17 @@ export class WebhookHandlers {
           status: 'completed',
           completedAt: new Date(),
           stripePaymentIntentId: paymentIntentId || null,
+        });
+        // Log successful payment verification
+        await storage.createBillingAuditLog({
+          userId: transaction.userId || undefined,
+          eventType: 'payment_verified',
+          checkoutSessionId,
+          paymentIntentId: paymentIntentId || undefined,
+          priceId: transaction.priceId || undefined,
+          expectedAmountCents: transaction.amountCents || undefined,
+          stripeAmountCents: amountTotal,
+          discountAmountCents: totalDiscount || undefined,
         });
         console.log(`[webhook] Marked checkout transaction ${transaction.id} as completed with payment_intent: ${paymentIntentId}`);
       }
@@ -260,6 +316,7 @@ export class WebhookHandlers {
 
     const normalizedStatus = WebhookHandlers.normalizeStripeStatus(stripeStatus);
     const oldPlanId = subscription.planId;
+    const oldStatus = subscription.status;
     const lastCreditGrant = subscription.lastCreditGrantPeriodEnd;
 
     await storage.updateSubscription(subscription.id, {
@@ -268,6 +325,19 @@ export class WebhookHandlers {
       currentPeriodStart,
       currentPeriodEnd,
     });
+
+    // Log subscription status change
+    if (oldStatus !== normalizedStatus) {
+      await storage.createBillingAuditLog({
+        userId: subscription.userId,
+        eventType: 'subscription_status_changed',
+        subscriptionId: stripeSubscriptionId,
+        priceId,
+        statusBefore: oldStatus,
+        statusAfter: normalizedStatus,
+        metadata: { oldPlanId, newPlanId: plan.id },
+      });
+    }
 
     await WebhookHandlers.recomputeEntitlements(subscription.userId, plan);
 
@@ -291,7 +361,6 @@ export class WebhookHandlers {
       }
     }
 
-    const oldStatus = subscription.status;
     const wasInactive = WebhookHandlers.isInactiveStatus(oldStatus);
     const isNowActive = normalizedStatus === 'active';
     
@@ -329,6 +398,11 @@ export class WebhookHandlers {
       
       for (const universe of toRemove) {
         await storage.updateUniverse(universe.id, { iceStatus: 'paused', pausedAt: new Date() });
+        await storage.createBillingAuditLog({
+          userId,
+          eventType: 'ice_paused_due_to_subscription',
+          metadata: { universeId: universe.id, reason: 'exceeded_plan_limit', limit },
+        });
         console.log(`[webhook] Auto-paused ICE ${universe.id} for user ${userId} (limit: ${limit})`);
       }
     } catch (error) {
@@ -361,6 +435,11 @@ export class WebhookHandlers {
       
       for (const universe of toRestore) {
         await storage.updateUniverse(universe.id, { iceStatus: 'active', pausedAt: null });
+        await storage.createBillingAuditLog({
+          userId,
+          eventType: 'ice_restored',
+          metadata: { universeId: universe.id, limit },
+        });
         console.log(`[webhook] Restored ICE ${universe.id} for user ${userId} (limit: ${limit})`);
       }
     } catch (error) {
