@@ -56,21 +56,32 @@ interface MediaOptions {
   voiceover: boolean;
 }
 
-const MEDIA_PRICES = {
-  images: 2.99,
-  video: 4.99,
-  music: 1.99,
-  voiceover: 2.99,
-};
+interface PricingConfig {
+  basePricePerIce: number;
+  mediaPerCard: { images: number; video: number; voiceover: number };
+  mediaFlat: { music: number };
+  interactivityPerNode: number;
+  sceneExpansionPerScene: number;
+  plans: Array<{ name: string; monthlyPrice: number }>;
+}
 
-const BASE_PRICE = 9.99;
-const INTERACTIVITY_PRICE_PER_NODE = 0.99;
-const PLAN_PRICES = {
-  pro: 19,
-  business: 49,
-};
+interface CheckoutCalculation {
+  breakdown: {
+    basePrice: number;
+    cardCount: number;
+    mediaBreakdown: { images: number; video: number; voiceover: number; music: number };
+    interactivity: number;
+    sceneExpansion: number;
+    subscription: number;
+    subscriptionPlan: string | null;
+  };
+  oneTimeTotal: number;
+  subscriptionTotal: number;
+  grandTotal: number;
+  pricingConfig: PricingConfig;
+}
 
-const PLAN_STRIPE_PRICE_IDS = {
+const PLAN_STRIPE_PRICE_IDS: Record<string, string> = {
   pro: "price_1SjorwDrvHce9MJuRiVY0xFs",
   business: "price_1SjorwDrvHce9MJuZzNh4YVo",
 };
@@ -105,23 +116,29 @@ export default function IceCheckoutPage() {
   
   const cardCount = preview?.cards?.length || 0;
   
-  const calculateTotal = () => {
-    let total = BASE_PRICE;
-    
-    if (mediaOptions.images) total += MEDIA_PRICES.images * cardCount;
-    if (mediaOptions.video) total += MEDIA_PRICES.video * cardCount;
-    if (mediaOptions.music) total += MEDIA_PRICES.music;
-    if (mediaOptions.voiceover) total += MEDIA_PRICES.voiceover * cardCount;
-    
-    if (outputChoice === "publish") {
-      total += interactivityNodeCount * INTERACTIVITY_PRICE_PER_NODE;
-      if (selectedPlan) {
-        total += PLAN_PRICES[selectedPlan];
-      }
-    }
-    
-    return total;
-  };
+  const { data: serverPricing } = useQuery({
+    queryKey: ["/api/checkout/calculate", params.id, mediaOptions, outputChoice, interactivityNodeCount, expansionScope, selectedPlan],
+    queryFn: async () => {
+      const res = await fetch("/api/checkout/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          previewId: params.id,
+          mediaOptions,
+          outputChoice,
+          interactivityNodeCount,
+          expansionScope,
+          selectedPlan,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to calculate pricing");
+      return res.json() as Promise<CheckoutCalculation>;
+    },
+    enabled: !!params.id,
+  });
+  
+  const pricingConfig = serverPricing?.pricingConfig;
+  const grandTotal = serverPricing?.grandTotal ?? 0;
   
   const toggleMedia = (key: keyof MediaOptions) => {
     setMediaOptions(prev => ({ ...prev, [key]: !prev[key] }));
@@ -315,7 +332,7 @@ export default function IceCheckoutPage() {
                     </p>
                   </div>
                 </div>
-                <span className="text-slate-400">${BASE_PRICE.toFixed(2)}</span>
+                <span className="text-slate-400">${(pricingConfig?.basePricePerIce ?? 9.99).toFixed(2)}</span>
               </div>
               
               {interactivityNodeCount > 0 && (
@@ -330,7 +347,7 @@ export default function IceCheckoutPage() {
                     </div>
                   </div>
                   <span className="text-slate-400">
-                    ${(interactivityNodeCount * INTERACTIVITY_PRICE_PER_NODE).toFixed(2)}
+                    ${(serverPricing?.breakdown?.interactivity ?? 0).toFixed(2)}
                   </span>
                 </div>
               )}
@@ -367,8 +384,8 @@ export default function IceCheckoutPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-400">
                       ${key === "music" 
-                        ? MEDIA_PRICES[key].toFixed(2) 
-                        : (MEDIA_PRICES[key] * cardCount).toFixed(2)
+                        ? (pricingConfig?.mediaFlat?.music ?? 1.99).toFixed(2) 
+                        : ((pricingConfig?.mediaPerCard?.[key as keyof typeof pricingConfig.mediaPerCard] ?? 2.99) * cardCount).toFixed(2)
                       }
                     </span>
                     <Switch
@@ -551,13 +568,13 @@ export default function IceCheckoutPage() {
                 <span className="text-lg font-semibold text-white">Total</span>
                 <AnimatePresence mode="wait">
                   <motion.span
-                    key={calculateTotal()}
+                    key={grandTotal}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     className="text-2xl font-bold text-white"
                   >
-                    ${calculateTotal().toFixed(2)}
+                    ${grandTotal.toFixed(2)}
                   </motion.span>
                 </AnimatePresence>
               </div>

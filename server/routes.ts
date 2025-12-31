@@ -4286,6 +4286,134 @@ export async function registerRoutes(
     }
   });
   
+  // ============================================================
+  // PRICING CONFIGURATION (Single Source of Truth)
+  // ============================================================
+  const PRICING_CONFIG = {
+    basePricePerIce: 9.99,
+    mediaPerCard: {
+      images: 2.99,
+      video: 4.99,
+      voiceover: 2.99,
+    },
+    mediaFlat: {
+      music: 1.99,
+    },
+    interactivityPerNode: 0.99,
+    sceneExpansionPerScene: 1.99,
+    plans: {
+      pro: { monthlyPrice: 19, stripePriceId: "price_1SjorwDrvHce9MJuRiVY0xFs" },
+      business: { monthlyPrice: 49, stripePriceId: "price_1SjorwDrvHce9MJuZzNh4YVo" },
+    },
+  };
+
+  // Calculate checkout totals (server-side authoritative pricing)
+  app.post("/api/checkout/calculate", async (req, res) => {
+    try {
+      const { previewId, mediaOptions, outputChoice, interactivityNodeCount, expansionScope, selectedPlan } = req.body;
+
+      if (!previewId || typeof previewId !== "string") {
+        return res.status(400).json({ message: "Preview ID required" });
+      }
+
+      const validExpansionScopes = ["preview_only", "full_story", "act1", "selected"];
+      const validOutputChoices = ["download", "publish", null];
+      const validPlans = ["pro", "business", null];
+
+      const safeInteractivityNodeCount = Math.max(0, Math.floor(Number(interactivityNodeCount) || 0));
+      const safeExpansionScope = validExpansionScopes.includes(expansionScope) ? expansionScope : "preview_only";
+      const safeOutputChoice = validOutputChoices.includes(outputChoice) ? outputChoice : null;
+      const safePlan = validPlans.includes(selectedPlan) ? selectedPlan : null;
+      const safeMediaOptions = {
+        images: mediaOptions?.images === true,
+        video: mediaOptions?.video === true,
+        music: mediaOptions?.music === true,
+        voiceover: mediaOptions?.voiceover === true,
+      };
+
+      const preview = await storage.getPreviewInstance(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+
+      const cards = (preview as any).cards || [];
+      const cardCount = Array.isArray(cards) ? cards.length : 0;
+
+      const sceneMap = (preview as any).sceneMap as { totalScenes?: number; generatedScenes?: number } | null;
+      const totalScenes = sceneMap?.totalScenes || cardCount;
+      const generatedScenes = sceneMap?.generatedScenes || cardCount;
+
+      let scenesToExpand = 0;
+      if (safeExpansionScope === "full_story") {
+        scenesToExpand = Math.max(0, totalScenes - generatedScenes);
+      } else if (safeExpansionScope === "act1") {
+        const act1Scenes = Math.ceil(totalScenes / 3);
+        scenesToExpand = Math.max(0, act1Scenes - generatedScenes);
+      }
+
+      const breakdown = {
+        basePrice: PRICING_CONFIG.basePricePerIce,
+        cardCount,
+        mediaBreakdown: {
+          images: safeMediaOptions.images ? PRICING_CONFIG.mediaPerCard.images * cardCount : 0,
+          video: safeMediaOptions.video ? PRICING_CONFIG.mediaPerCard.video * cardCount : 0,
+          voiceover: safeMediaOptions.voiceover ? PRICING_CONFIG.mediaPerCard.voiceover * cardCount : 0,
+          music: safeMediaOptions.music ? PRICING_CONFIG.mediaFlat.music : 0,
+        },
+        interactivity: safeOutputChoice === "publish" ? safeInteractivityNodeCount * PRICING_CONFIG.interactivityPerNode : 0,
+        sceneExpansion: scenesToExpand * PRICING_CONFIG.sceneExpansionPerScene,
+        subscription: 0,
+        subscriptionPlan: null as string | null,
+      };
+
+      if (safeOutputChoice === "publish" && safePlan && PRICING_CONFIG.plans[safePlan as keyof typeof PRICING_CONFIG.plans]) {
+        const planConfig = PRICING_CONFIG.plans[safePlan as keyof typeof PRICING_CONFIG.plans];
+        breakdown.subscription = planConfig.monthlyPrice;
+        breakdown.subscriptionPlan = safePlan;
+      }
+
+      const mediaTotal = breakdown.mediaBreakdown.images + breakdown.mediaBreakdown.video + breakdown.mediaBreakdown.voiceover + breakdown.mediaBreakdown.music;
+      const oneTimeTotal = breakdown.basePrice + mediaTotal + breakdown.interactivity + breakdown.sceneExpansion;
+      const total = oneTimeTotal + breakdown.subscription;
+
+      res.json({
+        breakdown,
+        oneTimeTotal,
+        subscriptionTotal: breakdown.subscription,
+        grandTotal: total,
+        pricingConfig: {
+          basePricePerIce: PRICING_CONFIG.basePricePerIce,
+          mediaPerCard: PRICING_CONFIG.mediaPerCard,
+          mediaFlat: PRICING_CONFIG.mediaFlat,
+          interactivityPerNode: PRICING_CONFIG.interactivityPerNode,
+          sceneExpansionPerScene: PRICING_CONFIG.sceneExpansionPerScene,
+          plans: Object.entries(PRICING_CONFIG.plans).map(([name, config]) => ({
+            name,
+            monthlyPrice: config.monthlyPrice,
+          })),
+        },
+      });
+    } catch (error) {
+      console.error("Error calculating checkout:", error);
+      res.status(500).json({ message: "Error calculating checkout" });
+    }
+  });
+
+  // Get pricing configuration (for initial page load)
+  app.get("/api/checkout/config", async (_req, res) => {
+    res.json({
+      basePricePerIce: PRICING_CONFIG.basePricePerIce,
+      mediaPerCard: PRICING_CONFIG.mediaPerCard,
+      mediaFlat: PRICING_CONFIG.mediaFlat,
+      interactivityPerNode: PRICING_CONFIG.interactivityPerNode,
+      sceneExpansionPerScene: PRICING_CONFIG.sceneExpansionPerScene,
+      plans: Object.entries(PRICING_CONFIG.plans).map(([name, config]) => ({
+        name,
+        monthlyPrice: config.monthlyPrice,
+      })),
+    });
+  });
+
   // Create checkout session for subscription
   app.post("/api/checkout", requireAuth, async (req, res) => {
     try {
