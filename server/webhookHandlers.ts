@@ -79,7 +79,7 @@ export class WebhookHandlers {
         break;
         
       case 'checkout.session.completed':
-        console.log(`[webhook] Checkout session completed: ${data.id}`);
+        await WebhookHandlers.handleCheckoutCompleted(data);
         break;
         
       case 'invoice.payment_succeeded':
@@ -154,6 +154,43 @@ export class WebhookHandlers {
     });
     
     console.log(`[webhook] Payment failed for subscription ${subscription.id}, user ${subscription.userId}`);
+  }
+  
+  static async handleCheckoutCompleted(session: any): Promise<void> {
+    const checkoutSessionId = session.id;
+    const idempotencyKey = session.metadata?.idempotencyKey;
+    const paymentIntentId = session.payment_intent;
+    const amountTotal = session.amount_total; // in cents
+    
+    console.log(`[webhook] Checkout session completed: ${checkoutSessionId}, payment_intent: ${paymentIntentId}, amount: ${amountTotal}`);
+    
+    if (idempotencyKey) {
+      const transaction = await storage.getCheckoutTransactionByKey(idempotencyKey);
+      if (transaction) {
+        // CRITICAL: Verify amount matches what we stored - REJECT if mismatched
+        // This prevents attackers from manipulating Stripe sessions to pay less
+        if (transaction.amountCents && amountTotal && transaction.amountCents !== amountTotal) {
+          console.error(`[webhook] SECURITY ALERT: Amount mismatch for transaction ${transaction.id}! Expected: ${transaction.amountCents}, Stripe charged: ${amountTotal}. BLOCKING entitlements.`);
+          await storage.updateCheckoutTransaction(transaction.id, {
+            status: 'failed' as any, // Mark as failed, not completed
+            stripePaymentIntentId: paymentIntentId || null,
+          });
+          // NOTE: Do NOT proceed with entitlements - payment was tampered
+          // Admin should investigate and potentially refund if needed
+          return;
+        }
+        
+        await storage.updateCheckoutTransaction(transaction.id, {
+          status: 'completed',
+          completedAt: new Date(),
+          stripePaymentIntentId: paymentIntentId || null,
+        });
+        console.log(`[webhook] Marked checkout transaction ${transaction.id} as completed with payment_intent: ${paymentIntentId}`);
+      }
+    } else {
+      // No idempotency key in metadata - legacy checkout or direct Stripe session
+      console.log(`[webhook] Checkout completed without idempotency key: ${checkoutSessionId}`);
+    }
   }
 
   static async handleSubscriptionChange(

@@ -4414,10 +4414,17 @@ export async function registerRoutes(
     });
   });
 
+  // Helper to generate idempotency key from checkout options
+  function generateIdempotencyKey(userId: number, previewId: string | undefined, options: any): string {
+    const crypto = require('crypto');
+    const payload = JSON.stringify({ userId, previewId, ...options });
+    return crypto.createHash('sha256').update(payload).digest('hex');
+  }
+
   // Create checkout session for subscription
   app.post("/api/checkout", requireAuth, async (req, res) => {
     try {
-      const { priceId, planName } = req.body;
+      const { priceId, planName, previewId, mediaOptions, outputChoice, interactivityNodeCount, expansionScope } = req.body;
       
       const { getUncachableStripeClient, getStripePublishableKey } = await import("./stripeClient");
       const stripe = await getUncachableStripeClient();
@@ -4425,6 +4432,70 @@ export async function registerRoutes(
       const plan = await storage.getPlanByName(planName);
       if (!plan) {
         return res.status(400).json({ message: "Invalid plan" });
+      }
+      
+      // CRITICAL: Validate that priceId matches the expected Stripe price for this plan
+      // This prevents attackers from submitting a cheaper priceId with an expensive plan
+      const expectedPriceId = plan.stripePriceId;
+      if (!expectedPriceId) {
+        return res.status(400).json({ message: "Plan not configured for billing" });
+      }
+      if (priceId !== expectedPriceId) {
+        console.error(`[checkout] SECURITY: Price ID mismatch! Submitted=${priceId}, Expected=${expectedPriceId} for plan ${planName}`);
+        return res.status(400).json({ 
+          message: "Invalid price configuration",
+          error: "PRICE_MISMATCH" 
+        });
+      }
+      
+      // Calculate server-side total for idempotency verification
+      const planPrice = PRICING_CONFIG.plans[planName as keyof typeof PRICING_CONFIG.plans];
+      const serverCalculatedAmountCents = planPrice ? planPrice.monthlyPrice * 100 : 0;
+      
+      // Generate idempotency key INCLUDING priceId and calculated amount for tamper detection
+      const idempotencyKey = generateIdempotencyKey(req.user!.id, previewId, {
+        planName,
+        priceId,
+        amountCents: serverCalculatedAmountCents,
+        mediaOptions,
+        outputChoice,
+        interactivityNodeCount,
+        expansionScope,
+      });
+      
+      // Check for existing transaction with this key
+      const existingTransaction = await storage.getCheckoutTransactionByKey(idempotencyKey);
+      if (existingTransaction) {
+        // Verify amount hasn't been tampered (should match since key includes amount)
+        if (existingTransaction.amountCents !== serverCalculatedAmountCents) {
+          console.error(`[checkout] Amount mismatch: stored=${existingTransaction.amountCents}, calculated=${serverCalculatedAmountCents}`);
+          return res.status(400).json({ 
+            message: "Checkout validation failed - please refresh and try again",
+            mismatch: true 
+          });
+        }
+        
+        if (existingTransaction.status === 'completed') {
+          return res.status(400).json({ 
+            message: "This checkout has already been completed",
+            alreadyCompleted: true 
+          });
+        }
+        if (existingTransaction.status === 'pending' && existingTransaction.stripeCheckoutSessionId) {
+          // Return existing session URL if still valid
+          try {
+            const existingSession = await stripe.checkout.sessions.retrieve(existingTransaction.stripeCheckoutSessionId);
+            if (existingSession.status === 'open' && existingSession.url) {
+              return res.json({ 
+                url: existingSession.url, 
+                publishableKey: await getStripePublishableKey(),
+                existingSession: true 
+              });
+            }
+          } catch (e) {
+            // Session expired or invalid, continue to create new one
+          }
+        }
       }
       
       let customerId: string | undefined;
@@ -4449,8 +4520,34 @@ export async function registerRoutes(
         metadata: {
           userId: String(req.user!.id),
           planId: String(plan.id),
+          idempotencyKey,
         },
       });
+      
+      // Create or update transaction record
+      if (existingTransaction) {
+        await storage.updateCheckoutTransaction(existingTransaction.id, {
+          stripeCheckoutSessionId: session.id,
+          status: 'pending',
+        });
+      } else {
+        await storage.createCheckoutTransaction({
+          idempotencyKey,
+          userId: req.user!.id,
+          previewId: previewId || null,
+          stripeCheckoutSessionId: session.id,
+          status: 'pending',
+          amountCents: serverCalculatedAmountCents,
+          currency: 'usd',
+          checkoutOptions: {
+            mediaOptions: mediaOptions || { images: true, video: true, music: true, voiceover: true },
+            outputChoice: outputChoice || 'publish',
+            expansionScope: expansionScope || 'preview_only',
+            selectedPlan: planName,
+            interactivityNodeCount: interactivityNodeCount || 0,
+          },
+        });
+      }
       
       res.json({ url: session.url, publishableKey: await getStripePublishableKey() });
     } catch (error) {

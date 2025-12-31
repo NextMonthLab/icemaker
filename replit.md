@@ -43,12 +43,14 @@ Key architectural decisions include:
 
 ## Production Hardening Backlog (Audit: Dec 31, 2025)
 
-### EPIC 1: Revenue Protection (HIGH PRIORITY)
-| Task | Risk | What Breaks | Files | Migration |
-|------|------|-------------|-------|-----------|
-| Server-side scene expansion pricing validation | HIGH | Users manipulate frontend to pay less | `server/routes.ts`, `IceCheckoutPage.tsx` | No |
-| Idempotency keys for one-time charges | HIGH | Double-billing on retry/refresh | `server/routes.ts`, `schema.ts` | Add `checkout_transactions` table |
-| Backend-calculated totals for checkout | MEDIUM | Frontend-backend price mismatch | `server/routes.ts`, `IceCheckoutPage.tsx` | No |
+### EPIC 1: Revenue Protection - COMPLETED
+| Task | Status | Details |
+|------|--------|---------|
+| Server-side scene expansion pricing validation | DONE | Input sanitization, negative value clamping, enum validation |
+| Idempotency keys for one-time charges | DONE | SHA256 keys with priceId + amount, checkout_transactions table, webhook completion tracking |
+| Backend-calculated totals for checkout | DONE | `/api/checkout/calculate` and `/api/checkout/config` endpoints |
+| Server-side priceId validation | DONE | Validates client priceId matches database plan.stripePriceId before session creation |
+| Webhook amount verification | DONE | Rejects and marks 'failed' any checkout where Stripe amount differs from stored amount |
 
 ### EPIC 2: Upgrade Continuity (MEDIUM PRIORITY)
 | Task | Risk | What Breaks | Files | Migration |
@@ -64,12 +66,12 @@ Key architectural decisions include:
 | Clear status transitions | MEDIUM | Undefined account states | `webhookHandlers.ts`, `schema.ts` | No |
 | Non-destructive reactivation path | LOW | Churned users can't return | `webhookHandlers.ts` | No |
 
-### EPIC 4: Single Source of Truth (LOW PRIORITY)
-| Task | Risk | What Breaks | Files | Migration |
-|------|------|-------------|-------|-----------|
-| Move pricing to backend database | LOW | Price changes require deploy | `schema.ts`, `server/routes.ts` | Add `pricing_config` table |
-| `/api/checkout-config` endpoint | LOW | Frontend hardcodes prices | `server/routes.ts` | No |
-| Frontend display-only refactor | LOW | Prevents future bugs | `IceCheckoutPage.tsx` | No |
+### EPIC 4: Single Source of Truth - COMPLETED
+| Task | Status | Details |
+|------|--------|---------|
+| Move pricing to backend | DONE | `PRICING_CONFIG` constant in `server/routes.ts` |
+| `/api/checkout/config` endpoint | DONE | Returns pricing config for frontend display |
+| Frontend display-only refactor | DONE | `IceCheckoutPage.tsx` fetches prices from server |
 
 ## External Dependencies
 -   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

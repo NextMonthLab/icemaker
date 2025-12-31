@@ -1049,6 +1049,34 @@ export const insertCreditEventSchema = createInsertSchema(creditEvents).omit({ i
 export type InsertCreditEvent = z.infer<typeof insertCreditEventSchema>;
 export type CreditEvent = typeof creditEvents.$inferSelect;
 
+// Checkout Transactions table (idempotency for one-time charges)
+export type CheckoutTransactionStatus = "pending" | "completed" | "failed" | "refunded";
+
+export const checkoutTransactions = pgTable("checkout_transactions", {
+  id: serial("id").primaryKey(),
+  idempotencyKey: text("idempotency_key").notNull().unique(), // Hash of (userId + previewId + options)
+  userId: integer("user_id").references(() => users.id).notNull(),
+  previewId: text("preview_id"), // Links to ice_previews
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  status: text("status").$type<CheckoutTransactionStatus>().default("pending").notNull(),
+  amountCents: integer("amount_cents").notNull(), // Total amount in cents
+  currency: text("currency").default("usd").notNull(),
+  checkoutOptions: jsonb("checkout_options").$type<{
+    mediaOptions: { images: boolean; video: boolean; music: boolean; voiceover: boolean };
+    outputChoice: "download" | "publish";
+    expansionScope: string;
+    selectedPlan: string | null;
+    interactivityNodeCount: number;
+  }>(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCheckoutTransactionSchema = createInsertSchema(checkoutTransactions).omit({ id: true, createdAt: true });
+export type InsertCheckoutTransaction = z.infer<typeof insertCheckoutTransactionSchema>;
+export type CheckoutTransaction = typeof checkoutTransactions.$inferSelect;
+
 // TTS Usage Log (for billing/usage tracking)
 export const ttsUsage = pgTable("tts_usage", {
   id: serial("id").primaryKey(),

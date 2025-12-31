@@ -156,6 +156,11 @@ export interface IStorage {
   // Credit Events
   logCreditEvent(event: schema.InsertCreditEvent): Promise<schema.CreditEvent>;
   
+  // Checkout Transactions (idempotency)
+  getCheckoutTransactionByKey(idempotencyKey: string): Promise<schema.CheckoutTransaction | undefined>;
+  createCheckoutTransaction(transaction: schema.InsertCheckoutTransaction): Promise<schema.CheckoutTransaction>;
+  updateCheckoutTransaction(id: number, data: Partial<schema.InsertCheckoutTransaction>): Promise<schema.CheckoutTransaction | undefined>;
+  
   // User Onboarding Profiles
   getUserOnboardingProfile(userId: number): Promise<schema.UserOnboardingProfile | undefined>;
   upsertUserOnboardingProfile(profile: schema.InsertUserOnboardingProfile): Promise<schema.UserOnboardingProfile>;
@@ -1275,6 +1280,27 @@ export class DatabaseStorage implements IStorage {
   // Credit Events
   async logCreditEvent(event: schema.InsertCreditEvent): Promise<schema.CreditEvent> {
     const [result] = await db.insert(schema.creditEvents).values(event as any).returning();
+    return result;
+  }
+  
+  // Checkout Transactions (idempotency)
+  async getCheckoutTransactionByKey(idempotencyKey: string): Promise<schema.CheckoutTransaction | undefined> {
+    const result = await db.query.checkoutTransactions.findFirst({
+      where: eq(schema.checkoutTransactions.idempotencyKey, idempotencyKey),
+    });
+    return result;
+  }
+  
+  async createCheckoutTransaction(transaction: schema.InsertCheckoutTransaction): Promise<schema.CheckoutTransaction> {
+    const [result] = await db.insert(schema.checkoutTransactions).values(transaction as any).returning();
+    return result;
+  }
+  
+  async updateCheckoutTransaction(id: number, data: Partial<schema.InsertCheckoutTransaction>): Promise<schema.CheckoutTransaction | undefined> {
+    const [result] = await db.update(schema.checkoutTransactions)
+      .set(data as any)
+      .where(eq(schema.checkoutTransactions.id, id))
+      .returning();
     return result;
   }
   
