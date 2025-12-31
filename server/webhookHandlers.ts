@@ -193,10 +193,36 @@ export class WebhookHandlers {
     }
   }
 
+  static normalizeStripeStatus(stripeStatus: string): 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused' {
+    switch (stripeStatus) {
+      case 'active':
+        return 'active';
+      case 'trialing':
+        return 'trialing';
+      case 'canceled':
+        return 'canceled';
+      case 'past_due':
+      case 'unpaid':
+      case 'incomplete':
+      case 'incomplete_expired':
+        return 'past_due';
+      case 'paused':
+        return 'paused';
+      default:
+        console.warn(`[webhook] Unknown Stripe status "${stripeStatus}", treating as past_due`);
+        return 'past_due';
+    }
+  }
+
+  static isInactiveStatus(status: string): boolean {
+    return status === 'canceled' || status === 'past_due' || status === 'paused' || 
+           status === 'unpaid' || status === 'incomplete' || status === 'incomplete_expired';
+  }
+
   static async handleSubscriptionChange(
     stripeCustomerId: string,
     stripeSubscriptionId: string,
-    status: string,
+    stripeStatus: string,
     currentPeriodStart: Date,
     currentPeriodEnd: Date,
     priceId: string
@@ -213,11 +239,12 @@ export class WebhookHandlers {
       return;
     }
 
+    const normalizedStatus = WebhookHandlers.normalizeStripeStatus(stripeStatus);
     const oldPlanId = subscription.planId;
     const lastCreditGrant = subscription.lastCreditGrantPeriodEnd;
 
     await storage.updateSubscription(subscription.id, {
-      status: status as any,
+      status: normalizedStatus,
       planId: plan.id,
       currentPeriodStart,
       currentPeriodEnd,
@@ -225,7 +252,7 @@ export class WebhookHandlers {
 
     await WebhookHandlers.recomputeEntitlements(subscription.userId, plan);
 
-    if (status === 'active' && plan.features) {
+    if (normalizedStatus === 'active' && plan.features) {
       const features = plan.features as PlanFeatures;
       const hasCredits = (features.monthlyVideoCredits || 0) > 0 || (features.monthlyVoiceCredits || 0) > 0;
       
@@ -246,10 +273,10 @@ export class WebhookHandlers {
     }
 
     const oldStatus = subscription.status;
-    const wasInactive = oldStatus === 'canceled' || oldStatus === 'past_due' || oldStatus === 'paused';
-    const isNowActive = status === 'active';
+    const wasInactive = WebhookHandlers.isInactiveStatus(oldStatus);
+    const isNowActive = normalizedStatus === 'active';
     
-    if (status === 'canceled' || status === 'unpaid' || status === 'past_due') {
+    if (WebhookHandlers.isInactiveStatus(stripeStatus)) {
       await WebhookHandlers.autoPauseExcessIces(subscription.userId, 0);
     } else if (wasInactive && isNowActive) {
       const newLimit = WebhookHandlers.getActiveIceLimit(plan.name);
