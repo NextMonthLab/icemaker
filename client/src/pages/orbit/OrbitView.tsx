@@ -835,11 +835,11 @@ export default function OrbitView() {
                 onClick={() => setShowClaimModal(true)}
                 data-testid="button-claim-orbit"
               >
-                Claim your business Orbit
+                Claim for free
               </Button>
             </div>
             <span className="text-[10px] text-zinc-500 text-center">
-              This Orbit is available for the verified owner of {preview?.sourceDomain || slug}
+              Own this Orbit? Claim it free to control your AI presence
             </span>
           </div>
         </div>
@@ -854,8 +854,11 @@ export default function OrbitView() {
       }}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
+            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               {claimStatus === 'success' ? 'Orbit Claimed!' : 'Claim your business Orbit'}
+              {claimStatus === 'idle' && claimStep === 'intro' && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-medium">FREE</span>
+              )}
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
               {claimStatus === 'verifying' 
@@ -863,7 +866,7 @@ export default function OrbitView() {
                 : claimStatus === 'success'
                 ? 'You now own this Orbit and can customize it.'
                 : claimStep === 'intro'
-                ? `This Orbit has been created for ${preview?.sourceDomain || slug}.`
+                ? `Take control of how AI represents ${preview?.sourceDomain || slug}`
                 : `Verify ownership of ${preview?.sourceDomain || slug}`}
             </DialogDescription>
           </DialogHeader>
@@ -871,40 +874,64 @@ export default function OrbitView() {
           <div className="space-y-4 pt-2">
             {claimStep === 'intro' && claimStatus === 'idle' && (
               <>
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-sm text-blue-300 font-medium">
+                    Your Orbit is your AI-powered business presence
+                  </p>
+                  <p className="text-xs text-blue-400/80 mt-1">
+                    When AI assistants search for businesses like yours, your Orbit ensures they get accurate, up-to-date information directly from you.
+                  </p>
+                </div>
                 <p className="text-sm text-zinc-300 leading-relaxed">
-                  Claiming it confirms you as the verified owner and unlocks:
+                  Claiming is free and unlocks:
                 </p>
-                <ul className="space-y-2 text-sm text-zinc-400">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                    Control over content and responses
+                <ul className="space-y-2.5 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-zinc-300">AI conversation assistant</span>
+                      <span className="text-xs text-zinc-500 block">Answers visitor questions 24/7 using your business knowledge</span>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                    Brand configuration and presentation
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-zinc-300">Brand control & customization</span>
+                      <span className="text-xs text-zinc-500 block">Edit responses, add FAQs, and set your brand voice</span>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                    Lead capture and insight tools
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-zinc-300">Lead capture & analytics</span>
+                      <span className="text-xs text-zinc-500 block">See what questions visitors ask and capture their contact info</span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-pink-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-zinc-300">AI discovery protection</span>
+                      <span className="text-xs text-zinc-500 block">Ensure AI search tools represent your business accurately</span>
+                    </div>
                   </li>
                 </ul>
-                <p className="text-xs text-zinc-500">
-                  Once claimed, this Orbit is reserved for your business domain.
+                <p className="text-xs text-zinc-500 border-t border-zinc-800 pt-3">
+                  Once verified, this Orbit is exclusively reserved for {preview?.sourceDomain || slug}.
                 </p>
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-1">
                   <Button
-                    className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
+                    className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium"
                     onClick={() => setClaimStep('verify')}
                     data-testid="button-verify-claim"
                   >
-                    Verify and claim Orbit
+                    Claim for free
                   </Button>
                 </div>
                 <button 
                   className="w-full text-center text-xs text-zinc-500 hover:text-zinc-400"
                   onClick={() => setShowClaimModal(false)}
                 >
-                  Learn more
+                  Learn more about Orbit
                 </button>
               </>
             )}
