@@ -52,12 +52,14 @@ Key architectural decisions include:
 | Server-side priceId validation | DONE | Validates client priceId matches database plan.stripePriceId before session creation |
 | Webhook amount verification | DONE | Rejects and marks 'failed' any checkout where Stripe amount differs from stored amount |
 
-### EPIC 2: Upgrade Continuity (MEDIUM PRIORITY)
-| Task | Risk | What Breaks | Files | Migration |
-|------|------|-------------|-------|-----------|
-| Persist 'pending action' state pre-checkout | MEDIUM | User loses context after upgrade | `schema.ts`, `server/routes.ts` | Add `pending_actions` table |
-| Post-webhook reconciliation hook | MEDIUM | User upgrades but generation doesn't resume | `webhookHandlers.ts` | No |
-| Resume generation after upgrade | MEDIUM | User has to start over | `webhookHandlers.ts`, client | No |
+### EPIC 2: Upgrade Continuity - COMPLETED
+| Task | Status | Details |
+|------|--------|---------|
+| Persist pending action pre-checkout | DONE | Uses existing checkout_transactions table with pendingAction (previewId + checkoutOptions) |
+| CheckoutSuccessPage verification flow | DONE | Animated verification → retrieves pendingAction by sessionId → redirects to preview |
+| Professional/Preview mode distinction | DONE | GuestIceBuilderPage fetches /api/me/entitlements, shows Professional Editor badge for paid tiers |
+| Upgrade orientation toast | DONE | Shows welcome message explaining unlocked features when returning with ?upgraded=true |
+| Routes for success/cancel | DONE | /checkout/success and /checkout/cancel routes added to App.tsx |
 
 ### EPIC 3: Subscription Lifecycle Safety (HIGH PRIORITY)
 | Task | Risk | What Breaks | Files | Migration |
