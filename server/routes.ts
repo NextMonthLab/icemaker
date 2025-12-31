@@ -912,10 +912,15 @@ export async function registerRoutes(
       // Check if Ice is active - only active experiences are publicly served
       if (universe.iceStatus !== 'active') {
         if (universe.iceStatus === 'paused') {
+          const isOwner = req.user && universe.creatorId === req.user.id;
           return res.status(410).json({
-            message: "This experience is currently paused",
+            message: isOwner 
+              ? "Paused due to subscription status. Reactivate your plan to restore this experience."
+              : "This experience is temporarily unavailable.",
             status: "paused",
+            reason: "paused_subscription",
             name: universe.name,
+            ...(isOwner ? {} : { cta: "If you own this experience, sign in to reactivate." }),
           });
         }
         // Draft or other status - not publicly accessible

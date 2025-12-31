@@ -348,6 +348,9 @@ export interface IStorage {
   // Security Audit Logging
   createAuditLog(log: schema.InsertAuditLog): Promise<schema.AuditLog>;
   getAuditLogs(resourceType: string, resourceId: string, limit?: number): Promise<schema.AuditLog[]>;
+  
+  // Billing Audit Logging
+  createBillingAuditLog(log: schema.InsertBillingAuditLog): Promise<schema.BillingAuditLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2622,6 +2625,12 @@ export class DatabaseStorage implements IStorage {
       orderBy: [desc(schema.auditLogs.createdAt)],
       limit,
     });
+  }
+  
+  // Billing Audit Logging
+  async createBillingAuditLog(log: schema.InsertBillingAuditLog): Promise<schema.BillingAuditLog> {
+    const [result] = await db.insert(schema.billingAuditLogs).values(log).returning();
+    return result;
   }
 }
 

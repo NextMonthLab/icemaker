@@ -2032,3 +2032,43 @@ export const auditLogs = pgTable("audit_logs", {
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// ============ BILLING AUDIT LOGGING ============
+
+export type BillingAuditEventType = 
+  | 'checkout_session_created'
+  | 'payment_verified'
+  | 'payment_rejected_amount_mismatch'
+  | 'subscription_status_changed'
+  | 'ice_paused_due_to_subscription'
+  | 'ice_restored'
+  | 'subscription_reactivated'
+  | 'credits_granted';
+
+export const billingAuditLogs = pgTable("billing_audit_logs", {
+  id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  userId: integer("user_id").references(() => users.id),
+  eventType: text("event_type").$type<BillingAuditEventType>().notNull(),
+  
+  stripeEventId: text("stripe_event_id"),
+  checkoutSessionId: text("checkout_session_id"),
+  paymentIntentId: text("payment_intent_id"),
+  subscriptionId: text("subscription_id"),
+  
+  priceId: text("price_id"),
+  currency: text("currency"),
+  expectedAmountCents: integer("expected_amount_cents"),
+  stripeAmountCents: integer("stripe_amount_cents"),
+  discountAmountCents: integer("discount_amount_cents"),
+  
+  statusBefore: text("status_before"),
+  statusAfter: text("status_after"),
+  
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+});
+
+export const insertBillingAuditLogSchema = createInsertSchema(billingAuditLogs).omit({ id: true, createdAt: true });
+export type InsertBillingAuditLog = z.infer<typeof insertBillingAuditLogSchema>;
+export type BillingAuditLog = typeof billingAuditLogs.$inferSelect;

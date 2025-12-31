@@ -1,0 +1,83 @@
+Do both polish items. They’re small, they’re cheap, and they’ll save you pain later.
+
+Priority order
+	1.	Add the “why paused” messaging (fastest UX win, reduces confusion immediately)
+	2.	Add the append-only billing audit log (future-you will thank you when Stripe or a customer disputes anything)
+
+You’ve already done the hard engineering. These are the seatbelts.
+
+⸻
+
+1) “Why paused” messaging
+
+What to do
+
+Keep the 410 (good choice), but add a clear, user-facing explanation without leaking billing details.
+
+For public visitors (no auth), something like:
+	•	message: "This experience is temporarily unavailable."
+	•	reason: "paused_subscription" (optional internal code)
+	•	cta: "If you own this experience, sign in to reactivate."
+
+For the owner (authed), include the direct explanation:
+	•	message: "Paused due to subscription status. Reactivate your plan to restore this experience."
+
+This avoids:
+	•	“Is it broken?”
+	•	“Did they delete it?”
+	•	Support tickets
+
+⸻
+
+2) Append-only billing audit log
+
+Yes, add it.
+
+Make it append-only and boring. You don’t need a whole analytics system, just a reliable trail.
+
+Minimum schema (recommended)
+	•	id (uuid or serial)
+	•	created_at (timestamp)
+	•	user_id
+	•	event_type (enum/string)
+	•	stripe_event_id (nullable, but nice)
+	•	checkout_session_id / payment_intent_id / subscription_id (nullable)
+	•	price_id
+	•	currency
+	•	expected_amount
+	•	stripe_amount
+	•	status_before
+	•	status_after
+	•	metadata (jsonb for anything extra)
+
+What events to log (keep it tight)
+	•	checkout_session_created
+	•	payment_verified (or checkout_completed)
+	•	payment_rejected_amount_mismatch
+	•	subscription_status_changed (normalised internal status)
+	•	ice_paused_due_to_subscription
+	•	subscription_reactivated
+	•	ice_restored
+
+That’s enough to reconstruct any incident.
+
+One rule
+
+Log after you have authoritative info (e.g., after webhook verification), so the log is trustworthy.
+
+⸻
+
+Move on to product work after these two
+
+Once those are in, you can confidently shift back to product knowing:
+	•	Users won’t be confused by paused experiences
+	•	You have an audit trail for anything billing-related
+
+If Replit is in execution mode, give it this as the next instruction:
+
+Implement two billing polish items:
+	1.	Add clear “paused due to subscription status” messaging (public-safe + owner-specific) while keeping 410 behaviour.
+	2.	Add an append-only billing_audit_log table and write audit entries on key billing events (checkout created, verified, rejected mismatch, subscription status changes, pause/restore actions).
+No refactors. No changes to existing revenue protection logic. Ship minimal, reliable implementation.
+
+When that’s done: we go straight back to product.
