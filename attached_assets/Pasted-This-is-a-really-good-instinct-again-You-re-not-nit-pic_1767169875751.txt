@@ -1,0 +1,161 @@
+This is a really good instinct again. You’re not nit-picking – you’ve spotted a semantic pricing collision that will confuse users if left as-is.
+
+I’ll answer in three layers:
+	1.	What currently doesn’t make sense
+	2.	Why it feels unintuitive
+	3.	The cleanest fix that preserves all your existing logic
+
+⸻
+
+1️⃣ What doesn’t make sense right now (clearly)
+
+You’re absolutely right to be confused by this pair:
+	•	“Your Experience – FAILSAFE – $9.99”
+	•	“Full Story – +$13.93”
+
+From a user’s point of view, this creates an immediate question:
+
+“Hang on… what is the $9.99 actually paying for if I still have to pay $13.93 to get the full story?”
+
+Even if you understand it technically, the UI is currently asking the user to do too much mental reconciliation.
+
+So yes – this part is not intuitive yet.
+
+⸻
+
+2️⃣ Why it feels wrong (the real issue)
+
+You currently have three different price concepts, but they’re being presented as if they’re the same kind of thing.
+
+Conceptually, you have:
+	1.	Base experience price (the ICE itself)
+	2.	Expansion cost (preview → full story)
+	3.	Media add-ons (images, video, music, voice)
+
+That’s fine architecturally.
+
+But visually and linguistically, the UI is flattening these into one layer, so the user sees:
+	•	A price next to the experience name
+	•	Another price to “unlock” the full thing
+
+And their brain goes:
+
+“Am I paying twice for the same thing?”
+
+That’s the friction.
+
+⸻
+
+3️⃣ The clean fix (without re-architecting anything)
+
+You don’t need to change pricing logic.
+You need to change what the numbers are describing.
+
+🔧 Fix 1: Rename what $9.99 actually is
+
+Right now:
+
+Your Experience – FAILSAFE – $9.99
+
+This reads like:
+
+“This costs $9.99”
+
+But functionally, that $9.99 is really:
+
+the base ICE creation fee (or base experience fee)
+
+So make that explicit.
+
+Example copy fixes:
+	•	Base Experience – $9.99
+	•	ICE Creation – $9.99
+	•	Experience Setup – $9.99
+
+Any of those immediately answers:
+
+“What is this number?”
+
+⸻
+
+🔧 Fix 2: Make the expansion feel like a delta, not another product
+
+Your Full Story +$13.93 is actually fine mathematically, but the relationship isn’t obvious.
+
+You need to visually and linguistically signal:
+
+“You’re upgrading from preview to full.”
+
+Example microcopy:
+	•	Full Story (Upgrade from Preview) – +$13.93
+	•	Expand to Full Story (12 scenes) – +$13.93
+
+That framing matters a lot.
+
+⸻
+
+🔧 Fix 3: Show a running subtotal per section
+
+Even before you fix the total accumulation bug, conceptually you want:
+	•	Base Experience: $9.99
+	•	Story Expansion: +$13.93
+	•	Media Options: +$X
+
+Right now, all prices are floating without hierarchy.
+
+A subtle “Section subtotal” line would do wonders.
+
+⸻
+
+4️⃣ Everything else actually does make sense
+
+It’s worth saying this clearly so you don’t overcorrect.
+
+✅ Media options
+
+These are clear, optional, and well-labelled. No issue there.
+
+✅ Download vs Publish
+
+This is excellent. The messaging is clean and honest.
+
+✅ Plan selection
+
+Pro vs Business is clear and well-scoped.
+
+✅ “Sign in to Pay”
+
+Correct, given your earlier decision about login ≠ unlock.
+
+So this is not a broken screen.
+It’s a labeling + hierarchy issue, not a structural one.
+
+⸻
+
+5️⃣ The one-sentence diagnosis
+
+If I had to summarise the issue in one line to Repl.it, it would be this:
+
+“The prices are correct, but the meaning of each price isn’t explicit, so users can’t tell what they’re paying for vs what they’re upgrading.”
+
+That’s the heart of it.
+
+⸻
+
+6️⃣ What I’d tell Repl.it next (optional, concise)
+
+If you want a short instruction you can paste, here it is:
+
+The $9.99 shown next to the experience name is ambiguous. It needs to be explicitly labelled as the base experience / ICE creation cost, otherwise it looks like users are being charged twice when they then see the +$13.93 full story expansion.
+
+Please clarify pricing hierarchy (base → expansion → media) through labels or microcopy. No pricing logic change required.
+
+⸻
+
+Bottom line
+
+You’re right to pause.
+Your instinct is correct.
+Nothing is “wrong” technically, but meaning clarity is slipping at exactly the moment users decide whether to trust you.
+
+Fix the labels and hierarchy, and this screen becomes very strong.

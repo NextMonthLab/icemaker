@@ -283,11 +283,12 @@ export default function IceCheckoutPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-white">Expansion Scope</p>
+                  <p className="text-sm font-medium text-white">Story Scope</p>
+                  <p className="text-xs text-slate-500 mb-3">Choose how much of your story to produce</p>
                   {[
-                    { value: "preview_only" as const, label: "Preview Only", desc: `First ${preview.sceneMap.generatedScenes} scenes`, price: "$0" },
-                    { value: "full_story" as const, label: "Full Story", desc: `All ${preview.sceneMap.totalScenes} scenes`, price: `+$${((preview.sceneMap.totalScenes - preview.sceneMap.generatedScenes) * 1.99).toFixed(2)}` },
-                    { value: "act1" as const, label: "Act 1", desc: `First ${Math.ceil(preview.sceneMap.totalScenes / 3)} scenes`, price: `+$${(Math.max(0, Math.ceil(preview.sceneMap.totalScenes / 3) - preview.sceneMap.generatedScenes) * 1.99).toFixed(2)}` },
+                    { value: "preview_only" as const, label: "Preview Only", desc: `Keep first ${preview.sceneMap.generatedScenes} scenes (no expansion)`, price: "Included" },
+                    { value: "full_story" as const, label: "Full Story Expansion", desc: `Upgrade to all ${preview.sceneMap.totalScenes} scenes`, price: `+$${((preview.sceneMap.totalScenes - preview.sceneMap.generatedScenes) * 1.99).toFixed(2)}` },
+                    { value: "act1" as const, label: "Act 1 Expansion", desc: `Expand to first ${Math.ceil(preview.sceneMap.totalScenes / 3)} scenes`, price: `+$${(Math.max(0, Math.ceil(preview.sceneMap.totalScenes / 3) - preview.sceneMap.generatedScenes) * 1.99).toFixed(2)}` },
                   ].map(({ value, label, desc, price }) => (
                     <button
                       key={value}
@@ -319,8 +320,9 @@ export default function IceCheckoutPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Film className="w-5 h-5 text-purple-400" />
-                Your Experience
+                Base Experience
               </CardTitle>
+              <p className="text-xs text-slate-500 mt-1">Core ICE creation and processing</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
@@ -331,15 +333,37 @@ export default function IceCheckoutPage() {
                   <div>
                     <p className="font-medium text-white">{preview?.title || "Your Story"}</p>
                     <p className="text-xs text-slate-500">
-                      {preview?.sceneMap && expansionScope !== "preview_only" 
-                        ? `${expansionScope === "full_story" ? preview.sceneMap.totalScenes : Math.ceil(preview.sceneMap.totalScenes / 3)} scenes`
-                        : `${cardCount} story cards`
-                      }
+                      ICE creation fee • {cardCount} preview cards
                     </p>
                   </div>
                 </div>
                 <span className="text-slate-400">${(pricingConfig?.basePricePerIce ?? 9.99).toFixed(2)}</span>
               </div>
+              
+              {/* Show expansion cost if not preview-only */}
+              {preview?.sceneMap && expansionScope !== "preview_only" && (
+                <div className="flex justify-between items-center py-2 border-b border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-900/50 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">
+                        {expansionScope === "full_story" ? "Full Story Expansion" : "Act 1 Expansion"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Upgrade from preview • {expansionScope === "full_story" 
+                          ? `${preview.sceneMap.totalScenes - preview.sceneMap.generatedScenes} additional scenes`
+                          : `${Math.max(0, Math.ceil(preview.sceneMap.totalScenes / 3) - preview.sceneMap.generatedScenes)} additional scenes`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-blue-400">
+                    +${(serverPricing?.breakdown?.expansion ?? 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
               
               {interactivityNodeCount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-slate-800">
@@ -349,7 +373,7 @@ export default function IceCheckoutPage() {
                     </div>
                     <div>
                       <p className="font-medium text-white">AI Interactions</p>
-                      <p className="text-xs text-slate-500">{interactivityNodeCount} nodes</p>
+                      <p className="text-xs text-slate-500">{interactivityNodeCount} conversation nodes</p>
                     </div>
                   </div>
                   <span className="text-slate-400">
@@ -357,6 +381,14 @@ export default function IceCheckoutPage() {
                   </span>
                 </div>
               )}
+              
+              {/* Base Experience Subtotal */}
+              <div className="flex justify-between items-center pt-2 text-sm">
+                <span className="text-slate-500">Base subtotal</span>
+                <span className="text-white font-medium">
+                  ${((pricingConfig?.basePricePerIce ?? 9.99) + (serverPricing?.breakdown?.expansion ?? 0) + (serverPricing?.breakdown?.interactivity ?? 0)).toFixed(2)}
+                </span>
+              </div>
             </CardContent>
           </Card>
           
@@ -364,8 +396,9 @@ export default function IceCheckoutPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-400" />
-                Media Options
+                Media Enhancements
               </CardTitle>
+              <p className="text-xs text-slate-500 mt-1">Optional add-ons to enrich your experience</p>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
@@ -389,7 +422,7 @@ export default function IceCheckoutPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-400">
-                      ${key === "music" 
+                      +${key === "music" 
                         ? (pricingConfig?.mediaFlat?.music ?? 1.99).toFixed(2) 
                         : ((pricingConfig?.mediaPerCard?.[key as keyof typeof pricingConfig.mediaPerCard] ?? 2.99) * cardCount).toFixed(2)
                       }
@@ -402,6 +435,16 @@ export default function IceCheckoutPage() {
                   </div>
                 </div>
               ))}
+              
+              {/* Media Subtotal */}
+              {(serverPricing?.breakdown?.media ?? 0) > 0 && (
+                <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-700 text-sm">
+                  <span className="text-slate-500">Media subtotal</span>
+                  <span className="text-white font-medium">
+                    +${(serverPricing?.breakdown?.media ?? 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -570,8 +613,34 @@ export default function IceCheckoutPage() {
           
           <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-500/30">
             <CardContent className="py-6">
+              {/* Price breakdown summary */}
+              <div className="space-y-2 mb-4 pb-4 border-b border-purple-500/20">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Base Experience</span>
+                  <span className="text-white">${(pricingConfig?.basePricePerIce ?? 9.99).toFixed(2)}</span>
+                </div>
+                {(serverPricing?.breakdown?.expansion ?? 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Story Expansion</span>
+                    <span className="text-blue-400">+${(serverPricing?.breakdown?.expansion ?? 0).toFixed(2)}</span>
+                  </div>
+                )}
+                {(serverPricing?.breakdown?.interactivity ?? 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">AI Interactions</span>
+                    <span className="text-white">+${(serverPricing?.breakdown?.interactivity ?? 0).toFixed(2)}</span>
+                  </div>
+                )}
+                {(serverPricing?.breakdown?.media ?? 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Media Enhancements</span>
+                    <span className="text-white">+${(serverPricing?.breakdown?.media ?? 0).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+              
               <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-semibold text-white">Total</span>
+                <span className="text-lg font-semibold text-white">Order Total</span>
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={grandTotal}
