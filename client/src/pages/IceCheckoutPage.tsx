@@ -448,55 +448,83 @@ export default function IceCheckoutPage() {
                     className="mt-4 pt-4 border-t border-slate-700"
                   >
                     <p className="text-sm font-medium text-white mb-3">Choose Your Plan</p>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <button
                         onClick={() => setSelectedPlan("pro")}
-                        className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        className={`w-full p-4 rounded-lg border text-left transition-all ${
                           selectedPlan === "pro"
                             ? "border-purple-500 bg-purple-900/30"
                             : "border-slate-600 bg-slate-800/30 hover:border-slate-500"
                         }`}
                         data-testid="plan-pro"
                       >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-white">Pro</p>
-                            <p className="text-xs text-slate-400">Up to 10 published experiences</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-white">$19/mo</p>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-white">Pro</p>
                             {selectedPlan === "pro" && (
-                              <Check className="w-4 h-4 text-purple-400 ml-auto" />
+                              <Check className="w-4 h-4 text-purple-400" />
                             )}
                           </div>
+                          <p className="font-bold text-white">$19<span className="text-xs font-normal text-slate-400">/mo</span></p>
                         </div>
+                        <ul className="text-xs text-slate-400 space-y-1">
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-purple-400">•</span> Up to 10 live interactive experiences
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-purple-400">•</span> AI character conversations
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-purple-400">•</span> Basic view analytics
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-purple-400">•</span> Email support
+                          </li>
+                        </ul>
                       </button>
                       
                       <button
                         onClick={() => setSelectedPlan("business")}
-                        className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        className={`w-full p-4 rounded-lg border text-left transition-all relative ${
                           selectedPlan === "business"
                             ? "border-purple-500 bg-purple-900/30"
                             : "border-slate-600 bg-slate-800/30 hover:border-slate-500"
                         }`}
                         data-testid="plan-business"
                       >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-white">Business</p>
-                            <p className="text-xs text-slate-400">Unlimited experiences + analytics</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-white">$49/mo</p>
+                        <span className="absolute -top-2 right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          BEST VALUE
+                        </span>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-white">Business</p>
                             {selectedPlan === "business" && (
-                              <Check className="w-4 h-4 text-purple-400 ml-auto" />
+                              <Check className="w-4 h-4 text-purple-400" />
                             )}
                           </div>
+                          <p className="font-bold text-white">$49<span className="text-xs font-normal text-slate-400">/mo</span></p>
                         </div>
+                        <ul className="text-xs text-slate-400 space-y-1">
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-green-400">•</span> <span className="text-white font-medium">Unlimited</span> live experiences
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-green-400">•</span> AI character conversations + voice
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-green-400">•</span> Advanced analytics dashboard
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-green-400">•</span> Team collaboration (3 seats)
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <span className="text-green-400">•</span> Priority support
+                          </li>
+                        </ul>
                       </button>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Your subscription will be billed monthly. Cancel anytime.
+                    <p className="text-xs text-slate-500 mt-3 text-center">
+                      Cancel anytime. <span className="text-purple-400 cursor-pointer hover:underline">Compare plans</span>
                     </p>
                   </motion.div>
                 )}
