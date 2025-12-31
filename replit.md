@@ -41,6 +41,36 @@ Key architectural decisions include:
 -   **Download vs Publish**: Download produces a non-interactive video artifact; Publish creates a public, interactive experience with AI, requiring a subscription.
 -   **Editor Transition**: Users transition from a Preview Editor to a Professional/Production Editor post-upgrade, with an explicit explanation and orientation.
 
+## Production Hardening Backlog (Audit: Dec 31, 2025)
+
+### EPIC 1: Revenue Protection (HIGH PRIORITY)
+| Task | Risk | What Breaks | Files | Migration |
+|------|------|-------------|-------|-----------|
+| Server-side scene expansion pricing validation | HIGH | Users manipulate frontend to pay less | `server/routes.ts`, `IceCheckoutPage.tsx` | No |
+| Idempotency keys for one-time charges | HIGH | Double-billing on retry/refresh | `server/routes.ts`, `schema.ts` | Add `checkout_transactions` table |
+| Backend-calculated totals for checkout | MEDIUM | Frontend-backend price mismatch | `server/routes.ts`, `IceCheckoutPage.tsx` | No |
+
+### EPIC 2: Upgrade Continuity (MEDIUM PRIORITY)
+| Task | Risk | What Breaks | Files | Migration |
+|------|------|-------------|-------|-----------|
+| Persist 'pending action' state pre-checkout | MEDIUM | User loses context after upgrade | `schema.ts`, `server/routes.ts` | Add `pending_actions` table |
+| Post-webhook reconciliation hook | MEDIUM | User upgrades but generation doesn't resume | `webhookHandlers.ts` | No |
+| Resume generation after upgrade | MEDIUM | User has to start over | `webhookHandlers.ts`, client | No |
+
+### EPIC 3: Subscription Lifecycle Safety (HIGH PRIORITY)
+| Task | Risk | What Breaks | Files | Migration |
+|------|------|-------------|-------|-----------|
+| Graceful pause/archive on cancellation | HIGH | Unbounded hosting costs or silent deletion | `webhookHandlers.ts`, `storage.ts` | No |
+| Clear status transitions | MEDIUM | Undefined account states | `webhookHandlers.ts`, `schema.ts` | No |
+| Non-destructive reactivation path | LOW | Churned users can't return | `webhookHandlers.ts` | No |
+
+### EPIC 4: Single Source of Truth (LOW PRIORITY)
+| Task | Risk | What Breaks | Files | Migration |
+|------|------|-------------|-------|-----------|
+| Move pricing to backend database | LOW | Price changes require deploy | `schema.ts`, `server/routes.ts` | Add `pricing_config` table |
+| `/api/checkout-config` endpoint | LOW | Frontend hardcodes prices | `server/routes.ts` | No |
+| Frontend display-only refactor | LOW | Prevents future bugs | `IceCheckoutPage.tsx` | No |
+
 ## External Dependencies
 -   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
 -   **Kling AI API**: For video generation.

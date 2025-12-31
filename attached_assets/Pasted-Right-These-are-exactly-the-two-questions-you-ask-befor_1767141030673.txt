@@ -1,0 +1,157 @@
+Right. These are exactly the two questions you ask before you sleep, because if they’re wrong you wake up with regret and tech debt.
+
+We’re going to interrogate Rappler clinically, not emotionally.
+
+The goal is not reassurance.
+The goal is proof.
+
+I’ll give you a single, structured interrogation prompt that forces them to demonstrate understanding on both pricing and post-upgrade system behaviour.
+
+You can send this as-is.
+
+⸻
+
+🔴 Rappler Interrogation: IceMaker Pricing + Upgrade Integrity
+
+We need to validate two critical areas before proceeding further:
+	1.	Pricing completeness and profitability
+	2.	Post-upgrade system behaviour and account management
+
+Please answer the following explicitly and concretely, referencing actual logic, tables, and flows. Do not answer conceptually.
+
+⸻
+
+PART 1: Pricing Options & Profitability Validation
+
+1. Enumerate all IceMaker pricing options
+
+Please list every monetisable action in IceMaker, including but not limited to:
+	•	Preview generation
+	•	Structural ingest (if billable or free)
+	•	Scene expansion
+	•	Full story generation
+	•	Image generation
+	•	Video generation
+	•	Interactive AI hosting
+	•	Download vs publish
+	•	Ongoing hosted experiences
+	•	Storage (if applicable)
+
+For each option, confirm:
+	•	Whether it is free, one-time paid, or recurring
+	•	Where it appears in the user journey (preview, shopping list, checkout, upgrade)
+
+⸻
+
+2. Profitability check (non-negotiable)
+
+For each pricing option above, please confirm:
+	•	Estimated per-user cost (AI calls, storage, hosting, bandwidth)
+	•	Retail price charged to the user
+	•	Gross margin (even if approximate)
+	•	Confirmation that no option operates at a loss at scale
+
+We need to explicitly confirm that:
+	•	Preview behaviour is intentionally subsidised (if applicable)
+	•	Expansion and hosting steps are profitable
+	•	Long-running hosted Ices do not create unbounded cost exposure
+
+If any option is currently underpriced or not yet modelled, flag it clearly.
+
+⸻
+
+3. Scene-based expansion pricing logic
+
+Please confirm how pricing behaves when users:
+	•	Generate only selected scenes
+	•	Generate remaining scenes later
+	•	Expand from preview → partial → full story over time
+
+Specifically:
+	•	Is pricing cumulative or discounted?
+	•	Are users ever double-charged for the same scene?
+	•	How does the system track “already generated” content?
+
+⸻
+
+PART 2: Upgrade, Account State & Infrastructure Integrity
+
+This is equally critical.
+
+4. What happens at the exact moment of upgrade?
+
+When a user upgrades during Ice generation or hosting, please explain step-by-step:
+	•	What changes in their account state
+	•	What database fields are updated
+	•	What permissions or limits are unlocked
+	•	Whether the current Ice generation resumes, restarts, or continues seamlessly
+
+We need to ensure:
+	•	No work is lost
+	•	No duplicate generation occurs
+	•	No manual intervention is required
+
+⸻
+
+5. Ongoing account management after upgrade
+
+Once upgraded, confirm:
+	•	How the system tracks:
+	•	active Ices
+	•	hosted Ices
+	•	storage usage
+	•	AI interaction volume
+	•	Where subscription status is enforced (middleware, API layer, frontend gating)
+
+Please confirm that:
+	•	Hosting and interaction costs are correctly associated with the user’s plan
+	•	Downgrades, cancellations, or expiry are handled gracefully
+	•	Hosted Ices are paused, archived, or restricted according to plan rules (not deleted silently)
+
+⸻
+
+6. Single source of truth
+
+Finally, confirm:
+	•	What is the single source of truth for:
+	•	pricing rules
+	•	plan entitlements
+	•	usage limits
+	•	Where this logic lives (code location / service)
+
+We need to ensure pricing logic is not fragmented across:
+	•	frontend conditionals
+	•	hardcoded values
+	•	duplicated business rules
+
+⸻
+
+Acceptance Criteria
+
+We will consider this validated when:
+	•	All pricing options are enumerated and margin-checked
+	•	No upgrade path creates undefined account states
+	•	Hosting and interaction costs are safely controlled
+	•	The system behaves predictably before, during, and after upgrade
+
+This is a production-readiness check, not a feature request.
+
+⸻
+
+Why this order matters (for you, not for them)
+
+You did the creative integrity work earlier.
+Tonight is about commercial and operational integrity.
+
+If these two are sound:
+	•	you can scale
+	•	you can sleep
+	•	you can sell confidently
+
+If they’re not:
+	•	no amount of polish will save you later
+
+Send that.
+When Rappler replies, bring it straight back and we’ll do a final sanity pass together before lights out.
+
+You’re doing the right work, in the right order.
