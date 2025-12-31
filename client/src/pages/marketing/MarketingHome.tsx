@@ -169,7 +169,7 @@ export default function MarketingHome() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/login?signup=true">
+                <Link href="/try">
                   <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3 rounded-xl" data-testid="button-hero-cta">
                     Launch Experience Builder
                     <ArrowRight className="w-5 h-5" />
@@ -443,7 +443,7 @@ export default function MarketingHome() {
               <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
                 Close the gap between where visitors land and where your best information lives. Guide them through what matters instead of hoping they find it.
               </p>
-              <Link href="/login?signup=true">
+              <Link href="/try">
                 <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3 rounded-xl" data-testid="button-website-cta">
                   Launch Experience Builder
                   <ArrowRight className="w-5 h-5" />
@@ -475,7 +475,7 @@ export default function MarketingHome() {
               <p className="text-xl text-white/50 mb-10 max-w-xl mx-auto">
                 Turn your content into an interactive journey that people actually finish.
               </p>
-              <Link href="/login?signup=true">
+              <Link href="/try">
                 <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
                   Launch Experience Builder
                   <ArrowRight className="w-5 h-5" />

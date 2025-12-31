@@ -92,7 +92,7 @@ export default function ForCreators() {
               </div>
               
               <div className="flex flex-col items-center gap-4">
-                <Link href="/login?signup=true">
+                <Link href="/try">
                   <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta" data-nm-cta="build-story-experience-hero">
                     Build a Story Experience
                     <ArrowRight className="w-5 h-5" />
@@ -232,7 +232,7 @@ export default function ForCreators() {
                 Build an interactive story experience your audience can explore, not just watch.
               </p>
               <div className="flex flex-col items-center gap-4">
-                <Link href="/login?signup=true">
+                <Link href="/try">
                   <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta" data-nm-cta="build-story-experience-footer">
                     Build a Story Experience
                     <ArrowRight className="w-5 h-5" />

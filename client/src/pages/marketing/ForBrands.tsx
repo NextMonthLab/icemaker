@@ -323,7 +323,7 @@ export default function ForBrands() {
                 Orbit presents your content as a guided, cinematic experience customers can explore or talk to.
               </p>
               
-              <Link href="/login?signup=true">
+              <Link href="/try">
                 <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta">
                   Build a Brand Experience
                   <ArrowRight className="w-5 h-5" />
@@ -522,7 +522,7 @@ export default function ForBrands() {
                 </span>
               </h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/login?signup=true">
+                <Link href="/try">
                   <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta">
                     Build a Brand Experience
                     <ArrowRight className="w-5 h-5" />

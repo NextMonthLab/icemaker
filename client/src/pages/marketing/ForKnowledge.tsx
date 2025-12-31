@@ -75,7 +75,7 @@ export default function ForKnowledge() {
                 people actually remember and engage with.
               </p>
               
-              <Link href="/login?signup=true">
+              <Link href="/try">
                 <Button size="lg" className="h-14 px-8 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-hero-cta" data-nm-cta="build-learning-experience-hero">
                   Build a Learning Experience
                   <ArrowRight className="w-5 h-5" />
@@ -191,7 +191,7 @@ export default function ForKnowledge() {
                   unforgettable?
                 </span>
               </h2>
-              <Link href="/login?signup=true">
+              <Link href="/try">
                 <Button size="lg" className="h-16 px-12 text-lg bg-pink-500 hover:bg-pink-400 text-white border-0 shadow-lg shadow-pink-500/30 gap-3" data-testid="button-footer-cta" data-nm-cta="build-learning-experience-footer">
                   Build a Learning Experience
                   <ArrowRight className="w-5 h-5" />
