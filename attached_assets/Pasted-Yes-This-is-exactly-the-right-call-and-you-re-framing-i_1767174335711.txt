@@ -1,0 +1,77 @@
+Yes. This is exactly the right call, and you’re framing it correctly: this is not a feature gap, it’s a wiring / connection audit.
+
+Below is a clear, calm, non-accusatory message you can send to Repl.it that does three important things at once:
+	•	States the problem unambiguously
+	•	Prevents new scope creep
+	•	Directs them into diagnostic mode, not build mode
+
+You can paste this verbatim.
+
+⸻
+
+Message to Repl.it: Orbit Page – Interactivity Audit Required
+
+Orbit Claim Page – Interactivity Not Functioning (Audit Required)
+
+We now have a dedicated page for accessing Orbit (/orbit/claim), which is the correct direction.
+
+However, at present none of the interactivity on this page appears to be working:
+	•	Website analysis does not run
+	•	Uploading a document does not trigger processing
+	•	Buttons, tabs, and actions do not appear to be connected to their underlying logic
+
+This is not a request to build new functionality.
+
+All of this behaviour should already exist in the system. The issue appears to be that the UI is not correctly wired to the existing backend logic or services.
+
+⸻
+
+Required Action
+
+Please enter diagnostic / audit mode, not build mode.
+
+We need a systematic check of:
+	•	Every interactive element on the Orbit claim page
+	•	Every button, input, tab, and option
+	•	Each one verified to:
+	•	Trigger the correct existing handler
+	•	Call the correct API endpoint
+	•	Receive and handle responses correctly
+
+If something is not functioning, the task is to:
+	•	Identify what it is meant to connect to
+	•	Restore or correct that connection
+
+Do not:
+	•	Add new features
+	•	Stub or mock behaviour
+	•	Re-implement logic that already exists
+
+⸻
+
+Goal
+
+By the end of this audit, the Orbit claim flow should be:
+	•	Fully functional
+	•	End-to-end connected
+	•	Reliant only on already-built systems
+
+Please confirm once:
+	•	The audit is complete
+	•	All interactive elements are verified as working
+	•	Any missing or broken connections have been restored
+
+This page is critical to the Orbit experience, so correctness and completeness matter more than speed here.
+
+⸻
+
+Why this wording works
+	•	It avoids blame
+	•	It clearly says “don’t build”
+	•	It frames the task as restoration, not invention
+	•	It forces a check-everything mindset instead of spot fixes
+
+You’re absolutely right to stop new work here.
+At this stage, reliability beats novelty every time.
+
+If Repl.it replies with a summary of what’s disconnected, feel free to paste it back here and I’ll help you decide whether it’s genuinely wiring or if there’s a deeper architectural issue hiding underneath.
