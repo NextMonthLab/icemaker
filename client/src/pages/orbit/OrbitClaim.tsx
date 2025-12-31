@@ -1,9 +1,9 @@
-import { Building2, Globe, Upload, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Building2, Globe, Upload, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import OrbitLayout from "@/components/OrbitLayout";
 import { Link, useLocation } from "wouter";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 interface OrbitGenerateResponse {
@@ -19,7 +19,6 @@ export default function OrbitClaim() {
   const [, setLocation] = useLocation();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [error, setError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const analyzeWebsiteMutation = useMutation({
     mutationFn: async (url: string): Promise<OrbitGenerateResponse> => {
@@ -46,32 +45,9 @@ export default function OrbitClaim() {
     },
   });
 
-  const uploadDocumentMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch('/api/orbit/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload document');
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.businessSlug) {
-        setLocation(`/orbit/${data.businessSlug}`);
-      }
-    },
-    onError: (err: Error) => {
-      setError(err.message);
-    },
-  });
+  const handleUploadClick = () => {
+    setError("Document upload for Orbit is coming soon. For now, please enter your website URL above to analyze your business.");
+  };
 
   const handleAnalyze = () => {
     setError("");
@@ -94,19 +70,7 @@ export default function OrbitClaim() {
     }
   };
 
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setError("");
-      uploadDocumentMutation.mutate(file);
-    }
-  };
-
-  const isLoading = analyzeWebsiteMutation.isPending || uploadDocumentMutation.isPending;
+  const isLoading = analyzeWebsiteMutation.isPending;
 
   return (
     <OrbitLayout>
@@ -187,30 +151,15 @@ export default function OrbitClaim() {
             <p className="text-sm text-white/60">
               Upload PDFs, presentations, or other documents about your business
             </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
-              onChange={handleFileChange}
-              className="hidden"
-              data-testid="input-file-upload"
-            />
             <Button 
               variant="outline" 
-              onClick={handleFileSelect}
-              disabled={isLoading}
+              onClick={handleUploadClick}
               className="border-white/20 text-white/60" 
               data-testid="button-upload"
             >
-              {uploadDocumentMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                "Choose Files"
-              )}
+              Choose Files
             </Button>
+            <p className="text-xs text-white/40 mt-2">Coming soon</p>
           </div>
         </div>
 
