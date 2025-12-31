@@ -129,10 +129,12 @@ export default function GuestIceBuilderPage() {
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("upgraded") === "true") {
+    const hasSeenUpgradeWelcome = localStorage.getItem("ice_upgrade_welcomed") === "true";
+    if (urlParams.get("upgraded") === "true" && !hasSeenUpgradeWelcome) {
+      localStorage.setItem("ice_upgrade_welcomed", "true");
       toast({
-        title: "Welcome to the Professional Editor!",
-        description: "Your subscription is active. All features are now unlocked - generate media, add AI interactivity, and publish your experience.",
+        title: "You're in the Professional Editor",
+        description: "Everything you created is here. This is where you refine, publish, and manage your experience.",
         duration: 6000,
       });
       window.history.replaceState({}, "", window.location.pathname);
