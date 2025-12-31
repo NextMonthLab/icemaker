@@ -197,6 +197,7 @@ export interface IStorage {
   getOrbitMetaById(id: number): Promise<schema.OrbitMeta | undefined>;
   getOrbitMetaByPreviewId(previewId: string): Promise<schema.OrbitMeta | undefined>;
   getOrbitMetaByDomain(domain: string): Promise<schema.OrbitMeta | undefined>;
+  getOrbitsByOwner(userId: number): Promise<schema.OrbitMeta[]>;
   createOrbitMeta(data: schema.InsertOrbitMeta): Promise<schema.OrbitMeta>;
   updateOrbitMeta(businessSlug: string, data: Partial<schema.InsertOrbitMeta>): Promise<schema.OrbitMeta | undefined>;
   setOrbitGenerationStatus(businessSlug: string, status: schema.OrbitGenerationStatus, error?: string): Promise<void>;
@@ -1531,6 +1532,14 @@ export class DatabaseStorage implements IStorage {
       }
     }
     return undefined;
+  }
+
+  async getOrbitsByOwner(userId: number): Promise<schema.OrbitMeta[]> {
+    const results = await db.query.orbitMeta.findMany({
+      where: eq(schema.orbitMeta.ownerId, userId),
+      orderBy: [desc(schema.orbitMeta.lastUpdated)],
+    });
+    return results;
   }
 
   async createOrbitMeta(data: schema.InsertOrbitMeta): Promise<schema.OrbitMeta> {

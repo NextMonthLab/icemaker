@@ -1,29 +1,74 @@
 import { Link, useLocation } from "wouter";
 import { 
   Orbit,
-  LayoutDashboard,
+  Globe,
   Map,
   Brain,
-  Zap,
-  Settings
+  Building2,
+  LogIn,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import GlobalNav from "./GlobalNav";
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 
-const orbitNavItems = [
-  { href: "/orbit", icon: LayoutDashboard, label: "Dashboard", exact: true },
-  { href: "/orbit/map", icon: Map, label: "Knowledge Map" },
-  { href: "/orbit/intelligence", icon: Brain, label: "Intelligence View" },
-  { href: "/orbit/actions", icon: Zap, label: "Actions" },
-  { href: "/orbit/settings", icon: Settings, label: "Settings" },
-];
+interface OrbitsResponse {
+  orbits: Array<{ businessSlug: string }>;
+}
 
 export default function OrbitLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
-  const isActive = (item: typeof orbitNavItems[0]) => {
-    if (item.exact) {
+  const { data: userData, isLoading: userLoading } = useQuery<{ id: number } | null>({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const response = await fetch("/api/user");
+      if (!response.ok) return null;
+      return response.json();
+    },
+    staleTime: 60000,
+  });
+
+  const { data: orbitsData } = useQuery<OrbitsResponse>({
+    queryKey: ["my-orbits"],
+    queryFn: async () => {
+      const response = await fetch("/api/me/orbits");
+      if (!response.ok) return { orbits: [] };
+      return response.json();
+    },
+    enabled: !!userData,
+    staleTime: 60000,
+  });
+
+  const isLoggedIn = !!userData;
+  const hasOrbits = orbitsData && orbitsData.orbits.length > 0;
+
+  const ownerNavItems = [
+    { href: "/orbit/my", icon: Building2, label: "My Orbits" },
+    { href: "/orbit", icon: Globe, label: "Explore Orbits", exact: true },
+    { href: "/orbit/map", icon: Map, label: "Knowledge Map" },
+    { href: "/orbit/intelligence", icon: Brain, label: "Intelligence" },
+  ];
+
+  const nonOwnerNavItems = [
+    { href: "/orbit", icon: Globe, label: "Explore Orbits", exact: true },
+    { href: "/orbit/claim", icon: Building2, label: "Claim an Orbit" },
+    { href: "/orbit/map", icon: HelpCircle, label: "How Orbit Works" },
+  ];
+
+  const guestNavItems = [
+    { href: "/orbit", icon: Globe, label: "Explore Orbits", exact: true },
+    { href: "/orbit/claim", icon: Building2, label: "Claim an Orbit" },
+    { href: "/login", icon: LogIn, label: "Sign In" },
+  ];
+
+  const navItems = isLoggedIn 
+    ? (hasOrbits ? ownerNavItems : nonOwnerNavItems)
+    : guestNavItems;
+
+  const isActive = (item: typeof navItems[0]) => {
+    if ('exact' in item && item.exact) {
       return location === item.href;
     }
     return location.startsWith(item.href);
@@ -41,7 +86,7 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
           </div>
           
           <nav className="space-y-1 flex-1">
-            {orbitNavItems.map((item) => (
+            {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <div
                   className={cn(
@@ -58,10 +103,24 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
               </Link>
             ))}
           </nav>
+
+          {isLoggedIn && hasOrbits && (
+            <div className="pt-4 border-t border-white/10 mt-4">
+              <p className="text-xs text-white/40 px-3 mb-2">Quick Access</p>
+              {orbitsData.orbits.slice(0, 3).map((orbit) => (
+                <Link key={orbit.businessSlug} href={`/orbit/${orbit.businessSlug}/hub`}>
+                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded cursor-pointer truncate">
+                    <Globe className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{orbit.businessSlug}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </aside>
 
         <nav className="lg:hidden bg-black/95 border-b border-white/10 px-2 py-2 flex gap-1 overflow-x-auto">
-          {orbitNavItems.slice(0, 4).map((item) => (
+          {navItems.slice(0, 4).map((item) => (
             <Link key={item.href} href={item.href}>
               <div
                 className={cn(

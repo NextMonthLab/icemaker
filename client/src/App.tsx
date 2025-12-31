@@ -24,6 +24,7 @@ import OrbitView from "@/pages/orbit/OrbitView";
 import KioskOrbitView from "@/pages/orbit/KioskOrbitView";
 import DataHub from "@/pages/orbit/DataHub";
 import OrbitHome from "@/pages/orbit/OrbitHome";
+import MyOrbits from "@/pages/orbit/MyOrbits";
 import OrbitMap from "@/pages/orbit/OrbitMap";
 import OrbitIntelligence from "@/pages/orbit/OrbitIntelligence";
 import OrbitActions from "@/pages/orbit/OrbitActions";
@@ -148,6 +149,7 @@ function Router() {
       <Route path="/icemaker/settings" component={IceMakerSettings} />
       
       <Route path="/orbit" component={OrbitHome} />
+      <Route path="/orbit/my" component={MyOrbits} />
       <Route path="/orbit/map" component={OrbitMap} />
       <Route path="/orbit/intelligence" component={OrbitIntelligence} />
       <Route path="/orbit/actions" component={OrbitActions} />

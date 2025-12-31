@@ -761,6 +761,40 @@ export async function registerRoutes(
       res.status(500).json({ message: "Error fetching onboarding profile" });
     }
   });
+
+  app.get("/api/me/orbits", requireAuth, async (req, res) => {
+    try {
+      const orbits = await storage.getOrbitsByOwner(req.user!.id);
+      
+      const orbitsWithStats = await Promise.all(
+        orbits.map(async (orbit) => {
+          const stats = await storage.getOrbitAnalyticsSummary(orbit.businessSlug, 30);
+          return {
+            businessSlug: orbit.businessSlug,
+            sourceUrl: orbit.sourceUrl,
+            generationStatus: orbit.generationStatus,
+            previewId: orbit.previewId,
+            customTitle: orbit.customTitle,
+            customDescription: orbit.customDescription,
+            planTier: orbit.planTier,
+            verifiedAt: orbit.verifiedAt,
+            lastUpdated: orbit.lastUpdated,
+            stats: {
+              visits: stats.visits,
+              interactions: stats.interactions,
+              conversations: stats.conversations,
+              iceViews: stats.iceViews,
+            },
+          };
+        })
+      );
+      
+      res.json({ orbits: orbitsWithStats });
+    } catch (error) {
+      console.error("Error fetching owned orbits:", error);
+      res.status(500).json({ message: "Error fetching owned orbits" });
+    }
+  });
   
   // Create or update user onboarding profile
   app.post("/api/me/onboarding", requireAuth, async (req, res) => {
