@@ -65,6 +65,10 @@ const MEDIA_PRICES = {
 
 const BASE_PRICE = 9.99;
 const INTERACTIVITY_PRICE_PER_NODE = 0.99;
+const PLAN_PRICES = {
+  pro: 19,
+  business: 49,
+};
 
 export default function IceCheckoutPage() {
   const params = useParams<{ id: string }>();
@@ -106,6 +110,9 @@ export default function IceCheckoutPage() {
     
     if (outputChoice === "publish") {
       total += interactivityNodeCount * INTERACTIVITY_PRICE_PER_NODE;
+      if (selectedPlan) {
+        total += PLAN_PRICES[selectedPlan];
+      }
     }
     
     return total;
