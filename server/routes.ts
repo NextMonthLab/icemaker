@@ -4486,7 +4486,7 @@ export async function registerRoutes(
       
       // CRITICAL: Validate that priceId matches the expected Stripe price for this plan
       // This prevents attackers from submitting a cheaper priceId with an expensive plan
-      const expectedPriceId = plan.stripePriceId;
+      const expectedPriceId = plan.stripePriceIdMonthly;
       if (!expectedPriceId) {
         return res.status(400).json({ message: "Plan not configured for billing" });
       }
@@ -7157,7 +7157,7 @@ STRICT RULES:
         allow_promotion_codes: true,
         line_items: [
           {
-            price: plan.stripePriceId!,
+            price: plan.stripePriceIdMonthly!,
             quantity: 1,
           },
         ],
