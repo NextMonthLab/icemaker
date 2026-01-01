@@ -7315,19 +7315,25 @@ STRICT RULES:
           imageUrl: m.imageUrl && !isExtractionBadImage(m.imageUrl) ? m.imageUrl : null,
         }));
         
-        extractedItems.push(...cleanedItems.map(m => ({
-          title: m.name,
-          description: m.description,
-          price: m.price,
-          currency: m.currency,
-          category: m.category,
-          imageUrl: m.imageUrl,
-          sourceUrl: m.sourceUrl,
-          tags: [],
-          boxType: 'product',
-          availability: 'available' as const,
-        })));
-        console.log(`[Orbit] Extracted ${menuItems.length} menu items with multi-page crawl`);
+        // Only add items if quality passed or we got at least some results
+        if (quality.passed || cleanedItems.length > 0) {
+          extractedItems.push(...cleanedItems.map(m => ({
+            title: m.name,
+            description: m.description,
+            price: m.price,
+            currency: m.currency,
+            category: m.category,
+            imageUrl: m.imageUrl,
+            sourceUrl: m.sourceUrl,
+            tags: [],
+            boxType: 'product',
+            availability: 'available' as const,
+          })));
+          console.log(`[Orbit] Extracted ${menuItems.length} menu items with multi-page crawl`);
+        } else {
+          // Quality check failed and no items - log for future AI fallback
+          console.log(`[Orbit] Extraction quality too low (${quality.score}/100), skipping items. Recommendations: ${quality.recommendations.join(', ')}`);
+        }
       }
 
       // Store extracted items as orbit boxes

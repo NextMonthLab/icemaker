@@ -1,114 +1,48 @@
 # NextMonth – Claude Code Operating Context
 
 ## Overview
-NextMonth is a Meaning-to-Experience Engine designed for brand storytelling, creative narratives, and knowledge transfer. It converts various content sources into interactive, cinematic story cards featuring AI-generated visuals, guardrailed AI character interaction, a Visual Bible system for consistency, TTS narration, and a Daily Drop Engine. The platform supports role-based access and a tiered subscription model, aiming for a monetizable MVP. The long-term vision involves evolving from basic analytics to strategic advice based on pattern intelligence and behavioral sequences.
+NextMonth is a Meaning-to-Experience Engine for brand storytelling, creative narratives, and knowledge transfer. It transforms various content into interactive, cinematic story cards featuring AI-generated visuals, guardrailed AI character interaction, a Visual Bible system, TTS narration, and a Daily Drop Engine. The platform supports role-based access and a tiered subscription model, with the goal of evolving from basic analytics to strategic advice based on pattern intelligence and behavioral sequences.
 
 ## User Preferences
 I prefer simple language and clear, concise explanations. I value iterative development and prefer to be asked before major changes are made to the codebase. Please provide detailed explanations when new features or significant modifications are implemented. Do not make changes to the `shared/schema.ts` file without explicit approval, as it is the single source of truth for data models. Ensure that any AI-generated content adheres to the established visual bible system and character profiles for consistency.
 
 ## System Architecture
-NextMonth employs a multi-stage pipeline: Input Normalisation, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18 with Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is Node.js and Express, utilizing Drizzle ORM with Neon-backed PostgreSQL and Passport.js for authentication.
+NextMonth utilizes a multi-stage pipeline: Input Normalisation, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18 with Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is Node.js and Express, with Drizzle ORM, Neon-backed PostgreSQL, and Passport.js for authentication.
 
 Key architectural decisions include:
--   **Schema-First Development**: `shared/schema.ts` defines all data models, generating types for client and server.
--   **Storage Abstraction**: Database operations are managed via an `IStorage` interface.
--   **Three-Layer Chat Prompt Composition**: AI prompts are built from Universe Policy, Character Profile, and Card Overrides.
--   **Visual Bible System**: Ensures visual consistency via a Design Guide, Reference Assets, and a Prompt Builder.
--   **Lens-Based User Experience**: Onboarding allows users to select a "lens" (Brand, Creative, Knowledge) for a customized experience.
--   **Tiered Capability Model**: Features are gated by an "Orbit" tier model (Free, Grow, Understand, Intelligence).
--   **Pattern Intelligence Focus**: Analytics are designed for future pattern recognition, focusing on session journeys, event ordering, object interaction, and outcome linkage.
--   **UI/UX**: Cinematic dark theme with Cinzel and Inter fonts, and a pink-purple-blue gradient accent.
--   **Three-Tier Navigation System**: Global navigation and product-specific submenus (`GlobalNav`, `IceMakerLayout`, `OrbitLayout`).
+-   **Schema-First Development**: `shared/schema.ts` defines all data models.
+-   **Storage Abstraction**: Database operations managed via an `IStorage` interface.
+-   **Three-Layer Chat Prompt Composition**: AI prompts built from Universe Policy, Character Profile, and Card Overrides.
+-   **Visual Bible System**: Ensures visual consistency through a Design Guide, Reference Assets, and Prompt Builder.
+-   **Lens-Based User Experience**: Onboarding customized by user-selected "lens" (Brand, Creative, Knowledge).
+-   **Tiered Capability Model**: Features gated by "Orbit" tier model (Free, Grow, Understand, Intelligence).
+-   **Pattern Intelligence Focus**: Analytics designed for future pattern recognition on session journeys, event ordering, object interaction, and outcome linkage.
+-   **UI/UX**: Cinematic dark theme with Cinzel and Inter fonts, pink-purple-blue gradient accent.
+-   **Three-Tier Navigation System**: Global navigation and product-specific submenus.
 -   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection.
--   **AgoraCube Device System**: Enables Orbit display on thin clients (e.g., Raspberry Pi 5) with kiosk mode and voice interaction.
--   **Orbit Signal Schema v0.1**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems, exposing structured business identity.
--   **Guest ICE Builder**: Allows anonymous users to create ICE previews at `/try` with server-persisted, time-limited previews and rate limiting.
--   **Preview Share Bar**: Facilitates stakeholder sharing of unclaimed Orbits with time remaining and sharing options.
--   **Experience Analytics System**: Client-side tracking for experience and card views, with public event and admin summary endpoints.
--   **Multi-Tenant Security (Phase 1)**: Implemented with HMAC-SHA256 signed access tokens for story and preview access, and per-IP rate limiting.
--   **Stripe Subscription System**: Full subscription billing with webhook-based synchronization for product plans (Pro, Business), checkout flow, and credit granting idempotency.
--   **Platform-Agnostic Deployment**: Configurable via environment variables for various hosting platforms (e.g., Render), including URL overrides and webhook verification.
--   **Email & Notifications System**: Transactional emails via Resend (e.g., Orbit Claim Magic Link) and in-app notifications (tier-gated).
--   **Interactivity Nodes Between Cards**: Supports interactive nodes *between* cards for conversational moments and AI character interaction, fully live in preview and requiring subscription for published persistence.
--   **Story-Specific Character AI**: During preview creation, characters are automatically extracted from story content (detective, victim, suspects, witnesses, etc.) with unique personas, system prompts, and in-character responses. Characters appear in interactivity nodes with dropdown selection when multiple are available.
--   **Card Pace Controls**: Preview modal includes Slow/Normal/Fast pace controls (12s/5s/3s) for card auto-advance timing, allowing users to control the viewing experience. Mobile-optimized layout prevents overlap.
--   **Story Fidelity Modes (Structural Ingest)**: Content uploads go through a Structural Ingest step that detects content type. Scripts trigger Script-Exact Mode which parses scene headings (INT./EXT.), characters, dialogue, and action into an internal scene map. Cards are generated from scenes, preserving narrative order and character intent. Interpretive Mode (default for non-scripts) summarizes and distills content into thematic cards.
--   **Fidelity Mode Discipline**: Script-Exact is screenplay-only. Business blogs, presentations, and articles use Interpretive Mode. Scripts have formal grammar and authorial intent encoded structurally; business content is inherently malleable. This distinction is architectural - never introduce "Business-Exact" or imply canonical preservation for non-script content.
--   **Selective Expansion**: For scripts, the checkout page shows scene progress (X of Y scenes generated) with expansion options: Preview Only, Full Story, or Act 1. Users control scope and manage budget iteratively.
--   **Guided First-Run Experience**: A light, skippable walkthrough on first preview explaining cards, interactivity nodes, and the distinction between downloading and publishing.
--   **Login Does Not Unlock Features**: Login saves progress and allows checkout; payment via Stripe unlocks media generation, AI interactivity, and publishing.
--   **Guest-First Conversion Model**: Users must experience value before identity or payment is requested. The canonical upsell journey is: preview creation → interaction → value demonstration → optional login for save/upgrade.
--   **Shopping List / Production Manifest**: Calculates and displays media counts (cards, interactivity nodes, AI characters, images, video, music, voice) with real-time price updates before checkout.
--   **Download vs Publish**: Download produces a non-interactive video artifact; Publish creates a public, interactive experience with AI, requiring a subscription.
--   **Editor Transition**: Users transition from a Preview Editor to a Professional/Production Editor post-upgrade, with an explicit explanation and orientation.
-
-## Canonical Routing Rules
-
-These routing rules are final and must not be altered without explicit approval.
-
-| CTA Label | Route | Requires Login | Notes |
-|-----------|-------|----------------|-------|
-| Launch Interactive Builder / Start Creating / Try It | `/try` | NO | Guest preview builder starts immediately. No login gate. |
-| Sign In / Login | `/login` | N/A | Explicit identity action |
-| Dashboard / My Projects | `/dashboard` | YES | Protected route |
-| Upgrade / Subscribe | `/checkout/*` | YES | Checkout requires identity for subscription linking |
-| Save Progress | Triggers login modal | YES | Login preserves work |
-
-**Key Principle**: "Launch Interactive Builder" and equivalent CTAs route to `/try`, never `/login`. Login is for identity and continuity, not gatekeeping creation. If a CTA routes to `/login`, it must be explicitly labeled as "Sign In", "Dashboard", or "Account access".
-
-## Production Hardening Backlog (Audit: Dec 31, 2025)
-
-### EPIC 1: Revenue Protection - COMPLETED
-| Task | Status | Details |
-|------|--------|---------|
-| Server-side scene expansion pricing validation | DONE | Input sanitization, negative value clamping, enum validation |
-| Idempotency keys for one-time charges | DONE | SHA256 keys with priceId + amount, checkout_transactions table, webhook completion tracking |
-| Backend-calculated totals for checkout | DONE | `/api/checkout/calculate` and `/api/checkout/config` endpoints |
-| Server-side priceId validation | DONE | Validates client priceId matches database plan.stripePriceId before session creation |
-| Webhook amount verification | DONE | Rejects and marks 'failed' any checkout where Stripe amount differs from stored amount |
-
-### EPIC 2: Upgrade Continuity - COMPLETED
-| Task | Status | Details |
-|------|--------|---------|
-| Persist pending action pre-checkout | DONE | Uses existing checkout_transactions table with pendingAction (previewId + checkoutOptions) |
-| CheckoutSuccessPage verification flow | DONE | Animated verification → retrieves pendingAction by sessionId → redirects to preview |
-| Professional/Preview mode distinction | DONE | GuestIceBuilderPage fetches /api/me/entitlements, shows Professional Editor badge for paid tiers |
-| Upgrade orientation toast | DONE | Shows welcome message explaining unlocked features when returning with ?upgraded=true |
-| Routes for success/cancel | DONE | /checkout/success and /checkout/cancel routes added to App.tsx |
-
-### EPIC 3: Subscription Lifecycle Safety - COMPLETED
-| Task | Status | Details |
-|------|--------|---------|
-| Graceful pause/archive on cancellation | DONE | ICEs auto-paused (not deleted), return 410 for cost protection |
-| Clear status transitions | DONE | normalizeStripeStatus() maps all Stripe variants to valid SubscriptionStatus; isInactiveStatus() for consistent detection |
-| Non-destructive reactivation path | DONE | autoRestorePausedIces() restores most recently paused ICEs up to plan limit when subscription reactivates |
-| Stripe status normalization | DONE | 'unpaid', 'incomplete', 'incomplete_expired' → 'past_due'; enables unpaid→active reactivation |
-
-### EPIC 4: Single Source of Truth - COMPLETED
-| Task | Status | Details |
-|------|--------|---------|
-| Move pricing to backend | DONE | `PRICING_CONFIG` constant in `server/routes.ts` |
-| `/api/checkout/config` endpoint | DONE | Returns pricing config for frontend display |
-| Frontend display-only refactor | DONE | `IceCheckoutPage.tsx` fetches prices from server |
-
-### EPIC 5: Billing Audit Logging - COMPLETED
-| Task | Status | Details |
-|------|--------|---------|
-| Billing audit log table | DONE | `billing_audit_logs` append-only table with event types, Stripe IDs, amounts, status transitions |
-| Payment verification logging | DONE | Logs `payment_verified` or `payment_rejected_amount_mismatch` on checkout completion |
-| Subscription status logging | DONE | Logs `subscription_status_changed` for all status transitions (updates, cancellations, payment failures) |
-| ICE lifecycle logging | DONE | Logs `ice_paused_due_to_subscription` and `ice_restored` for subscription-driven changes |
-| Enhanced 410 messaging | DONE | Owner sees "Paused due to subscription status. Reactivate your plan..." vs public "This experience is temporarily unavailable." |
-
-**Billing Audit Event Types:**
-- `checkout_session_created` - When checkout session is initiated
-- `payment_verified` - Successful payment with amount validation
-- `payment_rejected_amount_mismatch` - Blocked payment due to suspicious amount
-- `subscription_status_changed` - Any status transition (active, canceled, past_due, etc.)
-- `ice_paused_due_to_subscription` - ICE auto-paused when subscription downgrades
-- `ice_restored` - ICE restored when subscription reactivates
-- `subscription_reactivated` - Subscription moved from inactive to active
-- `credits_granted` - Monthly credits added to user account
+-   **AgoraCube Device System**: Enables Orbit display on thin clients with kiosk mode and voice interaction.
+-   **Orbit Signal Schema v0.1**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems.
+-   **Guest ICE Builder**: Allows anonymous users to create time-limited ICE previews at `/try` with server-persisted data and rate limiting.
+-   **Preview Share Bar**: Facilitates sharing of unclaimed Orbits.
+-   **Experience Analytics System**: Client-side tracking for experience and card views.
+-   **Multi-Tenant Security**: Implemented with HMAC-SHA256 signed access tokens and per-IP rate limiting.
+-   **Stripe Subscription System**: Full subscription billing with webhook-based synchronization for product plans.
+-   **Platform-Agnostic Deployment**: Configurable via environment variables.
+-   **Email & Notifications System**: Transactional emails via Resend and in-app notifications.
+-   **Interactivity Nodes Between Cards**: Supports conversational AI character interaction between cards in live previews.
+-   **Story-Specific Character AI**: Characters extracted from story content during preview creation with unique personas and in-character responses.
+-   **Card Pace Controls**: Preview modal includes Slow/Normal/Fast pace controls for card auto-advance timing.
+-   **Story Fidelity Modes (Structural Ingest)**: Content uploads detect type; scripts trigger Script-Exact Mode (parses scenes, dialogue) for card generation, preserving narrative order. Interpretive Mode (default for non-scripts) summarizes content.
+-   **Fidelity Mode Discipline**: Script-Exact is screenplay-only; business content uses Interpretive Mode, distinguishing structural grammar from malleable content.
+-   **Selective Expansion**: For scripts, checkout offers scene progress and expansion options (Preview Only, Full Story, Act 1).
+-   **Guided First-Run Experience**: A light, skippable walkthrough on first preview.
+-   **Login Does Not Unlock Features**: Login saves progress; payment unlocks media generation, AI interactivity, and publishing.
+-   **Guest-First Conversion Model**: Users experience value before identity or payment is requested.
+-   **Shopping List / Production Manifest**: Calculates and displays media counts with real-time price updates before checkout.
+-   **Download vs Publish**: Download produces a non-interactive video artifact; Publish creates a public, interactive experience requiring a subscription.
+-   **Editor Transition**: Users transition from Preview Editor to Professional/Production Editor post-upgrade.
+-   **Canonical Routing Rules**: Specific routes for CTAs like "Launch Interactive Builder" (`/try`), "Sign In" (`/login`), and "Dashboard" (`/dashboard`), emphasizing guest-first creation.
+-   **Website Extraction System**: Automatically detects and extracts product/menu data from business websites using Site Detection, Multi-Page Crawling, Quality Validation, and Image Filtering. Includes Site Fingerprinting for various platforms and DOM Extraction Strategies (Microdata/Schema.org, Repeating Sibling Patterns, Image + Price Cards).
 
 ## External Dependencies
 -   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
