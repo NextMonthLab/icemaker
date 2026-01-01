@@ -1,0 +1,144 @@
+Yes, continue to Phase 2, but do it with a tight scope so you don’t accidentally “optimise” your way into breaking working extraction.
+
+Phase 2 goal is simple:
+
+There must be exactly one deep crawling mechanism in the entire codebase.
+Everything else becomes a consumer of its outputs.
+
+That means deepScraper.ts:deepScrapeMultiplePages() is the only crawler. Any other multi-page logic becomes:
+	•	“choose candidate URLs”
+	•	“call deepScrapeMultiplePages”
+	•	“parse pages into menu/products”
+
+Nothing else.
+
+Here’s the Phase 2 plan I’d run.
+
+⸻
+
+Phase 2 PR: Unify Deep Crawling Patterns
+
+Acceptance Criteria (non-negotiable)
+	1.	No second multi-page crawler exists anywhere (no bespoke loops over links, no alternate navigation logic).
+	2.	All deep scan calls go through deepScrapeMultiplePages().
+	3.	Advanced Import only triggers deep crawling (still gated by claim + Orbit plan).
+	4.	Same or better extraction coverage on your smoke URLs.
+
+⸻
+
+Step-by-step
+
+1) Make deepScraper the “deep crawl API”
+
+In deepScraper.ts, ensure you have one canonical function with explicit options, something like:
+	•	deepScrapeMultiplePages(seedUrl, { candidates, maxPages, concurrency, scroll, timeoutMs, sameDomainOnly })
+
+If it already exists, don’t rewrite it. Just add missing options carefully.
+
+Add support for:
+	•	candidate URLs (explicit list OR discovery rules)
+	•	pagination handling (stop conditions)
+	•	PDF collection (as links, not necessarily parsed here)
+	•	job-friendly progress callbacks (optional, can be a stub for now)
+
+2) Replace extractMenuItemsMultiPage style flows with “candidate selection + deepScraper”
+
+Wherever you currently do:
+	•	find links
+	•	loop pages
+	•	scrape each page
+
+Replace with:
+	1.	candidate selection
+	2.	deepScrapeMultiplePages(candidates)
+	3.	parse results
+
+Candidate selection should be dumb and cheap, e.g.
+	•	nav links containing: menu, food, drinks, order, takeaway
+	•	product-ish paths: shop, products, collections, category
+	•	sitemap if available (advanced import only)
+
+3) Standardise what deepScraper returns
+
+Make sure the crawler returns a predictable structure per page:
+	•	url
+	•	finalUrl (after redirects)
+	•	html
+	•	text (optional)
+	•	title (optional)
+	•	metadata (optional: og tags, schema blocks)
+	•	screenshotPath (optional, if you use it)
+	•	errors (if failed)
+
+The important bit: every parser should work off this same structure. No one should need raw Puppeteer Page objects outside deepScraper.
+
+4) Add “crawl budget” rules to prevent runaway scans
+
+Even in advanced import, you need limits:
+	•	maxPages default, e.g. 50 (configurable by plan later)
+	•	stop if no new items discovered after N pages
+	•	stop if duplicate pages dominate
+	•	rate limiting per domain
+
+5) One place decides “deep scan or not”
+
+Confirm routes do not call deepScraper directly. They call orchestrator.
+	•	Discovery flow: shallow scan only
+	•	Advanced import: deepScrapeMultiplePages allowed
+
+6) Update smoke suite and compare
+
+Run the same URL suite and check:
+	•	number of pages crawled
+	•	items extracted
+	•	time to complete
+	•	quality scores
+	•	persistence behaviour
+
+If counts drop, don’t “patch” by adding more crawling logic elsewhere. Fix candidate selection or parsing.
+
+⸻
+
+What Phase 2 should NOT do
+	•	Don’t add batching/jobs yet (that’s Phase 3).
+	•	Don’t add new extractors.
+	•	Don’t change scoring thresholds.
+	•	Don’t change UI rendering.
+	•	Don’t add platform connectors.
+
+Just unify the crawl.
+
+⸻
+
+A crisp Replit/Claude Code prompt for Phase 2
+
+Paste this into your agent:
+
+Implement Phase 2: unify deep crawling so there is exactly one deep crawl mechanism.
+
+Rules:
+- deepScraper.ts:deepScrapeMultiplePages() is the ONLY multi-page crawler.
+- No module outside deepScraper may loop pages with its own navigation/scrolling/fetch logic.
+- All advanced import crawls are gated behind claimed + active Orbit plan. Discovery scans remain shallow.
+
+Tasks:
+1) Identify any remaining multi-page crawling logic outside deepScraper (e.g. extractMenuItemsMultiPage or similar).
+2) Refactor those functions into:
+   a) candidate URL selection
+   b) deepScrapeMultiplePages(candidates, options)
+   c) parse the returned pages into menu/products
+3) Standardise deepScraper return shape (url, finalUrl, html, optional schema blocks, errors).
+4) Add crawl budgets: maxPages, stop conditions, and same-domain enforcement.
+5) Ensure routes call orchestrator, not deepScraper directly.
+6) Update scripts/extraction-smoke.ts to report pages crawled + items extracted so we can compare before/after.
+
+Deliver:
+- A Phase 2 PR with minimal behavioural change besides consolidation.
+- A short changelog describing what crawling logic was removed and what deepScraper calls replaced it.
+
+
+⸻
+
+If you want one extra safety rail: keep the old path behind an internal flag for one release (USE_LEGACY_DEEP_CRAWL=false), but default OFF. That gives you a quick rollback without reintroducing fragmentation long-term.
+
+Go do Phase 2. Then we’ll tackle Phase 3 properly: batching + job architecture + virtualised review for the 200+ catalogue reality.
