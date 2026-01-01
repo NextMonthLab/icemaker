@@ -1,0 +1,199 @@
+Yes. And you’re right to be worried: the fastest way to kill a good extraction stack is to let “one more extractor” quietly spin up a second Puppeteer lifecycle and a third set of filters until nothing’s predictable.
+
+Two important truths up front:
+	•	I can’t genuinely “audit any and all extraction logic” without reading the repo files (line-by-line). What you pasted is a solid inventory + diagnosis, but it’s not a full code audit.
+	•	I can give you a safe, non-destructive audit workflow plus a consolidation plan that prevents overwriting good infrastructure, and a prompt you can give ChatGPT/Replit/Claude Code to do the real audit with code references.
+
+Below is what I’d do.
+
+⸻
+
+What’s actually going wrong (based on your summary)
+
+Your summary already exposes the core failure mode:
+
+Fragmentation patterns
+	1.	Multiple Puppeteer lifecycles
+
+	•	catalogueDetection.ts launching its own browser while deepScraper.ts already exists = guaranteed divergence, resource waste, and inconsistent behaviour.
+
+	2.	Parallel crawling stacks
+
+	•	New menu extraction (extractMenuItemsMultiPage) isn’t using deepScrapeMultiplePages, so you now have two “deep crawl” implementations.
+
+	3.	Inconsistent media filtering
+
+	•	Filtering in previewHelpers.ts and again in routes.ts means you’ll get different image pools depending on which path fired. That creates “random” results.
+
+	4.	Strategy selection not actually wired
+
+	•	detectSiteFingerprint exists but doesn’t control extraction. That’s dead code or half-integrated logic.
+
+	5.	Quality gates are “logging only”
+
+	•	If low-quality extraction still saves, you’ll pollute the dataset and future runs get worse.
+
+This is a classic “good system slowly turns into spaghetti” moment.
+
+⸻
+
+The fix: one extraction pipeline, many strategies
+
+You want one orchestrator that owns the lifecycle and hands off to strategies.
+
+The single rule
+
+Only one module is allowed to:
+	•	launch/borrow a browser instance
+	•	select strategy
+	•	run crawling
+	•	apply quality gates
+	•	decide whether to save or fallback
+
+Everything else becomes a plugin/strategy.
+
+⸻
+
+Proposed “Extraction Kernel” (the contract)
+
+Create a single orchestrator, e.g.
+
+server/services/extraction/orchestrator.ts
+
+It should expose something like:
+	•	runLightDiscovery(url, options) -> DiscoveryResult
+	•	runAdvancedImport(url, options) -> ImportJobResult
+
+And internally it calls strategies:
+	•	schemaStrategy
+	•	platformStrategy (Shopify/Woo etc)
+	•	domMenuStrategy
+	•	domCatalogueStrategy
+	•	pdfMenuStrategy
+
+But no strategy is allowed to launch Puppeteer.
+They must receive a scrapeContext from deepScraper.
+
+⸻
+
+Minimal consolidation plan (safe + low risk)
+
+This is the “don’t break production” path.
+
+Phase 1: Stop the bleeding (no functional changes)
+	1.	Browser lifecycle: single owner
+
+	•	Update catalogueDetection.ts to never puppeteer.launch()
+	•	It must call into deepScraper for page fetching / scrolling / navigation.
+
+	2.	Create one shared media filter
+
+	•	Make server/utils/mediaFilter.ts (or similar)
+	•	Move the blocklist + logic from previewHelpers.ts + routes.ts into this one file
+	•	Replace both call sites to use the same function.
+
+	3.	Wire in fingerprint usage
+
+	•	If detectSiteFingerprint exists, it should influence strategy selection in orchestrator.
+	•	If you’re not ready, delete it. Dead code is a liar.
+
+	4.	Turn “quality gating” into a real gate
+
+	•	validateExtractionQuality must return pass/fail + reasons
+	•	Orchestrator must block saving when fail, and trigger fallback.
+
+✅ Outcome: same features, but predictable behaviour.
+
+Phase 2: Unify deep crawling
+	1.	Replace any multi-page logic in catalogueDetection.ts with calls to:
+
+	•	deepScraper.deepScrapeMultiplePages(...)
+
+	2.	Ensure advanced import is the only pathway that does:
+
+	•	deep crawl
+	•	batching
+	•	PDFs
+	•	connectors
+
+✅ Outcome: one deep crawl path, less duplicate logic.
+
+Phase 3: Make it testable
+	•	Add a set of “golden URL” fixtures and snapshot the extracted output.
+	•	Add regression tests: “this URL yields X menu sections” etc.
+
+✅ Outcome: you can refactor without fear.
+
+⸻
+
+What I need from you to do a real audit in this chat
+
+To genuinely audit, you can paste:
+	•	the contents of those 5 files, or
+	•	key excerpts: exports + main functions + where they’re called, or
+	•	give me a GitHub link to those files (public or in a snippet)
+
+Without that, I’m operating off your inventory, not the code.
+
+⸻
+
+Prompt you can paste into Replit/Claude Code for a true audit (with code references)
+
+Copy/paste this exactly:
+
+You are acting as a senior backend engineer performing a non-destructive audit of all extraction logic. 
+Goal: consolidate without overwriting working infrastructure.
+
+Scope: audit and produce a report covering ALL extraction logic paths, with code references (file + function names + call sites).
+
+Files known to contain extraction logic:
+- server/services/catalogueDetection.ts
+- server/services/deepScraper.ts
+- server/previewHelpers.ts
+- server/routes.ts
+- server/orbitPackGenerator.ts
+
+Audit tasks (must do all):
+1) Build a call graph:
+   - For each route that triggers extraction (e.g. /api/orbit/auto-generate), trace the full execution path.
+   - Identify which functions fetch HTML, which parse it, which filter images, which save results.
+   - Output as a structured map: entrypoint -> modules -> functions.
+
+2) Identify duplication and divergence:
+   - Where Puppeteer is launched (ensure only one owner).
+   - Where multi-page crawling exists (identify parallel implementations).
+   - Where media filtering exists (blocklists and heuristics).
+   - Where site fingerprinting exists and whether it affects strategy selection.
+   - Where quality validation exists and whether it blocks saving or only logs.
+
+3) Define “canonical owners”:
+   - deepScraper.ts must be the sole owner of browser lifecycle and page fetching.
+   - One shared mediaFilter utility must be used everywhere.
+   - One orchestrator must own strategy selection + quality gating + save/fallback decisions.
+
+4) Produce a consolidation plan with minimal risk:
+   - Step-by-step PR plan: Phase 1 (no behaviour change), Phase 2 (unify crawl), Phase 3 (tests).
+   - For each step: exact files to edit, what to delete/move, what functions become wrappers.
+   - Explicitly list anything that must NOT change.
+
+5) Implement Phase 1 only (safe refactor):
+   - Remove duplicated puppeteer.launch from catalogueDetection.ts (delegate to deepScraper).
+   - Create shared server/utils/mediaFilter.ts and update previewHelpers.ts and routes.ts to use it.
+   - Convert validateExtractionQuality into a real gate return type, but do not change thresholds yet.
+   - Ensure all changes preserve current outputs.
+
+Deliverables:
+- AUDIT_REPORT.md with call graph + findings + recommended owners
+- A Phase 1 PR with the safe changes above
+- Notes on any new TODOs for Phase 2/3
+
+This forces an actual audit and stops Replit/Claude from “rewriting everything” like an eager intern.
+
+⸻
+
+One more blunt bit of advice
+
+Don’t start “adding new extraction features” until Phase 1 is done.
+Otherwise you’re building more floors onto a house while the foundations are being moved.
+
+If you paste the contents of catalogueDetection.ts and deepScraper.ts here, I’ll do a proper line-by-line review and tell you exactly what to cut, what to wrap, and what to promote to “canonical”.
