@@ -7390,10 +7390,17 @@ STRICT RULES:
   // Generate Orbit from URL - UNIFIED with deep extraction (everyone gets the best experience)
   app.post("/api/orbit/generate", async (req, res) => {
     try {
-      const { url } = req.body;
+      const { url, siteTypeHint } = req.body;
 
       if (!url || typeof url !== "string") {
         return res.status(400).json({ message: "URL is required" });
+      }
+      
+      // Validate siteTypeHint if provided
+      const validHints = ['menu', 'catalogue', 'hybrid', 'auto', undefined] as const;
+      const userHint = validHints.includes(siteTypeHint) ? siteTypeHint : undefined;
+      if (userHint && userHint !== 'auto') {
+        console.log(`[Orbit/generate] User provided site type hint: ${userHint}`);
       }
 
       // Import helpers
@@ -7513,9 +7520,22 @@ STRICT RULES:
       console.log(`[Orbit/generate] Deep extraction for: ${url}`);
       let scores, plan;
       try {
-        scores = await detectSiteType(url);
-        plan = deriveExtractionPlan(scores);
-        console.log(`[Orbit/generate] Detected type: ${plan.type} (confidence: ${(plan.confidence * 100).toFixed(1)}%)`);
+        // If user provided a hint (not 'auto'), use it directly instead of detecting
+        if (userHint && userHint !== 'auto') {
+          console.log(`[Orbit/generate] Using user-provided site type: ${userHint}`);
+          plan = {
+            type: userHint as 'menu' | 'catalogue' | 'hybrid',
+            confidence: 1.0, // User is always confident
+            rationale: `User selected: ${userHint}`,
+            strategies: userHint === 'menu' ? ['menu-dom'] : userHint === 'catalogue' ? ['catalogue-dom'] : ['menu-dom', 'catalogue-dom'],
+          };
+          scores = null; // Not used when hint provided
+        } else {
+          // Auto-detect
+          scores = await detectSiteType(url);
+          plan = deriveExtractionPlan(scores);
+          console.log(`[Orbit/generate] Detected type: ${plan.type} (confidence: ${(plan.confidence * 100).toFixed(1)}%)`);
+        }
       } catch (detectErr: any) {
         await storage.setOrbitGenerationStatus(businessSlug, "failed", `Detection failed: ${detectErr.message}`);
         return res.status(400).json({ message: `Could not analyze website: ${detectErr.message}` });
