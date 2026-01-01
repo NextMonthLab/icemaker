@@ -140,6 +140,25 @@ export default function GlobalNav({
                   </Link>
                 );
               })}
+              
+              {context === 'marketing' && (
+                <>
+                  <div className="w-px h-4 bg-white/20 mx-1" />
+                  {audienceLinks.map((link) => (
+                    <Link key={link.href} href={link.href}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-white/50 hover:text-white hover:bg-white/10 gap-1 h-8 px-2 text-xs"
+                        data-testid={`global-nav-${link.href.split('/').pop()}`}
+                      >
+                        <link.icon className="w-3 h-3" />
+                        {link.label}
+                      </Button>
+                    </Link>
+                  ))}
+                </>
+              )}
             </nav>
 
             <div className="flex items-center gap-2">
