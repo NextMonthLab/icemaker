@@ -26,6 +26,7 @@ export interface DeepScrapeResult {
   title: string | null;
   text?: string; // Optional plain text extraction
   schemaBlocks?: any[]; // JSON-LD structured data
+  squarespaceData?: { items: any[]; context: any }; // Squarespace-specific embedded data
   screenshotBase64?: string;
   crawlStatus: CrawlStatus; // Explicit outcome for routing
   error?: string;
@@ -184,11 +185,11 @@ export async function deepScrapeUrl(url: string, options: DeepScraperOptions = {
     const html = await page.content();
     const title = await page.title();
     
-    // Debug: Check if content was actually rendered
-    const bodyContent = await page.evaluate(() => document.body.innerText?.substring(0, 500) || '');
+    // Extract full page text (decoded entities) - critical for menu extraction
+    const bodyText = await page.evaluate(() => document.body.innerText || '');
     const imgCount = await page.evaluate(() => document.querySelectorAll('img').length);
     console.log(`[DeepScraper] Page rendered - Title: "${title}", Images found: ${imgCount}`);
-    console.log(`[DeepScraper] Body text preview: ${bodyContent.substring(0, 200)}...`);
+    console.log(`[DeepScraper] Body text preview: ${bodyText.substring(0, 200)}...`);
     
     let screenshotBase64: string | undefined;
     if (opts.captureScreenshot) {
@@ -196,7 +197,7 @@ export async function deepScrapeUrl(url: string, options: DeepScraperOptions = {
       screenshotBase64 = screenshot as string;
     }
     
-    // Extract JSON-LD schema blocks
+    // Extract JSON-LD schema blocks (Menu, MenuItem, Product, etc.)
     const schemaBlocks = await page.evaluate(() => {
       const blocks: any[] = [];
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
@@ -209,10 +210,34 @@ export async function deepScrapeUrl(url: string, options: DeepScraperOptions = {
       return blocks;
     });
     
+    // Extract Squarespace-specific data (menu items are often embedded as JSON)
+    const squarespaceData = await page.evaluate(() => {
+      const result: any = { items: [], context: null };
+      try {
+        // Try to find Squarespace context with menu/product data
+        if ((window as any).Static?.SQUARESPACE_CONTEXT) {
+          result.context = (window as any).Static.SQUARESPACE_CONTEXT;
+        }
+        // Look for store items
+        const scripts = document.querySelectorAll('script');
+        scripts.forEach(script => {
+          const text = script.textContent || '';
+          // Squarespace stores items in various embedded JSON formats
+          const itemMatch = text.match(/StoreItemJson\s*=\s*(\{[\s\S]*?\});/);
+          if (itemMatch) {
+            try {
+              result.items.push(JSON.parse(itemMatch[1]));
+            } catch {}
+          }
+        });
+      } catch {}
+      return result;
+    });
+    
     // Get final URL after any redirects
     const finalUrl = page.url();
     
-    console.log(`[DeepScraper] Successfully scraped ${url} (${html.length} chars, ${imgCount} images, ${schemaBlocks.length} schema blocks)`);
+    console.log(`[DeepScraper] Successfully scraped ${url} (${html.length} chars, ${bodyText.length} text chars, ${imgCount} images, ${schemaBlocks.length} schema blocks)`);
     
     // Check if page returned minimal content (might be bot protection page)
     const hasContent = html.length > 1000;
@@ -222,7 +247,9 @@ export async function deepScrapeUrl(url: string, options: DeepScraperOptions = {
       finalUrl,
       html,
       title: title || null,
+      text: bodyText, // Full decoded text content
       schemaBlocks: schemaBlocks.length > 0 ? schemaBlocks : undefined,
+      squarespaceData: (squarespaceData.items.length > 0 || squarespaceData.context) ? squarespaceData : undefined,
       screenshotBase64,
       crawlStatus: hasContent ? 'ok' : 'no_content',
     };
