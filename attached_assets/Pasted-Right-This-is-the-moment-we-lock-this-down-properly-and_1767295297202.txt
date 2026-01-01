@@ -1,0 +1,196 @@
+Right. This is the moment we lock this down properly and stop bleeding time on clever-but-brittle detection.
+
+Below is a full, comprehensive Replit promotion / instruction you can drop straight into replit.md or paste as the top-level brief for Ratplet. It is written to be unambiguous, grounded in real evidence, and decisive. No wiggle room. No “maybe”.
+
+I’ve structured it so Replit understands:
+	•	why this change is mandatory
+	•	what must be built
+	•	what must not break
+	•	what success looks like
+
+⸻
+
+🔒 Canonical Instruction: Orbit Extraction Intent Selection (Mandatory)
+
+Context (Read First – Do Not Skip)
+
+The current Orbit auto-detection system is architecturally unreliable for a large class of real websites, particularly B2B and service-led sites.
+
+This has been proven through live testing and production logs.
+
+Real failure evidence (ground truth)
+
+Site: https://www.tugo.co.uk
+Type: B2B food service company
+Platform: WordPress (correctly fingerprinted)
+
+Observed behaviour (Jan 1, 2026):
+	•	Auto-detection returned none (confidence ~38%)
+	•	Fingerprinting correctly identified WordPress
+	•	Extraction pipeline then searched for menu / catalogue patterns
+	•	Zero candidates found
+	•	API returned 400 – Could not extract any products or menu items
+
+This is not a threshold issue.
+This is not a tuning issue.
+This is a category error.
+
+B2B service sites do not emit the structural signals (prices, products, menus) that the detection heuristics rely on.
+
+Threshold tuning, CMS fingerprinting, and fallback logic have all been attempted and do not solve the core problem.
+
+⸻
+
+Strategic Decision (Canonical)
+
+We are replacing detection-first extraction with intent-first extraction, while keeping auto-detect as an optional convenience.
+
+Orbit must ask users what information on their site is most valuable to visitors, and use that answer to select the extraction strategy.
+
+This is now a foundational product decision, not an experiment.
+
+⸻
+
+Required UX Change (Frontend)
+
+Add an Intent Selection Step to Orbit Claim / Generate Flow
+
+Primary question (exact wording)
+“What information on your site would be most valuable to visitors?”
+
+Supporting microcopy
+Orbit will focus on understanding and structuring this information first.
+
+Options (exact intent labels)
+	•	Menu & pricing
+What you sell, organised into clear sections
+	•	Products & shop items
+Individual products, variations and details
+	•	Services & capabilities
+What you do, who it’s for, and how it helps
+	•	Case studies & work
+Examples, projects and results
+	•	Articles & resources
+Blogs, guides and helpful content
+	•	Locations & contact details
+Where you operate and how to get in touch
+	•	Let Orbit decide (default)
+We’ll try to work it out automatically
+
+UX rules
+	•	Default selection: Let Orbit decide
+	•	Selection must be clearly optional
+	•	User must be able to rerun Orbit with a different selection later
+	•	This is intent-setting, not a permanent lock
+
+⸻
+
+Required API Change (Backend)
+
+Extend /api/orbit/generate
+
+Request body
+
+{
+  "sourceUrl": "https://example.com",
+  "extractionIntent": "menu" 
+}
+
+Where extractionIntent can be:
+	•	"menu"
+	•	"catalogue"
+	•	"service"
+	•	"case_studies"
+	•	"content"
+	•	"locations"
+	•	null (auto-detect)
+
+Behaviour rules (non-negotiable)
+	•	If extractionIntent is provided:
+	•	Bypass all site-type detection and scoring
+	•	Route directly to the matching extractor
+	•	Do NOT apply confidence thresholds
+	•	Do NOT fall back to menu/catalogue heuristics
+	•	If extractionIntent is null:
+	•	Use existing auto-detection logic (unchanged)
+
+This ensures:
+	•	Backward compatibility
+	•	Zero regression for working restaurant flows
+	•	Deterministic behaviour when the user knows their intent
+
+⸻
+
+Extraction Architecture (Clarification)
+
+Orbit must operate on extraction archetypes, not “website types” or “industries”.
+
+Each extractor should assume:
+	•	It was intentionally selected
+	•	Absence of prices/products is NOT an error for service/content extractors
+	•	Success is defined by producing structured, visitor-useful information
+
+Example
+
+For "service" extraction:
+	•	Headings like “What we do”, “Services”, “Solutions”
+	•	Capability descriptions
+	•	Industries served
+	•	Value propositions
+	•	CTAs
+
+A lack of prices or products must never trigger a failure.
+
+⸻
+
+What Must Not Break (Critical)
+
+The following must remain unchanged and working:
+	•	Restaurant menu extraction (e.g. Red Lion Bloxham)
+	•	Auto-detect default behaviour
+	•	Existing tests for menu/catalogue extraction
+	•	Public API contract for callers who do not supply intent
+
+No regressions are acceptable here.
+
+⸻
+
+Success Criteria (Definition of Done)
+
+This change is considered successful when:
+	1.	Tugo.co.uk
+	•	Works on first run when “Services & capabilities” is selected
+	•	Returns structured service information
+	•	Does NOT return a 400 error
+	2.	Known restaurant site
+	•	Still extracts full menus via auto-detect
+	•	No loss of items or categories
+	3.	Developer clarity
+	•	Logs clearly state whether extraction was:
+	•	intent-driven, or
+	•	auto-detected
+	4.	UX clarity
+	•	Users understand why they are being asked
+	•	No jargon or technical language exposed
+
+⸻
+
+Final Note (Why this is locked)
+
+Auto-detection is a convenience feature.
+It is not reliable enough to be a gatekeeper.
+
+The user is the ultimate authority on what matters on their site.
+Orbit must respect that intent.
+
+This instruction is canonical and supersedes all previous detection-first approaches.
+
+⸻
+
+If you want, next we can:
+	•	Add multi-intent extraction (run services + case studies)
+	•	Add recommended defaults based on weak detection signals
+	•	Or formalise extractor interfaces so Claude and future agents can plug into them cleanly
+
+But for now:
+This fixes it once and for all.
