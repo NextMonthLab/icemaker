@@ -1,24 +1,5 @@
-import puppeteer, { Page } from 'puppeteer';
-import { execSync } from 'child_process';
-
-// Resolve chromium path dynamically for Nix environments
-function getChromiumPath(): string | undefined {
-  // Try environment variable first
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
-  
-  // Try to find chromium in PATH
-  try {
-    const path = execSync('which chromium || which chromium-browser', { encoding: 'utf8' }).trim();
-    if (path) return path;
-  } catch {}
-  
-  // Let puppeteer use its default
-  return undefined;
-}
-
-const chromiumPath = getChromiumPath();
+import { Page } from 'puppeteer';
+import { withPage, withMultiplePages } from './deepScraper';
 
 export interface DetectionSignals {
   structuredData: StructuredDataSignal[];
@@ -142,19 +123,7 @@ const MENU_URL_PATTERNS = [
 ];
 
 export async function detectSiteType(url: string): Promise<DetectionScores> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    ...(chromiumPath && { executablePath: chromiumPath }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-  });
-
-  try {
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    
-    const html = await page.content();
+  return withPage(url, async (page, html) => {
     const pageUrl = page.url();
 
     const signals: DetectionSignals = {
@@ -165,9 +134,7 @@ export async function detectSiteType(url: string): Promise<DetectionScores> {
     };
 
     return calculateScores(signals);
-  } finally {
-    await browser.close();
-  }
+  }, { timeout: 30000 });
 }
 
 async function detectStructuredData(page: Page): Promise<StructuredDataSignal[]> {
@@ -534,17 +501,7 @@ export function deriveExtractionPlan(scores: DetectionScores): ExtractionPlan {
 }
 
 export async function extractCatalogueItems(url: string): Promise<ExtractedProduct[]> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    ...(chromiumPath && { executablePath: chromiumPath }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-  });
-
-  try {
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
+  return withPage(url, async (page, html) => {
     const products = await page.evaluate(() => {
       const items: any[] = [];
       
@@ -591,23 +548,11 @@ export async function extractCatalogueItems(url: string): Promise<ExtractedProdu
       sourceUrl: url,
       tags: [],
     }));
-  } finally {
-    await browser.close();
-  }
+  }, { timeout: 30000 });
 }
 
 export async function extractMenuItems(url: string): Promise<ExtractedMenuItem[]> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    ...(chromiumPath && { executablePath: chromiumPath }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-  });
-
-  try {
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
+  return withPage(url, async (page, html) => {
     const menuItems = await page.evaluate(() => {
       const items: any[] = [];
       
@@ -664,9 +609,7 @@ export async function extractMenuItems(url: string): Promise<ExtractedMenuItem[]
       options: [],
       sourceUrl: url,
     }));
-  } finally {
-    await browser.close();
-  }
+  }, { timeout: 30000 });
 }
 
 // Multi-page menu extraction - follows category links to get actual items
@@ -681,154 +624,39 @@ export interface MultiPageMenuItem {
 }
 
 export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: number = 10): Promise<MultiPageMenuItem[]> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    ...(chromiumPath && { executablePath: chromiumPath }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-  });
+  // Menu-specific link patterns for multi-page crawling
+  const menuLinkPatterns = [
+    /burgers?/i, /chicken/i, /sides?/i, /drinks?/i, /desserts?/i,
+    /meals?/i, /buckets?/i, /wraps?/i, /salads?/i, /breakfast/i,
+    /lunch/i, /dinner/i, /appetizers?/i, /starters?/i, /mains?/i,
+    /pizzas?/i, /pasta/i, /sandwiches?/i, /sharing/i, /vegan/i,
+    /vegetarian/i, /kids/i, /combos?/i, /value/i, /specials?/i,
+    /rice/i, /bowls/i, /twisters?/i, /box/i, /savers/i, /classic/i, /dips/i
+  ];
 
-  const allItems: MultiPageMenuItem[] = [];
-  const visitedUrls = new Set<string>();
-
-  try {
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.setViewport({ width: 1920, height: 1080 });
-
-    console.log(`[MultiPage] Loading main menu page: ${baseUrl}`);
-    await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 45000 });
-    
-    // Wait for content to load
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Try to dismiss cookie consent banners
-    try {
-      const consentSelectors = [
-        '[id*="cookie"] button',
-        '[class*="cookie"] button',
-        '[id*="consent"] button',
-        '[class*="consent"] button',
-        'button[aria-label*="Accept"]',
-        'button[aria-label*="accept"]',
-        '[data-testid*="accept"]',
-        '#onetrust-accept-btn-handler',
-        '.accept-cookies',
-        'button:has-text("Accept")',
-      ];
-      for (const selector of consentSelectors) {
-        try {
-          const button = await page.$(selector);
-          if (button) {
-            await button.click();
-            console.log(`[MultiPage] Clicked consent button: ${selector}`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            break;
-          }
-        } catch {}
-      }
-    } catch {}
-    
-    // Scroll to load any lazy content
-    await page.evaluate(() => window.scrollTo(0, 500));
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Find category/section links on the main page
-    const categoryLinks = await page.evaluate((base) => {
-      const links: { url: string; name: string }[] = [];
-      const baseHost = new URL(base).hostname;
-      const basePath = new URL(base).pathname;
+  console.log(`[MultiPage] Starting extraction for: ${baseUrl}`);
+  
+  const { items, pagesVisited } = await withMultiplePages<MultiPageMenuItem>(
+    baseUrl,
+    async (page, html, pageUrl) => {
+      // Derive category name from URL
+      const urlPath = new URL(pageUrl).pathname;
+      const pathParts = urlPath.split('/').filter(Boolean);
+      const categoryName = pathParts.length > 0 
+        ? pathParts[pathParts.length - 1].replace(/-/g, ' ').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())
+        : 'Menu';
       
-      // Menu section patterns - these are sub-paths of the menu page
-      const menuKeywords = [
-        'burger', 'burgers', 'chicken', 'sides', 'side', 'drinks', 'drink',
-        'dessert', 'desserts', 'meals', 'meal', 'bucket', 'buckets', 'wrap', 'wraps',
-        'salad', 'salads', 'breakfast', 'lunch', 'dinner', 'appetizer', 'appetizers',
-        'starter', 'starters', 'main', 'mains', 'pizza', 'pizzas', 'pasta',
-        'sandwich', 'sandwiches', 'sharing', 'vegan', 'vegetarian', 'kids',
-        'combo', 'combos', 'value', 'new', 'whats-new', 'special', 'specials',
-        'rice', 'bowls', 'twisters', 'box', 'savers', 'classic', 'dips'
-      ];
-
-      const allLinks = document.querySelectorAll('a[href]');
-      allLinks.forEach(a => {
-        const href = a.getAttribute('href');
-        if (!href) return;
-        
-        try {
-          const fullUrl = new URL(href, base).href;
-          const urlObj = new URL(fullUrl);
-          const urlHost = urlObj.hostname;
-          const urlPath = urlObj.pathname;
-          
-          // Must be same domain
-          if (urlHost !== baseHost) return;
-          
-          // Skip the exact same URL as base
-          if (urlPath === basePath) return;
-          
-          // Check if this is a subpage of the menu page (e.g., /our-menu/burgers is child of /our-menu)
-          const isSubPage = urlPath.startsWith(basePath) && urlPath !== basePath && urlPath.length > basePath.length;
-          
-          // Or matches menu keywords anywhere in the path
-          const matchesKeyword = menuKeywords.some(kw => urlPath.toLowerCase().includes(kw));
-          
-          if (!isSubPage && !matchesKeyword) return;
-          
-          // Get link text for category name - try textContent, then title, then extract from URL
-          let text = (a.textContent || '').trim();
-          if (!text) text = (a.getAttribute('title') || '').trim();
-          if (!text) text = (a.getAttribute('aria-label') || '').trim();
-          if (!text) {
-            // Extract category name from URL path (e.g., /our-menu/burgers -> Burgers)
-            const pathParts = urlPath.split('/').filter(Boolean);
-            const lastPart = pathParts[pathParts.length - 1] || '';
-            text = lastPart.replace(/-/g, ' ').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
-          }
-          
-          if (text && text.length > 0 && text.length < 50 && !links.some(l => l.url === fullUrl)) {
-            links.push({ url: fullUrl, name: text });
-          }
-        } catch {}
-      });
-
-      return links;
-    }, baseUrl);
-
-    console.log(`[MultiPage] Found ${categoryLinks.length} category links`);
-    if (categoryLinks.length > 0) {
-      console.log(`[MultiPage] Categories:`, categoryLinks.slice(0, 5).map(c => c.name).join(', '));
+      return extractItemsFromPage(page, categoryName);
+    },
+    {
+      maxPages,
+      linkPatterns: menuLinkPatterns,
+      timeout: 45000,
     }
-    
-    // Also extract items from the main page first
-    const mainPageItems = await extractItemsFromPage(page, 'Menu');
-    allItems.push(...mainPageItems);
-    visitedUrls.add(baseUrl);
-
-    // Visit each category page (up to maxPages)
-    const pagesToVisit = categoryLinks.slice(0, maxPages);
-    
-    for (const category of pagesToVisit) {
-      if (visitedUrls.has(category.url)) continue;
-      visitedUrls.add(category.url);
-
-      try {
-        console.log(`[MultiPage] Visiting category: ${category.name} (${category.url})`);
-        await page.goto(category.url, { waitUntil: 'networkidle2', timeout: 30000 });
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const items = await extractItemsFromPage(page, category.name);
-        console.log(`[MultiPage] Found ${items.length} items in ${category.name}`);
-        allItems.push(...items);
-      } catch (err: any) {
-        console.error(`[MultiPage] Error visiting ${category.url}:`, err.message);
-      }
-    }
-
-    console.log(`[MultiPage] Total items extracted: ${allItems.length}`);
-    return allItems;
-  } finally {
-    await browser.close();
-  }
+  );
+  
+  console.log(`[MultiPage] Visited ${pagesVisited.length} pages, extracted ${items.length} items`);
+  return items;
 }
 
 async function extractItemsFromPage(page: Page, categoryName: string): Promise<MultiPageMenuItem[]> {

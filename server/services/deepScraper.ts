@@ -149,6 +149,149 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Execute a callback function with a Puppeteer page object.
+ * This is the canonical way for other modules to use the shared browser.
+ * The page is automatically closed after the callback completes.
+ * 
+ * @param url - URL to navigate to
+ * @param callback - Function to execute with the page
+ * @param options - Scraper options (timeout, scroll, etc.)
+ */
+export async function withPage<T>(
+  url: string,
+  callback: (page: Page, html: string) => Promise<T>,
+  options: DeepScraperOptions = {}
+): Promise<T> {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  let page: Page | null = null;
+  
+  try {
+    const browser = await getBrowser();
+    page = await browser.newPage();
+    
+    await page.setViewport({ width: 1920, height: 1080 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: opts.timeout,
+    });
+    
+    if (opts.waitForSelector) {
+      await page.waitForSelector(opts.waitForSelector, { timeout: 10000 }).catch(() => {});
+    }
+    
+    await delay(2000);
+    
+    if (opts.scrollPage) {
+      await autoScroll(page);
+    }
+    
+    await delay(1000);
+    
+    const html = await page.content();
+    
+    return await callback(page, html);
+  } finally {
+    if (page) {
+      await page.close().catch(() => {});
+    }
+  }
+}
+
+/**
+ * Execute a callback on multiple pages, using the shared browser.
+ * Uses configurable link patterns for discovery.
+ * 
+ * @param baseUrl - Starting URL
+ * @param callback - Function to extract data from each page
+ * @param options - Configuration for link discovery
+ */
+export async function withMultiplePages<T>(
+  baseUrl: string,
+  callback: (page: Page, html: string, pageUrl: string) => Promise<T[]>,
+  options: {
+    maxPages?: number;
+    linkPatterns?: RegExp[];
+    timeout?: number;
+  } = {}
+): Promise<{ items: T[]; pagesVisited: string[] }> {
+  const maxPages = options.maxPages || 10;
+  const allItems: T[] = [];
+  const visited = new Set<string>();
+  const toVisit: string[] = [baseUrl];
+  const pagesVisited: string[] = [];
+  
+  const parsedBase = new URL(baseUrl);
+  const baseDomain = parsedBase.hostname;
+  
+  while (toVisit.length > 0 && pagesVisited.length < maxPages) {
+    const url = toVisit.shift()!;
+    const normalizedUrl = normalizeUrl(url);
+    
+    if (visited.has(normalizedUrl)) continue;
+    visited.add(normalizedUrl);
+    
+    try {
+      const items = await withPage(url, async (page, html) => {
+        const extractedItems = await callback(page, html, url);
+        
+        // Extract links for further crawling using provided patterns or defaults
+        const linkPatterns = options.linkPatterns || [
+          /menu/i, /burgers?/i, /chicken/i, /sides?/i, /drinks?/i, /desserts?/i,
+          /meals?/i, /pizzas?/i, /salads?/i, /breakfast/i, /lunch/i, /dinner/i,
+          /products?/i, /collections?/i, /categories?/i, /shop/i
+        ];
+        
+        const links = extractNavigationLinksWithPatterns(html, url, baseDomain, linkPatterns);
+        for (const link of links) {
+          const normalizedLink = normalizeUrl(link);
+          if (!visited.has(normalizedLink) && !toVisit.includes(link)) {
+            toVisit.push(link);
+          }
+        }
+        
+        return extractedItems;
+      }, { timeout: options.timeout || 45000, scrollPage: true });
+      
+      allItems.push(...items);
+      pagesVisited.push(url);
+    } catch (error: any) {
+      console.error(`[DeepScraper] Error visiting ${url}:`, error.message);
+    }
+  }
+  
+  return { items: allItems, pagesVisited };
+}
+
+function extractNavigationLinksWithPatterns(
+  html: string,
+  baseUrl: string,
+  baseDomain: string,
+  patterns: RegExp[]
+): string[] {
+  const links: string[] = [];
+  const linkPattern = /<a[^>]*href=["']([^"'#]+)["'][^>]*>/gi;
+  
+  let match;
+  while ((match = linkPattern.exec(html)) !== null) {
+    try {
+      const href = match[1];
+      const absoluteUrl = new URL(href, baseUrl).href;
+      const parsed = new URL(absoluteUrl);
+      
+      if (parsed.hostname === baseDomain || parsed.hostname === `www.${baseDomain}` || `www.${parsed.hostname}` === baseDomain) {
+        if (patterns.some(pattern => pattern.test(parsed.pathname))) {
+          links.push(absoluteUrl);
+        }
+      }
+    } catch {}
+  }
+  
+  return Array.from(new Set(links)).slice(0, 15);
+}
+
 async function autoScroll(page: Page): Promise<void> {
   await page.evaluate(async () => {
     await new Promise<void>((resolve) => {
