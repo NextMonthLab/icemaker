@@ -14,7 +14,9 @@ import {
   Sparkles,
   X,
   Check,
-  Loader2
+  Loader2,
+  Package,
+  UtensilsCrossed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,14 @@ interface OrbitBox {
   sortOrder: number;
   isVisible: boolean;
   iceId: number | null;
+  price: number | null;
+  currency: string | null;
+  category: string | null;
+  subcategory: string | null;
+  tags: string[] | null;
+  sku: string | null;
+  availability: 'in_stock' | 'out_of_stock' | 'limited' | null;
+  popularityScore: number | null;
 }
 
 interface HubGridPanelProps {
@@ -60,6 +70,8 @@ const boxTypeIcons = {
   testimonial: Quote,
   pdf: FileIcon,
   ice: Sparkles,
+  product: Package,
+  menu_item: UtensilsCrossed,
 };
 
 const boxTypeLabels = {
@@ -68,6 +80,8 @@ const boxTypeLabels = {
   testimonial: 'Testimonial',
   pdf: 'PDF',
   ice: 'ICE Experience',
+  product: 'Product',
+  menu_item: 'Menu Item',
 };
 
 export function HubGridPanel({ businessSlug, planTier }: HubGridPanelProps) {
