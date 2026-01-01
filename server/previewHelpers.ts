@@ -1033,6 +1033,12 @@ export async function ingestSitePreview(
         const { deepScrapeUrl } = await import('./services/deepScraper');
         const deepResult = await deepScrapeUrl(url, { timeout: 45000 });
         
+        // Check for HTTP errors (403, 404, 500 etc)
+        if (deepResult.error) {
+          console.error(`[Ingestion] Deep scrape returned error: ${deepResult.error}`);
+          throw new Error(deepResult.error);
+        }
+        
         if (deepResult.html && deepResult.html.length > 0) {
           console.log(`[Ingestion] Deep scrape successful: ${deepResult.html.length} chars`);
           html = deepResult.html;
@@ -1082,7 +1088,10 @@ export async function ingestSitePreview(
         const { deepScrapeUrl } = await import('./services/deepScraper');
         const deepResult = await deepScrapeUrl(url);
         
-        if (deepResult.html && deepResult.html.length > html.length) {
+        // Skip enhancement if deep scrape returned an error
+        if (deepResult.error) {
+          console.log(`[Ingestion] Deep scrape enhancement skipped due to error: ${deepResult.error}`);
+        } else if (deepResult.html && deepResult.html.length > html.length) {
           console.log(`[Ingestion] Deep scrape enhanced: ${deepResult.html.length} chars (was ${html.length})`);
           html = deepResult.html;
           usedDeepScraping = true;

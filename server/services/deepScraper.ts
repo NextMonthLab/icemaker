@@ -93,6 +93,11 @@ async function getBrowser(): Promise<Browser> {
       '--disable-accelerated-2d-canvas',
       '--disable-gpu',
       '--window-size=1920,1080',
+      // Anti-detection args
+      '--disable-blink-features=AutomationControlled',
+      '--disable-features=IsolateOrigins,site-per-process',
+      '--disable-infobars',
+      '--ignore-certificate-errors',
     ],
   });
   
@@ -113,13 +118,80 @@ export async function deepScrapeUrl(url: string, options: DeepScraperOptions = {
     console.log('[DeepScraper] Page created successfully');
     
     await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Set realistic browser fingerprint to avoid bot detection
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
+    // Set extra headers that real browsers send
+    await page.setExtraHTTPHeaders({
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'no-cache',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': '?0',
+      'Sec-Ch-Ua-Platform': '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+    });
+    
+    // Remove automation detection signals
+    await page.evaluateOnNewDocument(() => {
+      // Hide webdriver flag
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      // Mock plugins array
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      // Mock languages
+      Object.defineProperty(navigator, 'languages', { get: () => ['en-GB', 'en-US', 'en'] });
+    });
+    
     console.log(`[DeepScraper] Navigating to ${url}...`);
-    await page.goto(url, {
+    const response = await page.goto(url, {
       waitUntil: 'networkidle2',
       timeout: opts.timeout,
     });
+    
+    // Check HTTP status - detect blocked/error responses early
+    const httpStatus = response?.status() || 200;
+    if (httpStatus === 403 || httpStatus === 401) {
+      console.log(`[DeepScraper] Access blocked (HTTP ${httpStatus}) for ${url}`);
+      await page.close();
+      return {
+        url,
+        finalUrl: url,
+        html: '',
+        title: `${httpStatus} - Access Blocked`,
+        text: `The website blocked automated access with HTTP ${httpStatus}. This may be due to bot protection.`,
+        error: `HTTP ${httpStatus}: Website blocked access`,
+      };
+    }
+    if (httpStatus === 404) {
+      console.log(`[DeepScraper] Page not found (HTTP 404) for ${url}`);
+      await page.close();
+      return {
+        url,
+        finalUrl: url,
+        html: '',
+        title: '404 - Not Found',
+        text: 'The requested page was not found.',
+        error: 'HTTP 404: Page not found',
+      };
+    }
+    if (httpStatus >= 500) {
+      console.log(`[DeepScraper] Server error (HTTP ${httpStatus}) for ${url}`);
+      await page.close();
+      return {
+        url,
+        finalUrl: url,
+        html: '',
+        title: `${httpStatus} - Server Error`,
+        text: 'The website returned a server error.',
+        error: `HTTP ${httpStatus}: Server error`,
+      };
+    }
     
     if (opts.waitForSelector) {
       await page.waitForSelector(opts.waitForSelector, { timeout: 10000 }).catch(() => {
