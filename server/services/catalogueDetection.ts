@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer';
-import { withPage, withMultiplePages } from './deepScraper';
+import { withPage, deepScrapeMultiplePages, LINK_PATTERNS, DeepScrapeResult } from './deepScraper';
 
 export interface DetectionSignals {
   structuredData: StructuredDataSignal[];
@@ -623,40 +623,122 @@ export interface MultiPageMenuItem {
   sourceUrl: string;
 }
 
+/**
+ * Multi-page menu extraction using the CANONICAL CRAWLER pattern:
+ * 1. Candidate selection (menu link patterns)
+ * 2. deepScrapeMultiplePages (crawl)
+ * 3. Parse results into menu items
+ */
 export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: number = 10): Promise<MultiPageMenuItem[]> {
-  // Menu-specific link patterns for multi-page crawling
-  const menuLinkPatterns = [
-    /burgers?/i, /chicken/i, /sides?/i, /drinks?/i, /desserts?/i,
-    /meals?/i, /buckets?/i, /wraps?/i, /salads?/i, /breakfast/i,
-    /lunch/i, /dinner/i, /appetizers?/i, /starters?/i, /mains?/i,
-    /pizzas?/i, /pasta/i, /sandwiches?/i, /sharing/i, /vegan/i,
-    /vegetarian/i, /kids/i, /combos?/i, /value/i, /specials?/i,
-    /rice/i, /bowls/i, /twisters?/i, /box/i, /savers/i, /classic/i, /dips/i
-  ];
-
   console.log(`[MultiPage] Starting extraction for: ${baseUrl}`);
   
-  const { items, pagesVisited } = await withMultiplePages<MultiPageMenuItem>(
-    baseUrl,
-    async (page, html, pageUrl) => {
-      // Derive category name from URL
-      const urlPath = new URL(pageUrl).pathname;
-      const pathParts = urlPath.split('/').filter(Boolean);
-      const categoryName = pathParts.length > 0 
-        ? pathParts[pathParts.length - 1].replace(/-/g, ' ').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())
-        : 'Menu';
-      
-      return extractItemsFromPage(page, categoryName);
-    },
-    {
-      maxPages,
-      linkPatterns: menuLinkPatterns,
-      timeout: 45000,
-    }
-  );
+  // STEP 1: Crawl using the canonical crawler with menu link patterns
+  const crawlResult = await deepScrapeMultiplePages(baseUrl, {
+    maxPages,
+    linkPatterns: LINK_PATTERNS.menu,
+    timeout: 45000,
+    sameDomainOnly: true,
+    rateLimitMs: 300,
+    stopAfterEmptyPages: 3
+  });
   
-  console.log(`[MultiPage] Visited ${pagesVisited.length} pages, extracted ${items.length} items`);
-  return items;
+  console.log(`[MultiPage] Crawled ${crawlResult.pages.length} pages (${crawlResult.stoppedReason})`);
+  
+  // STEP 2: Parse each page's results
+  const allItems: MultiPageMenuItem[] = [];
+  
+  for (const pageResult of crawlResult.pages) {
+    // Derive category from URL path
+    const categoryName = deriveCategoryFromUrl(pageResult.url);
+    
+    // STEP 2a: Try schema blocks first (most reliable, no DOM needed)
+    if (pageResult.schemaBlocks && pageResult.schemaBlocks.length > 0) {
+      const schemaItems = parseSchemaBlocksForMenuItems(pageResult.schemaBlocks, categoryName, pageResult.url);
+      if (schemaItems.length > 0) {
+        allItems.push(...schemaItems);
+        continue; // Schema blocks succeeded, skip DOM parsing
+      }
+    }
+    
+    // STEP 2b: Fall back to DOM parsing (requires re-fetch, but rare)
+    try {
+      const domItems = await extractItemsFromPage_withPage(pageResult.url, categoryName);
+      allItems.push(...domItems);
+    } catch (err) {
+      console.log(`[MultiPage] DOM parse failed for ${pageResult.url}: ${(err as Error).message}`);
+    }
+  }
+  
+  console.log(`[MultiPage] Visited ${crawlResult.pagesVisited.length} pages, extracted ${allItems.length} items`);
+  return allItems;
+}
+
+// Helper: derive category name from URL path
+function deriveCategoryFromUrl(url: string): string {
+  try {
+    const urlPath = new URL(url).pathname;
+    const pathParts = urlPath.split('/').filter(Boolean);
+    if (pathParts.length > 0) {
+      return pathParts[pathParts.length - 1]
+        .replace(/-/g, ' ')
+        .replace(/_/g, ' ')
+        .replace(/^\w/, c => c.toUpperCase());
+    }
+  } catch {}
+  return 'Menu';
+}
+
+// Pure function: parse JSON-LD schema blocks into menu items (no DOM needed)
+function parseSchemaBlocksForMenuItems(schemaBlocks: any[], category: string, sourceUrl: string): MultiPageMenuItem[] {
+  const results: MultiPageMenuItem[] = [];
+  
+  const processItem = (item: any, section: string) => {
+    if (item['@type'] === 'MenuItem' || item['@type'] === 'Product') {
+      let imageUrl = item.image;
+      if (Array.isArray(imageUrl)) imageUrl = imageUrl[0];
+      if (typeof imageUrl === 'object' && imageUrl?.url) imageUrl = imageUrl.url;
+      
+      results.push({
+        name: item.name || 'Unknown',
+        description: item.description || null,
+        price: item.offers?.price || item.price || null,
+        currency: item.offers?.priceCurrency || item.priceCurrency || 'GBP',
+        category: section,
+        imageUrl: imageUrl || null,
+        sourceUrl
+      });
+    }
+    if (item.hasMenuItem) {
+      (Array.isArray(item.hasMenuItem) ? item.hasMenuItem : [item.hasMenuItem])
+        .forEach((mi: any) => processItem(mi, item.name || section));
+    }
+    if (item.hasMenuSection) {
+      (Array.isArray(item.hasMenuSection) ? item.hasMenuSection : [item.hasMenuSection])
+        .forEach((ms: any) => processItem(ms, ms.name || section));
+    }
+    if (item.itemListElement) {
+      item.itemListElement.forEach((el: any) => processItem(el.item || el, section));
+    }
+  };
+  
+  for (const block of schemaBlocks) {
+    try {
+      if (Array.isArray(block)) {
+        block.forEach(d => processItem(d, category));
+      } else {
+        processItem(block, category);
+      }
+    } catch {}
+  }
+  
+  return results;
+}
+
+// DOM extraction fallback (requires browser page)
+async function extractItemsFromPage_withPage(url: string, categoryName: string): Promise<MultiPageMenuItem[]> {
+  return withPage(url, async (page, html) => {
+    return extractItemsFromPage(page, categoryName);
+  }, { timeout: 30000 });
 }
 
 async function extractItemsFromPage(page: Page, categoryName: string): Promise<MultiPageMenuItem[]> {
