@@ -7387,7 +7387,7 @@ STRICT RULES:
     }
   });
 
-  // Generate Orbit from URL - creates/reuses preview and links to orbit
+  // Generate Orbit from URL - UNIFIED with deep extraction (everyone gets the best experience)
   app.post("/api/orbit/generate", async (req, res) => {
     try {
       const { url } = req.body;
@@ -7396,24 +7396,43 @@ STRICT RULES:
         return res.status(400).json({ message: "URL is required" });
       }
 
+      // Import helpers
+      const { validateUrlSafety, ingestSitePreview: ingestSite, generatePreviewId: genPreviewId } = await import("./previewHelpers");
       const { generateSlug } = await import("./orbitPackGenerator");
+      const { detectSiteType, deriveExtractionPlan, extractCatalogueItems, extractMenuItemsMultiPage, validateExtractionQuality, fingerprintSite } = await import("./services/catalogueDetection");
+      const { deepScrapeMultiplePages } = await import("./services/deepScraper");
+      
       const businessSlug = generateSlug(url);
 
-      // Check if orbit already exists with a preview
+      // SSRF protection
+      const validation = await validateUrlSafety(url.trim());
+      if (!validation.safe) {
+        // Check if orbit meta exists and mark as failed
+        const existingMeta = await storage.getOrbitMeta(businessSlug);
+        if (existingMeta) {
+          await storage.setOrbitGenerationStatus(businessSlug, "failed", validation.error || "Invalid URL");
+        }
+        return res.status(400).json({ message: validation.error || "Invalid URL" });
+      }
+
+      // Check if orbit already exists with boxes
       let orbitMeta = await storage.getOrbitMeta(businessSlug);
       
-      if (orbitMeta?.previewId && orbitMeta.generationStatus === "ready") {
-        // Return existing orbit with preview
-        const preview = await storage.getPreviewInstance(orbitMeta.previewId);
-        if (preview) {
+      if (orbitMeta?.generationStatus === "ready") {
+        // Check if we have actual content
+        const existingBoxes = await storage.getOrbitBoxes(businessSlug);
+        if (existingBoxes.length > 0) {
+          const preview = orbitMeta.previewId ? await storage.getPreviewInstance(orbitMeta.previewId) : null;
           return res.json({
             success: true,
             businessSlug,
             previewId: orbitMeta.previewId,
             status: "ready",
-            brandName: preview.siteIdentity?.validatedContent?.brandName || preview.siteTitle,
+            brandName: preview?.siteIdentity?.validatedContent?.brandName || preview?.siteTitle || businessSlug,
+            itemsExtracted: existingBoxes.length,
           });
         }
+        // Has orbit but no boxes - re-extract
       }
 
       // Create or update orbit meta
@@ -7428,17 +7447,10 @@ STRICT RULES:
         await storage.setOrbitGenerationStatus(businessSlug, "generating");
       }
 
-      // Import preview helpers
-      const { validateUrlSafety, ingestSitePreview: ingestSite, generatePreviewId: genPreviewId } = await import("./previewHelpers");
+      // Get user ID if authenticated (for creator tracking)
+      const userId = req.isAuthenticated() ? (req.user as any)?.id : null;
 
-      // Validate URL (SSRF protection)
-      const validation = await validateUrlSafety(url.trim());
-      if (!validation.safe) {
-        await storage.setOrbitGenerationStatus(businessSlug, "failed", validation.error);
-        return res.status(400).json({ message: validation.error || "Invalid URL" });
-      }
-
-      // Ingest site using existing preview pipeline
+      // First: Ingest site for brand metadata (preview data)
       let siteData;
       try {
         siteData = await ingestSite(url.trim());
@@ -7447,13 +7459,154 @@ STRICT RULES:
         return res.status(400).json({ message: `Could not access website: ${err.message}` });
       }
 
-      // Get user ID if authenticated (for creator tracking)
-      const userId = req.isAuthenticated() ? (req.user as any)?.id : null;
+      // Run deep site detection (same as auto-generate)
+      console.log(`[Orbit/generate] Deep extraction for: ${url}`);
+      let scores, plan;
+      try {
+        scores = await detectSiteType(url);
+        plan = deriveExtractionPlan(scores);
+        console.log(`[Orbit/generate] Detected type: ${plan.type} (confidence: ${(plan.confidence * 100).toFixed(1)}%)`);
+      } catch (detectErr: any) {
+        await storage.setOrbitGenerationStatus(businessSlug, "failed", `Detection failed: ${detectErr.message}`);
+        return res.status(400).json({ message: `Could not analyze website: ${detectErr.message}` });
+      }
 
-      // Create preview instance using existing system
+      // Site fingerprinting
+      try {
+        const fingerprint = await fingerprintSite(url);
+        console.log(`[Orbit/generate] Fingerprint: ${fingerprint.platform} (${fingerprint.type}) - strategies: ${fingerprint.strategies.join(', ')}`);
+      } catch (fpError) {
+        console.log(`[Orbit/generate] Fingerprint detection skipped: ${(fpError as Error).message}`);
+      }
+
+      let extractedItems: any[] = [];
+      let qualityInfo: { score: number; passed: boolean; issues: string[] } | null = null;
+
+      // Extract based on detection (DEEP EXTRACTION FOR EVERYONE)
+      if (plan.type === 'catalogue' || plan.type === 'hybrid') {
+        const products = await extractCatalogueItems(url);
+        extractedItems.push(...products.map(p => ({
+          ...p,
+          boxType: 'product',
+        })));
+        console.log(`[Orbit/generate] Extracted ${products.length} catalogue products`);
+      }
+
+      if (plan.type === 'menu' || plan.type === 'hybrid') {
+        console.log(`[Orbit/generate] Using multi-page extraction to follow category links...`);
+        const menuItems = await extractMenuItemsMultiPage(url, 15);
+        
+        // Validate extraction quality
+        const quality = validateExtractionQuality(menuItems);
+        qualityInfo = { score: quality.score, passed: quality.passed, issues: quality.issues };
+        console.log(`[Orbit/generate] Extraction quality: ${quality.score}/100 (${quality.passed ? 'PASSED' : 'FAILED'})`);
+        
+        // QUALITY GATE: Hard block if quality fails
+        if (!quality.passed) {
+          console.log(`[Orbit/generate] QUALITY GATE BLOCKED: Score ${quality.score}/100 below threshold. Issues: ${quality.issues.join(', ')}`);
+          await storage.setOrbitGenerationStatus(businessSlug, "failed", `Quality gate failed: ${quality.issues.join(', ')}`);
+          return res.status(400).json({ 
+            message: `Extraction quality too low (${quality.score}/100). ${quality.issues.join('. ')}`,
+            qualityGateBlocked: true,
+            quality: qualityInfo,
+          });
+        }
+        
+        if (menuItems.length > 0) {
+          const cleanedItems = menuItems.map(m => ({
+            ...m,
+            imageUrl: m.imageUrl && !isExtractionBadImage(m.imageUrl) ? m.imageUrl : null,
+          }));
+          
+          extractedItems.push(...cleanedItems.map(m => ({
+            title: m.name,
+            description: m.description,
+            price: m.price,
+            currency: m.currency,
+            category: m.category,
+            imageUrl: m.imageUrl,
+            sourceUrl: m.sourceUrl,
+            tags: [],
+            boxType: 'product',
+            availability: 'available' as const,
+          })));
+          console.log(`[Orbit/generate] Extracted ${menuItems.length} menu items with multi-page crawl`);
+        }
+      }
+
+      // If no catalogue/menu detected, try deep scrape for general content
+      if (extractedItems.length === 0 && (plan.type === 'unknown' || plan.type === 'content')) {
+        console.log(`[Orbit/generate] No catalogue/menu found, running deep scrape for content...`);
+        try {
+          const deepResult = await deepScrapeMultiplePages(url, { maxPages: 10, maxDepth: 2 });
+          
+          // Check for HTTP errors in content
+          const hasHttpErrors = deepResult.pages.some(p => 
+            p.content.toLowerCase().includes('403 forbidden') ||
+            p.content.toLowerCase().includes('404 not found') ||
+            p.content.toLowerCase().includes('access denied')
+          );
+          
+          if (hasHttpErrors) {
+            await storage.setOrbitGenerationStatus(businessSlug, "failed", "Website returned error pages (403/404)");
+            return res.status(400).json({ 
+              message: "Website returned error pages. Please ensure the URL is publicly accessible.",
+              qualityGateBlocked: true,
+            });
+          }
+          
+          console.log(`[Orbit/generate] Deep scraped ${deepResult.pages.length} pages`);
+        } catch (err) {
+          console.log(`[Orbit/generate] Deep scrape failed: ${(err as Error).message}`);
+        }
+      }
+
+      // QUALITY GATE: Block if no items extracted
+      if (extractedItems.length === 0) {
+        await storage.setOrbitGenerationStatus(businessSlug, "failed", "No catalogue items could be extracted from this website");
+        return res.status(400).json({ 
+          message: "Could not extract any products or menu items from this website. The site may not have a standard catalogue structure.",
+          qualityGateBlocked: true,
+          itemsExtracted: 0,
+        });
+      }
+
+      // Store extracted items as orbit boxes
+      // Clear existing boxes if re-extracting
+      const existingBoxes = await storage.getOrbitBoxes(businessSlug);
+      if (existingBoxes.length > 0) {
+        for (const box of existingBoxes) {
+          await storage.deleteOrbitBox(box.id);
+        }
+      }
+      
+      for (let i = 0; i < extractedItems.length; i++) {
+        const item = extractedItems[i];
+        await storage.createOrbitBox({
+          businessSlug,
+          boxType: item.boxType || 'product',
+          title: item.title || 'Unknown Item',
+          description: item.description || null,
+          sourceUrl: item.sourceUrl || url,
+          content: null,
+          imageUrl: item.imageUrl || null,
+          sortOrder: i + 1,
+          isVisible: true,
+          iceId: null,
+          price: item.price || null,
+          currency: item.currency || 'GBP',
+          category: item.category || null,
+          subcategory: null,
+          tags: item.tags || [],
+          sku: null,
+          availability: item.availability || 'available',
+        });
+      }
+
+      // Create preview instance with FULL brand metadata from ingestion
       const preview = await storage.createPreviewInstance({
         id: genPreviewId(),
-        ownerUserId: userId, // Track creator for viewer-context admin detection
+        ownerUserId: userId,
         ownerIp: userId ? null : req.ip || null,
         sourceUrl: url.trim(),
         sourceDomain: validation.domain!,
@@ -7462,13 +7615,13 @@ STRICT RULES:
         keyServices: siteData.keyServices,
         contactInfo: null,
         siteIdentity: siteData.siteIdentity,
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year for orbits
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         ingestedPagesCount: siteData.pagesIngested,
         totalCharsIngested: siteData.totalChars,
         status: "active",
       });
 
-      // Link preview to orbit
+      // Link preview to orbit and mark ready
       await storage.setOrbitPreviewId(businessSlug, preview.id);
       await storage.setOrbitGenerationStatus(businessSlug, "ready");
 
@@ -7478,12 +7631,26 @@ STRICT RULES:
         previewId: preview.id,
         status: "ready",
         brandName: siteData.siteIdentity?.validatedContent?.brandName || siteData.title,
+        detection: {
+          type: plan.type,
+          confidence: plan.confidence,
+          rationale: plan.rationale,
+        },
+        itemsExtracted: extractedItems.length,
+        quality: qualityInfo,
         pagesIngested: siteData.pagesIngested,
-        totalChars: siteData.totalChars,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating orbit:", error);
-      res.status(500).json({ message: "Error generating orbit" });
+      // Try to mark as failed if we have a businessSlug
+      try {
+        const { generateSlug } = await import("./orbitPackGenerator");
+        const businessSlug = generateSlug(req.body.url || '');
+        if (businessSlug) {
+          await storage.setOrbitGenerationStatus(businessSlug, "failed", error.message);
+        }
+      } catch {}
+      res.status(500).json({ message: error.message || "Error generating orbit" });
     }
   });
 
