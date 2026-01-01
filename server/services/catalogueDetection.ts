@@ -699,29 +699,54 @@ export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: numbe
     await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 45000 });
     
     // Wait for content to load
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Try to dismiss cookie consent banners
+    try {
+      const consentSelectors = [
+        '[id*="cookie"] button',
+        '[class*="cookie"] button',
+        '[id*="consent"] button',
+        '[class*="consent"] button',
+        'button[aria-label*="Accept"]',
+        'button[aria-label*="accept"]',
+        '[data-testid*="accept"]',
+        '#onetrust-accept-btn-handler',
+        '.accept-cookies',
+        'button:has-text("Accept")',
+      ];
+      for (const selector of consentSelectors) {
+        try {
+          const button = await page.$(selector);
+          if (button) {
+            await button.click();
+            console.log(`[MultiPage] Clicked consent button: ${selector}`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            break;
+          }
+        } catch {}
+      }
+    } catch {}
+    
+    // Scroll to load any lazy content
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Find category/section links on the main page
     const categoryLinks = await page.evaluate((base) => {
       const links: { url: string; name: string }[] = [];
       const baseHost = new URL(base).hostname;
+      const basePath = new URL(base).pathname;
       
-      // Look for menu category links
-      const menuPatterns = [
-        /\/menu\//i,
-        /\/our-menu\//i,
-        /\/food\//i,
-        /\/category\//i,
-        /burgers?/i,
-        /chicken/i,
-        /sides?/i,
-        /drinks?/i,
-        /desserts?/i,
-        /meals?/i,
-        /buckets?/i,
-        /wraps?/i,
-        /salads?/i,
-        /breakfast/i,
+      // Menu section patterns - these are sub-paths of the menu page
+      const menuKeywords = [
+        'burger', 'burgers', 'chicken', 'sides', 'side', 'drinks', 'drink',
+        'dessert', 'desserts', 'meals', 'meal', 'bucket', 'buckets', 'wrap', 'wraps',
+        'salad', 'salads', 'breakfast', 'lunch', 'dinner', 'appetizer', 'appetizers',
+        'starter', 'starters', 'main', 'mains', 'pizza', 'pizzas', 'pasta',
+        'sandwich', 'sandwiches', 'sharing', 'vegan', 'vegetarian', 'kids',
+        'combo', 'combos', 'value', 'new', 'whats-new', 'special', 'specials',
+        'rice', 'bowls', 'twisters', 'box', 'savers', 'classic', 'dips'
       ];
 
       const allLinks = document.querySelectorAll('a[href]');
@@ -731,18 +756,36 @@ export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: numbe
         
         try {
           const fullUrl = new URL(href, base).href;
-          const urlHost = new URL(fullUrl).hostname;
+          const urlObj = new URL(fullUrl);
+          const urlHost = urlObj.hostname;
+          const urlPath = urlObj.pathname;
           
           // Must be same domain
           if (urlHost !== baseHost) return;
           
-          // Check if it matches menu patterns
-          const isMenuLink = menuPatterns.some(pattern => pattern.test(href));
-          if (!isMenuLink) return;
+          // Skip the exact same URL as base
+          if (urlPath === basePath) return;
           
-          // Get link text for category name
-          const text = (a.textContent || a.getAttribute('title') || '').trim();
-          if (text && text.length < 50 && !links.some(l => l.url === fullUrl)) {
+          // Check if this is a subpage of the menu page (e.g., /our-menu/burgers is child of /our-menu)
+          const isSubPage = urlPath.startsWith(basePath) && urlPath !== basePath && urlPath.length > basePath.length;
+          
+          // Or matches menu keywords anywhere in the path
+          const matchesKeyword = menuKeywords.some(kw => urlPath.toLowerCase().includes(kw));
+          
+          if (!isSubPage && !matchesKeyword) return;
+          
+          // Get link text for category name - try textContent, then title, then extract from URL
+          let text = (a.textContent || '').trim();
+          if (!text) text = (a.getAttribute('title') || '').trim();
+          if (!text) text = (a.getAttribute('aria-label') || '').trim();
+          if (!text) {
+            // Extract category name from URL path (e.g., /our-menu/burgers -> Burgers)
+            const pathParts = urlPath.split('/').filter(Boolean);
+            const lastPart = pathParts[pathParts.length - 1] || '';
+            text = lastPart.replace(/-/g, ' ').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+          }
+          
+          if (text && text.length > 0 && text.length < 50 && !links.some(l => l.url === fullUrl)) {
             links.push({ url: fullUrl, name: text });
           }
         } catch {}
@@ -752,6 +795,9 @@ export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: numbe
     }, baseUrl);
 
     console.log(`[MultiPage] Found ${categoryLinks.length} category links`);
+    if (categoryLinks.length > 0) {
+      console.log(`[MultiPage] Categories:`, categoryLinks.slice(0, 5).map(c => c.name).join(', '));
+    }
     
     // Also extract items from the main page first
     const mainPageItems = await extractItemsFromPage(page, 'Menu');
@@ -787,6 +833,10 @@ export async function extractMenuItemsMultiPage(baseUrl: string, maxPages: numbe
 
 async function extractItemsFromPage(page: Page, categoryName: string): Promise<MultiPageMenuItem[]> {
   const pageUrl = page.url();
+  
+  // Scroll to trigger lazy loading
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await new Promise(resolve => setTimeout(resolve, 500));
   
   const items = await page.evaluate((category) => {
     const results: any[] = [];
@@ -831,58 +881,131 @@ async function extractItemsFromPage(page: Page, categoryName: string): Promise<M
       } catch {}
     });
 
-    // If no structured data, try DOM extraction
+    // If no structured data, try DOM extraction with structural heuristics
     if (results.length === 0) {
-      // Look for product/menu cards
-      const cardSelectors = [
-        '[class*="product"]',
-        '[class*="menu-item"]',
-        '[class*="item-card"]',
-        '[class*="food-item"]',
-        '[data-testid*="product"]',
-        '[data-testid*="menu"]',
-        'article',
-      ];
-
-      for (const selector of cardSelectors) {
-        const cards = document.querySelectorAll(selector);
-        if (cards.length < 3) continue;
-
-        cards.forEach(card => {
-          // Find name
-          const nameEl = card.querySelector('h1, h2, h3, h4, [class*="title"], [class*="name"]');
-          const name = nameEl?.textContent?.trim();
-          if (!name || name.length > 100) return;
-
-          // Find price
-          const priceRegex = /[£$€]\s*(\d+(?:\.\d{2})?)/;
-          const priceMatch = card.textContent?.match(priceRegex);
-          const price = priceMatch ? priceMatch[1] : null;
-
-          // Find image
-          const img = card.querySelector('img');
-          let imageUrl = img?.getAttribute('src') || img?.getAttribute('data-src') || null;
-          if (imageUrl && !imageUrl.startsWith('http')) {
-            imageUrl = new URL(imageUrl, window.location.origin).href;
-          }
-
-          // Find description
-          const descEl = card.querySelector('p, [class*="desc"]');
-          const description = descEl?.textContent?.trim() || null;
-
-          if (name && !results.some(r => r.name === name)) {
-            results.push({
-              name,
-              description,
-              price,
-              currency: 'GBP',
-              category,
-              imageUrl,
+      const processedNames = new Set<string>();
+      const priceRegex = /[£$€]\s*(\d+(?:\.\d{2})?)/;
+      
+      // Strategy 1: Look for microdata/schema.org attributes
+      const microdataItems = document.querySelectorAll('[itemprop="name"], [itemtype*="Product"], [itemtype*="MenuItem"]');
+      microdataItems.forEach(el => {
+        const name = el.textContent?.trim();
+        if (!name || name.length < 2 || name.length > 80) return;
+        if (processedNames.has(name.toLowerCase())) return;
+        
+        // Find nearby price and image
+        const parent = el.closest('[itemscope]') || el.parentElement?.parentElement;
+        const priceEl = parent?.querySelector('[itemprop="price"]');
+        const price = priceEl?.textContent?.match(priceRegex)?.[1] || null;
+        const img = parent?.querySelector('img');
+        let imageUrl = img?.getAttribute('src') || img?.getAttribute('data-src') || null;
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          try { imageUrl = new URL(imageUrl, window.location.origin).href; } catch {}
+        }
+        
+        processedNames.add(name.toLowerCase());
+        results.push({ name, description: null, price, currency: 'GBP', category, imageUrl });
+      });
+      
+      // Strategy 2: Find repeating sibling structures (product grids/lists)
+      if (results.length === 0) {
+        // Look for containers with multiple similar children (grid patterns)
+        const containers = document.querySelectorAll('ul, ol, [role="list"], main, section, article');
+        
+        for (const container of containers) {
+          const children = Array.from(container.children);
+          if (children.length < 3) continue;
+          
+          // Check if children have similar structure (likely a product grid)
+          const childSignatures = children.slice(0, 5).map(child => {
+            const hasImg = child.querySelector('img') !== null;
+            const hasPrice = priceRegex.test(child.textContent || '');
+            const hasHeading = child.querySelector('h1, h2, h3, h4, h5, h6') !== null;
+            return `${hasImg}-${hasPrice}-${hasHeading}`;
+          });
+          
+          // If most children have the same pattern, it's likely a product grid
+          const mostCommon = childSignatures.sort((a, b) => 
+            childSignatures.filter(s => s === b).length - childSignatures.filter(s => s === a).length
+          )[0];
+          const matchCount = childSignatures.filter(s => s === mostCommon).length;
+          
+          if (matchCount >= 3 && mostCommon.includes('true')) {
+            children.forEach(child => {
+              // Extract name from heading or first strong text
+              const heading = child.querySelector('h1, h2, h3, h4, h5, h6, strong, b');
+              const name = heading?.textContent?.trim();
+              if (!name || name.length < 2 || name.length > 80) return;
+              if (processedNames.has(name.toLowerCase())) return;
+              if (/^(add|buy|order|view|see)/i.test(name)) return; // Skip CTAs
+              
+              // Extract price
+              const priceMatch = child.textContent?.match(priceRegex);
+              const price = priceMatch ? priceMatch[1] : null;
+              
+              // Extract image
+              const img = child.querySelector('img');
+              let imageUrl = img?.getAttribute('src') || img?.getAttribute('data-src') || null;
+              if (imageUrl && !imageUrl.startsWith('http')) {
+                try { imageUrl = new URL(imageUrl, window.location.origin).href; } catch {}
+              }
+              // Skip tiny images (icons)
+              if (img && (img.width < 50 || img.height < 50)) imageUrl = null;
+              
+              // Extract description
+              const desc = child.querySelector('p')?.textContent?.trim() || null;
+              
+              processedNames.add(name.toLowerCase());
+              results.push({ name, description: desc, price, currency: 'GBP', category, imageUrl });
             });
+            
+            if (results.length > 0) break;
+          }
+        }
+      }
+      
+      // Strategy 3: Find images with adjacent text (card patterns)
+      if (results.length === 0) {
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+          const src = img.getAttribute('src') || img.getAttribute('data-src') || '';
+          if (!src || src.includes('icon') || src.includes('logo') || src.includes('avatar')) return;
+          if (img.width > 0 && img.width < 80) return; // Skip small images
+          
+          // Find the card container (walk up max 4 levels)
+          let card: Element | null = img.parentElement;
+          for (let i = 0; i < 4 && card; i++) {
+            const text = card.textContent || '';
+            if (text.length > 10 && text.length < 500) {
+              // Check for price indicator (strong signal for product)
+              if (priceRegex.test(text)) {
+                const heading = card.querySelector('h1, h2, h3, h4, h5, h6, strong, b, [role="heading"]');
+                const name = heading?.textContent?.trim();
+                if (name && name.length > 2 && name.length < 80 && !processedNames.has(name.toLowerCase())) {
+                  if (/^(add|buy|order|view|menu|sign|login)/i.test(name)) return;
+                  
+                  const priceMatch = text.match(priceRegex);
+                  let imageUrl = src;
+                  if (!imageUrl.startsWith('http')) {
+                    try { imageUrl = new URL(imageUrl, window.location.origin).href; } catch {}
+                  }
+                  
+                  processedNames.add(name.toLowerCase());
+                  results.push({
+                    name,
+                    description: null,
+                    price: priceMatch ? priceMatch[1] : null,
+                    currency: 'GBP',
+                    category,
+                    imageUrl
+                  });
+                }
+                break;
+              }
+            }
+            card = card.parentElement;
           }
         });
-
-        if (results.length > 0) break;
       }
     }
 
