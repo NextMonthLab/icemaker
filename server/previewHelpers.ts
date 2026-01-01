@@ -1004,10 +1004,10 @@ export async function ingestSitePreview(
   try {
     notify('fetching', 'Connecting to your website...');
     
-    // Fetch main page
+    // Fetch main page (30 second timeout for slower sites)
     const response = await fetch(url, {
       headers: { "User-Agent": "NextMonth-Preview/1.0" },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
