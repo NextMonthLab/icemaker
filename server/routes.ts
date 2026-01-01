@@ -7737,19 +7737,63 @@ STRICT RULES:
         }
       }
 
-      // QUALITY GATE: Block if no items extracted
+      // QUALITY GATE with FALLBACK: If catalogue/menu extraction fails, try service extraction
       // Exception: Intent-driven service/content extractions should not fail on empty items
       // (per spec: "A lack of prices or products must never trigger a failure" for service/content extractors)
       const noQualityGateTypes = ['service', 'case_studies', 'content', 'locations'];
       const skipQualityGate = plan.intentDriven && noQualityGateTypes.includes(plan.type);
       
-      if (extractedItems.length === 0 && !skipQualityGate) {
-        await storage.setOrbitGenerationStatus(businessSlug, "failed", "No catalogue items could be extracted from this website");
-        return res.status(400).json({ 
-          message: "Could not extract any products or menu items from this website. The site may not have a standard catalogue structure.",
-          qualityGateBlocked: true,
-          itemsExtracted: 0,
-        });
+      // FALLBACK: If catalogue/menu extraction found nothing, try service extraction
+      if (extractedItems.length === 0 && !skipQualityGate && (plan.type === 'catalogue' || plan.type === 'menu')) {
+        console.log(`[Orbit/generate] FALLBACK: ${plan.type} extraction found 0 items, trying service extraction...`);
+        try {
+          const { extractServiceConceptsMultiPage } = await import("./services/catalogueDetection");
+          const serviceResult = await extractServiceConceptsMultiPage(url);
+          if (serviceResult.length > 0) {
+            console.log(`[Orbit/generate] FALLBACK SUCCESS: Found ${serviceResult.length} service concepts`);
+            extractedItems.push(...serviceResult.map((item: any) => ({
+              title: item.name || item.title,
+              description: item.description,
+              price: null,
+              currency: 'GBP',
+              category: item.category || 'Services',
+              imageUrl: null,
+              sourceUrl: item.sourceUrl || url,
+              tags: (item.features || []).map((f: string) => ({ key: 'feature', value: f })),
+              boxType: 'service',
+              availability: 'available' as const,
+            })));
+            // Update plan to reflect fallback
+            plan.type = 'service';
+            plan.rationale = `Fallback: No ${plan.type} items found, extracted services instead`;
+          }
+        } catch (fallbackErr: any) {
+          console.log(`[Orbit/generate] FALLBACK FAILED: ${fallbackErr.message}`);
+        }
+      }
+      
+      // If still no items after fallback, use site identity data to create a basic presence
+      if (extractedItems.length === 0) {
+        console.log(`[Orbit/generate] Creating presence from site identity data...`);
+        // Create boxes from validated content if available
+        const validatedContent = siteData.siteIdentity?.validatedContent;
+        if (validatedContent?.whatWeDo?.length > 0) {
+          for (const service of validatedContent.whatWeDo) {
+            extractedItems.push({
+              title: service.slice(0, 60),
+              description: service,
+              price: null,
+              currency: 'GBP',
+              category: 'What We Do',
+              imageUrl: null,
+              sourceUrl: url,
+              tags: [{ key: 'source', value: 'site-identity' }],
+              boxType: 'service',
+              availability: 'available' as const,
+            });
+          }
+          console.log(`[Orbit/generate] Created ${extractedItems.length} boxes from site identity`);
+        }
       }
       
       // For intent-driven content types with zero items, log but continue with site data
