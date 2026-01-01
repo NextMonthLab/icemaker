@@ -7193,6 +7193,13 @@ STRICT RULES:
         return res.status(400).json({ message: "URL is required" });
       }
 
+      // SSRF protection
+      const { validateUrlSafety } = await import("./previewHelpers");
+      const validation = await validateUrlSafety(url.trim());
+      if (!validation.safe) {
+        return res.status(400).json({ message: validation.error || "Invalid URL" });
+      }
+
       const { detectSiteType, deriveExtractionPlan } = await import("./services/catalogueDetection");
       
       console.log(`[Orbit] Starting auto-detection for: ${url}`);
@@ -7232,6 +7239,13 @@ STRICT RULES:
 
       if (!url || typeof url !== "string") {
         return res.status(400).json({ message: "URL is required" });
+      }
+
+      // SSRF protection
+      const { validateUrlSafety } = await import("./previewHelpers");
+      const validation = await validateUrlSafety(url.trim());
+      if (!validation.safe) {
+        return res.status(400).json({ message: validation.error || "Invalid URL" });
       }
 
       const { generateSlug } = await import("./orbitPackGenerator");

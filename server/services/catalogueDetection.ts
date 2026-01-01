@@ -1,4 +1,24 @@
 import puppeteer, { Page } from 'puppeteer';
+import { execSync } from 'child_process';
+
+// Resolve chromium path dynamically for Nix environments
+function getChromiumPath(): string | undefined {
+  // Try environment variable first
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  
+  // Try to find chromium in PATH
+  try {
+    const path = execSync('which chromium || which chromium-browser', { encoding: 'utf8' }).trim();
+    if (path) return path;
+  } catch {}
+  
+  // Let puppeteer use its default
+  return undefined;
+}
+
+const chromiumPath = getChromiumPath();
 
 export interface DetectionSignals {
   structuredData: StructuredDataSignal[];
@@ -124,7 +144,7 @@ const MENU_URL_PATTERNS = [
 export async function detectSiteType(url: string): Promise<DetectionScores> {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    ...(chromiumPath && { executablePath: chromiumPath }),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
@@ -386,73 +406,79 @@ async function detectDomHeuristics(page: Page): Promise<DomHeuristicSignal[]> {
 }
 
 function calculateScores(signals: DetectionSignals): DetectionScores {
-  let scoreCatalogue = 0;
-  let scoreMenu = 0;
+  let rawCatalogue = 0;
+  let rawMenu = 0;
 
+  // Accumulate raw scores from all signals
   for (const signal of signals.structuredData) {
     if (['Product', 'Offer', 'ItemList'].includes(signal.type)) {
-      scoreCatalogue += signal.confidence * (signal.count > 5 ? 1.5 : 1);
+      rawCatalogue += signal.confidence * (signal.count > 5 ? 1.5 : 1);
     }
     if (['Restaurant', 'FoodEstablishment', 'Menu', 'MenuItem'].includes(signal.type)) {
-      scoreMenu += signal.confidence * (signal.count > 5 ? 1.5 : 1);
+      rawMenu += signal.confidence * (signal.count > 5 ? 1.5 : 1);
     }
   }
 
   for (const signal of signals.platform) {
     if (signal.type === 'ecommerce') {
-      scoreCatalogue += signal.confidence * 1.2;
+      rawCatalogue += signal.confidence * 1.2;
     }
     if (signal.type === 'food_ordering') {
-      scoreMenu += signal.confidence * 1.2;
+      rawMenu += signal.confidence * 1.2;
     }
     if (signal.type === 'delivery') {
-      scoreMenu += signal.confidence * 0.5;
+      rawMenu += signal.confidence * 0.5;
     }
   }
 
   for (const signal of signals.urlPatterns) {
     if (signal.type === 'catalogue') {
-      scoreCatalogue += signal.confidence * 0.8;
+      rawCatalogue += signal.confidence * 0.8;
     }
     if (signal.type === 'menu') {
-      scoreMenu += signal.confidence * 0.8;
+      rawMenu += signal.confidence * 0.8;
     }
   }
 
   for (const signal of signals.domHeuristics) {
     if (signal.type === 'product_card') {
-      scoreCatalogue += signal.confidence * 0.7;
+      rawCatalogue += signal.confidence * 0.7;
     }
     if (signal.type === 'menu_item') {
-      scoreMenu += signal.confidence * 0.7;
+      rawMenu += signal.confidence * 0.7;
     }
     if (signal.type === 'price_grid') {
       const boost = 0.3;
-      scoreCatalogue += boost;
-      scoreMenu += boost;
+      rawCatalogue += boost;
+      rawMenu += boost;
     }
   }
 
-  const maxScore = Math.max(scoreCatalogue, scoreMenu, 0.01);
-  scoreCatalogue = Math.min(1, scoreCatalogue / maxScore);
-  scoreMenu = Math.min(1, scoreMenu / maxScore);
+  // Use sigmoid-like clamping for confidence (higher raw scores = higher confidence)
+  // Raw score of 3.0 = ~0.9 confidence, 1.0 = ~0.5 confidence
+  const clampToConfidence = (raw: number) => Math.min(0.99, raw / (raw + 2.0));
+  
+  const scoreCatalogue = clampToConfidence(rawCatalogue);
+  const scoreMenu = clampToConfidence(rawMenu);
 
+  // Determine primary type based on normalized comparison
   let primaryType: 'catalogue' | 'menu' | 'hybrid' | 'none';
   const threshold = 0.3;
-  const hybridThreshold = 0.7;
+  const hybridThreshold = 0.6;
 
   if (scoreCatalogue > hybridThreshold && scoreMenu > hybridThreshold) {
     primaryType = 'hybrid';
-  } else if (scoreCatalogue > threshold && scoreCatalogue > scoreMenu * 1.3) {
+  } else if (scoreCatalogue > threshold && rawCatalogue > rawMenu * 1.3) {
     primaryType = 'catalogue';
-  } else if (scoreMenu > threshold && scoreMenu > scoreCatalogue * 1.3) {
+  } else if (scoreMenu > threshold && rawMenu > rawCatalogue * 1.3) {
     primaryType = 'menu';
   } else if (scoreCatalogue > threshold || scoreMenu > threshold) {
-    primaryType = scoreCatalogue > scoreMenu ? 'catalogue' : 'menu';
+    primaryType = rawCatalogue > rawMenu ? 'catalogue' : 'menu';
   } else {
     primaryType = 'none';
   }
 
+  // Confidence is the max score, reflecting how certain we are about the classification
   const confidence = Math.max(scoreCatalogue, scoreMenu);
 
   return {
@@ -510,7 +536,7 @@ export function deriveExtractionPlan(scores: DetectionScores): ExtractionPlan {
 export async function extractCatalogueItems(url: string): Promise<ExtractedProduct[]> {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    ...(chromiumPath && { executablePath: chromiumPath }),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
@@ -573,7 +599,7 @@ export async function extractCatalogueItems(url: string): Promise<ExtractedProdu
 export async function extractMenuItems(url: string): Promise<ExtractedMenuItem[]> {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    ...(chromiumPath && { executablePath: chromiumPath }),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
