@@ -1,0 +1,113 @@
+Absolutely. Here’s a clear, authoritative prompt you can send straight to Rappler. It’s framed as an engineering + product feasibility check, not a blue-sky brainstorm, so you’ll get a useful answer back.
+
+⸻
+
+Prompt to Rappler: Orbit Catalogue & Menu Ingestion Feasibility
+
+Context
+
+We are exploring a strategic expansion of Orbit into e-commerce and food/takeaway businesses.
+
+These businesses already maintain highly structured data (products, menus, categories, prices, options). The opportunity is for Orbit to ingest this data and re-express it as an explorable, AI-assisted knowledge surface, without replacing existing checkout or POS systems.
+
+Before proceeding, we need a clear assessment of feasibility, limits, and architectural implications.
+
+⸻
+
+Questions to Answer (Be Specific)
+
+1. Catalogue / Menu Ingestion
+
+Can the current Orbit architecture ingest and represent:
+	•	Full e-commerce catalogues (hundreds to thousands of products)
+	•	Full restaurant / takeaway menus (categories, items, modifiers, prices, allergens)
+
+Please address:
+	•	Maximum practical item counts
+	•	Required data normalisation or schemas
+	•	Whether ingestion is batch, sync-based, or incremental
+
+⸻
+
+2. Data Sources & Integration
+
+From a technical perspective, how viable is ingestion from:
+	•	E-commerce platforms (via API or export)
+	•	Restaurant menu sources (POS systems, delivery platforms, or structured JSON)
+
+What assumptions would Orbit need to make about:
+	•	Data freshness
+	•	Update frequency (price changes, availability)
+	•	Variant/modifier complexity (sizes, extras, dietary tags)
+
+⸻
+
+3. Tile & Cluster Representation at Scale
+
+Given that Orbit tiles are the core UI unit:
+	•	Can tiles scale to 1,000+ items if clustered and virtualised?
+	•	What limits exist in the current tile/grid/radar system?
+	•	Would large catalogues require a distinct “index layer” vs “orbit view”?
+
+Be explicit about:
+	•	Performance constraints
+	•	Frontend vs backend bottlenecks
+	•	Any required changes to rendering or data loading strategy
+
+⸻
+
+4. AI Understanding & Querying
+
+Assuming large structured datasets:
+	•	Can Orbit’s AI layer reason over full catalogues/menus?
+	•	Can it support queries like:
+	•	“What should I choose?”
+	•	“What’s similar to X?”
+	•	“What’s popular / underrated / good for Y?”
+
+What additional embedding, indexing, or summarisation steps would be required?
+
+⸻
+
+5. Intelligence & Analytics Potential
+
+From an architecture point of view, could Orbit surface insights such as:
+	•	High-interest, low-conversion items
+	•	Frequently asked questions per product/menu item
+	•	Comparison patterns
+	•	Drop-off or confusion signals
+
+If yes:
+	•	What data would need to be captured?
+	•	What is realistic for an initial MVP vs later phases?
+
+⸻
+
+6. Constraints & Red Flags
+
+Please be honest about:
+	•	Hard technical limits
+	•	Areas where Orbit would struggle without major rework
+	•	Trade-offs between completeness and usability
+	•	Anything that would make this a poor fit for Orbit’s current design philosophy
+
+⸻
+
+Output Format Requested
+
+Please respond with:
+	1.	Feasible now / feasible with work / not feasible breakdown
+	2.	Key architectural changes required (if any)
+	3.	A recommended MVP scope for e-commerce or takeaway use
+	4.	Clear risks and mitigations
+
+This is an exploration, not a commitment. Accuracy matters more than optimism.
+
+⸻
+
+If you want, once Rappler replies, I’ll:
+	•	Translate the response into plain English
+	•	Call out what’s genuinely exciting vs hand-wavy
+	•	Recommend whether this becomes a core Orbit vertical or a later extension
+
+This is the right question at exactly the right moment.
