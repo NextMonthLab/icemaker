@@ -1468,7 +1468,14 @@ export type InsertOrbitLead = z.infer<typeof insertOrbitLeadSchema>;
 export type OrbitLead = typeof orbitLeads.$inferSelect;
 
 // Orbit Boxes - grid curation for Business Hub
-export type OrbitBoxType = 'url' | 'text' | 'testimonial' | 'pdf' | 'ice';
+export type OrbitBoxType = 'url' | 'text' | 'testimonial' | 'pdf' | 'ice' | 'product' | 'menu_item';
+
+// Product/Menu item tags for filtering
+export interface ProductTag {
+  key: string;      // e.g., 'dietary', 'size', 'spice'
+  value: string;    // e.g., 'vegetarian', 'large', 'mild'
+  label?: string;   // Display label
+}
 
 export const orbitBoxes = pgTable("orbit_boxes", {
   id: serial("id").primaryKey(),
@@ -1485,6 +1492,16 @@ export const orbitBoxes = pgTable("orbit_boxes", {
   isVisible: boolean("is_visible").default(true).notNull(),
   
   iceId: integer("ice_id"),
+  
+  // Product/Menu item fields (used when boxType is 'product' or 'menu_item')
+  price: text("price"),                                    // Price as string to handle formatting (e.g., "12.99")
+  currency: text("currency").default("GBP"),               // ISO currency code
+  category: text("category"),                              // Product category for clustering
+  subcategory: text("subcategory"),                        // Optional subcategory
+  tags: jsonb("tags").$type<ProductTag[]>(),               // Dietary, size, allergens, etc.
+  sku: text("sku"),                                        // External reference/SKU
+  availability: text("availability").default("available"), // 'available', 'out_of_stock', 'limited'
+  popularityScore: integer("popularity_score").default(0), // For sorting by popularity
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
