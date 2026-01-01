@@ -2,13 +2,19 @@
 
 **Date:** January 2026  
 **Auditor:** Claude Code  
-**Status:** Fragmented - requires consolidation
+**Status:** ✅ PHASE 1 COMPLETE - Consolidated
 
 ---
 
 ## Executive Summary
 
-Extraction logic is fragmented across **5 files** with **5 separate Puppeteer launches** and **3 different image filtering functions**. This creates unpredictable behaviour, resource waste, and maintenance burden.
+~~Extraction logic is fragmented across **5 files** with **5 separate Puppeteer launches** and **3 different image filtering functions**.~~ 
+
+**UPDATE:** Phase 1 consolidation complete:
+- ✅ Only **1 Puppeteer launch** remains (in `deepScraper.ts` singleton)
+- ✅ Unified image filtering in `server/utils/mediaFilter.ts`
+- ✅ Quality gate now **blocks persistence** when score < 50
+- ✅ Site fingerprinting wired for logging
 
 ---
 
@@ -57,29 +63,30 @@ ingestSitePreview() with useDeepScraper=true
 
 ---
 
-## 2. Puppeteer Launch Locations (5 total)
+## 2. Puppeteer Launch Locations (~~5~~ 1 total)
 
 | File | Line | Function | Shared? | Notes |
 |------|------|----------|---------|-------|
 | `deepScraper.ts` | 58 | `getBrowser()` | ✅ Yes | Singleton pattern, reuses browser |
-| `catalogueDetection.ts` | 145 | `detectSiteType()` | ❌ No | Launches & closes immediately |
-| `catalogueDetection.ts` | 537 | `extractCatalogueItems()` | ❌ No | Launches & closes immediately |
-| `catalogueDetection.ts` | 600 | `extractMenuItems()` | ❌ No | Launches & closes immediately |
-| `catalogueDetection.ts` | 684 | `extractMenuItemsMultiPage()` | ❌ No | Launches & closes immediately |
+| ~~`catalogueDetection.ts`~~ | ~~145~~ | ~~`detectSiteType()`~~ | ~~❌ No~~ | ✅ Now uses `withPage()` |
+| ~~`catalogueDetection.ts`~~ | ~~537~~ | ~~`extractCatalogueItems()`~~ | ~~❌ No~~ | ✅ Now uses `withPage()` |
+| ~~`catalogueDetection.ts`~~ | ~~600~~ | ~~`extractMenuItems()`~~ | ~~❌ No~~ | ✅ Now uses `withPage()` |
+| ~~`catalogueDetection.ts`~~ | ~~684~~ | ~~`extractMenuItemsMultiPage()`~~ | ~~❌ No~~ | ✅ Now uses `withMultiplePages()` |
 
-**Problem:** `catalogueDetection.ts` has 4 independent browser launches. A single Orbit generation can launch 3+ browsers sequentially, wasting resources and creating inconsistent behaviour.
+**✅ RESOLVED:** All functions now delegate to `deepScraper.ts` singleton via `withPage()` and `withMultiplePages()` helpers.
 
 ---
 
-## 3. Image Filtering Functions (3 total)
+## 3. Image Filtering Functions (~~3~~ 1 unified)
 
-| File | Line | Function | Blocklist |
-|------|------|----------|-----------|
-| `previewHelpers.ts` | 284 | `extractImagePool()` | icon, logo, avatar, sprite, 1x1, visa, mastercard, paypal, payment, stripe, footer, social, facebook, twitter, instagram, linkedin |
-| `routes.ts` | 7236 | `isExtractionBadImage()` | visa, mastercard, paypal, payment, pp-card, stripe, footer, social, facebook, twitter, instagram, linkedin, icon, logo, avatar, sprite, 1x1, pixel, blank, loading, spinner, placeholder, amex, discover |
-| `catalogueDetection.ts` | 1090 | `isPaymentOrBadImage()` | visa, mastercard, paypal, payment, card, stripe, footer, social, facebook, twitter, instagram, linkedin, icon, logo, avatar, sprite, 1x1, pixel, blank, loading, spinner, placeholder |
+| File | Function | Status |
+|------|----------|--------|
+| `server/utils/mediaFilter.ts` | `isBadImageUrl()` | ✅ **NEW** - Unified blocklist |
+| ~~`previewHelpers.ts`~~ | ~~`extractImagePool()`~~ | Delegates to mediaFilter |
+| ~~`routes.ts`~~ | ~~`isExtractionBadImage()`~~ | Delegates to mediaFilter |
+| ~~`catalogueDetection.ts`~~ | ~~`isPaymentOrBadImage()`~~ | Delegates to mediaFilter |
 
-**Problem:** Three separate blocklists with slight variations. Changes to one won't propagate to others.
+**✅ RESOLVED:** All filtering now uses shared `server/utils/mediaFilter.ts` with union of all blocklists.
 
 ---
 
@@ -98,9 +105,9 @@ ingestSitePreview() with useDeepScraper=true
 
 | File | Function | Status |
 |------|----------|--------|
-| `catalogueDetection.ts` | `detectSiteFingerprint()` | ❌ Exported but never called |
-| `catalogueDetection.ts` | `validateExtractionQuality()` | ⚠️ Called but doesn't gate persistence |
-| `catalogueDetection.ts` | `getStrategiesForType()` | ❌ Exported but never called |
+| `catalogueDetection.ts` | `fingerprintSite()` | ✅ Now wired for logging in auto-generate route |
+| `catalogueDetection.ts` | `validateExtractionQuality()` | ✅ Now **blocks persistence** when score < 50 |
+| `catalogueDetection.ts` | `getStrategiesForType()` | Used internally by fingerprinting |
 
 ---
 
@@ -119,24 +126,27 @@ ingestSitePreview() with useDeepScraper=true
 
 ## 7. Consolidation Plan
 
-### Phase 1: Stop the Bleeding (No Behaviour Change)
+### Phase 1: Stop the Bleeding ✅ COMPLETE
 
-1. **Create shared media filter**
-   - Create `server/utils/mediaFilter.ts`
-   - Move blocklist logic from all 3 locations
-   - Update `previewHelpers.ts`, `routes.ts`, `catalogueDetection.ts` to import it
+1. **✅ Create shared media filter**
+   - Created `server/utils/mediaFilter.ts`
+   - Consolidated blocklist from all 3 locations
+   - All call sites now delegate to shared module
 
-2. **Make `catalogueDetection.ts` use `deepScraper.ts` for browser**
-   - Remove all 4 `puppeteer.launch()` calls
-   - Import `deepScrapeUrl()` from deepScraper
-   - Pass HTML to detection/extraction functions instead of Page objects
+2. **✅ Make `catalogueDetection.ts` use `deepScraper.ts` for browser**
+   - Removed all 4 `puppeteer.launch()` calls
+   - Added `withPage()` and `withMultiplePages()` helpers to deepScraper
+   - All detection/extraction uses shared browser singleton
 
-3. **Wire `validateExtractionQuality()` as a real gate**
-   - Return `quality.passed` must block persistence when false
-   - Log recommendations for fallback (AI extraction - future)
+3. **✅ Wire `validateExtractionQuality()` as a real gate**
+   - Quality gate blocks persistence when score < 50
+   - Response includes `quality` and `qualityGateBlocked` fields
+   - Recommendations logged for future AI fallback
 
-4. **Remove or wire `detectSiteFingerprint()`**
-   - Either use it in route to influence strategy, or delete it
+4. **✅ Wire `detectSiteFingerprint()` for logging**
+   - Added `fingerprintSite()` helper using shared browser
+   - Wired into auto-generate route with try/catch (non-blocking)
+   - Logs platform, type, strategies for future routing improvements
 
 ### Phase 2: Unify Deep Crawling
 
