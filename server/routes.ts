@@ -7570,7 +7570,7 @@ STRICT RULES:
         console.log(`[Orbit/generate] Using multi-page extraction to follow category links...`);
         const { deepScrapeMultiplePages, LINK_PATTERNS } = await import("./services/deepScraper");
         
-        // First, crawl the pages
+        // Single crawl pass - reuse results for both DOM and AI extraction
         const crawlResult = await deepScrapeMultiplePages(url, {
           maxPages: 15,
           linkPatterns: LINK_PATTERNS.menu,
@@ -7581,16 +7581,9 @@ STRICT RULES:
         });
         console.log(`[Orbit/generate] Crawled ${crawlResult.pages.length} pages`);
         
-        // Try DOM-based extraction first
-        let menuItems = await extractMenuItemsMultiPage(url, 15);
-        console.log(`[Orbit/generate] DOM extraction found ${menuItems.length} items`);
-        
-        // If DOM extraction returned 0 items, try AI fallback
-        if (menuItems.length === 0 && crawlResult.pages.length > 0) {
-          console.log(`[Orbit/generate] DOM extraction returned 0 items, trying AI fallback...`);
-          menuItems = await extractMenuItemsWithAI(crawlResult);
-          console.log(`[Orbit/generate] AI extraction found ${menuItems.length} items`);
-        }
+        // Use AI extraction directly with the crawled pages (avoids double-crawling)
+        let menuItems = await extractMenuItemsWithAI(crawlResult);
+        console.log(`[Orbit/generate] AI extraction found ${menuItems.length} items`);
         
         // Validate extraction quality
         const quality = validateExtractionQuality(menuItems);
