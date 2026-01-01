@@ -7255,7 +7255,7 @@ STRICT RULES:
       }
 
       const { generateSlug } = await import("./orbitPackGenerator");
-      const { detectSiteType, deriveExtractionPlan, extractCatalogueItems, extractMenuItemsMultiPage, validateExtractionQuality, detectSiteFingerprint } = await import("./services/catalogueDetection");
+      const { detectSiteType, deriveExtractionPlan, extractCatalogueItems, extractMenuItemsMultiPage, validateExtractionQuality, fingerprintSite } = await import("./services/catalogueDetection");
       
       const businessSlug = generateSlug(url);
 
@@ -7278,6 +7278,14 @@ STRICT RULES:
       const plan = deriveExtractionPlan(scores);
 
       console.log(`[Orbit] Detected type: ${plan.type} (confidence: ${(plan.confidence * 100).toFixed(1)}%)`);
+
+      // Site fingerprinting (logging only for now - to guide future strategy selection)
+      try {
+        const fingerprint = await fingerprintSite(url);
+        console.log(`[Orbit] Fingerprint: ${fingerprint.platform} (${fingerprint.type}) - strategies: ${fingerprint.strategies.join(', ')}, confidence: ${(fingerprint.confidence * 100).toFixed(0)}%`);
+      } catch (fpError) {
+        console.log(`[Orbit] Fingerprint detection skipped: ${(fpError as Error).message}`);
+      }
 
       let extractedItems: any[] = [];
       let qualityInfo: { score: number; passed: boolean; issues: string[] } | null = null;

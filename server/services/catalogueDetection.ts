@@ -1002,3 +1002,10 @@ function getStrategiesForType(type: SiteFingerprint['type']): SiteFingerprint['s
       return ['structured_data', 'multi_page', 'single_page', 'ai_fallback'];
   }
 }
+
+// Fetch page and run fingerprinting (for logging purposes)
+export async function fingerprintSite(url: string): Promise<SiteFingerprint> {
+  return withPage(url, async (page, html) => {
+    return detectSiteFingerprint(url, html);
+  });
+}
