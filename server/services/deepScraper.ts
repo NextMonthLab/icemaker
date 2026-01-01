@@ -1,4 +1,19 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { execSync } from 'child_process';
+
+// Resolve chromium path dynamically for Nix environments
+function getChromiumPath(): string | undefined {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  try {
+    const path = execSync('which chromium || which chromium-browser', { encoding: 'utf8' }).trim();
+    if (path) return path;
+  } catch {}
+  return undefined;
+}
+
+const chromiumPath = getChromiumPath();
 
 export interface DeepScrapeResult {
   html: string;
@@ -16,7 +31,7 @@ export interface DeepScraperOptions {
 }
 
 const DEFAULT_OPTIONS: DeepScraperOptions = {
-  timeout: 30000,
+  timeout: 45000,
   scrollPage: true,
   captureScreenshot: false,
 };
@@ -40,11 +55,9 @@ async function getBrowser(): Promise<Browser> {
   
   console.log('[DeepScraper] Launching headless browser...');
   
-  const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
-  
   browserInstance = await puppeteer.launch({
     headless: true,
-    executablePath: chromiumPath,
+    ...(chromiumPath && { executablePath: chromiumPath }),
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',

@@ -1004,17 +1004,49 @@ export async function ingestSitePreview(
   try {
     notify('fetching', 'Connecting to your website...');
     
-    // Fetch main page (30 second timeout for slower sites)
-    const response = await fetch(url, {
-      headers: { "User-Agent": "NextMonth-Preview/1.0" },
-      signal: AbortSignal.timeout(30000),
-    });
+    let html = '';
+    let fetchSucceeded = false;
+    
+    // Try basic fetch first (faster, works for simple sites)
+    try {
+      const response = await fetch(url, {
+        headers: { 
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        },
+        signal: AbortSignal.timeout(15000),
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      if (response.ok) {
+        html = await response.text();
+        fetchSucceeded = true;
+        console.log('[Ingestion] Basic fetch successful');
+      }
+    } catch (fetchError: any) {
+      console.log('[Ingestion] Basic fetch failed, will use deep scraping:', fetchError.message);
     }
-
-    let html = await response.text();
+    
+    // If basic fetch failed or returned minimal content, use deep scraping
+    if (!fetchSucceeded || html.length < 1000) {
+      console.log('[Ingestion] Using deep scraping to handle protected/dynamic sites...');
+      notify('deep_scraping', 'Rendering page content (this may take a moment)...');
+      
+      try {
+        const { deepScrapeUrl } = await import('./services/deepScraper');
+        const deepResult = await deepScrapeUrl(url, { timeout: 45000 });
+        
+        if (deepResult.html && deepResult.html.length > 0) {
+          console.log(`[Ingestion] Deep scrape successful: ${deepResult.html.length} chars`);
+          html = deepResult.html;
+          usedDeepScraping = true;
+        } else {
+          throw new Error('Deep scrape returned empty content');
+        }
+      } catch (deepError: any) {
+        console.error('[Ingestion] Deep scrape failed:', deepError.message);
+        throw new Error(`Failed to ingest site: ${deepError.message}`);
+      }
+    }
+    
     notify('extracting', 'Analyzing page content...');
 
     // Extract site identity (for brand continuity)
@@ -1042,19 +1074,17 @@ export async function ingestSitePreview(
       .trim()
       .substring(0, maxCharsPerPage);
 
-    // Always use deep scraping by default for best quality extraction
-    // Deep scraping renders JavaScript and captures dynamic content
-    console.log('[Ingestion] Using deep extraction for comprehensive content capture...');
-    notify('deep_scraping', 'Rendering page content for best results...');
-    
-    {
+    // If we used basic fetch, also try deep scraping for better content
+    if (!usedDeepScraping) {
+      console.log('[Ingestion] Enhancing with deep extraction...');
+      notify('deep_scraping', 'Rendering page content for best results...');
       
       try {
         const { deepScrapeUrl } = await import('./services/deepScraper');
         const deepResult = await deepScrapeUrl(url);
         
         if (deepResult.html && deepResult.html.length > html.length) {
-          console.log(`[Ingestion] Deep scrape successful: ${deepResult.html.length} chars (was ${html.length})`);
+          console.log(`[Ingestion] Deep scrape enhanced: ${deepResult.html.length} chars (was ${html.length})`);
           html = deepResult.html;
           usedDeepScraping = true;
           
@@ -1084,7 +1114,7 @@ export async function ingestSitePreview(
             .substring(0, maxCharsPerPage);
         }
       } catch (deepError: any) {
-        console.error('[Ingestion] Deep scrape failed, continuing with basic extraction:', deepError.message);
+        console.error('[Ingestion] Deep scrape enhancement failed, continuing with basic extraction:', deepError.message);
       }
     }
 
