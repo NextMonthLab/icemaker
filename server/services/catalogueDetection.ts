@@ -1146,7 +1146,9 @@ export async function extractMenuItemsWithAI(crawlResult: MultiPageCrawlResult):
     const truncatedContent = contentForAI.slice(0, 25000);
     
     try {
-      console.log(`[AI-Extract] Processing ${pageResult.url} (${truncatedContent.length} chars)`);
+      // Debug: Log content sample to see what AI receives
+      console.log(`[AI-Extract] Processing ${pageResult.url} (${truncatedContent.length} chars, ${relevantLines.length} price-related lines found)`);
+      console.log(`[AI-Extract] Content sample: ${truncatedContent.substring(0, 500).replace(/\n/g, ' | ')}...`);
       
       const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -1170,7 +1172,7 @@ Return ONLY valid JSON array, no markdown or explanation.`
           }
         ],
         temperature: 0.1,
-        max_tokens: 2000,
+        max_tokens: 4000, // Increased to allow extracting 50+ menu items
       });
       
       const content = response.choices[0]?.message?.content?.trim() || '[]';
