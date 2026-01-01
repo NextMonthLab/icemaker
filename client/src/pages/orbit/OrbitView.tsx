@@ -728,61 +728,68 @@ export default function OrbitView() {
     };
   };
 
-  if (!preview?.siteIdentity) {
-    if (hasBoxes) {
-      const boxSiteKnowledge = generateSiteKnowledgeFromBoxes(orbitData!.boxes!);
-      return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col relative">
-          <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" />
-          <div className="flex-1">
-            {showCustomization ? (
-              <BrandCustomizationScreen
-                logoUrl={null}
-                faviconUrl={null}
-                brandName={boxSiteKnowledge.brand.name}
-                defaultAccentColor="#ec4899"
-                imagePool={orbitData!.boxes!.map(b => b.imageUrl).filter(Boolean) as string[]}
-                previewId=""
-                canDeepScan={canDeepScan}
-                isFirstRun={isFirstRun}
-                onConfirm={handleCustomizationConfirm}
-              />
-            ) : (
-              <RadarGrid
-                knowledge={boxSiteKnowledge}
-                accentColor={brandPreferences?.accentColor || '#ec4899'}
-                lightMode={brandPreferences?.theme === 'light'}
-                onInteraction={() => trackMetric('interactions')}
-                onSendMessage={async (message) => {
-                  if (!conversationTracked) {
-                    trackMetric('conversations');
-                    setConversationTracked(true);
-                  }
-                  return `I'm here to help you explore our menu. We have ${orbitData!.boxes!.length} items available. What would you like to know?`;
-                }}
-              />
-            )}
-          </div>
-          {!showCustomization && isUnclaimed && (
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
-              <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
-                <span className="text-xs text-white/60">
-                  Powered by <span className="text-pink-400 font-medium">NextMonth</span>
-                </span>
-                <Button
-                  size="sm"
-                  className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-3 py-1 h-7"
-                  onClick={() => setShowClaimModal(true)}
-                  data-testid="button-claim-orbit"
-                >
-                  Claim This Orbit
-                </Button>
-              </div>
-            </div>
+  // Priority: Boxes (extracted menu/products) > Preview siteIdentity (scraped pages)
+  // Boxes contain real product data; siteIdentity often only has page titles
+  if (hasBoxes) {
+    const boxSiteKnowledge = generateSiteKnowledgeFromBoxes(orbitData!.boxes!);
+    const logoUrl = preview?.siteIdentity?.logoUrl || null;
+    const faviconUrl = preview?.siteIdentity?.faviconUrl || null;
+    const accentColor = brandPreferences?.accentColor || preview?.siteIdentity?.primaryColour || '#ec4899';
+    
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col relative">
+        <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" />
+        <div className="flex-1">
+          {showCustomization ? (
+            <BrandCustomizationScreen
+              logoUrl={logoUrl}
+              faviconUrl={faviconUrl}
+              brandName={boxSiteKnowledge.brand.name}
+              defaultAccentColor={accentColor}
+              imagePool={orbitData!.boxes!.map(b => b.imageUrl).filter(Boolean) as string[]}
+              previewId={preview?.id || ""}
+              canDeepScan={canDeepScan}
+              isFirstRun={isFirstRun}
+              onConfirm={handleCustomizationConfirm}
+            />
+          ) : (
+            <RadarGrid
+              knowledge={boxSiteKnowledge}
+              accentColor={accentColor}
+              lightMode={brandPreferences?.theme === 'light'}
+              onInteraction={() => trackMetric('interactions')}
+              onSendMessage={async (message) => {
+                if (!conversationTracked) {
+                  trackMetric('conversations');
+                  setConversationTracked(true);
+                }
+                return `I'm here to help you explore our menu. We have ${orbitData!.boxes!.length} items available. What would you like to know?`;
+              }}
+            />
           )}
         </div>
-      );
-    }
+        {!showCustomization && isUnclaimed && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
+            <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+              <span className="text-xs text-white/60">
+                Powered by <span className="text-pink-400 font-medium">NextMonth</span>
+              </span>
+              <Button
+                size="sm"
+                className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-3 py-1 h-7"
+                onClick={() => setShowClaimModal(true)}
+                data-testid="button-claim-orbit"
+              >
+                Claim This Orbit
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  if (!preview?.siteIdentity) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
