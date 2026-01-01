@@ -495,11 +495,14 @@ function calculateScores(signals: DetectionSignals): DetectionScores {
 
   // Determine primary type based on normalized comparison
   // Priority: catalogue/menu/hybrid ALWAYS take precedence over service
-  // Service is only used when there's NO menu/catalogue evidence
+  // Service is used when there's low/no menu/catalogue evidence AND CMS signals
   let primaryType: 'catalogue' | 'menu' | 'service' | 'hybrid' | 'none';
   const threshold = 0.3;
   const hybridThreshold = 0.6;
-  const serviceThreshold = 0.4;
+  const serviceThreshold = 0.2;
+
+  // Check if CMS platform detected (suggests B2B/corporate site)
+  const hasCmsPlatform = signals.platform.some(p => p.type === 'cms');
 
   if (scoreCatalogue > hybridThreshold && scoreMenu > hybridThreshold) {
     primaryType = 'hybrid';
@@ -510,10 +513,12 @@ function calculateScores(signals: DetectionSignals): DetectionScores {
   } else if (scoreCatalogue > threshold || scoreMenu > threshold) {
     primaryType = rawCatalogue > rawMenu ? 'catalogue' : 'menu';
   } else if (scoreService > serviceThreshold && 
-             scoreCatalogue < 0.15 && 
-             scoreMenu < 0.15 &&
-             rawService > 0.5) {
-    // Service only when: strong service signals AND definitively no menu/catalogue evidence
+             scoreCatalogue < 0.2 && 
+             scoreMenu < 0.2) {
+    // Service when: service signals AND low menu/catalogue evidence
+    primaryType = 'service';
+  } else if (hasCmsPlatform && scoreCatalogue < 0.15 && scoreMenu < 0.15) {
+    // CMS platform with no menu/catalogue evidence - likely B2B service site
     primaryType = 'service';
   } else {
     primaryType = 'none';
