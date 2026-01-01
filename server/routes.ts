@@ -7362,6 +7362,20 @@ STRICT RULES:
         }
       }
 
+      // Products-only orbit (no previewId or pack, just imported boxes)
+      if (boxes && boxes.length > 0) {
+        return res.json({
+          status: "ready",
+          businessSlug: orbitMeta.businessSlug,
+          ownerId: orbitMeta.ownerId,
+          planTier: orbitMeta.planTier,
+          customTitle: orbitMeta.customTitle,
+          customDescription: orbitMeta.customDescription,
+          lastUpdated: orbitMeta.lastUpdated,
+          boxes,
+        });
+      }
+
       return res.status(404).json({ message: "No experience available" });
     } catch (error) {
       console.error("Error fetching orbit:", error);
