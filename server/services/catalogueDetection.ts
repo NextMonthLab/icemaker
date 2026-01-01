@@ -1111,8 +1111,39 @@ export async function extractMenuItemsWithAI(crawlResult: MultiPageCrawlResult):
     
     const categoryName = deriveCategoryFromUrl(pageResult.url);
     
-    // Truncate content to avoid token limits (keep first 8000 chars)
-    const truncatedContent = pageContent.slice(0, 8000);
+    // Extract menu-relevant content by finding price patterns and surrounding text
+    // This helps skip navigation/headers and focus on actual menu content
+    let contentForAI = pageContent;
+    
+    // Try to find content with prices (menu items usually have prices)
+    const pricePattern = /(?:£|\$|€)\s*\d+(?:\.\d{2})?|\d+(?:\.\d{2})?\s*(?:£|\$|€)/g;
+    const lines = pageContent.split('\n');
+    const relevantLines: string[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Include lines with prices or nearby lines for context
+      if (pricePattern.test(line) || 
+          (i > 0 && pricePattern.test(lines[i-1] || '')) ||
+          (i < lines.length - 1 && pricePattern.test(lines[i+1] || ''))) {
+        // Include some context around price lines
+        if (i > 0 && !relevantLines.includes(lines[i-1])) relevantLines.push(lines[i-1]);
+        relevantLines.push(line);
+        if (i < lines.length - 1) relevantLines.push(lines[i+1]);
+      }
+    }
+    
+    // If we found price-related content, use it; otherwise use larger portion
+    if (relevantLines.length > 20) {
+      contentForAI = relevantLines.slice(0, 500).join('\n');
+    } else {
+      // Use middle portion of page (skip navigation at start, footer at end)
+      const startOffset = Math.floor(pageContent.length * 0.1);
+      contentForAI = pageContent.slice(startOffset, startOffset + 25000);
+    }
+    
+    // Final truncation to avoid token limits (25000 chars max)
+    const truncatedContent = contentForAI.slice(0, 25000);
     
     try {
       console.log(`[AI-Extract] Processing ${pageResult.url} (${truncatedContent.length} chars)`);
