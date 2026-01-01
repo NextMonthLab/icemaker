@@ -7542,7 +7542,11 @@ STRICT RULES:
         console.log(`[Orbit/generate] Extracted ${products.length} catalogue products`);
       }
 
-      if (plan.type === 'menu' || plan.type === 'hybrid') {
+      // Try menu extraction if: explicitly menu/hybrid, OR catalogue extraction returned 0 items (fallback)
+      const shouldTryMenu = plan.type === 'menu' || plan.type === 'hybrid' || 
+        (plan.type === 'catalogue' && extractedItems.length === 0);
+      
+      if (shouldTryMenu) {
         console.log(`[Orbit/generate] Using multi-page extraction to follow category links...`);
         const menuItems = await extractMenuItemsMultiPage(url, 15);
         
