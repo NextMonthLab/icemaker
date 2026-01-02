@@ -432,12 +432,12 @@ export default function GuestIceBuilderPage() {
 
   if (loadingExisting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950 flex flex-col">
+      <div className="min-h-screen bg-black flex flex-col">
         <GlobalNav context="ice" showBreadcrumb breadcrumbLabel="ICE Maker" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-400">Loading your preview...</p>
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+            <p className="text-white/50">Loading your preview...</p>
           </div>
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function GuestIceBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950 flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       <GlobalNav context="ice" showBreadcrumb breadcrumbLabel="ICE Maker" />
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
         <div className="text-center mb-8">
@@ -456,15 +456,15 @@ export default function GuestIceBuilderPage() {
               <span className="text-xs text-emerald-400/70 ml-1">• {entitlements?.planName}</span>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full px-4 py-1.5 mb-4" data-testid="badge-preview">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span className="text-sm text-purple-300">Preview Mode</span>
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full px-4 py-1.5 mb-4" data-testid="badge-preview">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-sm text-blue-300">Preview Mode</span>
             </div>
           )}
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
             {isProfessionalMode ? "Professional ICE Editor" : "Create Your Interactive Cinematic Experience"}
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto">
+          <p className="text-white/50 max-w-2xl mx-auto">
             {isProfessionalMode 
               ? "Full access unlocked. Generate media, add AI characters, and publish your interactive experience."
               : "Transform any content into an interactive story. Paste a URL or your script, and we'll generate story cards you can edit and reorder."}
@@ -472,7 +472,7 @@ export default function GuestIceBuilderPage() {
         </div>
 
         {!preview ? (
-          <UiCard className="bg-slate-900/80 border-slate-800">
+          <UiCard className="bg-white/[0.03] border-white/10">
             <CardContent className="p-6">
               <Tabs value={inputType} onValueChange={(v) => setInputType(v as "url" | "text" | "file")}>
                 <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -496,10 +496,10 @@ export default function GuestIceBuilderPage() {
                       placeholder="example.com or https://example.com/about"
                       value={urlValue}
                       onChange={(e) => setUrlValue(e.target.value)}
-                      className="bg-slate-800 border-slate-700"
+                      className="bg-white/5 border-white/10"
                       data-testid="input-url"
                     />
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-white/40">
                       Enter a website URL and we'll extract the key content to create your story. No need to type https://
                     </p>
                   </div>
@@ -508,7 +508,7 @@ export default function GuestIceBuilderPage() {
                 <TabsContent value="file">
                   <div className="space-y-4">
                     <div 
-                      className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-purple-500/50 transition-colors cursor-pointer"
+                      className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer"
                       onClick={() => document.getElementById('file-upload')?.click()}
                     >
                       <input
@@ -519,17 +519,17 @@ export default function GuestIceBuilderPage() {
                         onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                         data-testid="input-file"
                       />
-                      <Upload className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+                      <Upload className="w-10 h-10 text-white/40 mx-auto mb-3" />
                       {selectedFile ? (
                         <p className="text-white font-medium">{selectedFile.name}</p>
                       ) : (
                         <>
-                          <p className="text-slate-300 mb-1">Click to upload a file</p>
-                          <p className="text-sm text-slate-500">PDF, PowerPoint, Word, or Text files</p>
+                          <p className="text-white/70 mb-1">Click to upload a file</p>
+                          <p className="text-sm text-white/40">PDF, PowerPoint, Word, or Text files</p>
                         </>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-white/40">
                       Upload a PDF, presentation, or document. We'll extract the content to create your story.
                     </p>
                   </div>
@@ -542,10 +542,10 @@ export default function GuestIceBuilderPage() {
                       value={textValue}
                       onChange={(e) => setTextValue(e.target.value)}
                       rows={8}
-                      className="bg-slate-800 border-slate-700"
+                      className="bg-white/5 border-white/10"
                       data-testid="input-text"
                     />
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-white/40">
                       Paste a script, article, or story outline. We'll break it into story cards.
                     </p>
                   </div>
@@ -556,7 +556,7 @@ export default function GuestIceBuilderPage() {
                 <div className="mt-6 space-y-4" data-testid="creation-stages">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold text-white mb-1">Creating Your Experience</h3>
-                    <p className="text-sm text-slate-400">This usually takes 10-15 seconds</p>
+                    <p className="text-sm text-white/50">This usually takes 10-15 seconds</p>
                   </div>
                   <div className="space-y-2">
                     <AnimatePresence mode="popLayout">
@@ -570,25 +570,25 @@ export default function GuestIceBuilderPage() {
                             transition={{ delay: index * 0.1 }}
                             className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                               status === "done" ? "bg-green-500/10" :
-                              status === "running" ? "bg-purple-500/20" : "bg-slate-800/50"
+                              status === "running" ? "bg-blue-500/20" : "bg-white/5"
                             }`}
                             data-testid={`stage-${stage.id}`}
                           >
                             <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
                               status === "done" ? "bg-green-500" :
-                              status === "running" ? "bg-purple-500" : "bg-slate-700"
+                              status === "running" ? "bg-blue-500" : "bg-white/20"
                             }`}>
                               {status === "done" ? (
                                 <Check className="w-4 h-4 text-white" />
                               ) : status === "running" ? (
                                 <Loader2 className="w-4 h-4 text-white animate-spin" />
                               ) : (
-                                <Circle className="w-3 h-3 text-slate-500" />
+                                <Circle className="w-3 h-3 text-white/30" />
                               )}
                             </div>
                             <span className={`text-sm ${
                               status === "done" ? "text-green-400" :
-                              status === "running" ? "text-purple-300 font-medium" : "text-slate-500"
+                              status === "running" ? "text-blue-300 font-medium" : "text-white/40"
                             }`}>
                               {stage.label}
                             </span>
@@ -602,7 +602,7 @@ export default function GuestIceBuilderPage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={createPreviewMutation.isPending || isFileUploading}
-                  className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   data-testid="button-create-preview"
                 >
                   Create Preview
@@ -620,7 +620,7 @@ export default function GuestIceBuilderPage() {
                   <h2 className="text-lg sm:text-xl font-semibold text-white truncate">{preview.title}</h2>
                   <VisibilityBadge visibility={((existingPreview as any)?.visibility as "private" | "unlisted" | "public") || "unlisted"} size="sm" />
                 </div>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                <p className="text-xs sm:text-sm text-white/50 mt-1">
                   <Film className="w-3 h-3 inline mr-1" />
                   {cards.length} story cards
                 </p>
@@ -633,7 +633,7 @@ export default function GuestIceBuilderPage() {
                     setPreviewCardIndex(0);
                     setShowPreviewModal(true);
                   }}
-                  className="flex-1 sm:flex-none gap-1.5 border-purple-500/50 text-purple-300 hover:bg-purple-500/10"
+                  className="flex-1 sm:flex-none gap-1.5 border-blue-500/50 text-blue-300 hover:bg-blue-500/10"
                   data-testid="button-preview-experience"
                 >
                   <Eye className="w-4 h-4" />
@@ -659,20 +659,20 @@ export default function GuestIceBuilderPage() {
             
             {/* Upgrade prompt banner - only for free users */}
             {!isProfessionalMode && (
-              <div className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 border border-purple-500/40 rounded-lg p-3 sm:p-4">
+              <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 border border-blue-500/40 rounded-lg p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <Sparkles className="w-4 h-4 text-blue-400" />
                       <span className="font-semibold text-white text-sm">Ready to bring this to life?</span>
                     </div>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-white/50">
                       Add AI-generated visuals, video, music, and interactive character conversations.
                     </p>
                   </div>
                   <Button
                     onClick={() => navigate(`/ice/preview/${preview.id}/checkout`)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm whitespace-nowrap"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm whitespace-nowrap"
                     size="sm"
                     data-testid="button-upgrade-preview"
                   >
@@ -684,9 +684,9 @@ export default function GuestIceBuilderPage() {
             )}
 
             {/* Edit hint banner */}
-            <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-purple-400 flex-shrink-0" />
-              <p className="text-xs sm:text-sm text-purple-200">
+            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+              <p className="text-xs sm:text-sm text-blue-200">
                 <span className="font-medium">Tap any card</span> to edit content and generate AI media. <span className="hidden sm:inline">Click ➕ between cards to add AI interactions.</span>
               </p>
             </div>
@@ -787,29 +787,29 @@ export default function GuestIceBuilderPage() {
               })}
             </div>
 
-            <UiCard className="bg-slate-900/50 border-slate-800 border-dashed">
+            <UiCard className="bg-white/[0.03] border-white/10 border-dashed">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Unlock Premium Features</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-slate-800/50">
-                    <Image className="w-6 h-6 text-purple-400 mb-2" />
-                    <span className="text-sm text-slate-300">AI Images</span>
-                    <Lock className="w-3 h-3 text-slate-500 mt-1" />
+                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-white/5">
+                    <Image className="w-6 h-6 text-blue-400 mb-2" />
+                    <span className="text-sm text-white/70">AI Images</span>
+                    <Lock className="w-3 h-3 text-white/40 mt-1" />
                   </div>
-                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-slate-800/50">
-                    <Play className="w-6 h-6 text-purple-400 mb-2" />
-                    <span className="text-sm text-slate-300">Video</span>
-                    <Lock className="w-3 h-3 text-slate-500 mt-1" />
+                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-white/5">
+                    <Play className="w-6 h-6 text-blue-400 mb-2" />
+                    <span className="text-sm text-white/70">Video</span>
+                    <Lock className="w-3 h-3 text-white/40 mt-1" />
                   </div>
-                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-slate-800/50">
-                    <Mic className="w-6 h-6 text-purple-400 mb-2" />
-                    <span className="text-sm text-slate-300">Narration</span>
-                    <Lock className="w-3 h-3 text-slate-500 mt-1" />
+                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-white/5">
+                    <Mic className="w-6 h-6 text-blue-400 mb-2" />
+                    <span className="text-sm text-white/70">Narration</span>
+                    <Lock className="w-3 h-3 text-white/40 mt-1" />
                   </div>
-                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-slate-800/50">
-                    <Sparkles className="w-6 h-6 text-purple-400 mb-2" />
-                    <span className="text-sm text-slate-300">Export</span>
-                    <Lock className="w-3 h-3 text-slate-500 mt-1" />
+                  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-white/5">
+                    <Sparkles className="w-6 h-6 text-blue-400 mb-2" />
+                    <span className="text-sm text-white/70">Export</span>
+                    <Lock className="w-3 h-3 text-white/40 mt-1" />
                   </div>
                 </div>
 
@@ -819,13 +819,13 @@ export default function GuestIceBuilderPage() {
                       onClick={() => {
                         navigate(`/ice/preview/${preview?.id}/checkout`);
                       }}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       data-testid="button-upgrade-to-pro"
                     >
                       Upgrade to Unlock
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                    <p className="text-xs text-center text-slate-500">
+                    <p className="text-xs text-center text-white/40">
                       Your progress is saved. Pay to unlock AI media and publishing.
                     </p>
                   </div>
@@ -836,13 +836,13 @@ export default function GuestIceBuilderPage() {
                         const returnUrl = preview ? `/ice/preview/${preview.id}` : "/try";
                         navigate(`/login?return=${encodeURIComponent(returnUrl)}`);
                       }}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       data-testid="button-sign-in-to-save"
                     >
                       Sign In to Save Progress
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                    <p className="text-xs text-center text-slate-500">
+                    <p className="text-xs text-center text-white/40">
                       Create an account to save your work. Payment unlocks premium features.
                     </p>
                   </div>
@@ -887,7 +887,7 @@ export default function GuestIceBuilderPage() {
                   onClick={() => handleManualNav(idx)}
                   className={`w-2 h-2 rounded-full transition-all ${
                     idx === previewCardIndex
-                      ? 'bg-purple-500 w-4'
+                      ? 'bg-blue-500 w-4'
                       : 'bg-white/30 hover:bg-white/50'
                   }`}
                   data-testid={`button-preview-dot-${idx}`}
@@ -947,7 +947,7 @@ export default function GuestIceBuilderPage() {
           <div className="absolute top-4 left-4 right-14 z-[60] flex flex-col sm:flex-row sm:items-center gap-2">
             {/* Premium upsell - hidden on very small screens, shown abbreviated on mobile */}
             <div className="hidden sm:flex bg-black/50 backdrop-blur rounded-full px-3 py-1.5 items-center gap-2 shrink-0">
-              <Lock className="w-3 h-3 text-purple-400" />
+              <Lock className="w-3 h-3 text-blue-400" />
               <span className="text-xs text-white/80 whitespace-nowrap">AI images & video with Pro</span>
             </div>
             
@@ -960,7 +960,7 @@ export default function GuestIceBuilderPage() {
                   onClick={() => setCardPace(pace)}
                   className={`px-2 py-0.5 text-[10px] rounded-full transition-all ${
                     cardPace === pace
-                      ? "bg-purple-500 text-white"
+                      ? "bg-blue-500 text-white"
                       : "text-white/60 hover:text-white hover:bg-white/10"
                   }`}
                   data-testid={`button-pace-${pace}`}
@@ -980,7 +980,7 @@ export default function GuestIceBuilderPage() {
                 data-testid="select-font"
               >
                 {CARD_FONTS.map((font) => (
-                  <option key={font.id} value={font.id} className="bg-slate-900 text-white">
+                  <option key={font.id} value={font.id} className="bg-black text-white">
                     {font.name}
                   </option>
                 ))}

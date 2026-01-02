@@ -6209,6 +6209,28 @@ Stay engaging, reference story details, and help the audience understand the nar
       res.status(500).json({ message: "Error processing uploaded file" });
     }
   });
+
+  // Get user's own ICE previews for Library
+  app.get("/api/ice/my-previews", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      const previews = await storage.getIcePreviewsByUser(user.id);
+      
+      res.json({
+        previews: previews.map(p => ({
+          id: p.id,
+          title: p.title,
+          cards: p.cards || [],
+          status: p.status,
+          visibility: p.visibility,
+          createdAt: p.createdAt?.toISOString() || new Date().toISOString(),
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching user previews:", error);
+      res.status(500).json({ message: "Error fetching previews" });
+    }
+  });
   
   // Get a specific ICE preview by ID (visibility-controlled)
   app.get("/api/ice/preview/:id", async (req, res) => {
@@ -9206,6 +9228,90 @@ Guidelines:
     } catch (error) {
       console.error("Error generating ice draft:", error);
       res.status(500).json({ message: "Error generating draft" });
+    }
+  });
+
+  // Orbit ICE Preview - Generate full preview from insight and route to editor
+  app.post("/api/orbit/:slug/ice/generate-preview", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      const { insightId, insightTitle, insightMeaning, format, tone, outputType } = req.body;
+      
+      if (!insightId || !format || !tone || !outputType) {
+        return res.status(400).json({ message: "insightId, format, tone, and outputType are required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can generate ICE previews" });
+      }
+      
+      // Generate cards from the insight
+      const previewCards: { id: string; title: string; content: string; order: number }[] = [];
+      const title = insightTitle || "Untitled Experience";
+      const content = insightMeaning || "Your content here";
+      
+      // Create card structure based on format
+      if (format === "hook_bullets") {
+        previewCards.push({ id: `card_${Date.now()}_0`, title: "Did you know?", content: title, order: 0 });
+        previewCards.push({ id: `card_${Date.now()}_1`, title: "Key Point 1", content: content, order: 1 });
+        previewCards.push({ id: `card_${Date.now()}_2`, title: "Key Point 2", content: "Continue your story...", order: 2 });
+        previewCards.push({ id: `card_${Date.now()}_3`, title: "Take Action", content: "Learn more about this topic.", order: 3 });
+      } else if (format === "myth_reality") {
+        previewCards.push({ id: `card_${Date.now()}_0`, title: "Common Myth", content: "What people often believe...", order: 0 });
+        previewCards.push({ id: `card_${Date.now()}_1`, title: "The Reality", content: content, order: 1 });
+        previewCards.push({ id: `card_${Date.now()}_2`, title: "Why It Matters", content: title, order: 2 });
+      } else if (format === "checklist") {
+        previewCards.push({ id: `card_${Date.now()}_0`, title: "Your Checklist", content: title, order: 0 });
+        previewCards.push({ id: `card_${Date.now()}_1`, title: "Step 1", content: content, order: 1 });
+        previewCards.push({ id: `card_${Date.now()}_2`, title: "Step 2", content: "Continue your checklist...", order: 2 });
+      } else {
+        previewCards.push({ id: `card_${Date.now()}_0`, title: "The Problem", content: "What challenge do you face?", order: 0 });
+        previewCards.push({ id: `card_${Date.now()}_1`, title: "The Solution", content: title, order: 1 });
+        previewCards.push({ id: `card_${Date.now()}_2`, title: "The Proof", content: content, order: 2 });
+      }
+      
+      // Generate preview ID
+      const previewId = `ice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30-day expiry for insight previews
+      
+      // Create ice preview with source linking to insight
+      const savedPreview = await storage.createIcePreview({
+        id: previewId,
+        ownerUserId: user.id,
+        sourceType: "text" as any,
+        sourceValue: `Insight: ${title}\n\n${content}`,
+        title,
+        cards: previewCards,
+        tier: "short",
+        status: "active",
+        expiresAt,
+      });
+      
+      // Also create an ice_draft for tracking in the Launchpad
+      await storage.createIceDraft({
+        businessSlug: slug,
+        userId: user.id,
+        insightId,
+        format: format as schema.IceDraftFormat,
+        tone: tone as schema.IceDraftTone,
+        outputType: outputType as schema.IceDraftOutputType,
+        headline: title,
+        captions: previewCards.map(c => c.content).slice(0, 3),
+        ctaText: "View experience",
+        status: "draft",
+      });
+      
+      res.json({ previewId: savedPreview.id, success: true });
+    } catch (error) {
+      console.error("Error generating ice preview from insight:", error);
+      res.status(500).json({ message: "Error generating preview" });
     }
   });
 

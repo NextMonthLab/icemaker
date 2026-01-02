@@ -176,35 +176,36 @@ export default function Launchpad() {
 
       setIsGenerating(true);
       try {
-        const response = await fetch(`/api/orbit/${selectedOrbit.slug}/ice/generate`, {
+        const response = await fetch(`/api/orbit/${selectedOrbit.slug}/ice/generate-preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(options),
+          body: JSON.stringify({
+            ...options,
+            insightTitle: selectedInsight.title,
+            insightMeaning: selectedInsight.meaning,
+          }),
         });
 
         if (!response.ok) {
           throw new Error("Failed to generate draft");
         }
 
-        const draft = await response.json();
-        setCurrentDraft(draft);
+        const result = await response.json();
         queryClient.invalidateQueries({ queryKey: ["orbit-drafts", selectedOrbit.slug] });
-        toast({
-          title: "Draft generated!",
-          description: "Your content is ready for review.",
-        });
+        
+        // Navigate to the Amalgamated Editor
+        setLocation(`/ice/preview/${result.previewId}`);
       } catch (error) {
         toast({
           title: "Generation failed",
           description: "Please try again.",
           variant: "destructive",
         });
-      } finally {
         setIsGenerating(false);
       }
     },
-    [selectedOrbit, selectedInsight, toast]
+    [selectedOrbit, selectedInsight, toast, setLocation, queryClient]
   );
 
   if (orbitsLoading) {
