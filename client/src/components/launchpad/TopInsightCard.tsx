@@ -72,7 +72,8 @@ export function TopInsightCard({ insight, onMakeIce }: TopInsightCardProps) {
           <Button
             onClick={() => onMakeIce(insight)}
             size="sm"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            variant="outline"
+            className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500"
             data-testid="button-make-ice-top"
           >
             <Sparkles className="w-3 h-3 mr-1.5" />

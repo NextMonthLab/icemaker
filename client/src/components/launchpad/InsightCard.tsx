@@ -69,11 +69,12 @@ export function InsightCard({
         </div>
         <Button
           size="sm"
+          variant="outline"
           onClick={(e) => {
             e.stopPropagation();
             onMakeIce(insight);
           }}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shrink-0"
+          className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500 shrink-0"
           data-testid={`button-make-ice-${insight.id}`}
         >
           <Sparkles className="w-3 h-3 mr-1" />

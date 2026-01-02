@@ -156,7 +156,7 @@ export function IceBuilderPanel({
         </div>
 
         <div className="flex gap-2">
-          <Button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+          <Button className="flex-1 border-blue-500/50 text-blue-400 hover:bg-blue-500/10" variant="outline">
             Edit captions
           </Button>
           {draft.outputType === "video_card" ? (

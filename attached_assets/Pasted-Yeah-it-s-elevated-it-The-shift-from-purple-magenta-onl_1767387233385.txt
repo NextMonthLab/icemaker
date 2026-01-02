@@ -1,0 +1,52 @@
+Yeah – it’s elevated it.
+
+The shift from purple-magenta-only to that blue → purple → pink gradient palette does three important things:
+	1.	It ties the page back to the NextMonth brand rather than “generic dark SaaS with purple accents”.
+	2.	It makes the builder feel more “active” and premium, especially the selected states and the Generate button.
+	3.	It reduces the heaviness you were reacting to. Blue reads cleaner and more modern than big purple fields.
+
+That said, there are two guardrails so it doesn’t become a Skittles packet.
+
+What’s working in this screenshot
+	•	Nav is fixed: Launchpad / Orbits / Library. Massive win.
+	•	The builder’s selected insight card is now dark, not a coloured slab. ✅
+	•	The accents are now edge + button + selected state, not background fills. ✅
+	•	The gradient “Generate draft” button looks like the hero action. ✅
+
+Two tweaks to keep it premium, not noisy
+
+1) Pick one “brand gradient role”
+
+Right now gradient is showing up in multiple places (borders, buttons, selected states). That’s fine, but define the hierarchy:
+	•	Primary action (Generate draft / Publish) = full gradient fill
+	•	Secondary actions (Make Ice / New Ice) = subtle gradient border or small glow
+	•	Selected states (format/output) = single-colour tint (blue OR purple), not full gradient
+
+If everything glows, nothing glows.
+
+2) Unify the accent hue across selection
+
+Your selected cards on the right look blue, while some accents on the left are purple. It’s not bad, but you want it to feel intentional:
+	•	Use blue for “selection/interaction” states
+	•	Use purple/pink for “brand/primary CTA” moments
+
+That gives the UI a logic users subconsciously feel.
+
+One last nit: “New Ice” button
+
+“New Ice” is better than “Create Ice”, but it still risks pulling people away from the loop.
+
+If it creates from scratch, rename to:
+	•	Create from scratch (small)
+Or keep New Ice, but make it secondary style so “Make Ice” stays the main behaviour.
+
+Bottom line
+
+This colour update is a win because it’s brand-led and controlled. Keep it controlled.
+
+If you want to stress-test it: try a version where only these elements use the full gradient:
+	•	Generate draft button
+	•	New Ice button (or Publish)
+Everything else uses a thin border + hover glow.
+
+If that still feels premium, you’ve nailed the balance.
