@@ -29,8 +29,8 @@ interface PersonaPageProps {
 
 export default function PersonaPage({ persona }: PersonaPageProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <div className="min-h-screen bg-black text-white">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <span className="text-xl font-display font-black tracking-tight cursor-pointer" data-testid="link-logo">
@@ -39,35 +39,35 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login">
-              <Button variant="ghost" data-testid="button-login">Sign In</Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10" data-testid="button-login">Sign In</Button>
             </Link>
             <Link href={`/login?signup=true&persona=${persona.id}`}>
-              <Button data-testid="button-signup">Get Started</Button>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" data-testid="button-signup">Get Started</Button>
             </Link>
           </div>
         </div>
       </header>
 
       <main className="pt-20">
-        <section className={`relative overflow-hidden py-20 px-4 bg-gradient-to-br ${persona.color}`}>
+        <section className="relative overflow-hidden py-20 px-4 bg-gradient-to-br from-blue-900/20 via-transparent to-purple-900/10">
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-background/80 backdrop-blur rounded-full">
-                <persona.icon className="w-5 h-5 text-primary" />
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-black/80 backdrop-blur rounded-full border border-white/10">
+                <persona.icon className="w-5 h-5 text-blue-400" />
                 <span className="text-sm font-bold">{persona.title}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight mb-6" data-testid="text-hero-title">
+              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight mb-6 text-white" data-testid="text-hero-title">
                 {persona.heroTitle}
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8" data-testid="text-hero-subtitle">
+              <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-8" data-testid="text-hero-subtitle">
                 {persona.heroSubtitle}
               </p>
               <Link href={`/login?signup=true&persona=${persona.id}`}>
-                <Button size="lg" className="gap-2" data-testid="button-hero-cta">
+                <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" data-testid="button-hero-cta">
                   Start Creating Free
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -82,7 +82,7 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
               <h2 className="text-3xl font-display font-bold mb-4" data-testid="text-usecases-title">
                 How {persona.title} Use NextMonth
               </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
+              <p className="text-white/60 max-w-xl mx-auto">
                 {persona.description}
               </p>
             </div>
@@ -94,11 +94,11 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="p-6 rounded-xl border border-border bg-card"
+                  className="p-6 rounded-xl border border-white/10 bg-white/5"
                   data-testid={`card-usecase-${index}`}
                 >
                   <h3 className="font-display font-bold mb-3">{useCase.title}</h3>
-                  <p className="text-sm text-muted-foreground">{useCase.description}</p>
+                  <p className="text-sm text-white/60">{useCase.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -106,13 +106,13 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
         </section>
 
         {persona.scenarioFilter && (
-          <section className="py-20 px-4 bg-card/50">
+          <section className="py-20 px-4 bg-white/5">
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-display font-bold mb-4">
                   Real Scenarios
                 </h2>
-                <p className="text-muted-foreground max-w-xl mx-auto">
+                <p className="text-white/60 max-w-xl mx-auto">
                   See how others like you use ICE to transform content into experiences
                 </p>
               </div>
@@ -139,7 +139,7 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
                   className="flex items-start gap-3 p-4"
                   data-testid={`text-benefit-${index}`}
                 >
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                   <span>{benefit}</span>
                 </motion.div>
               ))}
@@ -155,18 +155,18 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
               </blockquote>
               <div>
                 <p className="font-bold" data-testid="text-testimonial-author">{persona.testimonial.author}</p>
-                <p className="text-sm text-muted-foreground" data-testid="text-testimonial-role">{persona.testimonial.role}</p>
+                <p className="text-sm text-white/60" data-testid="text-testimonial-role">{persona.testimonial.role}</p>
               </div>
             </div>
           </section>
         )}
 
-        <section className="py-20 px-4 bg-primary text-primary-foreground">
+        <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4" data-testid="text-cta-title">
               Ready to Transform Your {persona.title.replace(/s$/, '')} Content?
             </h2>
-            <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+            <p className="text-white/80 mb-8 max-w-xl mx-auto">
               Join thousands of {persona.title.toLowerCase()} already creating engaging stories with NextMonth.
             </p>
             <Link href={`/login?signup=true&persona=${persona.id}`}>
@@ -179,17 +179,17 @@ export default function PersonaPage({ persona }: PersonaPageProps) {
         </section>
       </main>
 
-      <footer className="py-8 px-4 border-t border-border">
+      <footer className="py-8 px-4 border-t border-white/10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/">
-            <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <span className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer">
               Back to NextMonth Home
             </span>
           </Link>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-            <a href="#" className="hover:text-foreground transition-colors">Contact</a>
+          <div className="flex items-center gap-6 text-sm text-white/60">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
         </div>
       </footer>
