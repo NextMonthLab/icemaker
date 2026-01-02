@@ -951,21 +951,13 @@ export default function OrbitView() {
                   <p className="text-xs text-zinc-500 border-t border-zinc-800 pt-3">
                     Once verified, this Orbit is exclusively reserved for {preview?.sourceDomain || slug}.
                   </p>
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium"
-                      onClick={() => setClaimStep('verify')}
-                      data-testid="button-verify-claim"
-                    >
-                      Claim for free
-                    </Button>
-                  </div>
-                  <button 
-                    className="w-full text-center text-xs text-zinc-500 hover:text-zinc-400"
-                    onClick={() => setShowClaimModal(false)}
+                  <Button
+                    className="w-full bg-pink-500 hover:bg-pink-600 text-white font-medium"
+                    onClick={() => setClaimStep('verify')}
+                    data-testid="button-verify-claim"
                   >
-                    Learn more about Orbit
-                  </button>
+                    Claim for free
+                  </Button>
                 </>
               )}
 
@@ -1364,21 +1356,13 @@ export default function OrbitView() {
                 <p className="text-xs text-zinc-500 border-t border-zinc-800 pt-3">
                   Once verified, this Orbit is exclusively reserved for {preview?.sourceDomain || slug}.
                 </p>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium"
-                    onClick={() => setClaimStep('verify')}
-                    data-testid="button-verify-claim"
-                  >
-                    Claim for free
-                  </Button>
-                </div>
-                <button 
-                  className="w-full text-center text-xs text-zinc-500 hover:text-zinc-400"
-                  onClick={() => setShowClaimModal(false)}
+                <Button
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white font-medium"
+                  onClick={() => setClaimStep('verify')}
+                  data-testid="button-verify-claim"
                 >
-                  Learn more about Orbit
-                </button>
+                  Claim for free
+                </Button>
               </>
             )}
 
