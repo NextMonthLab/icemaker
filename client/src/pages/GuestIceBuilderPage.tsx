@@ -288,11 +288,17 @@ export default function GuestIceBuilderPage() {
       return;
     }
     
-    const value = inputType === "url" ? urlValue.trim() : textValue.trim();
+    let value = inputType === "url" ? urlValue.trim() : textValue.trim();
     if (!value) {
       toast({ title: "Input required", description: "Please enter a URL or paste your content.", variant: "destructive" });
       return;
     }
+    
+    // Normalize URL: add https:// if no protocol specified
+    if (inputType === "url" && !value.match(/^https?:\/\//i)) {
+      value = `https://${value}`;
+    }
+    
     createPreviewMutation.mutate({ type: inputType, value });
   };
 
@@ -394,14 +400,14 @@ export default function GuestIceBuilderPage() {
                 <TabsContent value="url">
                   <div className="space-y-4">
                     <Input
-                      placeholder="https://example.com/about"
+                      placeholder="example.com or https://example.com/about"
                       value={urlValue}
                       onChange={(e) => setUrlValue(e.target.value)}
                       className="bg-slate-800 border-slate-700"
                       data-testid="input-url"
                     />
                     <p className="text-sm text-slate-500">
-                      Enter a website URL and we'll extract the key content to create your story.
+                      Enter a website URL and we'll extract the key content to create your story. No need to type https://
                     </p>
                   </div>
                 </TabsContent>
