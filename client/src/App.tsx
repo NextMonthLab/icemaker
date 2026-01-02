@@ -171,6 +171,7 @@ function Router() {
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
       <Route path="/app" component={ProtectedLaunchpad} />
+      <Route path="/launchpad" component={ProtectedLaunchpad} />
       <Route path="/stories" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />

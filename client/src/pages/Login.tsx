@@ -41,8 +41,8 @@ export default function Login() {
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
-        // Redirect to return URL if provided, otherwise default to home
-        setLocation(returnUrl || "/");
+        // Redirect to return URL if provided, otherwise default to launchpad
+        setLocation(returnUrl || "/launchpad");
       }
     } catch (error: any) {
       toast({

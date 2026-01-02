@@ -8999,6 +8999,165 @@ Guidelines:
     }
   });
 
+  // Orbit Insights - Generate insights dynamically (owner only)
+  app.get("/api/orbit/:slug/insights", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Check ownership
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can view insights" });
+      }
+      
+      // Generate insights from existing data sources
+      const analytics = await storage.getOrbitAnalyticsSummary(slug, 30);
+      const conversations = await storage.getOrbitConversations(slug, 20);
+      const boxes = await storage.getOrbitBoxes(slug);
+      
+      const insights: Array<{
+        id: string;
+        orbitId: string;
+        title: string;
+        meaning: string;
+        confidence: "high" | "medium" | "low";
+        topicTags: string[];
+        segment?: string;
+        source: string;
+        kind?: "top" | "feed";
+        createdAt: string;
+      }> = [];
+      
+      // Helper to generate deterministic hash-based ID
+      const generateInsightId = (parts: string[]) => {
+        const str = parts.join('|');
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return `insight-${Math.abs(hash).toString(36)}`;
+      };
+      
+      const now = new Date().toISOString();
+      
+      // Insight from visit patterns
+      if (analytics.visits > 10) {
+        insights.push({
+          id: generateInsightId([slug, 'visits', String(analytics.visits)]),
+          orbitId: slug,
+          title: `${analytics.visits} visits in the last 30 days`,
+          meaning: analytics.visits > 50 
+            ? "Strong visitor engagement. Consider adding more interactive content to convert interest."
+            : "Growing interest. Share your Orbit link more to boost discovery.",
+          confidence: analytics.visits > 50 ? "high" : "medium",
+          topicTags: ["traffic", "engagement"],
+          source: "Analytics",
+          kind: analytics.visits > 50 ? "top" : "feed",
+          createdAt: now,
+        });
+      }
+      
+      // Insight from conversations
+      if (analytics.conversations > 0) {
+        const convRate = Math.round((analytics.conversations / Math.max(analytics.visits, 1)) * 100);
+        insights.push({
+          id: generateInsightId([slug, 'conversations', String(analytics.conversations)]),
+          orbitId: slug,
+          title: `${analytics.conversations} conversations started`,
+          meaning: convRate > 10 
+            ? `${convRate}% of visitors engage in chat. Your content sparks curiosity.`
+            : "Visitors are asking questions. Make sure your AI assistant has complete info.",
+          confidence: analytics.conversations > 5 ? "high" : "medium",
+          topicTags: ["conversations", "engagement"],
+          source: "Chat Analytics",
+          kind: convRate > 10 ? "top" : "feed",
+          createdAt: now,
+        });
+      }
+      
+      // Insight from menu/catalogue
+      if (boxes.length > 0) {
+        const categories = [...new Set(boxes.map(b => b.category).filter(Boolean))];
+        insights.push({
+          id: generateInsightId([slug, 'catalogue', String(boxes.length)]),
+          orbitId: slug,
+          title: `${boxes.length} items across ${categories.length} categories`,
+          meaning: "Your catalogue is ready for AI discovery. Visitors can ask about specific items.",
+          confidence: "high",
+          topicTags: ["catalogue", "products"],
+          source: "Knowledge Map",
+          kind: "feed",
+          createdAt: now,
+        });
+      }
+      
+      // Insight from recent conversation topics
+      if (conversations.length > 0) {
+        const recentConv = conversations[0];
+        insights.push({
+          id: generateInsightId([slug, 'recent-conv', String(recentConv.id)]),
+          orbitId: slug,
+          title: "Recent visitor questions need answers",
+          meaning: "Review your latest conversations to identify gaps in your knowledge base.",
+          confidence: "medium",
+          topicTags: ["conversations", "improvement"],
+          source: "Conversation Review",
+          kind: "feed",
+          createdAt: now,
+        });
+      }
+      
+      // Ice views insight
+      if (analytics.iceViews > 0) {
+        insights.push({
+          id: generateInsightId([slug, 'ice-views', String(analytics.iceViews)]),
+          orbitId: slug,
+          title: `${analytics.iceViews} interactive experience views`,
+          meaning: "Your published content is getting attention. Create more to drive engagement.",
+          confidence: analytics.iceViews > 10 ? "high" : "medium",
+          topicTags: ["content", "ice"],
+          source: "Content Performance",
+          kind: "feed",
+          createdAt: now,
+        });
+      }
+      
+      // If no insights, add a starter insight
+      if (insights.length === 0) {
+        insights.push({
+          id: generateInsightId([slug, 'starter']),
+          orbitId: slug,
+          title: "Your Orbit is ready for insights",
+          meaning: "As visitors interact with your Orbit, insights will appear here to help you create better content.",
+          confidence: "low",
+          topicTags: ["getting-started"],
+          source: "System",
+          kind: "top",
+          createdAt: now,
+        });
+      }
+      
+      // Sort to put top insight first
+      insights.sort((a, b) => {
+        if (a.kind === "top" && b.kind !== "top") return -1;
+        if (b.kind === "top" && a.kind !== "top") return 1;
+        return 0;
+      });
+      
+      res.json({ insights });
+    } catch (error) {
+      console.error("Error generating orbit insights:", error);
+      res.status(500).json({ message: "Error generating insights" });
+    }
+  });
+
   // Orbit Leads - Submit a lead
   app.post("/api/orbit/:slug/leads", async (req, res) => {
     try {
