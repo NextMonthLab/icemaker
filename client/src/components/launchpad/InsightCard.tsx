@@ -35,10 +35,10 @@ export function InsightCard({
 }: InsightCardProps) {
   return (
     <div
-      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+      className={`p-4 rounded-lg border transition-all cursor-pointer ${
         isSelected
-          ? "bg-purple-500/10 border-purple-500/50"
-          : "bg-white/5 border-white/10 hover:border-white/20"
+          ? "bg-white/[0.03] border-l-2 border-l-purple-500 border-white/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
+          : "bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
       }`}
       data-testid={`insight-card-${insight.id}`}
     >

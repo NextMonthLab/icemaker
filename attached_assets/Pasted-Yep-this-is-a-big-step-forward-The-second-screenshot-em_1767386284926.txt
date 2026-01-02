@@ -1,0 +1,88 @@
+Yep, this is a big step forward. The second screenshot (empty builder) and the first (builder populated) prove the loop is working visually: select insight → configure → generate. Good.
+
+Now I’m going to be picky, because you’re close enough that polish matters.
+
+What’s improved massively
+	•	The right side now feels like a real builder when populated. The “Turn this insight to content” header, format chips, tone, output toggle, and that big gradient “Generate draft” button… that’s the right vibe.
+	•	The page reads as one system now. You can actually feel the “insight in → content out” story.
+
+What’s still undermining the premium simplicity
+
+1) The purple slabs are still too heavy (and you already hate them)
+
+The hero insight and the feed row are still sitting on big purple gradients. It’s less offensive than the first glimpse, but it’s still shouting.
+
+Fix: make insight cards primarily dark with accent-only edges.
+	•	Keep the purple as:
+	•	a thin top border (2px)
+	•	a subtle glow on hover
+	•	a tiny “Top insight” pill
+	•	the CTA button
+	•	Not as the entire background fill.
+
+If you do only one change, do this. It’ll instantly feel more expensive.
+
+2) Empty builder state is still “floating in space”
+
+In the empty-state screenshot, the right panel is visually dead because the message is centred in a big void.
+
+Fix: make the IceBuilderPanel show the controls disabled even when empty.
+	•	Keep the header: “Turn insight into content”
+	•	Show format/tone/output controls greyed out
+	•	Empty copy at the top: “Select an insight to unlock builder controls.”
+	•	Optional: a small arrow pointing left “Choose an insight”
+
+This turns “empty” into “ready”.
+
+3) The top navigation still tells the old story
+
+You still have Home / IceMaker / Orbit in the top bar. That’s the switchboard problem creeping back in.
+
+Fix the nav labels now:
+	•	Launchpad (or Studio)
+	•	Orbits
+	•	Library
+	•	Account
+
+And remove “IceMaker” as a top-level destination. IceMaker is a capability inside Launchpad. Library is where projects live.
+
+4) “Create Ice” vs “Make Ice” confusion
+
+Top right says Create Ice, insight cards say Make Ice.
+
+Pick one:
+	•	Use Make Ice for the action tied to an insight.
+	•	Use New Ice (or Create from scratch) only if you support a non-insight flow.
+
+Right now “Create Ice” in the header feels like it might bypass the loop.
+
+⸻
+
+Quick layout tweaks to make it feel finished
+
+These are small, but they’ll do a lot:
+	•	Reduce hero card height by ~25%. It’s dominating the left column.
+	•	Add a real Insights Feed header row with:
+	•	Search
+	•	Filter chips (New / High confidence / Topic)
+	•	“Sort: Latest / Impact”
+	•	Make the feed a scroll container with a subtle fade at the bottom so users know it scrolls.
+	•	“Recent” needs to be a strip of empty placeholders, not just a sentence. Three ghost cards is enough.
+
+⸻
+
+If you want a clean “next instruction” for the dev
+
+Give them this exact checklist:
+	1.	Restyle TopInsightCard and InsightCard backgrounds to dark, with accent-only border/glow (no purple slab fills).
+	2.	Update IceBuilderPanel empty state to top-aligned with disabled controls visible.
+	3.	Rename nav: Home → Launchpad, remove IceMaker, keep Orbits + Library.
+	4.	Unify button language: Make Ice (from insight), New Ice (scratch) if needed.
+	5.	Add Insights Feed header with search + filter chips and make feed scrollable.
+	6.	Replace “Recent” empty text with 3 placeholder cards.
+
+⸻
+
+If you do #1 and #2, it’ll stop triggering your “big purple areas” bugbear and it’ll feel like a proper premium tool instead of a themed dashboard.
+
+Send the next screenshot after the insight cards go dark-with-accent and the builder empty state becomes top-aligned with disabled controls. That’s the “we’re nearly there” moment.

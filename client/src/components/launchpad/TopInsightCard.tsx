@@ -32,46 +32,53 @@ export function TopInsightCard({ insight, onMakeIce }: TopInsightCardProps) {
 
   return (
     <div
-      className="p-6 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+      className="relative p-5 rounded-xl bg-white/[0.03] border-t-2 border-t-purple-500 border border-white/10 hover:border-white/20 transition-all group"
       data-testid="top-insight-card"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-          <h3 className="font-semibold text-white">Today's top insight</h3>
-        </div>
-        <Badge
-          variant="outline"
-          className={confidenceColors[insight.confidence]}
-        >
-          ★ {insight.confidence.charAt(0).toUpperCase() + insight.confidence.slice(1)}
-        </Badge>
-      </div>
-
-      <h4 className="text-xl font-medium text-white mb-2">{insight.title}</h4>
-      <p className="text-white/70 mb-4">{insight.meaning}</p>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
-          {insight.topicTags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className="border-white/20 text-white/60"
-            >
-              {tag}
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none" />
+      
+      <div className="relative">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Badge className="bg-purple-500/20 text-purple-400 border-0 text-xs px-2 py-0.5">
+              <Star className="w-3 h-3 mr-1 fill-current" />
+              Top insight
             </Badge>
-          ))}
-          <span className="text-xs text-white/40">• {insight.source}</span>
+          </div>
+          <Badge
+            variant="outline"
+            className={confidenceColors[insight.confidence]}
+          >
+            {insight.confidence.charAt(0).toUpperCase() + insight.confidence.slice(1)}
+          </Badge>
         </div>
-        <Button
-          onClick={() => onMakeIce(insight)}
-          className="bg-purple-600 hover:bg-purple-700"
-          data-testid="button-make-ice-top"
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Make Ice
-        </Button>
+
+        <h4 className="text-lg font-medium text-white mb-2">{insight.title}</h4>
+        <p className="text-white/60 text-sm mb-4 line-clamp-2">{insight.meaning}</p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            {insight.topicTags.slice(0, 2).map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="border-white/20 text-white/50 text-xs"
+              >
+                {tag}
+              </Badge>
+            ))}
+            <span className="text-xs text-white/40">{insight.source}</span>
+          </div>
+          <Button
+            onClick={() => onMakeIce(insight)}
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-700"
+            data-testid="button-make-ice-top"
+          >
+            <Sparkles className="w-3 h-3 mr-1.5" />
+            Make Ice
+          </Button>
+        </div>
       </div>
     </div>
   );

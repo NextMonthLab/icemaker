@@ -70,18 +70,65 @@ export function IceBuilderPanel({
 
   if (!selectedInsight && !draft) {
     return (
-      <div
-        className="h-full flex flex-col items-center justify-center p-8 text-center"
-        data-testid="builder-empty-state"
-      >
-        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-          <FileText className="w-8 h-8 text-white/30" />
+      <div className="p-6 space-y-6" data-testid="builder-empty-state">
+        <div>
+          <h3 className="text-lg font-medium text-white mb-1">
+            Turn insight into content
+          </h3>
+          <p className="text-sm text-white/50">
+            Select an insight to unlock builder controls
+          </p>
         </div>
-        <h3 className="text-lg font-medium text-white mb-2">IceMaker</h3>
-        <p className="text-white/60 text-sm max-w-xs">
-          Select an insight to turn it into content. Click "Make Ice" on any
-          insight to get started.
-        </p>
+
+        <div className="p-4 rounded-lg bg-white/[0.02] border border-dashed border-white/10">
+          <p className="text-white/30 text-sm text-center py-2">
+            ← Choose an insight from the feed
+          </p>
+        </div>
+
+        <div className="space-y-4 opacity-40 pointer-events-none">
+          <div>
+            <label className="text-sm text-white/40 mb-2 block">Format</label>
+            <div className="grid grid-cols-2 gap-2">
+              {formatOptions.slice(0, 2).map((option) => (
+                <div
+                  key={option.value}
+                  className="p-3 rounded-lg border border-white/10 bg-white/[0.02] text-white/40"
+                >
+                  <span className="mr-2 opacity-50">{option.icon}</span>
+                  {option.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm text-white/40 mb-2 block">Tone</label>
+            <div className="p-3 rounded-lg border border-white/10 bg-white/[0.02] text-white/40">
+              Select tone...
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm text-white/40 mb-2 block">Output</label>
+            <div className="flex gap-2">
+              <div className="flex-1 p-3 rounded-lg border border-white/10 bg-white/[0.02] text-white/40 text-center">
+                📹 Video
+              </div>
+              <div className="flex-1 p-3 rounded-lg border border-white/10 bg-white/[0.02] text-white/40 text-center">
+                ✨ Interactive
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          disabled
+          className="w-full bg-white/10 text-white/40 cursor-not-allowed"
+        >
+          <Sparkles className="w-4 h-4 mr-2 opacity-50" />
+          Generate draft
+        </Button>
       </div>
     );
   }
