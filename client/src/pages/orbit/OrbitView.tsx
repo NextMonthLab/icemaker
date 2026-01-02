@@ -855,8 +855,8 @@ export default function OrbitView() {
           </div>
         )}
         
-        {/* First-run admin CTA - allow creators to verify ownership after preview */}
-        {!showCustomization && isFirstRun && (
+        {/* First-run admin CTA - allow creators to verify ownership after preview (only if unclaimed) */}
+        {!showCustomization && isFirstRun && isUnclaimed && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
             <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
               <div className="w-full flex items-center justify-between gap-3">
@@ -871,6 +871,28 @@ export default function OrbitView() {
                   data-testid="button-verify-ownership"
                 >
                   Verify Ownership
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Owner CTA - show manage button for owners who have already claimed */}
+        {!showCustomization && isOwner && !isUnclaimed && !isPaidTier && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
+            <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
+              <div className="w-full flex items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  <span className="text-sm text-white font-medium">Welcome back!</span>
+                  <span className="text-xs text-zinc-300">Manage your Orbit and view analytics</span>
+                </div>
+                <Button 
+                  size="sm"
+                  className="bg-white hover:bg-zinc-100 text-purple-900 font-medium text-xs px-4 py-2 h-8"
+                  onClick={() => setLocation(`/orbit/${slug}/hub`)}
+                  data-testid="button-manage-orbit"
+                >
+                  Manage Your Orbit
                 </Button>
               </div>
             </div>
@@ -1261,8 +1283,8 @@ export default function OrbitView() {
         </div>
       )}
 
-      {/* First-run admin CTA - allow creators to verify ownership */}
-      {isFirstRun && !showCustomization && (
+      {/* First-run admin CTA - allow creators to verify ownership (only if unclaimed) */}
+      {isFirstRun && isUnclaimed && !showCustomization && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
           <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
             <div className="w-full flex items-center justify-between gap-3">
@@ -1277,6 +1299,28 @@ export default function OrbitView() {
                 data-testid="button-verify-ownership"
               >
                 Verify Ownership
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Owner CTA - show manage button for claimed orbit owners */}
+      {isOwner && !isUnclaimed && !isPaidTier && !showCustomization && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
+          <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
+            <div className="w-full flex items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="text-sm text-white font-medium">Welcome back!</span>
+                <span className="text-xs text-zinc-300">Manage your Orbit and view analytics</span>
+              </div>
+              <Button 
+                size="sm"
+                className="bg-white hover:bg-zinc-100 text-purple-900 font-medium text-xs px-4 py-2 h-8"
+                onClick={() => setLocation(`/orbit/${slug}/hub`)}
+                data-testid="button-manage-orbit"
+              >
+                Manage Your Orbit
               </Button>
             </div>
           </div>
