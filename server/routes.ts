@@ -8428,8 +8428,12 @@ Guidelines:
       const summary = await storage.getOrbitAnalyticsSummary(slug, daysNum);
       const dailyData = await storage.getOrbitAnalytics(slug, daysNum);
       
-      // Check if user is owner (for paid features)
-      const isOwner = req.isAuthenticated() && orbitMeta.ownerId === (req.user as any)?.id;
+      // Check if user is owner (by ID or email/username)
+      const user = req.isAuthenticated() ? (req.user as any) : null;
+      const userEmail = (user?.email || user?.username)?.toLowerCase() || null;
+      const isOwnerById = user && orbitMeta.ownerId === user.id;
+      const isOwnerByEmail = userEmail && orbitMeta.ownerEmail?.toLowerCase() === userEmail;
+      const isOwner = isOwnerById || isOwnerByEmail;
       
       // Check plan tier for paid features
       const PAID_TIERS = ['grow', 'insight', 'intelligence'];
