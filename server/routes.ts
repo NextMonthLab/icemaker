@@ -4465,8 +4465,8 @@ export async function registerRoutes(
   });
 
   // Helper to generate idempotency key from checkout options
-  function generateIdempotencyKey(userId: number, previewId: string | undefined, options: any): string {
-    const crypto = require('crypto');
+  async function generateIdempotencyKey(userId: number, previewId: string | undefined, options: any): Promise<string> {
+    const crypto = await import('crypto');
     const payload = JSON.stringify({ userId, previewId, ...options });
     return crypto.createHash('sha256').update(payload).digest('hex');
   }
@@ -4503,7 +4503,7 @@ export async function registerRoutes(
       const serverCalculatedAmountCents = planPrice ? planPrice.monthlyPrice * 100 : 0;
       
       // Generate idempotency key INCLUDING priceId and calculated amount for tamper detection
-      const idempotencyKey = generateIdempotencyKey(req.user!.id, previewId, {
+      const idempotencyKey = await generateIdempotencyKey(req.user!.id, previewId, {
         planName,
         priceId,
         amountCents: serverCalculatedAmountCents,
