@@ -1,0 +1,103 @@
+This is very close to “ship-ready”, but I’m going to put my CTO hat on and stop two bits of drift before they bite you later.
+
+What’s strong (keep)
+	•	The component breakdown is clean and matches the loop.
+	•	Orbit selection persistence via localStorage is fine for v1.
+	•	The three IceBuilder states are correct.
+	•	“Ice Views = published interactive only” is a good MVP definition.
+	•	Generating insights day-one from existing signals is exactly the right move.
+
+Two big fixes before you “lock it in”
+
+1) Don’t create DB tables in Phase 2 unless you absolutely have to
+
+Phase 2 is “read-only wiring”. Adding an insights table + migrations is scope creep and risk (especially if your schema is already working and deployed).
+
+Better approach for Phase 2:
+	•	Implement GET /api/orbit/:slug/insights that generates insights on the fly from existing sources.
+	•	Give each insight a stable id without a table by hashing deterministic inputs.
+
+Example idea:
+	•	id = hash(orbitSlug + title + source + createdAtBucket)
+So the UI can still do selection + trace without needing persistence.
+
+Then in Phase 4/5 you can decide:
+	•	Cache to DB
+	•	Store only “pinned” insights
+	•	Or keep generation fully dynamic and only store drafts
+
+This keeps the build tight and avoids database surgery mid-flight.
+
+2) Avoid renaming Launchpad.tsx to LaunchpadHub.tsx unless necessary
+
+Renames cause churn and break imports. If /launchpad already exists, just refactor it in place:
+	•	Keep client/src/pages/Launchpad.tsx
+	•	Add the new components folder
+	•	Move logic incrementally
+
+If later you want a /studio route, fine. But don’t create a second page file now unless there’s a genuine architectural reason.
+
+A couple of smaller “future pain” tweaks
+
+OrbitSummary should include slug (or whatever identifier you route with)
+
+Right now you have:
+
+type OrbitSummary = { id; name; status; strengthScore? }
+
+But you’re navigating with /orbit/:slug and fetching /api/orbit/:slug/...
+
+So add:
+
+slug: string
+
+Foreign keys: don’t tie tables to orbit_slug TEXT if you can avoid it
+
+If you do create tables later, it’s safer to reference an orbit ID, not a slug string. Slugs change; IDs shouldn’t.
+
+Redirect logic must handle loading state
+
+Your Phase 0 snippet implies immediate redirect. Make sure it covers:
+	•	loading
+	•	unauthenticated
+	•	query error
+
+Otherwise you’ll get flicker or redirect loops.
+
+My recommended “locked” version of Phase 0–2
+
+If I were signing this off, I’d lock it as:
+
+Phase 0
+	•	/launchpad is default post-login.
+	•	Orbit selector persists to localStorage (v1).
+	•	If 0 orbits → claim flow.
+
+Phase 1
+	•	Layout skeleton + components, wired with static mock objects using the contracts.
+
+Phase 2
+	•	Wire real data:
+	•	orbits list
+	•	signal metrics
+	•	insights feed (generated, not stored)
+	•	No new DB tables yet.
+
+Answer to the question: should you proceed to updated task list?
+
+Yes. Proceed.
+But update the tasks to reflect the two changes above: no DB tables in Phase 2, and no unnecessary page rename.
+
+Here’s the updated task list I’d want you to use:
+	1.	Default post-login routing → /launchpad (with loading/error guards)
+	2.	Refactor existing Launchpad.tsx into new hub layout (static)
+	3.	Add components/launchpad/* and render skeleton
+	4.	Wire orbit list + orbit selection persistence (slug included)
+	5.	Wire signal tiles metrics
+	6.	Implement /api/orbit/:slug/insights using generated insights (no DB)
+	7.	Hook “Make Ice” → builder selected state
+	8.	Mobile adaptation (tabs + builder sheet)
+	9.	Power-up banner + onboarding entry point (wizard can be Phase 5 if needed)
+	10.	Polish: empty states, microcopy, loading skeletons
+
+If you paste that back to Redblood, you’ll keep them on rails and stop them “helpfully” building half a database you didn’t ask for.

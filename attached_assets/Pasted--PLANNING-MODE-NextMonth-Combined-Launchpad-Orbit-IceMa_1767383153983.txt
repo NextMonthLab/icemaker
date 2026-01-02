@@ -1,0 +1,90 @@
+# PLANNING MODE — NextMonth Combined Launchpad (Orbit + IceMaker)
+
+## Goal
+Design a single, beautifully simple **Launchpad** screen that unifies **Orbit (insights + signal)** and **IceMaker (turn insight into content)**.
+
+The user should feel: **“Insight in → content out”** with zero decision fatigue.
+This launchpad becomes the default post-login destination.
+
+## Context (Current System)
+We already have:
+- Orbit: Claim flow, Knowledge Map, Data Hub, Intelligence Views
+- IceMaker: Create Experience, Projects, Templates, Professional ICE Editor
+- Current Home is a switchboard with separate Orbit and IceMaker tiles
+
+Problem: UI feels fragmented. We need a single hub where Orbit and IceMaker feel intrinsically linked.
+
+## Core UX Loop
+Listen (Orbit) → Distil (Insights) → Publish (Ice) → Learn (Orbit again)
+
+## Launchpad Requirements (Desktop)
+Create a single page with:
+1) **Top Bar**
+- Orbit selector dropdown (e.g. “KFC Co UK”)
+- Status pill: “Basic scan” vs “Powered up”
+- Primary CTA: “Create Ice”
+- Secondary CTA (conditional): “Power up Orbit” (only when not fully configured)
+- Link: Library
+
+2) **Two-column workspace**
+LEFT: **Orbit Signal + Insights**
+- Small row of 3–4 metric tiles: Visits, Conversations, Ice Views, Leads
+- “Today’s top insight” hero card:
+  - title, 1–2 line meaning, confidence badge, tags (segment/topic), “Make Ice” button
+- Scrollable “Insights feed” list:
+  - compact cards with title, tags, confidence, timestamp/source, “Make Ice” button
+
+RIGHT: **Ice Builder panel**
+- States:
+  A) Empty: “Select an insight to turn into content”
+  B) Insight selected: show selected insight (2 lines max) + controls:
+     - Format chooser (max 4): Hook+bullets, Myth vs reality, Checklist, Problem→Solution→Proof
+     - Tone selector: Direct / Warm / Playful / Premium
+     - Output toggle: Video card (download) / Interactive experience (publish)
+     - CTA selector (optional)
+     - Primary button: “Generate draft”
+  C) Draft ready: show mini preview + actions:
+     - Edit captions
+     - Download video
+     - Publish interactive
+     - Trace link: “Made from: [Insight]”
+
+3) **Bottom strip: Recent**
+- recent drafts and published items
+- each item shows trace: “Made from [Insight]”
+
+## Launchpad Requirements (Mobile)
+Mobile should keep the same mental model, but stacked:
+- Top bar stays (Orbit selector + status + Create Ice)
+- Tabs or segmented control for the main body:
+  - Tab 1: Insights
+  - Tab 2: Builder
+  - Tab 3: Recent (optional)
+Flow:
+- Tap insight → persistent “Build from this insight” drawer/button appears
+- Builder panel becomes a full-screen sheet with the same controls
+
+## “Power-Up” Onboarding (Orbit Claim Stage 2)
+After claiming an Orbit, show guided onboarding to increase Orbit strength:
+- Ask for:
+  - About page URL
+  - Services page URL(s)
+  - Team page URL (optional)
+  - 5 or 10 key blog posts (allow “auto-select”)
+  - Social channels (LinkedIn, Instagram, TikTok, YouTube, etc.)
+- Show “Orbit Strength” progress indicator
+- Completion moment: “Your Orbit is ready” with Before/After and button “Go to Launchpad”
+
+## Design Direction
+- Plain black background (no galaxy texture)
+- Subtle coloured gradients for buttons/outlines (purple/magenta accents)
+- Minimal, premium, spacious
+- Avoid big blocks of purple background. Use accents, borders, and small highlights.
+
+## Output Needed
+1) A clear **desktop wireframe layout** (components, hierarchy)
+2) A clear **mobile wireframe layout** (stacking + tab/sheet behaviour)
+3) A short list of **existing screens to demote** (Orbit dashboard, IceMaker dashboard, current Home) and what they become (Library, Orbits admin, etc.)
+4) Recommended route + nav label (e.g. /launchpad or /studio) and default post-login routing rules.
+
+Do NOT propose rebuilding the whole app. This should be a re-ranking + a new hub page.

@@ -1,0 +1,85 @@
+Locked. This is now a buildable spec, not a vibe.
+
+Now the most useful thing I can do is give you the exact next instruction to move from “plan” to “code changes” without losing the plot.
+
+The next move
+
+Get Redblood (or Claude) to produce a Phase 0–2 implementation doc that includes:
+	•	routes
+	•	API endpoints (even if stubbed)
+	•	file locations
+	•	minimal DB/storage approach
+
+Because right now your plan is solid, but the missing link is: where do these objects live and how are they fetched/saved.
+
+Two implementation choices (pick one and stick to it)
+
+Option A (fastest, safest): Store Launchpad drafts in your existing database (wherever Ice projects already live).
+Option B (MVP hack): Store drafts client-side first (localStorage) and add DB in Phase 4.
+If you want momentum without risk, do A.
+
+What you should ask for next (paste this to Redblood/Claude)
+
+# IMPLEMENTATION PLAN REQUEST — Launchpad Phase 0–2
+
+Using the locked data contracts and component list, produce a concrete implementation plan for Phase 0–2 with:
+
+## Phase 0: Routing + Orbit selection
+- New route: /launchpad
+- Make it default post-login route
+- Redirect rules:
+  - If user has 0 orbits → /orbit/claim
+  - Else → /launchpad
+- Orbit selector persistence (where stored, how read)
+- Nav updates (what menu item labels change)
+
+## Phase 1: Layout skeleton (static UI)
+- Files to create/edit (exact paths)
+- Components scaffolded with props
+- Desktop layout + placeholder data
+
+## Phase 2: Real data wiring (read-only)
+Define the minimal API/data access needed to populate:
+- Orbit selector list: OrbitSummary[]
+- SignalTiles metrics (visits, conversations, iceViews, leads)
+- Insights list: Insight[] with kind="top" + "feed"
+
+For each, specify:
+- Endpoint name + route (REST)
+- Response shape matching contracts
+- Where the data comes from in the current system (existing tables/services)
+
+## Deliverables
+- File tree diff (what new files, what existing files modified)
+- Minimal endpoints (even if stubbed)
+- Any DB schema changes required (only if unavoidable)
+
+Two small product decisions to lock (so dev doesn’t improvise)
+	1.	Where do “Insights” come from on day one?
+If you don’t have a true “insights” table yet, that’s fine. Start by generating them from:
+
+	•	Conversation logs
+	•	Topic analysis
+	•	Any existing orbit intelligence output
+…but make sure it returns the Insight contract.
+
+	2.	What is “Ice Views” in SignalTiles?
+Define it now:
+
+	•	Views of published interactive experiences?
+	•	Views of downloaded video cards?
+	•	Both?
+Pick one for MVP. My vote: published interactive views only (it reinforces your differentiator).
+
+Extra: One UX guardrail
+
+Don’t let “Create Ice” in the header open a separate flow.
+It should:
+	•	Focus the builder panel
+	•	Or open a “Pick an insight” modal that immediately returns to builder
+
+No side quests.
+
+⸻
+
+If you paste back whatever implementation plan you get, I’ll review it like a CTO: I’ll spot scope creep, missing data sources, and anything that will cause friction in Replit/Render.

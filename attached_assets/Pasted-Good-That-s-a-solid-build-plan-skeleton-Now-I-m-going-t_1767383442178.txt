@@ -1,0 +1,136 @@
+Good. That’s a solid build plan skeleton. Now I’m going to be a bit ruthless and tighten it so it’s actually implementable in your codebase without “mystery object” drift.
+
+1) Fix the data contracts (small but important)
+
+Insight Object: add the bits you’ll need in UI
+
+You’ll want these, otherwise you’ll end up hacking around later:
+	•	kind (top insight vs normal insight, or category)
+	•	updatedAt (so you can sort by freshness)
+	•	metricsHint (optional: “why is this top?”)
+	•	actionSuggestedFormats (optional, but nice)
+
+Suggested:
+
+type Insight = {
+  id: string
+  orbitId: string
+  title: string
+  meaning: string
+  confidence: "high" | "medium" | "low"
+  topicTags: string[]
+  segment?: string
+  source: string
+  kind?: "top" | "feed"
+  createdAt: string // ISO
+  updatedAt?: string // ISO
+}
+
+Ice Draft Object: avoid content: object as a black hole
+
+If you leave it as object, the UI will become inconsistent and impossible to evolve.
+
+Give it a minimal stable shape now:
+
+type IceDraft = {
+  id: string
+  orbitId: string
+  insightId: string
+  format: "hook_bullets" | "myth_reality" | "checklist" | "problem_solution_proof"
+  tone: "direct" | "warm" | "playful" | "premium"
+  outputType: "video_card" | "interactive"
+  status: "draft" | "published"
+  headline: string
+  captions: string[]       // for card/scene captions
+  ctaText?: string
+  previewFrameUrl?: string // optional later
+  createdAt: string        // ISO
+  publishedAt?: string     // ISO
+}
+
+Also: include orbitId on drafts. You’ll need it to filter recents when switching orbits.
+
+2) Add one missing concept: Orbit “state”
+
+Because your Launchpad needs to know whether to show “Power up Orbit”.
+
+type OrbitStatus = "basic" | "powered"
+
+type OrbitSummary = {
+  id: string
+  name: string
+  status: OrbitStatus
+  strengthScore?: number // 0-100 optional
+}
+
+3) Tighten the component list
+
+Your component list is good. Add these two to prevent UI glue code:
+	•	LaunchpadHeader (OrbitSelector + status pill + actions)
+	•	EmptyStates (no orbit, no insights, no drafts)
+
+And ensure IceBuilderPanel accepts a strict props shape:
+	•	selectedInsight?: Insight
+	•	onGenerateDraft(...)
+	•	draft?: IceDraft
+
+4) Build tasks: reorder into real phases (so it ships)
+
+Here’s the order that will actually work without getting stuck:
+
+Phase 0: Routing + state
+	•	Create /launchpad
+	•	Make it default post-login route
+	•	Persist last selected orbit (localStorage or DB)
+	•	If user has 0 orbits → route to claim flow
+
+Phase 1: Layout skeleton (static)
+	•	Two columns + bottom strip
+	•	Header with orbit selector + status pill + buttons
+
+Phase 2: Real Orbit data on the left
+	•	Signal tiles wired to Data Hub metrics
+	•	Insights list wired to your current insight source (even if it’s placeholder copy initially, it must be real objects)
+
+Phase 3: “Make Ice” handshake
+	•	Clicking insight populates builder state
+	•	Format/tone/output controls functional
+	•	Generate draft triggers your existing Ice generation route or a stub endpoint
+
+Phase 4: Draft persistence + Recent strip
+	•	Save draft record
+	•	Show recent drafts/published with “Made from” trace
+	•	Click trace scrolls/selects the insight (or opens the insight detail)
+
+Phase 5: Power-Up onboarding integration
+	•	Banner/pill shows “Basic scan”
+	•	CTA opens Power-Up wizard
+	•	On completion: orbit status becomes “powered”
+	•	Return to launchpad with “after” moment
+
+Phase 6: Mobile UX
+	•	Tabs: Insights | Builder | Recent
+	•	Sticky “Build from this” button after selecting insight
+	•	Builder as full-screen sheet
+
+Phase 7: Polish
+	•	Copy, empty states, loading skeletons, error states
+
+5) Acceptance criteria for v1 (ship gate)
+
+If these are true, you ship:
+	•	User lands on Launchpad after login
+	•	Can switch orbits
+	•	Sees metrics + at least a few insights
+	•	Clicks “Make Ice” and generates a draft
+	•	Draft appears in Recent immediately
+	•	Every draft shows “Made from: Insight”
+	•	Power-Up CTA is visible when orbit is basic
+
+6) One note on naming
+
+Don’t call it “Launchpad” in the logo/top left if you can avoid it. Keep product name as NextMonth and make the page label Studio or Launchpad in nav. Small thing, but it feels more premium.
+
+⸻
+
+If you paste this back to Redblood, they’ll have a build plan that’s tight enough to implement without “content object” chaos or routing confusion.

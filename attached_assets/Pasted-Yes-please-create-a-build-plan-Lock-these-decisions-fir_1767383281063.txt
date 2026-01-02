@@ -1,0 +1,46 @@
+Yes – please create a build plan. Lock these decisions first:
+
+### Locked decisions
+- New default post-login hub: **/launchpad** (can become “Home” in nav)
+- Do NOT rebuild the app. This is a **re-ranking + new hub page**.
+- Keep existing pages but demote:
+  - /orbit/:slug = Orbit Admin (sources, map, data hub)
+  - /icemaker = Ice Library (projects/templates) OR redirect to /library?tab=ice
+  - /try stays for guest builder
+- Design: plain black background, subtle gradient accents, no big purple blocks.
+
+### Build plan requirements
+Deliver a phased plan with:
+1) Desktop Launchpad first (responsive layout but desktop is primary)
+2) Mobile adaptation second (tabs or segmented control + builder as full-screen sheet)
+3) Explicit routing rules and fallbacks:
+   - If user has 0 Orbits → route to Claim flow
+   - If user has >=1 Orbit → route to Launchpad with Orbit selector defaulting to last used
+4) Data contracts required for the hub:
+   - Insight object fields (title, meaning, confidence, topic tags, segment, source, timestamps)
+   - Ice draft object fields (format, tone, output type, insightId trace)
+5) A list of components to create:
+   - LaunchpadLayout
+   - OrbitSelector
+   - SignalTiles
+   - TopInsightCard
+   - InsightFeed + InsightCard (with “Make Ice” CTA)
+   - IceBuilderPanel (3 states: empty/selected/draft)
+   - RecentStrip (drafts + published with “Made from” trace)
+6) Acceptance criteria for v1:
+   - User can select an Orbit
+   - See signal tiles + insight list
+   - Click “Make Ice” → builder fills with selected insight
+   - Generate draft → preview state appears
+   - Draft is saved and appears in Recent
+   - Every draft/published item shows “Made from: [Insight]”
+
+### Implementation order (suggested)
+Phase 0: Routing + orbit selection persistence
+Phase 1: Launchpad UI skeleton (static)
+Phase 2: Wire Orbit metrics + insights feed (real data)
+Phase 3: Wire “Make Ice” → builder state + draft generation call
+Phase 4: Wire Recent strip (drafts/published)
+Phase 5: Power-Up onboarding integration (Orbit Strength + completion moment)
+Phase 6: Mobile UX (tabs + builder sheet)
+Phase 7: Polish (copy, empty states, loading, errors)
