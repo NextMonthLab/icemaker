@@ -1,0 +1,107 @@
+# NextMonth UI Consolidation — Lock In Amalgamated Editor (CRITICAL)
+
+## Objective
+We are consolidating Orbit + IceMaker into a single, simple product flow:
+**Insights in → Content out.**
+This must feel like one system, not separate apps.
+
+## The Rule (Non-Negotiable)
+✅ **All draft creation flows must open the NEW Amalgamated Editor.**
+❌ Do not route users into any legacy editor or legacy IceMaker dashboard UX.
+
+The Launchpad “Builder Panel” is a launcher only (selection + configuration).  
+The **Amalgamated Editor** is where editing, media, interactions, and publish/download happen.
+
+---
+
+## Navigation (Final)
+Top-level nav must be:
+- **Launchpad**
+- **Orbits**
+- **Library**
+
+Remove or demote “IceMaker” as a top-level destination.  
+Legacy routes may exist for backwards compatibility but should redirect into Launchpad/Library where appropriate.
+
+---
+
+## Core Pages & Responsibilities
+
+### 1) Launchpad (default post-login)
+Purpose: Unified hub that shows Orbit signal + insights and allows creating an Ice from an insight.
+
+Key behaviour:
+- Clicking **Make Ice** on any insight populates the right-hand builder panel.
+- Clicking **Generate draft** must:
+  1) Create an IceDraft record (or draft payload)
+  2) Immediately open the **Amalgamated Editor** with that draft loaded
+
+Launchpad is NOT an editor.
+
+### 2) Library
+Purpose: Content store for the user’s work
+- Lists: Drafts + Published
+- Clicking any Draft opens the **Amalgamated Editor**
+- Published items open the viewer (with Edit if allowed)
+
+### 3) Orbits
+Purpose: Orbit configuration/admin
+- Claim
+- Power-up wizard
+- Knowledge Map / Intelligence views
+No Ice creation UI lives here.
+
+---
+
+## “New Ice” Entry Point (Source-led creation)
+IceMaker currently supports creation from:
+- Insights (primary)
+- URL
+- Paste text
+- Upload
+
+We still support these, but the entry point is unified:
+
+### “New Ice” Button
+Appears in Launchpad and Library.
+Opens a small modal chooser with:
+1) **From Insight (recommended)** → returns to/ focuses insight selection on Launchpad
+2) From URL
+3) Paste text
+4) Upload file
+
+After selecting a source:
+- User configures format/tone/output
+- Clicks **Generate draft**
+- Must open **Amalgamated Editor** every time
+
+---
+
+## Editor Routing (Single destination)
+Define a single canonical editor route:
+- e.g. `/ice/:id/edit` OR `/editor/:id`
+
+All “Generate draft” and “Open draft” actions must navigate there.
+
+---
+
+## Editor UX Requirement: Traceability
+Inside the Amalgamated Editor, show an “Origin” chip:
+- “Made from: [Insight title]” OR “Made from: URL / Upload / Paste”
+This maintains the loop and prevents feature fragmentation.
+
+---
+
+## Implementation Guardrails
+- Do not create a new “IceMaker Dashboard” page.
+- Do not duplicate editor logic inside Launchpad.
+- Do not keep separate “IceMaker Editor” vs “Orbit Editor”.
+There is only one: **Amalgamated Editor**.
+
+---
+
+## Success Criteria
+- User can create an Ice from an Insight in Launchpad → lands in Amalgamated Editor
+- User can create an Ice from URL/Paste/Upload via New Ice modal → lands in Amalgamated Editor
+- Library drafts always open Amalgamated Editor
+- Navigation is clean: Launchpad / Orbits / Library
