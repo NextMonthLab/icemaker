@@ -84,7 +84,7 @@ export function LaunchpadHeader({
             <Button
               variant="outline"
               size="sm"
-              className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+              className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
               data-testid="button-power-up"
             >
               <Zap className="w-4 h-4 mr-1" />
@@ -107,7 +107,7 @@ export function LaunchpadHeader({
         </Link>
         <Button
           onClick={onCreateIce}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm md:text-base px-3 md:px-4"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm md:text-base px-3 md:px-4"
           data-testid="button-new-ice"
           aria-label="New Ice"
         >

@@ -67,8 +67,8 @@ export function InsightFeed({
             onClick={() => setActiveFilter(filter)}
             className={`cursor-pointer whitespace-nowrap transition-colors ${
               activeFilter === filter
-                ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
-                : "border-white/10 text-white/50 hover:border-white/20 hover:text-white/70"
+                ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+                : "border-white/10 text-white/50 hover:border-blue-500/30 hover:text-white/70"
             }`}
             data-testid={`filter-${filter.toLowerCase().replace(" ", "-")}`}
           >

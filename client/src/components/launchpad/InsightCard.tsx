@@ -37,8 +37,8 @@ export function InsightCard({
     <div
       className={`p-4 rounded-lg border transition-all cursor-pointer ${
         isSelected
-          ? "bg-white/[0.03] border-l-2 border-l-purple-500 border-white/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
-          : "bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
+          ? "bg-white/[0.03] border-l-2 border-l-blue-500 border-white/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+          : "bg-white/[0.02] border-white/10 hover:border-blue-500/30 hover:bg-white/[0.04]"
       }`}
       data-testid={`insight-card-${insight.id}`}
     >
@@ -73,7 +73,7 @@ export function InsightCard({
             e.stopPropagation();
             onMakeIce(insight);
           }}
-          className="bg-purple-600 hover:bg-purple-700 shrink-0"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shrink-0"
           data-testid={`button-make-ice-${insight.id}`}
         >
           <Sparkles className="w-3 h-3 mr-1" />

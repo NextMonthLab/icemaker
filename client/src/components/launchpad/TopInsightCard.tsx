@@ -32,15 +32,15 @@ export function TopInsightCard({ insight, onMakeIce }: TopInsightCardProps) {
 
   return (
     <div
-      className="relative p-5 rounded-xl bg-white/[0.03] border-t-2 border-t-purple-500 border border-white/10 hover:border-white/20 transition-all group"
+      className="relative p-5 rounded-xl bg-white/[0.03] border-t-2 border-t-blue-500 border border-white/10 hover:border-blue-500/30 transition-all group"
       data-testid="top-insight-card"
     >
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
       
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Badge className="bg-purple-500/20 text-purple-400 border-0 text-xs px-2 py-0.5">
+            <Badge className="bg-blue-500/20 text-blue-400 border-0 text-xs px-2 py-0.5">
               <Star className="w-3 h-3 mr-1 fill-current" />
               Top insight
             </Badge>
@@ -72,7 +72,7 @@ export function TopInsightCard({ insight, onMakeIce }: TopInsightCardProps) {
           <Button
             onClick={() => onMakeIce(insight)}
             size="sm"
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             data-testid="button-make-ice-top"
           >
             <Sparkles className="w-3 h-3 mr-1.5" />

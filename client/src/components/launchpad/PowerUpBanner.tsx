@@ -17,7 +17,7 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
       
       <div className="relative px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
             <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
           </div>
           
@@ -38,7 +38,7 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
 
         <Button
           onClick={onUpgrade}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 gap-2 text-sm w-full sm:w-auto"
+          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 gap-2 text-sm w-full sm:w-auto"
           data-testid="button-powerup"
         >
           <Sparkles className="w-4 h-4" />

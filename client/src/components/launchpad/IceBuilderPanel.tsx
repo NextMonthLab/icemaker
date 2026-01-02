@@ -156,7 +156,7 @@ export function IceBuilderPanel({
         </div>
 
         <div className="flex gap-2">
-          <Button className="flex-1 bg-purple-600 hover:bg-purple-700">
+          <Button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
             Edit captions
           </Button>
           {draft.outputType === "video_card" ? (
@@ -190,7 +190,7 @@ export function IceBuilderPanel({
         </p>
       </div>
 
-      <div className="p-4 rounded-lg bg-white/[0.03] border-l-2 border-l-purple-500 border border-white/10">
+      <div className="p-4 rounded-lg bg-white/[0.03] border-l-2 border-l-blue-500 border border-white/10">
         <p className="text-white font-medium">{insight.title}</p>
         <p className="text-sm text-white/60 mt-1 line-clamp-2">
           {insight.meaning}
@@ -213,8 +213,8 @@ export function IceBuilderPanel({
                 onClick={() => setFormat(option.value)}
                 className={`p-3 rounded-lg border text-left transition-colors ${
                   format === option.value
-                    ? "border-purple-500 bg-purple-500/20 text-white"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                    ? "border-blue-500 bg-blue-500/20 text-white"
+                    : "border-white/10 bg-white/5 text-white/70 hover:border-blue-500/30"
                 }`}
                 data-testid={`format-${option.value}`}
               >
@@ -252,8 +252,8 @@ export function IceBuilderPanel({
               onClick={() => setOutputType("video_card")}
               className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
                 outputType === "video_card"
-                  ? "border-purple-500 bg-purple-500/20 text-white"
-                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                  ? "border-blue-500 bg-blue-500/20 text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-blue-500/30"
               }`}
               data-testid="output-video"
             >
@@ -263,8 +263,8 @@ export function IceBuilderPanel({
               onClick={() => setOutputType("interactive")}
               className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
                 outputType === "interactive"
-                  ? "border-purple-500 bg-purple-500/20 text-white"
-                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                  ? "border-blue-500 bg-blue-500/20 text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-blue-500/30"
               }`}
               data-testid="output-interactive"
             >
@@ -284,7 +284,7 @@ export function IceBuilderPanel({
           })
         }
         disabled={isGenerating}
-        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         data-testid="button-generate-draft"
       >
         {isGenerating ? (

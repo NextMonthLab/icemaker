@@ -167,7 +167,7 @@ export default function GlobalNav({
                   <Link href="/try">
                     <Button 
                       size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white gap-1.5 h-8 px-3 text-xs"
+                      className="bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 text-white gap-1.5 h-8 px-3 text-xs"
                       data-testid="global-cta-ice"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
