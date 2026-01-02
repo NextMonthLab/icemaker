@@ -435,7 +435,7 @@ export default function CardPlayer({
               />
             )}
 
-            <div className={`absolute inset-x-0 bottom-0 flex flex-col justify-end ${fullScreen ? 'p-8 pb-24' : 'p-6 pb-16'}`}>
+            <div className={`absolute inset-x-0 bottom-0 top-16 flex flex-col justify-end ${fullScreen ? 'p-8 pb-24' : 'p-6 pb-16'}`}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={captionIndex}
@@ -443,11 +443,17 @@ export default function CardPlayer({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="flex items-center justify-center"
+                  className="flex items-center justify-center max-h-[60%] overflow-hidden"
                 >
                   {captionIndex < card.captions.length ? (
                     <p 
-                      className={`font-bold text-center leading-snug px-4 tracking-wide ${fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
+                      className={`font-bold text-center leading-snug px-4 tracking-wide ${
+                        card.captions[captionIndex].length > 100 
+                          ? (fullScreen ? 'text-xl md:text-2xl' : 'text-lg md:text-xl')
+                          : card.captions[captionIndex].length > 50 
+                            ? (fullScreen ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl')
+                            : (fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl')
+                      }`}
                       style={{ 
                         textShadow: '0 2px 10px rgba(0,0,0,0.9)',
                         fontFamily: selectedFontFamily,
