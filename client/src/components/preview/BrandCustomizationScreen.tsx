@@ -522,34 +522,6 @@ export function BrandCustomizationScreen({
             Continue to Preview
             <ArrowRight className="w-5 h-5" />
           </button>
-          
-          {isFirstRun && (
-            <div 
-              className="p-4 rounded-xl text-center"
-              style={{
-                backgroundColor: theme === 'dark' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.1)',
-                border: `1px solid ${theme === 'dark' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.3)'}`,
-              }}
-            >
-              <p className="text-sm font-medium mb-2" style={{ color: theme === 'dark' ? '#c084fc' : '#9333ea' }}>
-                Is this your business?
-              </p>
-              <p className="text-xs mb-3" style={{ color: mutedColor }}>
-                Claim your Orbit to unlock all features and control how AI represents you.
-              </p>
-              <button
-                onClick={() => window.location.href = `/for/brands?claim=${window.location.pathname.split('/').pop()}`}
-                className="px-6 py-2.5 rounded-lg font-medium text-sm transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: theme === 'dark' ? '#9333ea' : '#7c3aed',
-                  color: '#fff',
-                }}
-                data-testid="button-verify-ownership"
-              >
-                Verify Ownership
-              </button>
-            </div>
-          )}
         </motion.div>
       </motion.div>
     </motion.div>
