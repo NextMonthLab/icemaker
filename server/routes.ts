@@ -4478,7 +4478,8 @@ export async function registerRoutes(
       
       // DEV BYPASS: Skip Stripe and directly upgrade the user (for testing)
       if (devBypass === true) {
-        const plan = await storage.getPlanByName(planName);
+        const targetPlanName = planName || "pro"; // Default to pro if no plan specified
+        const plan = await storage.getPlanByName(targetPlanName);
         if (!plan) {
           return res.status(400).json({ message: "Invalid plan" });
         }
