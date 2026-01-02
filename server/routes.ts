@@ -9158,6 +9158,57 @@ Guidelines:
     }
   });
 
+  // Orbit ICE Draft - Generate draft from insight (owner only, stub for Phase 3)
+  app.post("/api/orbit/:slug/ice/generate", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      const { insightId, format, tone, outputType } = req.body;
+      
+      if (!insightId || !format || !tone || !outputType) {
+        return res.status(400).json({ message: "insightId, format, tone, and outputType are required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can generate ICE drafts" });
+      }
+      
+      // Phase 3: Return mock draft structure (real persistence in Phase 4)
+      const draft = {
+        id: `draft-${Date.now().toString(36)}`,
+        orbitSlug: slug,
+        insightId,
+        format,
+        tone,
+        outputType,
+        status: "draft",
+        headline: format === "hook_bullets" ? "Did you know...?" 
+          : format === "myth_reality" ? "Common myths vs reality"
+          : format === "checklist" ? "Your essential checklist"
+          : "The solution you need",
+        captions: [
+          "This insight is about your business",
+          "Turn visitors into customers",
+          "Share your story effectively",
+        ],
+        ctaText: "Learn more",
+        previewFrameUrl: null,
+        createdAt: new Date().toISOString(),
+        publishedAt: null,
+      };
+      
+      res.json(draft);
+    } catch (error) {
+      console.error("Error generating ice draft:", error);
+      res.status(500).json({ message: "Error generating draft" });
+    }
+  });
+
   // Orbit Leads - Submit a lead
   app.post("/api/orbit/:slug/leads", async (req, res) => {
     try {
