@@ -36,6 +36,7 @@ import IceMakerCreate from "@/pages/icemaker/IceMakerCreate";
 import IceMakerProjects from "@/pages/icemaker/IceMakerProjects";
 import IceMakerTemplates from "@/pages/icemaker/IceMakerTemplates";
 import IceMakerSettings from "@/pages/icemaker/IceMakerSettings";
+import Library from "@/pages/Library";
 import { useSearch } from "wouter";
 
 function OrbitRouter() {
@@ -145,9 +146,10 @@ function Router() {
       <Route path="/cookies" component={CookiePolicy} />
       <Route path="/preview/:id" component={PreviewRedirect} />
       
-      <Route path="/icemaker" component={IceMakerHome} />
+      <Route path="/library" component={Library} />
+      <Route path="/icemaker" component={Library} />
       <Route path="/icemaker/create" component={IceMakerCreate} />
-      <Route path="/icemaker/projects" component={IceMakerProjects} />
+      <Route path="/icemaker/projects" component={Library} />
       <Route path="/icemaker/templates" component={IceMakerTemplates} />
       <Route path="/icemaker/settings" component={IceMakerSettings} />
       

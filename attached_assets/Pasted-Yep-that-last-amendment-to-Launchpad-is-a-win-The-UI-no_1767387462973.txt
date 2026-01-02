@@ -1,0 +1,102 @@
+Yep – that last amendment to Launchpad is a win. The UI now has a single design language (dark surfaces + brand gradient accents) and it’s starting to feel like a real NextMonth OS.
+
+Now: Orbits and Library are the last two “tell-tales” that will give away the old fragmented product if we don’t bring them into the same visual family.
+
+⸻
+
+1) Library page (IceMaker / My Projects) – what’s wrong
+
+In your screenshot, Library still looks like the old IceMaker app wearing the new top nav.
+
+The giveaways
+	•	Left sidebar still says IceMaker and has “Dashboard / Create Experience / My Projects”.
+	•	The page title is “My Projects” but the global nav says “Library”.
+	•	The button styling is still the old pink, not your new brand gradient system.
+	•	The whole layout feels like a separate product embedded inside NextMonth.
+
+What to change (simple, high impact)
+
+A. Remove the IceMaker sidebar entirely (or hide it when top nav is present).
+Library should be a clean first-class NextMonth page, not a nested tool.
+
+B. Reframe the page as “Library”, not “My Projects”.
+Then use tabs inside it:
+	•	Drafts
+	•	Published
+	•	Templates
+	•	Downloads (optional)
+
+C. Make the empty state match Launchpad
+Instead of “No projects yet”, use:
+	•	Headline: Your Library is empty
+	•	Sub: Drafts and published experiences will appear here.
+	•	Primary CTA: Make an Ice from an insight (takes you to Launchpad, scrolls to Insights)
+	•	Secondary CTA: Create from scratch (only if you genuinely support it)
+
+This reinforces the loop instead of sending people into an old IceMaker flow.
+
+D. Rename “New Project” to “New Ice”
+And use the same brand gradient button style as Launchpad.
+
+If you only do one thing: kill the IceMaker sidebar. It instantly stops feeling like a separate app.
+
+⸻
+
+2) Orbits page (Explore Orbits) – it’s close, but still “old Orbit”
+
+This page is much less broken than Library. The layout is fine, but the styling is still in the “Orbit era”.
+
+The giveaways
+	•	The big purple “Claim Your Orbit” block (again, your bugbear).
+	•	Sidebar feels like a different system (different icon weight / spacing / emphasis).
+	•	The “Explore Orbits” page is more of a marketing landing screen than an admin/product screen.
+
+What to change (keep the layout, update the skin + hierarchy)
+
+A. Make “Claim Your Orbit” a dark card with an accent border
+No full purple fill. Same rule as Launchpad.
+
+B. Reframe the page structure
+Orbits should feel like:
+	•	My Orbits (list)
+	•	Claim new Orbit
+	•	Orbit Admin (once inside a specific orbit)
+
+So “Explore Orbits” might become “Orbits” and show:
+	•	A list/table/grid of orbits
+	•	Each orbit tile shows: status (basic/powered), strength score, last updated
+	•	Primary CTA: Open Launchpad for that orbit
+	•	Secondary CTA: Manage Orbit (goes to admin)
+
+C. Button language should match Launchpad
+	•	“Get Started” → Claim Orbit
+	•	“Analyze” → Open Intelligence
+	•	“Explore” → Open Map
+
+Small words, big cohesion.
+
+⸻
+
+The unifying rule across all three pages
+
+Launchpad is the product. Orbits and Library are supporting areas.
+
+So:
+	•	Launchpad = action + loop
+	•	Orbits = configuration + admin
+	•	Library = outcomes (drafts/published)
+
+Right now Launchpad is aligned. Orbits is 70% aligned. Library is 30% aligned.
+
+⸻
+
+Your next instruction to Replica (copy/paste)
+
+If you want a clean task for them:
+	1.	Library page: remove IceMaker sidebar when global nav exists, rename page to “Library”, add tabs (Drafts/Published/Templates), and update empty state CTAs to push users back to Launchpad loop.
+	2.	Orbits page: remove purple fill blocks, convert to dark cards with accent borders, and restructure Orbits home to focus on “My Orbits” + “Claim Orbit” rather than “Explore Orbits” marketing tiles.
+	3.	Ensure all CTAs use the brand gradient system consistently (only primary actions get full gradient fill).
+
+⸻
+
+If you send me one more screenshot after the Library sidebar is gone and the Orbits purple card is dark-with-accent, I’ll call it: at that point the whole nav will feel like one product, not stitched apps.
