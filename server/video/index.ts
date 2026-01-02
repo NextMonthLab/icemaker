@@ -17,6 +17,8 @@ export {
   isReplicateConfigured,
   getReplicateModels,
   generateVideoWithReplicate,
+  startReplicateVideoAsync,
+  checkReplicatePrediction,
   type ReplicateVideoRequest,
   type ReplicateVideoResult,
 } from "./replicate";

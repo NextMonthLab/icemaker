@@ -6632,17 +6632,113 @@ Stay engaging, reference story details, and help the audience understand the nar
         details: { cardId, type: 'video', mode },
       });
       
-      // Video generation requires additional setup (Replicate/Kling)
-      // For now, return a placeholder response
+      // Get video settings from request
+      const { model, duration } = req.body;
+      const videoPrompt = prompt || `Cinematic scene: ${card.title}. ${card.content}`;
+      
+      // Import video generation functions
+      const { isReplicateConfigured, startReplicateVideoAsync } = await import("./video");
+      
+      if (!isReplicateConfigured()) {
+        return res.status(503).json({ message: "Video generation not configured" });
+      }
+      
+      // Start async video generation
+      const result = await startReplicateVideoAsync({
+        prompt: videoPrompt,
+        imageUrl: mode === "image-to-video" ? sourceImageUrl : undefined,
+        model: model || "kling-v1.6-standard",
+        duration: duration || 5,
+        aspectRatio: "9:16",
+        negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+      });
+      
+      // Update the card with the prediction ID
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      cards[cardIndex] = { 
+        ...card, 
+        videoPredictionId: result.predictionId,
+        videoGenerationStatus: "processing",
+        videoGenerationMode: mode || "text-to-video",
+      };
+      await storage.updateIcePreview(previewId, { cards });
+      
+      console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId}`);
+      
       res.json({
         success: true,
         message: "Video generation started",
-        status: "pending",
+        status: "processing",
+        predictionId: result.predictionId,
         cardId,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating ICE preview card video:", error);
-      res.status(500).json({ message: "Error generating video" });
+      res.status(500).json({ message: error.message || "Error generating video" });
+    }
+  });
+  
+  // Check video generation status for an ICE preview card
+  app.get("/api/ice/preview/:previewId/cards/:cardId/video/status", requireAuth, async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      const cards = preview.cards as any[];
+      const card = cards.find(c => c.id === cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // If no prediction ID, return current status
+      if (!card.videoPredictionId) {
+        return res.json({
+          status: card.videoGenerationStatus || "none",
+          videoUrl: card.generatedVideoUrl,
+        });
+      }
+      
+      // Check prediction status
+      const { checkReplicatePrediction } = await import("./video");
+      const result = await checkReplicatePrediction(card.videoPredictionId);
+      
+      // Update card if status changed
+      if (result.status === "completed" && result.videoUrl) {
+        const cardIndex = cards.findIndex(c => c.id === cardId);
+        cards[cardIndex] = {
+          ...card,
+          generatedVideoUrl: result.videoUrl,
+          videoGenerationStatus: "completed",
+          videoPredictionId: null, // Clear after completion
+        };
+        await storage.updateIcePreview(previewId, { cards });
+        
+        console.log(`[ICE Video] Completed for card ${cardId}: ${result.videoUrl}`);
+      } else if (result.status === "failed") {
+        const cardIndex = cards.findIndex(c => c.id === cardId);
+        cards[cardIndex] = {
+          ...card,
+          videoGenerationStatus: "failed",
+          videoGenerationError: result.error,
+          videoPredictionId: null,
+        };
+        await storage.updateIcePreview(previewId, { cards });
+        
+        console.log(`[ICE Video] Failed for card ${cardId}: ${result.error}`);
+      }
+      
+      res.json({
+        status: result.status,
+        videoUrl: result.videoUrl,
+        error: result.error,
+      });
+    } catch (error: any) {
+      console.error("Error checking ICE video status:", error);
+      res.status(500).json({ message: "Error checking video status" });
     }
   });
   
