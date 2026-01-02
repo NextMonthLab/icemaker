@@ -3,7 +3,6 @@ import {
   Sparkles,
   LayoutDashboard,
   FolderOpen,
-  Settings,
   Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +13,6 @@ const iceMakerNavItems = [
   { href: "/icemaker", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/icemaker/create", icon: Plus, label: "Create Experience" },
   { href: "/icemaker/projects", icon: FolderOpen, label: "My Projects" },
-  { href: "/icemaker/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function IceMakerLayout({ children }: { children: React.ReactNode }) {
