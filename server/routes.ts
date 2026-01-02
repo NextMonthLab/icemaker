@@ -6738,13 +6738,14 @@ Stay engaging, reference story details, and help the audience understand the nar
       }
       
       const { isTTSConfigured, synthesiseSpeech, validateNarrationText } = await import("./tts");
-      const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
+      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
       
       if (!isTTSConfigured()) {
         return res.status(503).json({ message: "TTS not configured: OPENAI_API_KEY is missing" });
       }
       
-      if (!isObjectStorageConfigured()) {
+      const objectStorage = new ObjectStorageService();
+      if (!objectStorage.isConfigured()) {
         return res.status(503).json({ message: "Object storage not configured" });
       }
       
@@ -6761,9 +6762,9 @@ Stay engaging, reference story details, and help the audience understand the nar
         speed: speed || 1.0,
       });
       
-      // Save to object storage
-      const key = `.private/ice-narration/${previewId}-${cardId}-${Date.now()}.mp3`;
-      const audioUrl = await putObject(key, result.audioBuffer, result.contentType);
+      // Save to Replit object storage
+      const fileName = `ice-narration-${previewId}-${cardId}-${Date.now()}.mp3`;
+      const audioUrl = await objectStorage.uploadBuffer(result.audioBuffer, fileName, result.contentType, "ice-narration");
       
       // Update the card with the generated audio URL
       cards[cardIndex] = { ...card, narrationAudioUrl: audioUrl };
