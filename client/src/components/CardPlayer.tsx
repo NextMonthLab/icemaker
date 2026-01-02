@@ -44,6 +44,26 @@ interface BrandPreferences {
   selectedImages: string[];
 }
 
+export type CardFont = 'cinzel' | 'playfair' | 'inter' | 'oswald' | 'dancing' | 'bebas';
+
+export const CARD_FONTS: { id: CardFont; name: string; fontFamily: string }[] = [
+  { id: 'cinzel', name: 'Cinzel', fontFamily: '"Cinzel", serif' },
+  { id: 'playfair', name: 'Playfair', fontFamily: '"Playfair Display", serif' },
+  { id: 'inter', name: 'Inter', fontFamily: '"Inter", sans-serif' },
+  { id: 'oswald', name: 'Oswald', fontFamily: '"Oswald", sans-serif' },
+  { id: 'dancing', name: 'Dancing Script', fontFamily: '"Dancing Script", cursive' },
+  { id: 'bebas', name: 'Bebas Neue', fontFamily: '"Bebas Neue", sans-serif' },
+];
+
+export const CARD_COLORS = [
+  { id: 'white', name: 'White', value: '#ffffff' },
+  { id: 'gold', name: 'Gold', value: '#ffd700' },
+  { id: 'pink', name: 'Pink', value: '#ec4899' },
+  { id: 'purple', name: 'Purple', value: '#a855f7' },
+  { id: 'cyan', name: 'Cyan', value: '#06b6d4' },
+  { id: 'green', name: 'Green', value: '#22c55e' },
+];
+
 interface CardPlayerProps {
   card: Card;
   autoplay?: boolean;
@@ -52,6 +72,8 @@ interface CardPlayerProps {
   onPhaseChange?: (phase: "cinematic" | "context") => void;
   fullScreen?: boolean;
   brandPreferences?: BrandPreferences | null;
+  font?: CardFont;
+  fontColor?: string;
 }
 
 type Phase = "cinematic" | "context";
@@ -63,7 +85,9 @@ export default function CardPlayer({
   onChatClick,
   onPhaseChange,
   fullScreen = false,
-  brandPreferences
+  brandPreferences,
+  font = 'cinzel',
+  fontColor = '#ffffff'
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -85,6 +109,8 @@ export default function CardPlayer({
   const bgColor = theme === 'dark' ? '#0a0a0a' : '#f5f5f5';
   const textColor = theme === 'dark' ? 'white' : '#1a1a1a';
   const mutedTextColor = theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
+  
+  const selectedFontFamily = CARD_FONTS.find(f => f.id === font)?.fontFamily || CARD_FONTS[0].fontFamily;
   
   const hasNarration = card.narrationEnabled && card.narrationStatus === "ready" && card.narrationAudioUrl;
   const hasVideo = card.videoGenerated && card.generatedVideoUrl && card.videoGenerationStatus === "completed";
@@ -421,9 +447,11 @@ export default function CardPlayer({
                 >
                   {captionIndex < card.captions.length ? (
                     <p 
-                      className={`font-display font-bold text-center leading-snug px-4 text-white tracking-wide ${fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
+                      className={`font-bold text-center leading-snug px-4 tracking-wide ${fullScreen ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
                       style={{ 
-                        textShadow: '0 2px 10px rgba(0,0,0,0.9)'
+                        textShadow: '0 2px 10px rgba(0,0,0,0.9)',
+                        fontFamily: selectedFontFamily,
+                        color: fontColor
                       }}
                     >
                       {card.captions[captionIndex]}

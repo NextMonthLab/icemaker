@@ -14,7 +14,7 @@ import GlobalNav from "@/components/GlobalNav";
 import { VisibilityBadge } from "@/components/VisibilityBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import CardPlayer from "@/components/CardPlayer";
+import CardPlayer, { CARD_FONTS, CARD_COLORS, type CardFont } from "@/components/CardPlayer";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import previewCardBackground from "@assets/generated_images/minimal_sunset_with_top_silhouettes.png";
@@ -101,6 +101,8 @@ export default function GuestIceBuilderPage() {
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [cardPace, setCardPace] = useState<"slow" | "normal" | "fast">("normal");
   const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState(true);
+  const [cardFont, setCardFont] = useState<CardFont>("cinzel");
+  const [cardFontColor, setCardFontColor] = useState("#ffffff");
   
   const paceDelays = { slow: 12000, normal: 5000, fast: 3000 };
   
@@ -875,6 +877,8 @@ export default function GuestIceBuilderPage() {
                   }}
                   autoplay={true}
                   fullScreen={true}
+                  font={cardFont}
+                  fontColor={cardFontColor}
                   onPhaseChange={(phase) => {
                     if (phase === 'context' && previewCardIndex < cards.length - 1) {
                       setPreviewCardIndex(prev => prev + 1);
@@ -909,6 +913,42 @@ export default function GuestIceBuilderPage() {
                 >
                   {pace.charAt(0).toUpperCase() + pace.slice(1)}
                 </button>
+              ))}
+            </div>
+            
+            {/* Font selector */}
+            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
+              <span className="text-[10px] text-white/60 mr-1">Font:</span>
+              <select
+                value={cardFont}
+                onChange={(e) => setCardFont(e.target.value as CardFont)}
+                className="bg-transparent text-[10px] text-white border-none outline-none cursor-pointer"
+                data-testid="select-font"
+              >
+                {CARD_FONTS.map((font) => (
+                  <option key={font.id} value={font.id} className="bg-slate-900 text-white">
+                    {font.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Color selector */}
+            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1.5 w-fit">
+              <span className="text-[10px] text-white/60">Color:</span>
+              {CARD_COLORS.map((color) => (
+                <button
+                  key={color.id}
+                  onClick={() => setCardFontColor(color.value)}
+                  className={`w-4 h-4 rounded-full border-2 transition-all ${
+                    cardFontColor === color.value
+                      ? "border-white scale-110"
+                      : "border-transparent hover:border-white/50"
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                  data-testid={`button-color-${color.id}`}
+                />
               ))}
             </div>
           </div>
