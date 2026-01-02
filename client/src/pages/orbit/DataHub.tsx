@@ -1,5 +1,5 @@
 import { useRoute, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
   Eye, 
@@ -152,6 +152,46 @@ export default function DataHub() {
     enabled: !!slug,
   });
 
+  const { data: plans } = useQuery<{ name: string; stripePriceIdMonthly: string | null }[]>({
+    queryKey: ["plans"],
+    queryFn: async () => {
+      const response = await fetch("/api/plans");
+      if (!response.ok) throw new Error("Failed to fetch plans");
+      return response.json();
+    },
+  });
+
+  const upgradeMutation = useMutation({
+    mutationFn: async () => {
+      const proPlan = plans?.find(p => p.name === "pro");
+      if (!proPlan?.stripePriceIdMonthly) {
+        throw new Error("Pro plan not available");
+      }
+      
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: proPlan.stripePriceIdMonthly,
+          planName: "pro",
+        }),
+        credentials: "include",
+      });
+      
+      if (!response.ok) throw new Error("Failed to create checkout session");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+  });
+
+  const handleUpgrade = () => {
+    upgradeMutation.mutate();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -212,8 +252,10 @@ export default function DataHub() {
             <Button 
               className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
               data-testid="button-upgrade-to-grow"
+              onClick={handleUpgrade}
+              disabled={upgradeMutation.isPending}
             >
-              Upgrade to Grow
+              {upgradeMutation.isPending ? "Loading..." : "Upgrade to Grow"}
             </Button>
             <Button 
               variant="ghost" 
