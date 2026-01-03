@@ -1,0 +1,127 @@
+You’re thinking about this the right way: don’t “ask if it’s built”, force Raplet to prove it with file paths, routes, state logic, and a clickable flow.
+
+Here’s how to interrogate Raplet properly so you can confirm whether the Orbit Power-Up journey is genuinely scaffolded (and not just vibes).
+
+⸻
+
+1) Define “Powered Up” in code terms (so it can be verified)
+
+Before you interrogate, make the target concrete:
+
+OrbitStatus = powered when at least:
+	•	1+ extra page sources added (About, Services/Pricing, FAQ/Contact)
+	•	Social links added OR brand assets selected (logo, images, accent preset)
+	•	Ingest job completed successfully (not pending)
+	•	Strength score > threshold (even if crude at first)
+
+If Raplet can’t point to where that logic lives, it’s not scaffolded.
+
+⸻
+
+2) The interrogation method: “Show me the evidence”
+
+You want Raplet to answer in this format every time:
+	•	Routes: exact paths
+	•	Components: exact file paths
+	•	State machine: what statuses exist and where they change
+	•	Data model: DB tables or persisted objects
+	•	Wiring: which endpoints are called on submit
+	•	UI proof: what happens when a user clicks through
+
+No evidence = not built.
+
+⸻
+
+3) Paste this prompt to Raplet (it will flush out reality fast)
+
+RAPLET: Power-Up Process Scaffold Audit (No hand-waving)
+
+Goal
+Confirm whether the Orbit “Power-Up” process exists as a real scaffolded flow, not just UI fragments.
+
+You must respond with EVIDENCE:
+- file paths
+- route paths
+- component names
+- which endpoints are called
+- where state is stored
+- where Orbit status changes
+
+Checklist you must satisfy:
+
+A) Routes and navigation
+1) What route starts the power-up wizard? Provide exact route path.
+2) What route shows completion and where does it redirect (Launchpad or Orbit Admin)?
+3) Is there a guarded redirect (basic -> power-up prompt)? Show logic location.
+
+B) UI components
+List each wizard screen component with its file path:
+- Step 1: key pages (About, Services/Pricing, FAQ/Contact) with URL or paste toggle
+- Step 2: socials + optional brand assets
+- Progress/loading state
+- Success state + CTA
+
+C) Data storage
+1) Where are the user-provided sources stored (DB table or persisted JSON)? Provide schema or interface.
+2) Where is Orbit status stored and updated? Show the code line or function.
+
+D) Backend wiring
+1) Which endpoint receives the “power-up” payload? Provide route definition file + handler.
+2) What does it do: queue ingest job, run immediate scrape, save sources, compute strengthScore.
+3) If anything is stubbed, label it clearly as STUB and show TODO.
+
+E) Smoke test
+Provide steps to test in the browser in under 2 minutes:
+- starting from a basic orbit
+- entering sources
+- confirming status changes to powered
+- seeing insights begin to appear in Launchpad
+
+If any part is missing, list the missing parts as a punch list with file paths to create.
+
+That prompt basically forces a confession if anything is pretend.
+
+⸻
+
+4) What “scaffolded” actually means for you (minimum viable)
+
+For your “hooked, no turning back” loop, scaffolded does NOT need perfect AI. It needs:
+	•	A wizard that collects sources fast (2 steps)
+	•	A status flip (basic -> powered) that is visible everywhere
+	•	A drip feed that starts immediately (even if it’s partly templated at first)
+
+If Raplet has built the Launchpad insight feed, you can “drip” with:
+	•	1 top insight (always)
+	•	3 feed insights (rotating)
+	•	Confidence badges that improve as data increases
+
+That’s enough to hook.
+
+⸻
+
+5) The 10-minute “truth test” you do yourself
+
+After Raplet responds, you verify in this order:
+	1.	Can you start the wizard from the Orbit area in one click?
+	2.	Can you submit at least ONE source and continue?
+	3.	Does it save somewhere real (refresh page, still there)?
+	4.	Does Orbit status change to Powered Up in the UI?
+	5.	Do you see any new insights populate within 30 seconds (even if basic)?
+
+If any answer is “no”, that’s your punch list.
+
+⸻
+
+6) The hook: what to drip so they’re invested
+
+Once powered:
+	•	“New insight unlocked” toast after ingest
+	•	“Orbit strength increased” indicator (+X)
+	•	Launchpad shows: “Powered Up insights are now live” with a subtle glow
+	•	First “Make Ice” is pre-selected for them (remove friction)
+
+You’re aiming for: submit pages → feel progress → see insight → generate content.
+
+⸻
+
+If you paste the prompt above into Raplet and send me what it replies with, I’ll translate it into a clean pass/fail checklist and the exact next build steps (no fluff).

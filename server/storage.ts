@@ -211,6 +211,11 @@ export interface IStorage {
   getClaimToken(token: string): Promise<schema.OrbitClaimToken | undefined>;
   markClaimTokenUsed(token: string): Promise<void>;
 
+  // Orbit Sources (Power-Up)
+  upsertOrbitSources(businessSlug: string, sources: Array<{ label: schema.OrbitSourceLabel; sourceType: schema.OrbitSourceType; value: string }>): Promise<schema.OrbitSource[]>;
+  getOrbitSources(businessSlug: string): Promise<schema.OrbitSource[]>;
+  updateOrbitTierAndStrength(businessSlug: string, planTier: string, strengthScore: number): Promise<schema.OrbitMeta | undefined>;
+
   // Orbit Analytics
   getOrbitAnalytics(businessSlug: string, days?: number): Promise<schema.OrbitAnalytics[]>;
   getOrbitAnalyticsSummary(businessSlug: string, days?: number): Promise<{
@@ -1648,6 +1653,62 @@ export class DatabaseStorage implements IStorage {
     await db.update(schema.orbitClaimTokens)
       .set({ usedAt: new Date() })
       .where(eq(schema.orbitClaimTokens.token, token));
+  }
+
+  // Orbit Sources (Power-Up)
+  async upsertOrbitSources(
+    businessSlug: string, 
+    sources: Array<{ label: schema.OrbitSourceLabel; sourceType: schema.OrbitSourceType; value: string }>
+  ): Promise<schema.OrbitSource[]> {
+    const results: schema.OrbitSource[] = [];
+    
+    for (const source of sources) {
+      const [upserted] = await db
+        .insert(schema.orbitSources)
+        .values({
+          businessSlug,
+          label: source.label,
+          sourceType: source.sourceType,
+          value: source.value,
+        })
+        .onConflictDoUpdate({
+          target: [schema.orbitSources.businessSlug, schema.orbitSources.label],
+          set: {
+            sourceType: source.sourceType,
+            value: source.value,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      results.push(upserted);
+    }
+    
+    return results;
+  }
+
+  async getOrbitSources(businessSlug: string): Promise<schema.OrbitSource[]> {
+    const results = await db.query.orbitSources.findMany({
+      where: eq(schema.orbitSources.businessSlug, businessSlug),
+      orderBy: [asc(schema.orbitSources.createdAt)],
+    });
+    return results;
+  }
+
+  async updateOrbitTierAndStrength(
+    businessSlug: string, 
+    planTier: string, 
+    strengthScore: number
+  ): Promise<schema.OrbitMeta | undefined> {
+    const [updated] = await db
+      .update(schema.orbitMeta)
+      .set({ 
+        planTier, 
+        strengthScore,
+        lastUpdated: new Date(),
+      })
+      .where(eq(schema.orbitMeta.businessSlug, businessSlug))
+      .returning();
+    return updated;
   }
 
   async getOrCreateTodayAnalytics(businessSlug: string): Promise<schema.OrbitAnalytics> {

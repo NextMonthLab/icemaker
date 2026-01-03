@@ -1382,6 +1382,9 @@ export const orbitMeta = pgTable("orbit_meta", {
   // Tier (free | grow | insight | intelligence)
   planTier: text("plan_tier").default("free").notNull(),
   
+  // Power-Up strength score (0-100, calculated from sources provided)
+  strengthScore: integer("strength_score").default(0).notNull(),
+  
   // ICE Allowance (Phase 2: bundled credits for Insight tier)
   iceAllowanceMonthly: integer("ice_allowance_monthly").default(0).notNull(),
   iceUsedThisPeriod: integer("ice_used_this_period").default(0).notNull(),
@@ -1412,6 +1415,28 @@ export const orbitClaimTokens = pgTable("orbit_claim_tokens", {
 export const insertOrbitClaimTokenSchema = createInsertSchema(orbitClaimTokens).omit({ id: true, createdAt: true });
 export type InsertOrbitClaimToken = z.infer<typeof insertOrbitClaimTokenSchema>;
 export type OrbitClaimToken = typeof orbitClaimTokens.$inferSelect;
+
+// Orbit Sources - Power-Up sources submitted via wizard (pages, socials, etc.)
+export type OrbitSourceType = 'page_url' | 'page_text' | 'social_link';
+export type OrbitSourceLabel = 'about' | 'services' | 'faq' | 'contact' | 'homepage' | 'linkedin' | 'instagram' | 'facebook' | 'twitter' | 'tiktok' | 'youtube';
+
+export const orbitSources = pgTable("orbit_sources", {
+  id: serial("id").primaryKey(),
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug).notNull(),
+  
+  label: text("label").$type<OrbitSourceLabel>().notNull(),
+  sourceType: text("source_type").$type<OrbitSourceType>().notNull(),
+  value: text("value").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueSlugLabel: unique().on(table.businessSlug, table.label),
+}));
+
+export const insertOrbitSourceSchema = createInsertSchema(orbitSources).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertOrbitSource = z.infer<typeof insertOrbitSourceSchema>;
+export type OrbitSource = typeof orbitSources.$inferSelect;
 
 // Orbit Analytics - daily activity tracking for Data Hub
 export const orbitAnalytics = pgTable("orbit_analytics", {

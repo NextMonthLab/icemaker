@@ -1,0 +1,180 @@
+# REPLIT TASK LIST — Orbit Power-Up Plumbing (Make Wizard REAL) + Style Guide Alignment
+
+## Goal
+The Launchpad → Insights → Draft → Editor loop is mostly real and DB-backed.
+The missing critical piece is the Orbit Power-Up flow:
+- UI exists (OrbitClaim wizard) but does NOT persist sources
+- No sources table
+- No strengthScore persistence
+- No planTier flip to indicate Powered Up
+We must wire the backend + UI so Power-Up is real, measurable, and immediately improves the experience.
+
+## Non-Negotiables
+- Do NOT introduce mock data or hardcoded “success” states.
+- Do NOT build a job queue yet. Keep it synchronous and reliable.
+- Must follow the NEW style guide:
+  - Pure black background
+  - Subtle dark surfaces (bg-white/5, border-white/10)
+  - NextMonth gradient only for primary CTA + selected states
+  - No big purple slabs, no rainbow pickers, no heavy banners
+
+---
+
+# PHASE 1 — Persistence + Status Flip (Highest Priority)
+
+## 1) Add `orbit_sources` table
+**File:** shared/schema.ts  
+Create a new table to store Power-Up sources submitted in OrbitClaim wizard.
+
+Minimum fields:
+- id (uuid or serial)
+- businessSlug (text)  // orbit slug identifier
+- label (text)         // about | services | faq | contact | linkedin | instagram | etc
+- sourceType (text)    // page_url | page_text | social_link
+- value (text)
+- createdAt (timestamp)
+- updatedAt (timestamp)
+
+Add appropriate indexes (businessSlug + label unique if you want upsert behaviour).
+
+## 2) Add `strengthScore` column (persisted)
+**File:** shared/schema.ts  
+Add strengthScore integer column to business_previews (or whichever orbit summary table holds planTier).
+- default 0
+- not null
+
+## 3) Storage helpers
+**File:** server/storage.ts  
+Add functions:
+- upsertOrbitSources(businessSlug: string, sources: {label, sourceType, value}[])
+- getOrbitSources(businessSlug: string)
+- updateOrbitTierAndStrength(businessSlug: string, planTier: string, strengthScore: number)
+
+Upsert rules:
+- Replace existing rows per (businessSlug + label)
+- Delete removed labels if necessary (optional)
+
+## 4) Strength scoring service (simple, honest)
+**File:** server/services/orbitStrength.ts (NEW)
+Implement a deterministic scoring function:
+
+Example scoring:
+- about provided: +15
+- services/pricing: +25
+- faq/contact: +15
+- each social link: +5 (cap 20)
+Cap at 100.
+
+Return:
+- strengthScore: number
+Optionally return breakdown to help UI later.
+
+## 5) Implement Power-Up endpoint
+**File:** server/routes.ts  
+Add:
+
+POST /api/orbit/:slug/ingest-sources
+
+Responsibilities:
+- Auth: ensure current user owns orbit
+- Validate: require at least ONE source
+- Upsert sources into orbit_sources
+- Compute strengthScore using orbitStrength.ts
+- Flip planTier:
+  - if current planTier === "free", set to "grow" (or your chosen “powered” tier)
+- Persist strengthScore and planTier
+- Return updated OrbitSummary including:
+  { id, name, slug, planTier, strengthScore }
+
+Also add:
+GET /api/orbit/:slug/sources  (optional but helpful for UI rehydration)
+- returns saved sources for editing/review
+
+---
+
+# PHASE 2 — Wire UI Submit + Success State (No dead ends)
+
+## 6) Wire OrbitClaim wizard submit to endpoint
+**File:** client/src/pages/orbit/OrbitClaim.tsx  
+Currently POST is commented out around line ~297. Replace with real call to:
+POST /api/orbit/:slug/ingest-sources
+
+Requirements:
+- Loading state while submitting (disable buttons, show spinner)
+- Error state: calm copy, retry CTA
+- On success: proceed to Step 3 success state
+
+## 7) Add Step 3 Success screen (new style)
+**File:** client/src/pages/orbit/OrbitClaim.tsx  
+Add completion screen:
+- Title: “Orbit powered up”
+- Show:
+  - Strength score (e.g. “Orbit strength: 62/100”)
+  - 1–2 short lines: “We’ll now generate richer insights and content-ready ideas.”
+- Primary CTA (gradient): “Go to Launchpad”
+- Secondary CTA (ghost): “Manage Orbit”
+
+Style:
+- No green success banner blocks
+- Use subtle card + small status dot
+
+## 8) Launchpad reflects status + strength
+**Files:** client/src/pages/Launchpad.tsx (or LaunchpadHub) + LaunchpadHeader.tsx  
+- Status pill must derive from planTier:
+  - free => “Basic”
+  - grow/insight/intelligence => “Powered”
+- Show strengthScore if > 0 (small, tasteful)
+
+---
+
+# PHASE 3 — Make Power-Up feel like it changes insight quality (light touch)
+
+## 9) Tie insight quantity/confidence to planTier
+**File:** server/routes.ts (GET /api/orbit/:slug/insights handler)
+- If planTier === "free":
+  - return fewer insights (e.g. 3 total)
+  - cap confidence at “medium”
+- If planTier !== "free":
+  - return more insights (e.g. 10)
+  - allow “high”
+
+DO NOT use mock arrays. Keep using existing generator based on real analytics/conversations/boxes.
+
+---
+
+# QUICK VERIFICATION — Ice Views on published ICE
+## 10) Confirm public view fires ice_open event
+- When a published ICE URL is opened in incognito, confirm:
+  POST /api/orbit/:slug/events with eventType = "ice_open" and iceId
+- Confirm it increments orbit_analytics.iceViews via existing aggregation.
+If missing:
+- Add the event call in the published ICE viewer page
+- Ensure aggregation counts it
+
+---
+
+# Acceptance Tests (Must Pass)
+1) Complete OrbitClaim wizard with at least 1 source → submit succeeds
+2) Refresh page → sources persist (not lost)
+3) planTier flips from free → grow (Powered)
+4) strengthScore becomes > 0 and shows in Launchpad header
+5) Launchpad insights endpoint returns more insights when powered
+6) User can immediately click Make Ice → Generate draft → Amalgamated Editor opens
+7) Published ICE views increment iceViews when opened publicly
+
+---
+
+# UI Style Guardrails (Apply Everywhere touched)
+- Pure black page background
+- Cards: bg-white/5, border-white/10, rounded-xl
+- Hover: border-white/20, subtle lift
+- Selected: gradient outline ring + checkmark (no big fills)
+- Primary CTA: NextMonth gradient
+- Secondary: ghost button, muted border
+- No large purple slabs, no rainbow pickers, no loud banners
+
+Deliver the change in small, reviewable commits:
+- Schema + endpoint
+- UI wiring + success state
+- Launchpad status display + insights gating tweak
+- Ice view verification fix (if needed)

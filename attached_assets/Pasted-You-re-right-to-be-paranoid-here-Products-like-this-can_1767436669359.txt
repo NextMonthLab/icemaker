@@ -1,0 +1,175 @@
+You’re right to be paranoid here. Products like this can look “alive” while quietly running on placeholders, seeded arrays, or hard-coded summaries. The way you avoid self-delusion is you run a truth audit: every step must prove it’s backed by real events, real storage, and real endpoints.
+
+Below is the exact way to interrogate Raplet so it has to show evidence (not vibes), plus a manual smoke test you can do in 10 minutes to validate with your own eyes.
+
+⸻
+
+The holy grail flow you want to verify
+	1.	Claim Orbit (and power-up sources)
+	2.	Traffic arrives (real visitors hit the Orbit entrypoints)
+	3.	Events are recorded (views, sessions, interactions)
+	4.	Intelligence is generated (insights derived from those events + sources)
+	5.	Insights show in Launchpad (no mock)
+	6.	Make Ice from insight → Draft saved
+	7.	Draft opens in Amalgamated Editor
+	8.	Publish and views accrue
+	9.	Loop feeds back into Orbit signal + new insights
+
+⸻
+
+How to interrogate Raplet properly
+
+Rule: it must answer with evidence
+
+For every claim, Raplet must provide:
+	•	Exact route paths
+	•	Exact file paths
+	•	Exact DB tables/columns
+	•	Example API responses (real JSON shape)
+	•	Where “real data” comes from (queries / storage calls)
+
+If it can’t, it’s not connected.
+
+⸻
+
+Copy/paste this to Raplet (Truth Audit Prompt Pack)
+
+RAPLET: END-TO-END TRUTH AUDIT (No mock data allowed)
+
+Goal
+Prove the entire Orbit → Intelligence → Ice → Editor → Publish loop is functional and backed by real data.
+For each section, provide:
+1) route paths
+2) file paths
+3) database tables/columns (or storage)
+4) actual API response examples (shape)
+5) clear statement: REAL / STUB / MOCK
+
+SECTION 1 — Claim + Power-Up Sources
+A) What endpoints persist power-up sources?
+- Show server route handler file path and storage function called.
+- Show tables used (orbit_sources or equivalent).
+B) Where is orbit status stored (basic vs powered)?
+- Show exact schema field and update location.
+C) How does Launchpad read orbit status and strengthScore?
+- Show file path and data mapping.
+
+SECTION 2 — Traffic + Event Tracking (real visitors)
+A) What public endpoint/page receives traffic?
+- Is it an Orbit page, embed script, published ice viewer, etc. Provide URL route(s).
+B) What events are captured and where stored?
+- List event types (pageview, session_start, interaction, etc).
+- Show table(s) + example row shape.
+C) Show the code location where events are written.
+- File path + function name.
+
+SECTION 3 — Signal Metrics (Launchpad tiles)
+A) For each tile (Visits, Conversations, Ice Views, Leads):
+- Which API endpoint feeds it?
+- What table/query feeds it?
+- Show example JSON response.
+B) Confirm none of these are hardcoded numbers or seeded.
+- Provide proof by pointing to the DB query or aggregation code.
+
+SECTION 4 — Insights Generation (no placeholders)
+A) What endpoint serves /api/orbit/:slug/insights (or equivalent)?
+- Show handler file path.
+B) Where do insights come from TODAY?
+- DB table (insights) OR generated from events/sources.
+- Show the generator/service file path.
+C) Confirm whether any part returns mock arrays.
+- Search code for: mock, sample, placeholder, fake, seed, TODO, hardcoded insight list.
+- Report findings.
+
+SECTION 5 — Launchpad → Draft → Amalgamated Editor
+A) “Generate draft” button:
+- Show client file path where it calls API.
+- Show API endpoint used to create draft (and where draft is stored).
+B) Navigation to editor:
+- Show route shape (/ice/:id/edit etc) and the code that navigates there.
+C) Editor load:
+- Show how editor fetches draft by ID on refresh (must not rely only on in-memory state).
+- Provide endpoint + handler.
+
+SECTION 6 — Publish + Ice Views feedback
+A) What happens when publishing?
+- Endpoint + storage tables updated.
+B) Where do “Ice Views” come from?
+- Confirm it counts only published interactive experience views (as previously decided).
+- Show the table/query used.
+
+SECTION 7 — Smoke Test Script (must be doable in under 10 minutes)
+Provide a step-by-step manual test with:
+- exact URLs to visit
+- actions to perform
+- what DB rows should appear (which tables)
+- what metrics should increase
+- what insight should appear/change
+
+FINAL OUTPUT
+Return a table with rows for each section:
+Claim | Traffic | Event storage | Metrics | Insights | Draft creation | Editor load | Publish | Views feedback
+and columns: Status (REAL/STUB/MOCK), Evidence (file paths + tables), Next fix if not real.
+
+
+⸻
+
+Your own “no BS” manual smoke test (do this yourself)
+
+This is how you personally verify it’s real, even if Raplet says it is.
+
+1) Watch the network calls
+	•	Open Launchpad
+	•	Open DevTools → Network
+	•	Click “Make Ice” → “Generate draft”
+	•	Confirm:
+	•	there’s a POST to create the draft
+	•	response includes a real id
+	•	editor then loads via GET using that id
+
+If you don’t see the GET on refresh, it’s client-state-only.
+
+2) Prove traffic is real
+
+Open the public thing that receives traffic (published Ice view or Orbit page) in:
+	•	Incognito window
+	•	Mobile hotspot (different IP)
+
+Then go back to Launchpad and refresh:
+	•	Visits should move
+	•	Ice Views should move (if that’s the page you opened)
+
+If metrics don’t move, you’re either looking at mock data or missing event capture.
+
+3) Prove insights are derived from something
+
+After generating a few events, check:
+	•	Does /api/orbit/:slug/insights response change at all?
+	•	Do timestamps update?
+	•	Does “source” reference anything real (sessions/events)?
+
+If insights are always identical across orbits, it’s mock or template.
+
+4) Prove Library is real storage
+	•	Create a draft
+	•	Refresh the whole app
+	•	Go to Library
+	•	Draft still there
+	•	Click it → Editor loads same draft
+
+If it disappears, it’s local-only.
+
+⸻
+
+What “mock data smell” looks like
+
+When you’re inspecting responses or code, these are red flags:
+	•	Arrays of insights with identical wording across different orbits
+	•	Numbers that never change with real traffic
+	•	Comments like // TODO, // stub, sampleInsights, mockMetrics
+	•	Math.random() used for metrics or confidence
+	•	“createdAt” always now, never older
+
+⸻
+
+If you run that audit prompt through Raplet and paste the table it returns, I’ll give you a blunt verdict: what’s truly connected, what’s cosmetic, and the shortest path to make the loop real end-to-end without overbuilding.

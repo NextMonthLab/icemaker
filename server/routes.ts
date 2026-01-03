@@ -9180,6 +9180,86 @@ Guidelines:
     }
   });
 
+  // Orbit Power-Up - Ingest sources from wizard (owner only)
+  app.post("/api/orbit/:slug/ingest-sources", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      const { sources } = req.body;
+      
+      if (!sources || !Array.isArray(sources) || sources.length === 0) {
+        return res.status(400).json({ message: "At least one source is required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can update sources" });
+      }
+      
+      // Validate sources
+      const validSources = sources.filter((s: any) => 
+        s.label && s.sourceType && s.value && s.value.trim() !== ''
+      );
+      
+      if (validSources.length === 0) {
+        return res.status(400).json({ message: "At least one valid source with content is required" });
+      }
+      
+      // Upsert sources
+      await storage.upsertOrbitSources(slug, validSources);
+      
+      // Calculate strength score
+      const { calculateStrengthScore } = await import("./services/orbitStrength");
+      const { strengthScore } = calculateStrengthScore(validSources);
+      
+      // Determine new tier (flip from free to grow if powered up)
+      const newTier = orbitMeta.planTier === 'free' && strengthScore > 0 ? 'grow' : orbitMeta.planTier;
+      
+      // Update orbit with new tier and strength
+      const updated = await storage.updateOrbitTierAndStrength(slug, newTier, strengthScore);
+      
+      res.json({
+        success: true,
+        orbit: {
+          id: updated?.id,
+          businessSlug: slug,
+          planTier: newTier,
+          strengthScore,
+        },
+      });
+    } catch (error) {
+      console.error("Error ingesting orbit sources:", error);
+      res.status(500).json({ message: "Error saving sources" });
+    }
+  });
+
+  // Orbit Sources - Get saved sources (owner only)
+  app.get("/api/orbit/:slug/sources", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can view sources" });
+      }
+      
+      const sources = await storage.getOrbitSources(slug);
+      res.json({ sources });
+    } catch (error) {
+      console.error("Error getting orbit sources:", error);
+      res.status(500).json({ message: "Error getting sources" });
+    }
+  });
+
   // Orbit ICE Draft - Generate draft from insight (owner only)
   app.post("/api/orbit/:slug/ice/generate", requireAuth, async (req, res) => {
     try {
