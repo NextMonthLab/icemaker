@@ -69,14 +69,24 @@ export function LaunchpadHeader({
 
         <Badge
           variant="outline"
-          className={`hidden sm:flex ${
+          className={`hidden sm:flex items-center gap-1.5 ${
             isPowered
               ? "border-green-500/50 text-green-400"
               : "border-amber-500/50 text-amber-400"
           }`}
           data-testid="badge-orbit-status"
         >
-          {isPowered ? "Powered up" : "Basic scan"}
+          {isPowered ? (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              Powered {selectedOrbit?.strengthScore ? `(${selectedOrbit.strengthScore}%)` : ''}
+            </>
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              Basic scan
+            </>
+          )}
         </Badge>
 
         {!isPowered && (

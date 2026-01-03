@@ -31,6 +31,7 @@ interface OwnedOrbit {
   previewId: string | null;
   customTitle: string | null;
   planTier: string | null;
+  strengthScore: number;
   stats: {
     visits: number;
     interactions: number;
@@ -94,7 +95,7 @@ export default function Launchpad() {
     slug: o.businessSlug,
     name: o.customTitle || o.businessSlug.replace(/-/g, " "),
     status: o.planTier && o.planTier !== "free" ? "powered" : "basic",
-    strengthScore: undefined,
+    strengthScore: o.strengthScore ?? 0,
   }));
 
   useEffect(() => {

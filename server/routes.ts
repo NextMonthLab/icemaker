@@ -784,6 +784,7 @@ export async function registerRoutes(
             customTitle: orbit.customTitle,
             customDescription: orbit.customDescription,
             planTier: orbit.planTier,
+            strengthScore: orbit.strengthScore ?? 0,
             verifiedAt: orbit.verifiedAt,
             lastUpdated: orbit.lastUpdated,
             stats: {
