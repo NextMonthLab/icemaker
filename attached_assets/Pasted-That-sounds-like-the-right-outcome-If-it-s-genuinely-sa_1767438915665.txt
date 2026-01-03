@@ -1,0 +1,74 @@
+That sounds like the right outcome. If it’s genuinely saving sources, flipping status, and strength + insight gating change immediately, then you’ve just removed the biggest “movie set” risk.
+
+I’d keep it, with a few deliberate adjustments so it feels inevitable, not “feature-y”.
+
+The must-pass checks (if these pass, it’s “good”)
+	1.	Submit Quick Setup → refresh the page → sources are still there
+	2.	Orbit shows Powered in Orbits + Launchpad + anywhere else consistently (no mixed labels)
+	3.	Strength score is non-zero and changes when you add/remove sources
+	4.	Insight gating is clearly explained, not confusing (user knows what they unlocked)
+	5.	Generate draft after power-up uses the richer insights immediately (no waiting / no stale cache)
+
+If any one of those fails, it will feel broken even if the backend is correct.
+
+The adjustments I’d make (to make it feel smarter and more addictive)
+
+1) Show “Why this score?” in one click
+
+Strength without explanation can feel arbitrary. Add a tiny “How to reach 100” link that opens a simple breakdown:
+	•	About page: ✅
+	•	Services/Pricing: ✅
+	•	FAQ/Contact: ⬜
+	•	Socials: ✅✅ (2/4)
+
+This turns the score into a progression system, not a number.
+
+2) Make the tier gating feel like a reward, not a restriction
+
+If you gate insights, avoid “locked” language. Use:
+	•	Basic Orbit: “Starter insights (3)”
+	•	Powered Orbit: “Full insights (10) + content-ready ideas”
+
+And on the insight list:
+	•	A small pill: Powered insights live (subtle glow)
+
+3) Success screen: force the “switch flipped” moment
+
+After submit:
+	•	“Orbit powered up”
+	•	“Strength: 62/100 (+42)”
+	•	“New insights unlocked”
+Primary CTA: Go to Launchpad
+Secondary: Review sources
+
+That’s the hook.
+
+4) Let them edit sources later (without re-claiming)
+
+Wherever the wizard lives, add a “Edit sources” link for powered orbits. Otherwise people will feel trapped if they made a mistake.
+
+5) Make sure nothing is client-only
+
+Even if it looks perfect:
+	•	Confirm Launchpad reads tier/strength from the backend after refresh, not from local state.
+
+One last thing to verify (still important)
+
+On a published experience, does opening the public URL fire ice_open and increment iceViews?
+
+If yes, you’ve closed the loop.
+If no, that’s the final missing stitch.
+
+⸻
+
+What I’d do next
+	•	Add the strength breakdown UI (small modal)
+	•	Add edit sources entry point
+	•	Tighten the copy so gating feels like “level up”
+	•	Verify the public ice view event increments metrics
+
+If you send one screenshot each of:
+	1.	the powered-up success state,
+	2.	Launchpad showing strength + gated insights,
+	3.	the insight list’s gating message,
+…I’ll give you a precise polish pass (wording + hierarchy + “feels premium” tweaks).

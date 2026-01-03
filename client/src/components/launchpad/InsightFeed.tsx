@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, Search, SlidersHorizontal, Lock, Zap } from "lucide-react";
+import { RefreshCw, Search, SlidersHorizontal, Sparkles, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,16 +143,18 @@ export function InsightFeed({
           </p>
         )}
         
-        {/* Locked upgrade banner */}
-        {locked && upgradeMessage && (
+        {/* Upgrade banner - reframed as reward */}
+        {locked && upgradeMessage && remainingInsights && remainingInsights > 0 && (
           <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 mt-2">
             <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4 text-blue-400" />
+              <Sparkles className="w-4 h-4 text-blue-400" />
               <span className="text-sm font-medium text-white">
-                {remainingInsights && remainingInsights > 0 ? `${remainingInsights} more insights available` : 'More insights available'}
+                Unlock {remainingInsights} more insights
               </span>
             </div>
-            <p className="text-xs text-white/60 mb-3">{upgradeMessage}</p>
+            <p className="text-xs text-white/60 mb-3">
+              Power up your Orbit to access full insights and content-ready ideas
+            </p>
             {orbitSlug && (
               <Link href={`/orbit/${orbitSlug}/settings`}>
                 <Button
@@ -161,7 +163,7 @@ export function InsightFeed({
                   data-testid="button-unlock-insights"
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Power Up
+                  Level Up
                 </Button>
               </Link>
             )}

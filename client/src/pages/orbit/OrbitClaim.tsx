@@ -1008,39 +1008,80 @@ export default function OrbitClaim() {
                   <div className="space-y-6 mt-4 text-center py-4">
                     {/* Success indicator */}
                     <div className="flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center animate-pulse">
                         <Sparkles className="w-8 h-8 text-blue-400" />
                       </div>
                       <div>
                         <h3 className="text-xl font-semibold text-white mb-2">Orbit Powered Up</h3>
                         <p className="text-sm text-white/60">
-                          We'll now generate richer insights and content-ready ideas.
+                          Full insights unlocked · Content-ready ideas enabled
                         </p>
                       </div>
                     </div>
 
-                    {/* Strength score */}
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                      <div className="flex items-center justify-between mb-2">
+                    {/* Strength score with breakdown */}
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="text-sm text-white/60">Orbit Strength</span>
-                        <span className="text-lg font-semibold text-white">{powerUpResult.strengthScore}/100</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-semibold text-white">{powerUpResult.strengthScore}/100</span>
+                          <span className="text-xs text-green-400 font-medium">+{powerUpResult.strengthScore}</span>
+                        </div>
                       </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-4">
                         <div 
                           className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
                           style={{ width: `${powerUpResult.strengthScore}%` }}
                         />
                       </div>
-                      <p className="text-xs text-white/40 mt-2">
-                        Add more sources to increase your strength score
-                      </p>
+                      
+                      {/* Strength breakdown */}
+                      <div className="space-y-2 text-xs">
+                        <p className="text-white/50 mb-2">How to reach 100:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {quickSetupData.aboutUrl || quickSetupData.aboutText ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <div className="w-3 h-3 border border-white/30 rounded" />
+                            )}
+                            <span className={quickSetupData.aboutUrl || quickSetupData.aboutText ? "text-white/70" : "text-white/40"}>About page</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {quickSetupData.servicesUrl || quickSetupData.servicesText ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <div className="w-3 h-3 border border-white/30 rounded" />
+                            )}
+                            <span className={quickSetupData.servicesUrl || quickSetupData.servicesText ? "text-white/70" : "text-white/40"}>Services/Pricing</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {quickSetupData.faqUrl || quickSetupData.faqText ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <div className="w-3 h-3 border border-white/30 rounded" />
+                            )}
+                            <span className={quickSetupData.faqUrl || quickSetupData.faqText ? "text-white/70" : "text-white/40"}>FAQ/Contact</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {(quickSetupData.socialLinkedIn || quickSetupData.socialInstagram || quickSetupData.socialFacebook || quickSetupData.socialTikTok) ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <div className="w-3 h-3 border border-white/30 rounded" />
+                            )}
+                            <span className={(quickSetupData.socialLinkedIn || quickSetupData.socialInstagram || quickSetupData.socialFacebook || quickSetupData.socialTikTok) ? "text-white/70" : "text-white/40"}>
+                              Socials ({[quickSetupData.socialLinkedIn, quickSetupData.socialInstagram, quickSetupData.socialFacebook, quickSetupData.socialTikTok].filter(Boolean).length}/4)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Status badge */}
                     <div className="flex justify-center">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                        <span className="w-2 h-2 rounded-full bg-blue-400" />
-                        <span className="text-sm font-medium text-blue-300">Powered</span>
+                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                        <span className="text-sm font-medium text-blue-300">Powered insights live</span>
                       </span>
                     </div>
 
@@ -1061,14 +1102,14 @@ export default function OrbitClaim() {
                         onClick={() => {
                           setShowQuickSetup(false);
                           if (blockedData?.businessSlug) {
-                            setLocation(`/orbit/${blockedData.businessSlug}`);
+                            setLocation(`/orbit/${blockedData.businessSlug}/settings`);
                           }
                         }}
                         variant="ghost"
                         className="w-full text-white/60 hover:text-white hover:bg-white/5"
-                        data-testid="button-manage-orbit"
+                        data-testid="button-review-sources"
                       >
-                        Manage Orbit
+                        Review Sources
                       </Button>
                     </div>
                   </div>

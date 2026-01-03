@@ -27,11 +27,11 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
                 variant="outline" 
                 className="border-amber-500/50 text-amber-400 text-xs px-2 py-0"
               >
-                Basic Scan
+                Starter (3 insights)
               </Badge>
             </div>
             <p className="text-xs md:text-sm text-white/80">
-              <span className="font-medium text-white">Power up</span> for AI chat, insights & content
+              <span className="font-medium text-white">Level up</span> to unlock full insights + content-ready ideas
             </p>
           </div>
         </div>

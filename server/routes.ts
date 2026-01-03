@@ -9297,6 +9297,31 @@ Guidelines:
     }
   });
 
+  // Orbit Meta - Get basic orbit info (owner only)
+  app.get("/api/orbit/:slug/meta", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can view meta" });
+      }
+      
+      res.json({
+        strengthScore: orbitMeta.strengthScore ?? 0,
+        planTier: orbitMeta.planTier || 'free',
+      });
+    } catch (error) {
+      console.error("Error getting orbit meta:", error);
+      res.status(500).json({ message: "Error getting meta" });
+    }
+  });
+
   // Orbit ICE Draft - Generate draft from insight (owner only)
   app.post("/api/orbit/:slug/ice/generate", requireAuth, async (req, res) => {
     try {
