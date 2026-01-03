@@ -84,7 +84,7 @@ export default function Home() {
         </section>
 
         {/* Workflow Section: Orbit → Launchpad → ICE */}
-        <section id="how-it-works" className="py-20 px-4 md:px-8 bg-white/[0.02] border-y border-white/5">
+        <section id="how-it-works" className="py-20 px-4 md:px-8 bg-neutral-900/60 border-y border-white/10">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
               <span className="text-xs font-bold tracking-widest text-blue-400 uppercase">One clear workflow</span>
@@ -158,10 +158,11 @@ export default function Home() {
         </section>
 
         {/* AI Discovery Section */}
-        <section className="py-20 px-4 md:px-8">
+        <section className="py-20 px-4 md:px-8 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">The "why now"</span>
+              <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-yellow-400 uppercase bg-yellow-500/10 border border-yellow-500/20 px-4 py-2 rounded-full">AI Discovery</span>
               <h2 className="text-3xl md:text-4xl font-display font-bold text-white mt-4" data-testid="discovery-headline">
                 Discovery has changed. AI now answers.
               </h2>
@@ -196,10 +197,11 @@ export default function Home() {
         </section>
 
         {/* Pricing Comparison */}
-        <section className="py-20 px-4 md:px-8 bg-white/[0.02] border-y border-white/5">
+        <section className="py-20 px-4 md:px-8 bg-neutral-900/60 border-y border-white/10 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-bold tracking-widest text-green-400 uppercase">Weeks to minutes</span>
+              <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-green-400 uppercase bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-full">Weeks → Minutes</span>
               <h2 className="text-3xl md:text-4xl font-display font-bold text-white mt-4">
                 Creating interactive experiences used to take forever. Not anymore.
               </h2>
@@ -284,10 +286,11 @@ export default function Home() {
         </section>
 
         {/* Use Cases */}
-        <section className="py-20 px-4 md:px-8">
+        <section className="py-20 px-4 md:px-8 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">Use cases</span>
+              <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-purple-400 uppercase bg-purple-500/10 border border-purple-500/20 px-4 py-2 rounded-full">What people use ICE for</span>
               <h2 className="text-3xl md:text-4xl font-display font-bold text-white mt-4">
                 Interactive Cinematic Experiences for every storytelling need
               </h2>
@@ -339,10 +342,11 @@ export default function Home() {
         </section>
 
         {/* Case Study Teaser */}
-        <section className="py-20 px-4 md:px-8 bg-white/[0.02] border-y border-white/5">
+        <section className="py-20 px-4 md:px-8 bg-neutral-900/60 border-y border-white/10 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-bold tracking-widest text-blue-400 uppercase">Real examples</span>
+              <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-blue-400 uppercase bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full">Real examples</span>
               <h2 className="text-3xl md:text-4xl font-display font-bold text-white mt-4">
                 See how real people use ICE
               </h2>
@@ -388,9 +392,10 @@ export default function Home() {
         </section>
 
         {/* Trust Section */}
-        <section className="py-20 px-4 md:px-8">
+        <section className="py-20 px-4 md:px-8 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
           <div className="max-w-4xl mx-auto text-center">
-            <Shield className="w-12 h-12 text-green-400 mx-auto mb-6" />
+            <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-green-400 uppercase bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-full mb-6">Trust & Control</span>
             <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
               Built for trust, not hallucinations
             </h2>
@@ -399,19 +404,19 @@ export default function Home() {
             </p>
             
             <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/5">
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
                 <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-white/80 text-sm">Creator-editable prompts so the experience sounds like you</p>
               </div>
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/5">
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
                 <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-white/80 text-sm">Explicit guardrails to prevent drift from source</p>
               </div>
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/5">
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
                 <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-white/80 text-sm">Source-grounded chat so characters only know what you provide</p>
               </div>
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/5">
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
                 <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-white/80 text-sm">Human review before publishing where required</p>
               </div>
@@ -446,7 +451,8 @@ export default function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="py-24 px-4 md:px-8 border-t border-white/5">
+        <section className="py-24 px-4 md:px-8 bg-neutral-900/60 border-t border-white/10 relative">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-white leading-tight">
               Stop being interpreted by default.
