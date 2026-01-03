@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { RefreshCw, Search, SlidersHorizontal, Sparkles, Zap } from "lucide-react";
+import { RefreshCw, Search, SlidersHorizontal, Sparkles, Zap, BarChart3, Database } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InsightCard, type Insight } from "./InsightCard";
+import { InsightCard, type Insight, type InsightKind } from "./InsightCard";
 import { Link } from "wouter";
 
 interface InsightFeedProps {
@@ -18,7 +18,16 @@ interface InsightFeedProps {
   orbitSlug?: string;
 }
 
-const filterOptions = ["All", "New", "High confidence", "Analytics", "Chat"];
+type InsightTab = "all" | "content_ready" | "signals" | "ops";
+
+const tabConfig: Record<InsightTab, { label: string; icon: typeof Sparkles; description: string }> = {
+  all: { label: "All", icon: SlidersHorizontal, description: "All insights" },
+  content_ready: { label: "Content-ready", icon: Sparkles, description: "Ready to publish" },
+  signals: { label: "Signals", icon: BarChart3, description: "Internal metrics" },
+  ops: { label: "Ops", icon: Database, description: "Data status" },
+};
+
+const filterOptions = ["All", "High confidence", "Analytics", "Chat"];
 const sortOptions = ["Latest", "Impact"];
 
 export function InsightFeed({
@@ -32,32 +41,74 @@ export function InsightFeed({
   remainingInsights,
   orbitSlug,
 }: InsightFeedProps) {
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeTab, setActiveTab] = useState<InsightTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Count insights by kind
+  const contentReadyCount = insights.filter(i => i.insightKind === "content_ready").length;
+  const signalCount = insights.filter(i => i.insightKind === "signal").length;
+  const opsCount = insights.filter(i => i.insightKind === "ops").length;
+
   const filteredInsights = insights.filter((insight) => {
+    // Search filter
     if (searchQuery && !insight.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    if (activeFilter === "All") return true;
-    if (activeFilter === "New") return true;
-    if (activeFilter === "High confidence") return insight.confidence === "high";
-    if (activeFilter === "Analytics") return insight.source === "Analytics";
-    if (activeFilter === "Chat") return insight.source === "Conversations";
+    // Tab filter
+    if (activeTab === "all") return true;
+    if (activeTab === "content_ready") return insight.insightKind === "content_ready";
+    if (activeTab === "signals") return insight.insightKind === "signal";
+    if (activeTab === "ops") return insight.insightKind === "ops";
     return true;
   });
 
   const headerContent = (
     <div className="space-y-3 mb-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-white">Insights feed</h3>
+        <h3 className="font-semibold text-white">Insights</h3>
         <div className="flex items-center gap-2">
-          <button className="text-xs text-white/50 hover:text-white/70 flex items-center gap-1">
-            <SlidersHorizontal className="w-3 h-3" />
-            Latest
-          </button>
           {isLoading && <RefreshCw className="w-4 h-4 text-white/40 animate-spin" />}
         </div>
+      </div>
+      
+      {/* Insight kind tabs */}
+      <div className="flex gap-1 p-1 bg-white/[0.02] rounded-lg border border-white/10">
+        {(["all", "content_ready", "signals", "ops"] as InsightTab[]).map((tab) => {
+          const config = tabConfig[tab];
+          const TabIcon = config.icon;
+          const count = tab === "all" ? insights.length 
+            : tab === "content_ready" ? contentReadyCount 
+            : tab === "signals" ? signalCount 
+            : opsCount;
+          const isActive = activeTab === tab;
+          
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                isActive
+                  ? tab === "content_ready"
+                    ? "bg-gradient-to-r from-purple-600/30 to-pink-600/30 text-purple-300 border border-purple-500/30"
+                    : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  : "text-white/50 hover:text-white/70 hover:bg-white/[0.03] border border-transparent"
+              }`}
+              data-testid={`tab-${tab}`}
+            >
+              <TabIcon className="w-3 h-3" />
+              <span className="hidden sm:inline">{config.label}</span>
+              {count > 0 && (
+                <span className={`text-[10px] px-1.5 rounded-full ${
+                  isActive 
+                    ? tab === "content_ready" ? "bg-purple-500/30" : "bg-blue-500/30" 
+                    : "bg-white/10"
+                }`}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
       
       <div className="relative">
@@ -69,24 +120,6 @@ export function InsightFeed({
           className="pl-9 bg-white/[0.03] border-white/10 text-white placeholder:text-white/30 h-9 text-sm"
           data-testid="insight-search"
         />
-      </div>
-      
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {filterOptions.map((filter) => (
-          <Badge
-            key={filter}
-            variant="outline"
-            onClick={() => setActiveFilter(filter)}
-            className={`cursor-pointer whitespace-nowrap transition-colors ${
-              activeFilter === filter
-                ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
-                : "border-white/10 text-white/50 hover:border-blue-500/30 hover:text-white/70"
-            }`}
-            data-testid={`filter-${filter.toLowerCase().replace(" ", "-")}`}
-          >
-            {filter}
-          </Badge>
-        ))}
       </div>
     </div>
   );

@@ -9098,6 +9098,16 @@ Guidelines:
       const boxes = await storage.getOrbitBoxes(slug);
       const curatedItems = await storage.getApiCuratedItemsByOrbit(slug, 50);
       
+      type InsightKind = "signal" | "content_ready" | "ops";
+      type ContentBrief = {
+        audience: string;
+        problem: string;
+        promise: string;
+        proof: string;
+        cta: string;
+        formatSuggestion: "hook" | "myth_bust" | "checklist" | "problem_solution" | "testimonial" | "story";
+      };
+      
       const insights: Array<{
         id: string;
         orbitId: string;
@@ -9108,6 +9118,9 @@ Guidelines:
         segment?: string;
         source: string;
         kind?: "top" | "feed";
+        insightKind: InsightKind;
+        contentPotentialScore: number;
+        contentBrief?: ContentBrief;
         createdAt: string;
       }> = [];
       
@@ -9125,7 +9138,9 @@ Guidelines:
       
       const now = new Date().toISOString();
       
-      // Insight from visit patterns
+      // SIGNAL INSIGHTS - Internal metrics for operators
+      
+      // Insight from visit patterns (SIGNAL - internal metric)
       if (analytics.visits > 10) {
         insights.push({
           id: generateInsightId([slug, 'visits', String(analytics.visits)]),
@@ -9138,11 +9153,13 @@ Guidelines:
           topicTags: ["traffic", "engagement"],
           source: "Analytics",
           kind: analytics.visits > 50 ? "top" : "feed",
+          insightKind: "signal",
+          contentPotentialScore: 10,
           createdAt: now,
         });
       }
       
-      // Insight from conversations
+      // Insight from conversation count (SIGNAL - internal metric)
       if (analytics.conversations > 0) {
         const convRate = Math.round((analytics.conversations / Math.max(analytics.visits, 1)) * 100);
         insights.push({
@@ -9156,11 +9173,15 @@ Guidelines:
           topicTags: ["conversations", "engagement"],
           source: "Chat Analytics",
           kind: convRate > 10 ? "top" : "feed",
+          insightKind: "signal",
+          contentPotentialScore: 15,
           createdAt: now,
         });
       }
       
-      // Insight from menu/catalogue
+      // OPS INSIGHTS - Operational/data status
+      
+      // Insight from menu/catalogue (OPS - data status)
       if (boxes.length > 0) {
         const categories = [...new Set(boxes.map(b => b.category).filter(Boolean))];
         insights.push({
@@ -9172,12 +9193,97 @@ Guidelines:
           topicTags: ["catalogue", "products"],
           source: "Knowledge Map",
           kind: "feed",
+          insightKind: "ops",
+          contentPotentialScore: 5,
           createdAt: now,
         });
       }
       
-      // Insight from recent conversation topics
+      // CONTENT-READY INSIGHTS - From real conversations, ready for external publishing
+      
+      // Analyze conversations for content-ready patterns
       if (conversations.length > 0) {
+        // Look for questions with buying intent or key concerns
+        const conversationTexts = conversations.map(c => 
+          typeof c.context === 'string' ? c.context : JSON.stringify(c.context || '')
+        ).join(' ').toLowerCase();
+        
+        // Detect pricing/cost questions - content-ready
+        if (conversationTexts.includes('price') || conversationTexts.includes('cost') || conversationTexts.includes('how much')) {
+          insights.push({
+            id: generateInsightId([slug, 'conv-pricing', now.substring(0, 10)]),
+            orbitId: slug,
+            title: "Visitors are asking about pricing",
+            meaning: "Cost clarity is a key concern. Consider a story that addresses value and pricing transparency.",
+            confidence: "high",
+            topicTags: ["pricing", "objection-handling"],
+            source: "Conversations",
+            kind: "top",
+            insightKind: "content_ready",
+            contentPotentialScore: 85,
+            contentBrief: {
+              audience: "Prospects evaluating cost",
+              problem: "Uncertainty about pricing and what's included",
+              promise: "Clear, transparent pricing with no hidden costs",
+              proof: "Examples of value delivered to similar clients",
+              cta: "Get a quote or view pricing page",
+              formatSuggestion: "problem_solution",
+            },
+            createdAt: now,
+          });
+        }
+        
+        // Detect timeline/delivery questions - content-ready
+        if (conversationTexts.includes('time') || conversationTexts.includes('deliver') || conversationTexts.includes('when') || conversationTexts.includes('deadline')) {
+          insights.push({
+            id: generateInsightId([slug, 'conv-timeline', now.substring(0, 10)]),
+            orbitId: slug,
+            title: "Delivery timelines are a key concern",
+            meaning: "Visitors want certainty about when you can deliver. Perfect for a reliability-focused story.",
+            confidence: "high",
+            topicTags: ["delivery", "reliability"],
+            source: "Conversations",
+            kind: "top",
+            insightKind: "content_ready",
+            contentPotentialScore: 90,
+            contentBrief: {
+              audience: "Project managers and decision makers",
+              problem: "Uncertainty about delivery timelines and reliability",
+              promise: "On-time delivery with clear milestones",
+              proof: "Track record and process that ensures punctuality",
+              cta: "View our delivery process or book a planning call",
+              formatSuggestion: "myth_bust",
+            },
+            createdAt: now,
+          });
+        }
+        
+        // Detect service capability questions - content-ready
+        if (conversationTexts.includes('do you') || conversationTexts.includes('can you') || conversationTexts.includes('offer')) {
+          insights.push({
+            id: generateInsightId([slug, 'conv-capabilities', now.substring(0, 10)]),
+            orbitId: slug,
+            title: "Visitors want to know what you offer",
+            meaning: "People are exploring your capabilities. A compelling services story could convert curiosity to action.",
+            confidence: "medium",
+            topicTags: ["services", "capabilities"],
+            source: "Conversations",
+            kind: "feed",
+            insightKind: "content_ready",
+            contentPotentialScore: 75,
+            contentBrief: {
+              audience: "Prospects exploring options",
+              problem: "Not sure if you offer what they need",
+              promise: "Comprehensive solutions tailored to their needs",
+              proof: "Range of services and satisfied clients",
+              cta: "Explore services or talk to an expert",
+              formatSuggestion: "checklist",
+            },
+            createdAt: now,
+          });
+        }
+        
+        // Generic conversation insight (SIGNAL - not content-ready)
         const recentConv = conversations[0];
         insights.push({
           id: generateInsightId([slug, 'recent-conv', String(recentConv.id)]),
@@ -9188,11 +9294,13 @@ Guidelines:
           topicTags: ["conversations", "improvement"],
           source: "Conversation Review",
           kind: "feed",
+          insightKind: "signal",
+          contentPotentialScore: 20,
           createdAt: now,
         });
       }
       
-      // Ice views insight
+      // Ice views insight (SIGNAL)
       if (analytics.iceViews > 0) {
         insights.push({
           id: generateInsightId([slug, 'ice-views', String(analytics.iceViews)]),
@@ -9203,11 +9311,13 @@ Guidelines:
           topicTags: ["content", "ice"],
           source: "Content Performance",
           kind: "feed",
+          insightKind: "signal",
+          contentPotentialScore: 15,
           createdAt: now,
         });
       }
       
-      // Insights from curated items (API data sources)
+      // Insights from curated items (API data sources) - OPS
       if (curatedItems.length > 0) {
         const sourceTypes = [...new Set(curatedItems.map(c => c.sourceType))];
         insights.push({
@@ -9219,6 +9329,8 @@ Guidelines:
           topicTags: ["operations", "data-sync", ...sourceTypes.slice(0, 3)],
           source: "Data Sources",
           kind: curatedItems.length > 30 ? "top" : "feed",
+          insightKind: "ops",
+          contentPotentialScore: 10,
           createdAt: now,
         });
         
@@ -9239,6 +9351,8 @@ Guidelines:
             topicTags: ["operations", topType[0]],
             source: "Data Sources",
             kind: "feed",
+            insightKind: "ops",
+            contentPotentialScore: 5,
             createdAt: now,
           });
         }
@@ -9255,12 +9369,22 @@ Guidelines:
           topicTags: ["getting-started"],
           source: "System",
           kind: "top",
+          insightKind: "signal",
+          contentPotentialScore: 0,
           createdAt: now,
         });
       }
       
-      // Sort to put top insight first
+      // Sort: content-ready first, then by content potential score, then top insights
       insights.sort((a, b) => {
+        // Content-ready always first
+        if (a.insightKind === "content_ready" && b.insightKind !== "content_ready") return -1;
+        if (b.insightKind === "content_ready" && a.insightKind !== "content_ready") return 1;
+        // Then by content potential score
+        if (a.contentPotentialScore !== b.contentPotentialScore) {
+          return b.contentPotentialScore - a.contentPotentialScore;
+        }
+        // Then top insights
         if (a.kind === "top" && b.kind !== "top") return -1;
         if (b.kind === "top" && a.kind !== "top") return 1;
         return 0;

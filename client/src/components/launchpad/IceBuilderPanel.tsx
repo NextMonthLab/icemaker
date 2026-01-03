@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, FileText, Check, Loader2 } from "lucide-react";
-import type { Insight } from "./InsightCard";
+import { Sparkles, FileText, Check, Loader2, Target, Lightbulb, Award, MousePointerClick } from "lucide-react";
+import type { Insight, ContentBrief } from "./InsightCard";
 
 export type IceFormat = "hook_bullets" | "myth_reality" | "checklist" | "problem_solution_proof";
 export type IceTone = "direct" | "warm" | "playful" | "premium";
@@ -58,6 +58,15 @@ const toneOptions: { value: IceTone; label: string }[] = [
   { value: "premium", label: "Premium" },
 ];
 
+const formatSuggestionToIceFormat: Record<string, IceFormat> = {
+  "hook": "hook_bullets",
+  "myth_bust": "myth_reality",
+  "checklist": "checklist",
+  "problem_solution": "problem_solution_proof",
+  "testimonial": "problem_solution_proof",
+  "story": "hook_bullets",
+};
+
 export function IceBuilderPanel({
   selectedInsight,
   draft,
@@ -67,6 +76,16 @@ export function IceBuilderPanel({
   const [format, setFormat] = useState<IceFormat>("hook_bullets");
   const [tone, setTone] = useState<IceTone>("direct");
   const [outputType, setOutputType] = useState<IceOutputType>("interactive");
+  
+  // Auto-select format based on content brief suggestion
+  useEffect(() => {
+    if (selectedInsight?.contentBrief?.formatSuggestion) {
+      const suggestedFormat = formatSuggestionToIceFormat[selectedInsight.contentBrief.formatSuggestion];
+      if (suggestedFormat) {
+        setFormat(suggestedFormat);
+      }
+    }
+  }, [selectedInsight?.id]);
 
   if (!selectedInsight && !draft) {
     return (
@@ -178,30 +197,89 @@ export function IceBuilderPanel({
   }
 
   const insight = selectedInsight!;
+  const isContentReady = insight.insightKind === "content_ready";
+  const brief = insight.contentBrief;
 
   return (
     <div className="p-6 space-y-6" data-testid="ice-builder-panel">
       <div>
         <h3 className="text-lg font-medium text-white mb-1">
-          Turn this insight to content
+          {isContentReady ? "Create your story" : "Turn this insight to content"}
         </h3>
         <p className="text-sm text-white/60">
-          Configure your output format and style
+          {isContentReady 
+            ? "AI has prepared a content brief for you" 
+            : "Configure your output format and style"}
         </p>
       </div>
 
-      <div className="p-4 rounded-lg bg-white/[0.03] border-l-2 border-l-blue-500 border border-white/10">
+      <div className={`p-4 rounded-lg border border-white/10 ${
+        isContentReady 
+          ? "bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-l-2 border-l-purple-500" 
+          : "bg-white/[0.03] border-l-2 border-l-blue-500"
+      }`}>
         <p className="text-white font-medium">{insight.title}</p>
         <p className="text-sm text-white/60 mt-1 line-clamp-2">
           {insight.meaning}
         </p>
-        <Badge
-          variant="outline"
-          className="mt-2 border-white/20 text-white/60"
-        >
-          ★ {insight.confidence}
-        </Badge>
+        <div className="flex gap-2 mt-2">
+          <Badge
+            variant="outline"
+            className={isContentReady ? "border-purple-500/50 text-purple-400" : "border-white/20 text-white/60"}
+          >
+            {isContentReady ? "Content-ready" : `★ ${insight.confidence}`}
+          </Badge>
+          {insight.contentPotentialScore >= 70 && (
+            <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-300 text-xs">
+              {insight.contentPotentialScore}% potential
+            </Badge>
+          )}
+        </div>
       </div>
+
+      {/* Content Brief section - shown for content-ready insights */}
+      {brief && (
+        <div className="space-y-3 p-4 rounded-lg bg-white/[0.02] border border-white/10">
+          <h4 className="text-sm font-medium text-white flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-yellow-400" />
+            Story Brief
+          </h4>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <div className="flex items-center gap-1 text-white/40 mb-1">
+                <Target className="w-3 h-3" /> Audience
+              </div>
+              <p className="text-white/80">{brief.audience}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-1 text-white/40 mb-1">
+                <MousePointerClick className="w-3 h-3" /> CTA
+              </div>
+              <p className="text-white/80">{brief.cta}</p>
+            </div>
+          </div>
+          <div>
+            <div className="text-white/40 text-xs mb-1">Their problem</div>
+            <p className="text-sm text-white/70">{brief.problem}</p>
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-white/40 text-xs mb-1">
+              <Award className="w-3 h-3" /> Your promise
+            </div>
+            <p className="text-sm text-white font-medium">{brief.promise}</p>
+          </div>
+          <div>
+            <div className="text-white/40 text-xs mb-1">Proof points</div>
+            <p className="text-sm text-white/70">{brief.proof}</p>
+          </div>
+          <div className="pt-2 border-t border-white/10">
+            <div className="text-white/40 text-xs mb-1">Suggested format</div>
+            <Badge variant="outline" className="border-blue-500/50 text-blue-400">
+              {brief.formatSuggestion.replace(/_/g, ' ')}
+            </Badge>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         <div>
@@ -284,18 +362,22 @@ export function IceBuilderPanel({
           })
         }
         disabled={isGenerating}
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        className={`w-full ${
+          isContentReady 
+            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" 
+            : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        }`}
         data-testid="button-generate-draft"
       >
         {isGenerating ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Generating...
+            Creating story...
           </>
         ) : (
           <>
             <Sparkles className="w-4 h-4 mr-2" />
-            Generate draft
+            {isContentReady ? "Create story" : "Generate draft"}
           </>
         )}
       </Button>
