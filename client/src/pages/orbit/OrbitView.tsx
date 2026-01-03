@@ -151,6 +151,9 @@ export default function OrbitView() {
   const searchString = useSearch();
   const [, setLocation] = useLocation();
   
+  // Embed mode: hide nav/chrome when ?embed=true
+  const isEmbedMode = searchString.includes('embed=true');
+  
   const [showCustomization, setShowCustomization] = useState(true);
   const [brandPreferences, setBrandPreferences] = useState<BrandPreferences | null>(null);
   const [experienceType, setExperienceType] = useState<'radar' | 'spatial' | 'classic'>('radar');
@@ -774,9 +777,11 @@ export default function OrbitView() {
     
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col relative">
-        <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" />
+        {!isEmbedMode && (
+          <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" />
+        )}
         <div className="flex-1">
-          {showCustomization ? (
+          {!isEmbedMode && showCustomization ? (
             <BrandCustomizationScreen
               logoUrl={logoUrl}
               faviconUrl={faviconUrl}
@@ -837,7 +842,7 @@ export default function OrbitView() {
           )}
         </div>
         {/* Public unclaimed CTA - only show to public viewers */}
-        {!showCustomization && isUnclaimed && canSeeClaimCTA && (
+        {!isEmbedMode && !showCustomization && isUnclaimed && canSeeClaimCTA && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
             <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
               <span className="text-xs text-white/60">
@@ -856,7 +861,7 @@ export default function OrbitView() {
         )}
         
         {/* First-run admin CTA - allow creators to verify ownership after preview (only if unclaimed) */}
-        {!showCustomization && isFirstRun && isUnclaimed && (
+        {!isEmbedMode && !showCustomization && isFirstRun && isUnclaimed && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
             <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
               <div className="w-full flex items-center justify-between gap-3">
@@ -878,7 +883,7 @@ export default function OrbitView() {
         )}
         
         {/* Owner CTA - show manage button for owners who have already claimed */}
-        {!showCustomization && isOwner && !isUnclaimed && !isPaidTier && (
+        {!isEmbedMode && !showCustomization && isOwner && !isUnclaimed && !isPaidTier && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
             <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
               <div className="w-full flex items-center justify-between gap-3">
@@ -1073,10 +1078,12 @@ export default function OrbitView() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative">
-      <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" minimal={showHub} />
+      {!isEmbedMode && (
+        <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" minimal={showHub} />
+      )}
       <div className="flex-1 flex relative">
       {/* Business Hub Sidebar for paid tier owners */}
-      {isOwner && isPaidTier && showHub && (
+      {!isEmbedMode && isOwner && isPaidTier && showHub && (
         <BusinessHubSidebar
           isOwner={true}
           planTier={planTier}
@@ -1094,7 +1101,7 @@ export default function OrbitView() {
       )}
 
       {/* Hub toggle button for paid tier owners */}
-      {isOwner && isPaidTier && !showHub && !showCustomization && (
+      {!isEmbedMode && isOwner && isPaidTier && !showHub && !showCustomization && (
         <Button
           onClick={() => setShowHub(true)}
           className="fixed left-4 top-4 z-50 bg-zinc-900/90 hover:bg-zinc-800 text-white border border-zinc-700"
@@ -1107,7 +1114,7 @@ export default function OrbitView() {
       )}
       
       {/* Free tier owner - show upgrade prompt */}
-      {isOwner && !isPaidTier && !showCustomization && (
+      {!isEmbedMode && isOwner && !isPaidTier && !showCustomization && (
         <div className="fixed left-4 top-4 z-50 bg-zinc-900/90 border border-zinc-700 rounded-lg p-3 max-w-xs">
           <p className="text-sm text-zinc-300 mb-2">Upgrade to unlock your Business Hub</p>
           <Button
@@ -1121,7 +1128,7 @@ export default function OrbitView() {
       )}
 
       {/* Hub Panel Content (when hub is open) */}
-      {isOwner && isPaidTier && showHub && (
+      {!isEmbedMode && isOwner && isPaidTier && showHub && (
         <div className="flex-1 bg-zinc-950 overflow-auto">
           <HubPanelContainer
             activePanel={hubPanel}
@@ -1260,7 +1267,7 @@ export default function OrbitView() {
       )}
 
       {/* Public unclaimed CTA - only show to public viewers, never to admin */}
-      {canSeeClaimCTA && !showCustomization && (
+      {!isEmbedMode && canSeeClaimCTA && !showCustomization && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
           <div className="max-w-lg mx-auto flex flex-col items-center gap-1">
             <div className="w-full flex items-center justify-between gap-3">
@@ -1284,7 +1291,7 @@ export default function OrbitView() {
       )}
 
       {/* First-run admin CTA - allow creators to verify ownership (only if unclaimed) */}
-      {isFirstRun && isUnclaimed && !showCustomization && (
+      {!isEmbedMode && isFirstRun && isUnclaimed && !showCustomization && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
           <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
             <div className="w-full flex items-center justify-between gap-3">
@@ -1306,7 +1313,7 @@ export default function OrbitView() {
       )}
       
       {/* Owner CTA - show manage button for claimed orbit owners */}
-      {isOwner && !isUnclaimed && !isPaidTier && !showCustomization && (
+      {!isEmbedMode && isOwner && !isUnclaimed && !isPaidTier && !showCustomization && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
           <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
             <div className="w-full flex items-center justify-between gap-3">

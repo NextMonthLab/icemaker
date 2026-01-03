@@ -8,6 +8,7 @@ import { HubNotificationsPanel } from "./HubNotificationsPanel";
 import { HubDataSourcesPanel } from "./HubDataSourcesPanel";
 import { HubCubesPanel } from "./HubCubesPanel";
 import { HubAIDiscoveryPanel } from "./HubAIDiscoveryPanel";
+import { HubSettingsPanel } from "./HubSettingsPanel";
 import type { HubPanel } from "./BusinessHubSidebar";
 
 interface HubPanelContainerProps {
@@ -69,15 +70,11 @@ export function HubPanelContainer({
     
     case 'settings':
       return (
-        <div className="p-6">
-          <h2 className="text-2xl font-semibold text-white mb-1">Settings</h2>
-          <p className="text-zinc-400 text-sm mb-6">
-            Configure your Orbit settings
-          </p>
-          <div className="border border-dashed border-zinc-700 rounded-lg p-8 text-center">
-            <p className="text-zinc-500">Settings panel coming soon</p>
-          </div>
-        </div>
+        <HubSettingsPanel 
+          businessSlug={businessSlug} 
+          planTier={planTier}
+          customTitle={customTitle}
+        />
       );
     
     default:

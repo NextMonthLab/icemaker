@@ -1,0 +1,97 @@
+# REPLIT TASK: Orbit Share+Embed MVP + Wire API Curated Items into Insights (No Mock)
+
+We have confirmed via audit:
+- Public Orbit routes exist: /o/:slug and /orbit/:slug render OrbitView with no auth
+- Tracking exists: POST /api/orbit/:slug/track is called from OrbitView.tsx
+- Embed code exists ONLY for ICE/Universe (ExportPage.tsx), NOT for Orbits
+- API connector is real (tables + UI + endpoints + snapshots + curated items)
+- Curated items are used in chat context, but NOT in insights generation
+
+Goal
+1) Add “Share & Embed” for claimed Orbits, with a clean iframe snippet like ExportPage does for ICE.
+2) Add embed mode rendering for OrbitView (?embed=true) to hide chrome.
+3) Wire api_curated_items into /api/orbit/:slug/insights so operational insights become visible in Launchpad.
+
+Style Guide (must match Launchpad/Editor)
+- Pure black background
+- Subtle glass panels (bg-white/5, border-white/10)
+- NextMonth gradient only for primary CTA / selected states
+- No loud banners, no rainbow UI, no heavy purple slabs
+
+---
+
+## A) Orbit Share + Embed
+
+### 1) Add Share & Embed UI entry point
+Add a button “Share & Embed” in the Orbit Hub/Settings area (where it makes most sense):
+- likely in /orbit/:slug/hub sidebar tabs OR Orbit settings panel
+
+Create a modal:
+- Title: “Share & Embed Orbit”
+- Section 1: Share link
+  - URL: `${origin}/o/${slug}`
+  - Button: Copy link
+- Section 2: Embed code
+  - iframe snippet:
+    `<iframe src="${origin}/o/${slug}?embed=true" width="100%" height="600" frameborder="0" allow="clipboard-write; fullscreen" title="Orbit Experience"></iframe>`
+  - Button: Copy embed code
+- Small note: “Embedded Orbits are public. Anyone with the link can view.”
+
+Files likely involved:
+- client/src/components/orbit/ (new OrbitShareModal.tsx)
+- client/src/pages/orbit/OrbitHub or wherever the hub panel is rendered
+
+### 2) Implement ?embed=true mode
+In OrbitView rendering:
+- detect `embed=true` query param
+- hide global nav / sidebars / header chrome
+- ensure layout fills container nicely for iframe
+
+Files:
+- client/src/pages/orbit/OrbitView.tsx (or wrapper)
+- any layout components around OrbitRouter
+
+Acceptance test:
+- /o/:slug?embed=true renders a clean minimal view inside an iframe without nav clutter
+
+---
+
+## B) API Connector → Insights Wiring
+
+### 3) Pull curated items into insights endpoint
+In server route:
+GET /api/orbit/:slug/insights
+Currently uses:
+- analytics summary
+- conversations
+- boxes
+
+Add:
+- `const curatedItems = await storage.getApiCuratedItemsByOrbit(slug, 50);`
+
+Then include curatedItems in insight generation input so insights can reference operational signals.
+
+IMPORTANT:
+- No hardcoded insight arrays
+- Keep deterministic IDs as current generator does
+
+If you have an insight generator function/service, update it to accept curatedItems and incorporate them.
+If insights are assembled inline, add a curated-items section to the generation prompt/logic.
+
+### 4) Minimal operational insight patterns (optional but recommended)
+Add at least one or two simple patterns that reliably produce insights when curatedItems exist, for example:
+- “Operational snapshot: {title} – {summary}”
+- “Common operational theme: group by sourceType and count”
+These must be derived from curatedItems, not mocked.
+
+Acceptance test:
+- After running a snapshot in Data Sources, /api/orbit/:slug/insights returns at least 1 additional insight referencing curatedItems
+
+---
+
+## Deliverables
+- OrbitShareModal with Copy Link + Copy Embed Code
+- embed mode (?embed=true) for OrbitView
+- insights endpoint wired to api_curated_items
+- List of file paths changed + short QA steps
+- Confirm no mock data was introduced

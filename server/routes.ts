@@ -9096,6 +9096,7 @@ Guidelines:
       const analytics = await storage.getOrbitAnalyticsSummary(slug, 30);
       const conversations = await storage.getOrbitConversations(slug, 20);
       const boxes = await storage.getOrbitBoxes(slug);
+      const curatedItems = await storage.getApiCuratedItemsByOrbit(slug, 50);
       
       const insights: Array<{
         id: string;
@@ -9204,6 +9205,43 @@ Guidelines:
           kind: "feed",
           createdAt: now,
         });
+      }
+      
+      // Insights from curated items (API data sources)
+      if (curatedItems.length > 0) {
+        const sourceTypes = [...new Set(curatedItems.map(c => c.sourceType))];
+        insights.push({
+          id: generateInsightId([slug, 'data-source', String(curatedItems.length)]),
+          orbitId: slug,
+          title: `${curatedItems.length} operational data items synced`,
+          meaning: `Your connected data sources are feeding ${sourceTypes.length} type(s) of operational data. AI can now answer questions using this live information.`,
+          confidence: curatedItems.length > 20 ? "high" : "medium",
+          topicTags: ["operations", "data-sync", ...sourceTypes.slice(0, 3)],
+          source: "Data Sources",
+          kind: curatedItems.length > 30 ? "top" : "feed",
+          createdAt: now,
+        });
+        
+        // Group by source type for more specific insights
+        const typeGroups = curatedItems.reduce((acc, item) => {
+          acc[item.sourceType] = (acc[item.sourceType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        const topType = Object.entries(typeGroups).sort((a, b) => b[1] - a[1])[0];
+        if (topType && topType[1] > 5) {
+          insights.push({
+            id: generateInsightId([slug, 'data-type', topType[0]]),
+            orbitId: slug,
+            title: `${topType[1]} ${topType[0].replace(/_/g, ' ')} records available`,
+            meaning: "This data enriches your Orbit's knowledge base and helps answer visitor questions accurately.",
+            confidence: "medium",
+            topicTags: ["operations", topType[0]],
+            source: "Data Sources",
+            kind: "feed",
+            createdAt: now,
+          });
+        }
       }
       
       // If no insights, add a starter insight
