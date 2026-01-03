@@ -281,7 +281,7 @@ export default function ForBusiness() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className={`p-6 rounded-xl border bg-gradient-to-br ${colors.split(' ').slice(0, 2).join(' ')} ${colors.split(' ')[2]} hover:scale-[1.02] transition-all`}
+                    className={`p-6 rounded-xl border bg-gradient-to-br ${colors.split(' ').slice(0, 2).join(' ')} ${colors.split(' ')[2]} transition-colors`}
                     data-testid={`card-usecase-${index}`}
                   >
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors.split(' ').slice(0, 2).join(' ')} flex items-center justify-center mb-4`}>
