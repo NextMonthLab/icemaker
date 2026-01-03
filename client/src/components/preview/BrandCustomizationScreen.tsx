@@ -69,6 +69,13 @@ const accentPresets: AccentPreset[] = [
 
 const MAX_IMAGES = 12;
 
+function findMatchingPreset(color: string): string | null {
+  if (!color) return null;
+  const normalizedColor = color.toLowerCase().trim();
+  const match = accentPresets.find(p => p.color.toLowerCase() === normalizedColor);
+  return match?.id || null;
+}
+
 export function BrandCustomizationScreen({
   logoUrl,
   faviconUrl,
@@ -86,8 +93,17 @@ export function BrandCustomizationScreen({
   onSkip,
 }: BrandCustomizationScreenProps) {
   const queryClient = useQueryClient();
-  const [selectedPreset, setSelectedPreset] = useState<string>('nextmonth');
-  const [accentColor, setAccentColor] = useState(defaultAccentColor || '#3b82f6');
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(() => {
+    const matchedPreset = findMatchingPreset(defaultAccentColor);
+    return matchedPreset || 'nextmonth';
+  });
+  const [accentColor, setAccentColor] = useState(() => {
+    const matchedPreset = findMatchingPreset(defaultAccentColor);
+    if (matchedPreset) {
+      return defaultAccentColor;
+    }
+    return defaultAccentColor || '#3b82f6';
+  });
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl || faviconUrl);
   const [selectedImages, setSelectedImages] = useState<string[]>(() => imagePool.slice(0, MAX_IMAGES));
@@ -134,6 +150,10 @@ export function BrandCustomizationScreen({
     setSelectedPreset(preset.id);
     setAccentColor(preset.color);
   }, []);
+
+  const isPresetSelected = useCallback((presetId: string) => {
+    return selectedPreset === presetId;
+  }, [selectedPreset]);
 
   const allLogoCandidates = [
     ...(logoUrl ? [logoUrl] : []),
