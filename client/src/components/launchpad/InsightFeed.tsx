@@ -163,7 +163,7 @@ export function InsightFeed({
                   data-testid="button-unlock-insights"
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Power up in 2 minutes
+                  Add sources (~2 min)
                 </Button>
               </Link>
             )}

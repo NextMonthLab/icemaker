@@ -19,6 +19,7 @@ import {
   type IceTone,
   type IceOutputType,
 } from "@/components/launchpad";
+import { NewIceModal } from "@/components/launchpad/NewIceModal";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,6 +78,7 @@ export default function Launchpad() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("insights");
   const [mobileBuilderOpen, setMobileBuilderOpen] = useState(false);
   const [highlightedInsightId, setHighlightedInsightId] = useState<string | null>(null);
+  const [newIceModalOpen, setNewIceModalOpen] = useState(false);
 
   const { data: orbitsData, isLoading: orbitsLoading, isError: orbitsError } = useQuery<OrbitsResponse>({
     queryKey: ["my-orbits"],
@@ -202,13 +204,8 @@ export default function Launchpad() {
   }, []);
 
   const handleCreateIce = useCallback(() => {
-    if (topInsight) {
-      setSelectedInsight(topInsight);
-      setCurrentDraft(null);
-      setMobileBuilderOpen(true);
-      setMobileTab("builder");
-    }
-  }, [topInsight]);
+    setNewIceModalOpen(true);
+  }, []);
 
   const handleGenerateDraft = useCallback(
     async (options: {
@@ -445,6 +442,17 @@ export default function Launchpad() {
           />
         </SheetContent>
       </Sheet>
+
+      {/* New ICE Modal */}
+      {selectedOrbit && (
+        <NewIceModal
+          open={newIceModalOpen}
+          onOpenChange={setNewIceModalOpen}
+          businessSlug={selectedOrbit.slug}
+          selectedInsight={selectedInsight}
+          insights={insights}
+        />
+      )}
     </div>
   );
 }

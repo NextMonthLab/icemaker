@@ -98,7 +98,7 @@ export function LaunchpadHeader({
               data-testid="button-power-up"
             >
               <Zap className="w-4 h-4 mr-1" />
-              Power up
+              Add sources
             </Button>
           </Link>
         )}

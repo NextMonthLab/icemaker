@@ -31,7 +31,7 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
               </Badge>
             </div>
             <p className="text-xs md:text-sm text-white/80">
-              <span className="font-medium text-white">Power up</span> to unlock 7 more insights in 2 minutes
+              <span className="font-medium text-white">Add sources</span> to unlock full insights
             </p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
           data-testid="button-powerup"
         >
           <Sparkles className="w-4 h-4" />
-          Power Up
+          Add Sources
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
