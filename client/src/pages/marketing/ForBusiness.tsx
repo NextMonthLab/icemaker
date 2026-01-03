@@ -98,9 +98,9 @@ export default function ForBusiness() {
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/">
-            <img src="/logo.png" alt="NextMonth" className="h-28 md:h-40 cursor-pointer" style={{ clipPath: 'inset(30% 0 30% 0)' }} data-testid="link-logo" />
+            <img src="/logo.png" alt="NextMonth" className="h-8 md:h-10 cursor-pointer" data-testid="link-logo" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login">
@@ -113,7 +113,7 @@ export default function ForBusiness() {
         </div>
       </header>
 
-      <main className="pt-20">
+      <main className="pt-16">
         {/* Smart Site Preview Section */}
         <section className="relative overflow-hidden py-16 px-4 bg-gradient-to-br from-blue-900/20 via-transparent to-purple-900/10">
           <div className="max-w-3xl mx-auto text-center relative z-10">
