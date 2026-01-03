@@ -1,4 +1,4 @@
-import { Building2, Sparkles, ArrowRight, CheckCircle2, Loader2, Zap, MessageSquare, BarChart3 } from "lucide-react";
+import { Building2, Sparkles, ArrowRight, CheckCircle2, Loader2, Zap, MessageSquare, BarChart3, Rocket, Users, Heart } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,15 +12,21 @@ import SectionSkin, { SectionDivider } from "@/components/SectionSkin";
 const useCases = [
   {
     title: "Product Launch Stories",
-    description: "Daily chapters that build anticipation and drive repeat visits"
+    description: "Daily chapters that build anticipation and drive repeat visits",
+    icon: Rocket,
+    color: "blue"
   },
   {
     title: "Customer Success Series",
-    description: "Turn case studies into guided before and after journeys"
+    description: "Turn case studies into guided before and after journeys",
+    icon: Users,
+    color: "purple"
   },
   {
     title: "Company Culture Content",
-    description: "Employee spotlights that make your brand feel human"
+    description: "Employee spotlights that make your brand feel human",
+    icon: Heart,
+    color: "pink"
   }
 ];
 
@@ -186,10 +192,8 @@ export default function ForBusiness() {
 
         {/* How It Works Section */}
         <SectionSkin 
-          skins={["orbitGrid", "spotlight"]} 
-          spotlightColor="rgba(139, 92, 246, 0.08)"
-          gridOpacity={0.04}
-          className="py-16 px-4"
+          skins={["noise"]} 
+          className="py-16 px-4 bg-neutral-900/50"
           separator="gradient"
         >
           <div className="max-w-4xl mx-auto">
@@ -261,19 +265,31 @@ export default function ForBusiness() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {useCases.map((useCase, index) => (
-                <motion.div
-                  key={useCase.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="p-6 rounded-xl border border-white/10 bg-white/5 hover:border-blue-500/30 transition-all"
-                  data-testid={`card-usecase-${index}`}
-                >
-                  <h3 className="font-bold mb-3">{useCase.title}</h3>
-                  <p className="text-sm text-white/60">{useCase.description}</p>
-                </motion.div>
-              ))}
+              {useCases.map((useCase, index) => {
+                const IconComponent = useCase.icon;
+                const colorClasses = {
+                  blue: "from-blue-500/20 to-blue-600/10 border-blue-500/30 text-blue-400",
+                  purple: "from-purple-500/20 to-purple-600/10 border-purple-500/30 text-purple-400",
+                  pink: "from-pink-500/20 to-pink-600/10 border-pink-500/30 text-pink-400"
+                };
+                const colors = colorClasses[useCase.color as keyof typeof colorClasses];
+                return (
+                  <motion.div
+                    key={useCase.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className={`p-6 rounded-xl border bg-gradient-to-br ${colors.split(' ').slice(0, 2).join(' ')} ${colors.split(' ')[2]} hover:scale-[1.02] transition-all`}
+                    data-testid={`card-usecase-${index}`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors.split(' ').slice(0, 2).join(' ')} flex items-center justify-center mb-4`}>
+                      <IconComponent className={`w-5 h-5 ${colors.split(' ')[3]}`} />
+                    </div>
+                    <h3 className="font-bold mb-3">{useCase.title}</h3>
+                    <p className="text-sm text-white/60">{useCase.description}</p>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </SectionSkin>
