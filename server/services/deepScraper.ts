@@ -344,6 +344,21 @@ export const LINK_PATTERNS = {
   general: [
     /about/i, /services/i, /products?/i, /team/i, /contact/i,
     /pricing/i, /features/i, /solutions/i
+  ],
+  // High-signal pages for richer business data extraction
+  highSignal: [
+    // About & Identity
+    /about/i, /our-story/i, /story/i, /company/i, /mission/i, /values/i, /who-we-are/i,
+    // Team & People
+    /team/i, /people/i, /meet-the-team/i, /leadership/i, /staff/i, /our-team/i,
+    // Trust & Proof
+    /testimonials?/i, /reviews?/i, /case-stud/i, /work/i, /portfolio/i, /clients?/i, /success/i,
+    // Help & Support
+    /faq/i, /faqs/i, /help/i, /support/i, /shipping/i, /returns/i, /delivery/i,
+    // Contact & Location
+    /contact/i, /locations?/i, /find-us/i, /visit/i, /hours/i, /opening/i,
+    // Services & Pricing
+    /services/i, /what-we-do/i, /industries/i, /pricing/i, /packages/i
   ]
 };
 

@@ -1,6 +1,11 @@
 import { Page } from 'puppeteer';
 import { withPage, deepScrapeMultiplePages, LINK_PATTERNS, MultiPageCrawlResult } from './deepScraper';
 import OpenAI from 'openai';
+import { 
+  extractBusinessData, 
+  extractionResultToBoxes,
+  type BusinessDataExtractionResult 
+} from './businessDataExtractor';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -1437,4 +1442,118 @@ export async function extractServiceConceptsMultiPage(baseUrl: string, maxPages:
   
   // Use AI extraction for B2B content
   return extractServiceConceptsWithAI(crawlResult);
+}
+
+/**
+ * High-Signal Page Extraction - crawls about/faq/contact/testimonial pages
+ * and extracts rich business data beyond products/menu items.
+ * 
+ * Returns boxes ready to insert into orbit_boxes table.
+ */
+export interface HighSignalExtractionResult {
+  pagesVisited: string[];
+  extractionResults: BusinessDataExtractionResult[];
+  boxes: Array<{
+    businessSlug: string;
+    boxType: string;
+    title: string;
+    description: string | null;
+    content: string | null;
+    sourceUrl: string | null;
+    tags: Array<{ key: string; value: string }>;
+  }>;
+  stats: {
+    totalPages: number;
+    businessProfiles: number;
+    contacts: number;
+    openingHours: number;
+    faqs: number;
+    testimonials: number;
+    teamMembers: number;
+    trustSignals: number;
+  };
+}
+
+export async function extractHighSignalPages(
+  baseUrl: string, 
+  businessSlug: string,
+  maxPages: number = 15
+): Promise<HighSignalExtractionResult> {
+  console.log(`[HighSignal] Starting high-signal page extraction for: ${baseUrl}`);
+  
+  // Crawl using high-signal link patterns
+  const crawlResult = await deepScrapeMultiplePages(baseUrl, {
+    maxPages,
+    linkPatterns: LINK_PATTERNS.highSignal,
+    timeout: 45000,
+    sameDomainOnly: true,
+    rateLimitMs: 500,
+    stopAfterEmptyPages: 5
+  });
+  
+  console.log(`[HighSignal] Crawled ${crawlResult.pages.length} high-signal pages (${crawlResult.stoppedReason})`);
+  
+  const extractionResults: BusinessDataExtractionResult[] = [];
+  const allBoxes: HighSignalExtractionResult['boxes'] = [];
+  
+  const stats = {
+    totalPages: crawlResult.pages.length,
+    businessProfiles: 0,
+    contacts: 0,
+    openingHours: 0,
+    faqs: 0,
+    testimonials: 0,
+    teamMembers: 0,
+    trustSignals: 0,
+  };
+  
+  // Process each page
+  for (const pageResult of crawlResult.pages) {
+    if (!pageResult.text || pageResult.text.length < 200) {
+      console.log(`[HighSignal] Skipping ${pageResult.url} - insufficient content`);
+      continue;
+    }
+    
+    try {
+      const result = await extractBusinessData(pageResult);
+      extractionResults.push(result);
+      
+      // Convert to boxes
+      const boxes = extractionResultToBoxes(result, businessSlug);
+      allBoxes.push(...boxes);
+      
+      // Update stats
+      if (result.businessProfile) stats.businessProfiles++;
+      if (result.contact) stats.contacts++;
+      if (result.openingHours) stats.openingHours++;
+      stats.faqs += result.faqs.length;
+      stats.testimonials += result.testimonials.length;
+      stats.teamMembers += result.teamMembers.length;
+      stats.trustSignals += result.trustSignals.length;
+      
+      console.log(`[HighSignal] Extracted from ${pageResult.url}: type=${result.pageType}, confidence=${result.confidence.toFixed(2)}`);
+      
+    } catch (err) {
+      console.log(`[HighSignal] Failed to extract ${pageResult.url}: ${(err as Error).message}`);
+    }
+  }
+  
+  // Deduplicate boxes by title + boxType
+  const seenKeys = new Set<string>();
+  const deduplicatedBoxes = allBoxes.filter(box => {
+    const key = `${box.boxType}:${box.title.toLowerCase().trim()}`;
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
+  
+  console.log(`[HighSignal] Extraction complete: ${deduplicatedBoxes.length} boxes (${allBoxes.length - deduplicatedBoxes.length} duplicates removed)`);
+  console.log(`[HighSignal] Stats: profiles=${stats.businessProfiles}, contacts=${stats.contacts}, hours=${stats.openingHours}, faqs=${stats.faqs}, testimonials=${stats.testimonials}, team=${stats.teamMembers}`);
+  
+  return {
+    pagesVisited: crawlResult.pagesVisited,
+    extractionResults,
+    boxes: deduplicatedBoxes,
+    stats,
+  };
 }

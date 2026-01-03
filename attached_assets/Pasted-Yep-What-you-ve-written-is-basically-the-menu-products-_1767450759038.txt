@@ -1,0 +1,207 @@
+Yep. What you’ve written is basically the “menu/products-first” scraper, which is fine for MVP… but it starves the system of the stuff that makes the Orbit feel smart (identity, trust, conversion cues).
+
+Here’s how we could have scraped it to seed richer initial data, and how I’d implement it going forward in a clean, repeatable way.
+
+Why the current scrape feels thin
+
+Right now the pipeline is optimised for catalogue objects (items + prices). That’s useful, but it doesn’t create:
+	•	a believable business profile
+	•	trust/authority proof
+	•	a “what should I do next?” conversion layer
+	•	conversational context that sounds like them
+
+So the AI ends up saying “people view your blog page” instead of producing externally-facing stories and CTAs.
+
+What we should have done during the scrape
+
+1) Broaden discovery from “product pages” to “business reality pages”
+
+Add a page-discovery pass that targets high-signal URLs before crawling everything:
+
+Priority routes to hunt (pattern + internal link text):
+	•	About: /about, /our-story, /company, /mission, /values
+	•	Team: /team, /people, /meet-the-team, /leadership
+	•	Proof: /testimonials, /reviews, /case-studies, /work, /portfolio
+	•	Help: /faq, /support, /help, /shipping, /returns (if ecom)
+	•	Contact: /contact, /locations, /find-us
+	•	Legal/trust: /privacy, /terms, /cookies
+	•	For services: /services, /what-we-do, /industries, /pricing
+
+You don’t need to crawl the whole site. You need the 10–30 most “meaningful” pages.
+
+2) Extract “Business Facts” as a dedicated object
+
+Don’t leave these buried in prose. Pull them out explicitly:
+	•	Business name + tagline
+	•	Address(es), phone, email
+	•	Opening hours
+	•	Service areas
+	•	Social profiles
+	•	Primary categories / industries served
+	•	Key claims (eg “family-run since 1998”, “ISO certified”, “same-day delivery”)
+
+3) Extract “Trust & Proof” as first-class data
+
+This is where conversion power comes from:
+	•	testimonials (quote + name + role + company + source page)
+	•	case study summaries (problem → approach → result → metrics)
+	•	badges/associations (accreditations, memberships)
+	•	client logos (even if just alt text + image)
+
+4) Capture “Brand Voice” + “Positioning”
+
+Do a lightweight tone/voice analysis from headings + hero sections + about page:
+	•	tone (formal, friendly, premium, playful)
+	•	vocabulary cues
+	•	3–5 key messages they repeat
+	•	the “promise” they’re making
+	•	what they emphasise (speed, quality, price, care, innovation, compliance, etc.)
+
+5) Seed “Conversion Hooks” (the bit you’re really aiming for)
+
+During scrape, identify:
+	•	primary CTAs (“Book a call”, “Get a quote”, “Order online”)
+	•	lead magnets (downloads, guides, newsletters)
+	•	enquiry forms + fields
+	•	pricing signals (starting from…, packages, finance options)
+	•	common objections addressed on the site (shipping, timelines, guarantees)
+
+That gives you enough to generate externally-facing ICEs that sound like the business.
+
+⸻
+
+How to implement this going forward (practical plan)
+
+A) Split extraction into 3 passes (so it’s stable and debuggable)
+
+Pass 1: Fingerprint + Sitemap
+	•	platform detection (as you already do)
+	•	gather candidate URLs from:
+	•	sitemap.xml (if present)
+	•	nav menus + footer links
+	•	internal links with boosted anchor text (“About”, “Contact”, etc.)
+
+Pass 2: Targeted Page Fetch
+	•	fetch the top N “high signal” pages first (N=25 is usually enough)
+	•	keep raw page snapshots for traceability (even if just HTML + extracted text)
+
+Pass 3: Structured AI Extraction
+Instead of one generic prompt, use a router prompt + specialist prompts:
+	•	Router: “What type of page is this? product/menu/about/team/faq/testimonial/contact/legal/other”
+	•	Specialist extractor: run the matching schema prompt
+
+This massively improves accuracy because each prompt is narrow.
+
+⸻
+
+Data model changes (minimal but powerful)
+
+You said orbit_boxes already supports boxType. Good. Use it properly and keep it consistent.
+
+Suggested boxType set:
+	•	product / menuItem
+	•	businessProfile
+	•	faq
+	•	testimonial
+	•	teamMember
+	•	caseStudy
+	•	contact
+	•	openingHours
+	•	socialLink
+	•	brandVoice
+	•	trustSignal (accreditations, badges, “as seen in”)
+
+Each box should include:
+	•	sourceUrl
+	•	sourceTitle (page title)
+	•	confidence
+	•	extractedAt
+	•	rawSnippet (small excerpt used to justify the extraction)
+
+That last bit (rawSnippet) is your “court evidence” when something looks wrong.
+
+⸻
+
+Prompting upgrade (what to change immediately)
+
+1) Add a “detect and extract if present” block
+
+Even on product pages, FAQs/testimonials sometimes appear in-page.
+
+So your extractor should always include something like:
+	•	“If you see FAQ-like Q&A, extract them.”
+	•	“If you see review/testimonial blocks, extract them.”
+	•	“If you see address/phone/opening hours, extract them.”
+
+2) Use deterministic outputs and strict schemas
+
+Force JSON-only outputs with a strict schema per boxType. No prose. No “helpful commentary”.
+
+3) Add dedupe rules
+
+Websites repeat the same footer contact info everywhere. You need to dedupe by:
+	•	normalised phone/email/address
+	•	identical testimonial text
+	•	identical FAQ Q
+
+⸻
+
+Seeding strategy (so the Orbit feels “alive” instantly)
+
+After extraction, run a seeding composer that creates:
+	1.	A Business Profile box (single canonical summary)
+	2.	A Top 5 FAQs box set (even if it’s just “shipping/returns/contact” for ecom)
+	3.	A Trust pack (testimonials + accreditations)
+	4.	A First 3 conversion CTAs (what the business wants users to do)
+	5.	A Voice guide (tone + do/don’t list)
+
+This is the stuff that makes the AI feel like it knows the company.
+
+⸻
+
+Quick-win roadmap (do this in order)
+
+If you want the highest impact with the lowest engineering risk:
+	1.	Contact + Opening Hours extraction
+	•	easiest to detect
+	•	immediately useful for AI chat and UI
+	2.	FAQ extraction
+	•	structured and low ambiguity
+	•	gives instant helpfulness
+	3.	Testimonials extraction
+	•	boosts trust and conversion
+	•	makes ICE output feel premium
+	4.	About/Team extraction
+	•	strengthens “brand voice” and authenticity
+	5.	Case studies / portfolio
+	•	best for B2B conversion stories
+	•	heavier parsing, but worth it
+
+⸻
+
+The non-negotiable: make it observable
+
+If you don’t add observability, you’ll keep guessing.
+
+Log per scrape:
+	•	pages discovered, pages fetched, pages skipped
+	•	page type classification distribution
+	•	number of boxes per type
+	•	confidence averages
+	•	top extraction errors (schema fails, empty outputs)
+
+And store the sourceUrl on every box so you can click straight to “why did it say that?”
+
+⸻
+
+How this solves your “mundane insight” problem
+
+With the richer seed, you can generate two layers of output:
+	•	Internal insights: behaviour + friction + gaps (“people view pricing page but don’t enquire”)
+	•	Externally-facing ICE: stories and CTAs grounded in proof/voice (“Here’s what matters when choosing X… here’s our approach… here’s proof… here’s the next step”)
+
+You can’t do that with product titles alone. You need about/faq/proof/CTA context.
+
+⸻
+
+If you want the most direct next step: implement targeted page discovery + contact/opening hours + FAQ first. That’s the fastest way to make the AI feel like it’s walked into the business, not just skimmed the menu.

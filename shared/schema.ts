@@ -1499,7 +1499,10 @@ export type InsertOrbitLead = z.infer<typeof insertOrbitLeadSchema>;
 export type OrbitLead = typeof orbitLeads.$inferSelect;
 
 // Orbit Boxes - grid curation for Business Hub
-export type OrbitBoxType = 'url' | 'text' | 'testimonial' | 'pdf' | 'ice' | 'product' | 'menu_item';
+export type OrbitBoxType = 
+  | 'url' | 'text' | 'testimonial' | 'pdf' | 'ice' | 'product' | 'menu_item'
+  | 'faq' | 'team_member' | 'business_profile' | 'contact' | 'opening_hours' 
+  | 'case_study' | 'social_link' | 'brand_voice' | 'trust_signal';
 
 // Product/Menu item tags for filtering
 export interface ProductTag {

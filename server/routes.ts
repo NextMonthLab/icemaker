@@ -9829,6 +9829,91 @@ Guidelines:
     }
   });
 
+  // Orbit High-Signal Enrichment - Extract FAQs, Contact, Team, Testimonials (owner only, Grow+ tier)
+  app.post("/api/orbit/:slug/enrich", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      const isOwner = orbitMeta.ownerId === (req.user as any)?.id;
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only the orbit owner can enrich data" });
+      }
+      
+      const PAID_TIERS = ['grow', 'insight', 'intelligence'];
+      const tier = orbitMeta.planTier;
+      if (!tier || !PAID_TIERS.includes(tier)) {
+        return res.status(403).json({ message: "Upgrade to Grow to enrich your orbit with business data" });
+      }
+      
+      // Get source URL from orbit meta (primary) or preview (fallback)
+      let sourceUrl: string | null = orbitMeta.sourceUrl || null;
+      
+      if (!sourceUrl && orbitMeta.previewId) {
+        const preview = await storage.getIcePreview(orbitMeta.previewId);
+        sourceUrl = preview?.sourceUrl || null;
+      }
+      
+      if (!sourceUrl) {
+        return res.status(400).json({ message: "No source URL available for enrichment. Please provide a website URL." });
+      }
+      
+      console.log(`[Orbit/enrich] Starting high-signal extraction for ${slug} from ${sourceUrl}`);
+      
+      const { extractHighSignalPages } = await import("./services/catalogueDetection");
+      const { composeSeedingResult, buildAIContextFromSeeding } = await import("./services/businessDataExtractor");
+      const result = await extractHighSignalPages(sourceUrl, slug, 15);
+      
+      // Compose seeding summary from all extraction results
+      const seedingSummary = composeSeedingResult(result.extractionResults);
+      const aiContext = buildAIContextFromSeeding(seedingSummary);
+      console.log(`[Orbit/enrich] Seeding summary: ${JSON.stringify(seedingSummary, null, 2)}`);
+      console.log(`[Orbit/enrich] AI context: ${aiContext}`);
+      
+      // Insert new boxes (don't clear existing product/menu boxes)
+      const insertedCount = { success: 0, skipped: 0 };
+      
+      for (const box of result.boxes) {
+        try {
+          await storage.createOrbitBox({
+            businessSlug: slug,
+            boxType: box.boxType as any,
+            title: box.title,
+            description: box.description,
+            content: box.content,
+            sourceUrl: box.sourceUrl,
+            tags: box.tags,
+            sortOrder: 1000 + insertedCount.success,
+            isVisible: true,
+          });
+          insertedCount.success++;
+        } catch (err: any) {
+          console.log(`[Orbit/enrich] Failed to insert box: ${err.message}`);
+          insertedCount.skipped++;
+        }
+      }
+      
+      console.log(`[Orbit/enrich] Completed: ${insertedCount.success} boxes added, ${insertedCount.skipped} skipped`);
+      
+      res.json({
+        success: true,
+        stats: result.stats,
+        insertedCount: insertedCount.success,
+        pagesVisited: result.pagesVisited.length,
+        seedingSummary,
+        aiContext,
+      });
+      
+    } catch (error: any) {
+      console.error("[Orbit/enrich] Error:", error);
+      res.status(500).json({ message: error.message || "Failed to enrich orbit data" });
+    }
+  });
+
   // Orbit Catalogue Import - Bulk import products/menu items (owner only, Grow+ tier required)
   app.post("/api/orbit/:slug/import", async (req, res) => {
     try {
