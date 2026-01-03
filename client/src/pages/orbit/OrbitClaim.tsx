@@ -1,13 +1,64 @@
-import { Building2, Globe, Loader2, AlertCircle, ClipboardPaste, FileSpreadsheet, Link2, Shield, UtensilsCrossed, ShoppingCart, Briefcase, BookOpen, FileText, MapPin, Sparkles, ArrowLeft } from "lucide-react";
+import { Building2, Globe, Loader2, AlertCircle, ClipboardPaste, FileSpreadsheet, Link2, Shield, UtensilsCrossed, ShoppingCart, Briefcase, BookOpen, FileText, MapPin, Sparkles, ArrowLeft, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import OrbitLayout from "@/components/OrbitLayout";
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { SiteIngestionLoader } from "@/components/preview/SiteIngestionLoader";
 
-type ExtractionIntent = 'menu' | 'catalogue' | 'service' | 'case_studies' | 'content' | 'locations' | null;
+type ExtractionIntent = 'menu' | 'catalogue' | 'service' | 'case_studies' | 'content' | 'locations';
+type ExtractionIntentOrNull = ExtractionIntent | null;
+
+interface PriorityOption {
+  id: ExtractionIntent;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  recommended?: 'hospitality' | 'ecommerce' | 'service' | 'all';
+}
+
+const priorityOptions: PriorityOption[] = [
+  {
+    id: 'menu',
+    title: 'Menu & pricing',
+    description: 'What you sell, organised into clear sections',
+    icon: UtensilsCrossed,
+    recommended: 'hospitality',
+  },
+  {
+    id: 'catalogue',
+    title: 'Products & shop items',
+    description: 'Individual products, variations and details',
+    icon: ShoppingCart,
+    recommended: 'ecommerce',
+  },
+  {
+    id: 'service',
+    title: 'Services & capabilities',
+    description: 'What you do, who it\'s for, and how it helps',
+    icon: Briefcase,
+    recommended: 'service',
+  },
+  {
+    id: 'case_studies',
+    title: 'Case studies & work',
+    description: 'Examples, projects and results',
+    icon: BookOpen,
+  },
+  {
+    id: 'content',
+    title: 'Articles & resources',
+    description: 'Blogs, guides and helpful content',
+    icon: FileText,
+  },
+  {
+    id: 'locations',
+    title: 'Locations & contact',
+    description: 'Where you operate and how to get in touch',
+    icon: MapPin,
+  },
+];
 
 interface OrbitGenerateResponse {
   success: boolean;
@@ -29,9 +80,39 @@ export default function OrbitClaim() {
   const [blockedData, setBlockedData] = useState<OrbitGenerateResponse | null>(null);
   const [showClassification, setShowClassification] = useState(false);
   const [validatedUrl, setValidatedUrl] = useState("");
+  const [selectedPriorities, setSelectedPriorities] = useState<ExtractionIntent[]>([]);
+
+  const MAX_SELECTIONS = 3;
+
+  const togglePriority = useCallback((id: ExtractionIntent) => {
+    setSelectedPriorities(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(p => p !== id);
+      }
+      if (prev.length >= MAX_SELECTIONS) {
+        return prev;
+      }
+      return [...prev, id];
+    });
+  }, []);
+
+  const getRecommendedType = useCallback((): 'hospitality' | 'ecommerce' | 'service' | null => {
+    if (!validatedUrl) return null;
+    const url = validatedUrl.toLowerCase();
+    if (url.includes('restaurant') || url.includes('cafe') || url.includes('bar') || url.includes('food') || url.includes('menu')) {
+      return 'hospitality';
+    }
+    if (url.includes('shop') || url.includes('store') || url.includes('buy') || url.includes('product')) {
+      return 'ecommerce';
+    }
+    if (url.includes('consulting') || url.includes('agency') || url.includes('service') || url.includes('solutions')) {
+      return 'service';
+    }
+    return null;
+  }, [validatedUrl]);
 
   const analyzeWebsiteMutation = useMutation({
-    mutationFn: async ({ url, extractionIntent }: { url: string; extractionIntent: ExtractionIntent }): Promise<OrbitGenerateResponse> => {
+    mutationFn: async ({ url, extractionIntent }: { url: string; extractionIntent: ExtractionIntentOrNull }): Promise<OrbitGenerateResponse> => {
       const response = await fetch('/api/orbit/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,13 +171,22 @@ export default function OrbitClaim() {
     }
   };
 
-  const handleStartExtraction = (extractionIntent: ExtractionIntent) => {
+  const handleStartExtraction = (extractionIntent: ExtractionIntentOrNull) => {
     if (!validatedUrl) {
       setError("Please enter a valid URL first");
       return;
     }
     setShowClassification(false);
     analyzeWebsiteMutation.mutate({ url: validatedUrl, extractionIntent });
+  };
+
+  const handleContinueWithSelection = () => {
+    if (selectedPriorities.length === 0) return;
+    handleStartExtraction(selectedPriorities[0]);
+  };
+
+  const handleLetOrbitDecide = () => {
+    handleStartExtraction(null);
   };
 
   const isLoading = analyzeWebsiteMutation.isPending;
@@ -118,151 +208,177 @@ export default function OrbitClaim() {
   }
 
   if (showClassification) {
+    const recommendedType = getRecommendedType();
+    const atLimit = selectedPriorities.length >= MAX_SELECTIONS;
+
     return (
-      <OrbitLayout>
-        <div className="p-6 max-w-2xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-blue-400" />
+      <div className="min-h-screen bg-black flex flex-col">
+        {/* Progress indicator */}
+        <div className="border-b border-white/10 bg-black/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-medium">Orbit setup</span>
+              </div>
+              <span className="text-white/50 text-sm">Step 2 of 4</span>
             </div>
-            <h1 className="text-2xl font-bold text-white" data-testid="text-classification-title">
-              What information on your site would be most valuable to visitors?
-            </h1>
-            <p className="text-white/60 max-w-md mx-auto">
-              Orbit will focus on understanding and structuring this information first.
-            </p>
-          </div>
-
-          {error && (
-            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400" data-testid="text-classification-error">{error}</p>
+            {/* Progress bar */}
+            <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full w-1/2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
             </div>
-          )}
-
-          <div className="grid gap-3">
-            <Button
-              onClick={() => handleStartExtraction('menu')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-menu"
-            >
-              <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                <UtensilsCrossed className="w-5 h-5 text-orange-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Menu & pricing</span>
-                <span className="text-white/60 text-sm">What you sell, organised into clear sections</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction('catalogue')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-catalogue"
-            >
-              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <ShoppingCart className="w-5 h-5 text-green-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Products & shop items</span>
-                <span className="text-white/60 text-sm">Individual products, variations and details</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction('service')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-service"
-            >
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <Briefcase className="w-5 h-5 text-purple-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Services & capabilities</span>
-                <span className="text-white/60 text-sm">What you do, who it's for, and how it helps</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction('case_studies')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-case-studies"
-            >
-              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-amber-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Case studies & work</span>
-                <span className="text-white/60 text-sm">Examples, projects and results</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction('content')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-content"
-            >
-              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 text-cyan-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Articles & resources</span>
-                <span className="text-white/60 text-sm">Blogs, guides and helpful content</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction('locations')}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-locations"
-            >
-              <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-5 h-5 text-rose-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Locations & contact details</span>
-                <span className="text-white/60 text-sm">Where you operate and how to get in touch</span>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => handleStartExtraction(null)}
-              variant="outline"
-              className="w-full p-5 h-auto flex items-start gap-4 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/50 transition-all"
-              data-testid="button-intent-auto"
-            >
-              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-medium block">Let Orbit decide</span>
-                <span className="text-white/60 text-sm">We'll try to work it out automatically</span>
-              </div>
-            </Button>
           </div>
+        </div>
 
-          <div className="pt-4 flex justify-center">
+        {/* Main content */}
+        <div className="flex-1 px-4 py-8 pb-32">
+          <div className="max-w-3xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-3">
+              <h1 className="text-2xl md:text-3xl font-bold text-white" data-testid="text-classification-title">
+                What should Orbit learn first?
+              </h1>
+              <p className="text-white/60 max-w-md mx-auto">
+                Choose up to 3. We'll prioritise these sources first.
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400" data-testid="text-classification-error">{error}</p>
+              </div>
+            )}
+
+            {/* Selection limit indicator */}
+            {atLimit && (
+              <div className="text-center">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm">
+                  <Check className="w-3.5 h-3.5" />
+                  Maximum 3 selected
+                </span>
+              </div>
+            )}
+
+            {/* Options grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {priorityOptions.map((option) => {
+                const isSelected = selectedPriorities.includes(option.id);
+                const isRecommended = option.recommended === recommendedType;
+                const Icon = option.icon;
+                const isDisabled = atLimit && !isSelected;
+
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => togglePriority(option.id)}
+                    disabled={isDisabled}
+                    className={`
+                      relative p-4 rounded-xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                      ${isSelected
+                        ? 'bg-white/[0.07] border-transparent ring-2 ring-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+                        : isDisabled
+                        ? 'bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed'
+                        : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/[0.05] cursor-pointer'
+                      }
+                    `}
+                    data-testid={`button-intent-${option.id}`}
+                  >
+                    {/* Recommended chip */}
+                    {isRecommended && (
+                      <span className="absolute -top-2 right-3 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-medium">
+                        Recommended
+                      </span>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      {/* Icon with gradient ring when selected */}
+                      <div className={`
+                        w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
+                        ${isSelected
+                          ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 ring-1 ring-blue-500/50'
+                          : 'bg-white/[0.05]'
+                        }
+                      `}>
+                        <Icon className={`w-5 h-5 ${isSelected ? 'text-blue-400' : 'text-white/60'}`} />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${isSelected ? 'text-white' : 'text-white/90'}`}>
+                            {option.title}
+                          </span>
+                        </div>
+                        <span className="text-white/50 text-sm line-clamp-1">{option.description}</span>
+                      </div>
+
+                      {/* Checkmark */}
+                      <div className={`
+                        w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all
+                        ${isSelected
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500'
+                          : 'border border-white/20'
+                        }
+                      `}>
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Let Orbit decide link */}
+            <div className="text-center pt-2">
+              <button
+                onClick={handleLetOrbitDecide}
+                className="text-white/40 hover:text-white/70 text-sm transition-colors underline underline-offset-2"
+                data-testid="button-intent-auto"
+              >
+                Or let Orbit decide automatically
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky bottom action bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-white/10">
+          <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
             <Button
               onClick={() => {
                 setShowClassification(false);
                 setValidatedUrl("");
+                setSelectedPriorities([]);
               }}
               variant="ghost"
-              className="text-white/60 hover:text-white"
+              className="text-white/60 hover:text-white hover:bg-white/5"
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
+
+            <div className="flex items-center gap-3">
+              {selectedPriorities.length > 0 && (
+                <span className="text-white/40 text-sm hidden sm:inline">
+                  {selectedPriorities.length} selected
+                </span>
+              )}
+              <Button
+                onClick={handleContinueWithSelection}
+                disabled={selectedPriorities.length === 0}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="button-continue"
+              >
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </div>
         </div>
-      </OrbitLayout>
+      </div>
     );
   }
 
