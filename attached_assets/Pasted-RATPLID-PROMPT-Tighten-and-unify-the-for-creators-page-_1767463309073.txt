@@ -1,0 +1,125 @@
+RATPLID PROMPT: Tighten and unify the /for-creators page (Creators & Filmmakers) for clarity, conversion, and premium feel.
+
+Context
+- This is the /for-creators page aimed at filmmakers and creators.
+- It already has strong raw copy, but it needs tightening for CTA consistency, scannability, and grammar/tone consistency.
+- Goal: Make the page feel like one coherent proposition with a clear primary action, a clear secondary path, and a smooth narrative flow (script -> cards -> visual bible -> share).
+
+Primary objective
+- Increase clicks on the primary CTA: "Build a Story Experience"
+- Reduce confusion by using consistent CTA labels and anchor behaviour.
+
+Hard requirements (must do)
+
+1) HERO CLEANUP (top of page)
+- Keep the vibe, but tighten structure.
+- Hero content must be:
+  - Page label / eyebrow: "For Creators & Filmmakers"
+  - H1: "Your story, one moment at a time"
+  - Subhead: "Transform scripts and ideas into cinematic, interactive story experiences. Built for filmmakers who think in scenes, not pages."
+- Replace the "Built for:" block with clean bullet tags or pills (no stray hyphens):
+  - "Short films"
+  - "Trailers and proof of concepts"
+  - "Interactive fiction"
+- CTA row must contain only:
+  - Primary button: "Build a Story Experience"
+  - Secondary button: "Browse examples"
+- Remove or rename any other CTA labels in the hero (e.g. "See an example experience") so they match the two above.
+
+2) CTA CONSISTENCY (entire page)
+- Across the whole page, only these two CTA labels may appear:
+  - Primary: "Build a Story Experience"
+  - Secondary: "Browse examples"
+- Replace "See an example experience" and "See an example experience / Browse examples" variants with the standard labels.
+- The bottom-of-page CTA section must use the same labels.
+
+3) ADD A SIMPLE "How it works" SECTION (directly after hero)
+Insert a 4-step section that matches the promise and helps scanning:
+- Title: "From script to experience"
+- Steps:
+  1. "Upload your script or outline"
+  2. "We turn scenes into cinematic cards"
+  3. "Lock your visual bible for consistency"
+  4. "Share as a link or release in chapters"
+Keep it tight. No long paragraphs.
+
+4) "From script to screen" SECTION: tighten + make scannable
+- Keep the existing subsections but convert them into a consistent pattern:
+  - Heading
+  - One sentence max
+  - 3 short bullets max if needed
+- Keep these features, but tighten the copy:
+  - Scripts become story cards
+  - Cinematic visuals per card
+  - Optional character interaction
+  - Release your way
+- Ensure the output line is clean and consistent:
+  - "Output: cinematic cards, optional character chat, shareable link"
+- Avoid long dashes. Use normal hyphens or rewrite sentences.
+
+5) ICE NAMING CLARITY (first mention only)
+- The first time ICE appears anywhere on this page, write:
+  "ICE (Interactive Content Experiences)"
+- After that, ICE is fine on its own.
+
+6) VISUAL BIBLE SYSTEM SECTION: improve clarity + examples
+- Keep the concept, but tighten into:
+  - Title: "Visual Bible System"
+  - One short paragraph explaining: define look once, apply across every card, keeps continuity.
+  - Then a compact list of example styles:
+    - "Neo-noir"
+    - "Warm naturalism"
+    - "High contrast sci-fi"
+    - "Handheld documentary"
+- Add one short proof-style line beneath:
+  "Characters stay recognisable. Locations feel connected. The look stays coherent from first scene to last."
+(Keep "recognisable" spelling.)
+
+7) PERFECT FOR SECTION: tighten and de-duplicate
+- Keep list but make it compact and avoid repeating the hero.
+Suggested list:
+  - "Short films and micro-cinema"
+  - "Trailers and teasers"
+  - "Pilot episodes and proof of concepts"
+  - "Experimental storytelling"
+  - "Interactive fiction"
+  - "Music video narratives"
+
+8) CREATOR STORIES / SCENARIO CARD: fix tense + labels
+- Current scenario reads inconsistently ("They use ICE to" then "Builds...").
+- Standardise the scenario card structure to:
+  - "Problem"
+  - "How they use ICE"
+  - "Outcome"
+For "Independent Filmmaker", use this copy (or very close):
+  - Problem: "A polished screenplay and a clear creative vision, but limited budget for full previs to pitch investors or align a team."
+  - How they use ICE: "They build a living storyboard: AI-generated scenes that communicate shots, lighting, composition, and mood so cast and crew understand the vision before day one."
+  - Outcome: "Investors grasp the vision faster. Crew arrives aligned. Production runs smoother and the budget holds."
+- Keep it punchy. Avoid overpromising.
+
+9) FINAL CTA SECTION: sharpen and match CTAs
+- Title: "Ready to bring your story to life?"
+- Subhead: "Build an interactive story experience your audience can explore, not just watch."
+- Buttons:
+  - Primary: "Build a Story Experience"
+  - Secondary: "Browse examples"
+- Secondary button should scroll to the examples / creator stories section (anchor link with smooth scroll).
+
+Design and UX requirements
+- Preserve responsive layout on mobile/tablet/desktop.
+- Improve typography hierarchy: hero > sections > feature cards.
+- Make sections more scannable: shorter lines, less repetition, consistent spacing.
+- Keep premium feel: generous whitespace, consistent button styles.
+- Avoid long dashes (—). Use standard hyphens or rewrite.
+
+Acceptance criteria checklist
+- Only two CTA labels exist across the page: "Build a Story Experience" and "Browse examples".
+- Secondary CTA scrolls to examples section.
+- ICE is clarified on first mention as "ICE (Interactive Content Experiences)".
+- Scenario grammar/tenses are consistent and readable.
+- Bullets/tags render cleanly (no stray hyphens).
+- No new backend logic. This is copy/layout only.
+
+Deliverable
+- Commit changes to the /for-creators page component with clean section structure.
+- If helpful, refactor into small presentational sections (Hero, HowItWorks, Features, VisualBible, Scenarios, FinalCTA) without over-engineering.

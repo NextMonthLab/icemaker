@@ -1,0 +1,89 @@
+RATPLID PROMPT: Update /for-businesses page to unify proposition (SmartSite Preview + ICE) and tighten conversion.
+
+Context
+- This page currently feels like two different pages stitched together: "Smart Site Preview" lead-gen plus "ICE" brand storytelling platform pitch.
+- Goal: Make it feel like ONE coherent business page with ONE primary action, and a clear secondary path.
+- Keep existing preview generation logic and endpoints exactly as-is. We are changing layout + copy + CTA consistency, not backend behaviour.
+
+Primary objective
+- Increase "Create free preview" submissions by reducing confusion and tightening the flow.
+- Present ICE as the secondary path with examples and use cases.
+
+Hard requirements (must do)
+1) HERO SECTION REBUILD (top of page)
+- Replace the current top hero copy with a single unified hero that introduces both paths clearly.
+- New hero content:
+  - H1: "See what NextMonth does for businesses in 60 seconds"
+  - Subhead: "Create a free preview showing how an AI assistant would answer customer questions about your business. Or explore how ICE turns your content into interactive story experiences."
+  - Input placeholder: "https://yourdomain.co.uk"
+  - Primary CTA button label: "Create free preview"
+  - Secondary CTA button label: "Explore ICE examples"
+  - Under the primary CTA add a trust line (small text):
+    "We only use publicly available content. No signup. Nothing is published unless you choose."
+  - Keep the existing preview form submission logic and validation, only update labels/layout.
+
+2) CTA CONSISTENCY (entire page)
+- Standardise CTAs across the whole page to only these:
+  - Primary: "Create free preview"
+  - Secondary: "Explore ICE examples"
+- Remove or replace any other CTA labels like "Start Creating Free", "Get Started Free", "Or explore the full platform".
+- Any bottom-of-page CTA section must use the same primary CTA label.
+
+3) ADD "How it works" SECTION (immediately below hero)
+Create a simple 3-step section focused on the preview flow:
+- Title: "How the free preview works"
+- Steps:
+  1. "Paste your website"
+  2. "We generate a preview assistant and demo answers"
+  3. "Upgrade to publish, embed, and track leads"
+Keep it concise and scannable.
+
+4) ICE NAMING CLARITY
+- On first mention of ICE anywhere on the page, use:
+  "ICE (Interactive Content Experiences)"
+- After first mention, you can refer to "ICE" normally.
+
+5) USE CASES COPY TIGHTENING (keep same meaning, better outcomes)
+Update the "How Businesses Use NextMonth" section to be outcome-led and consistent:
+- Product Launch Stories: "Daily chapters that build anticipation and drive repeat visits"
+- Customer Success Series: "Turn case studies into guided before and after journeys"
+- Company Culture Content: "Employee spotlights that make your brand feel human"
+Keep the section but tighten the intro paragraph so it does not repeat the hero.
+
+6) SCENARIOS SECTION CLEANUP (Problem -> ICE Experience -> Outcome)
+- Keep the scenario card layout but rewrite the internal labels and tense consistency.
+For the "Innovative Manufacturer" scenario:
+  - Problem: "Dense technical documentation, CAD specs, and engineering white papers overwhelm prospects and slow sales cycles."
+  - ICE experience: "ICE turns product specs into an interactive experience where an AI engineer guide walks prospects through features, answers technical questions in real time, and demonstrates use cases visually."
+  - Outcome: "Shorter sales cycles as prospects self-educate. Technical complexity becomes an advantage, not a barrier."
+- Ensure consistent grammar: no random "Transforms" vs "They transform" mismatch.
+- Make the three rows visually scannable with strong label hierarchy.
+
+7) REMOVE UNVERIFIABLE CLAIMS + FIX TYPOS
+- Fix: "Ready to Transform Your Businesse Content?" -> "Ready to transform your business content?"
+- Replace "Join thousands of businesses..." with a safer line unless we have proof:
+  Use: "Join businesses already creating story experiences with NextMonth."
+Do not invent metrics like "thousands" or "5x" unless already supported by real data in the codebase/content.
+
+8) SECONDARY CTA ANCHOR BEHAVIOUR
+- "Explore ICE examples" should scroll to the ICE examples / scenarios section on the same page (anchor link).
+- Keep it smooth and obvious.
+
+Design and UX requirements
+- Preserve mobile/tablet/desktop responsiveness.
+- Improve hierarchy: hero headline, subhead, input + CTA row, trust line.
+- Keep spacing clean and premium.
+- Ensure buttons use consistent styling and states across the page.
+- Avoid long dashes. Use normal hyphens if needed.
+
+Acceptance criteria checklist
+- Page reads as one coherent business proposition (preview first, ICE second).
+- Only two CTA labels appear site-wide on this page: "Create free preview" and "Explore ICE examples".
+- The preview form still works exactly the same as before.
+- ICE is explained on first mention as "ICE (Interactive Content Experiences)".
+- Typos removed, tense consistent, claims are credible.
+- Secondary CTA scrolls to examples section.
+
+Deliverable
+- Commit the updated /for-businesses page changes with clean, readable component structure.
+- If the page is currently hard-coded, refactor lightly into sections/components only if it improves clarity (no over-engineering).
