@@ -152,8 +152,8 @@ export function InsightFeed({
                 Unlock {remainingInsights} more insights
               </span>
             </div>
-            <p className="text-xs text-white/60 mb-3">
-              Power up your Orbit to access full insights and content-ready ideas
+            <p className="text-xs text-white/60 mb-2">
+              Most users unlock this by adding About + Services pages
             </p>
             {orbitSlug && (
               <Link href={`/orbit/${orbitSlug}/settings`}>
@@ -163,7 +163,7 @@ export function InsightFeed({
                   data-testid="button-unlock-insights"
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Level Up
+                  Power up in 2 minutes
                 </Button>
               </Link>
             )}

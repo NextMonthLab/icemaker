@@ -1,0 +1,56 @@
+Yes, this is a clear improvement. “Starter insights (3)” + “Level up to unlock” reads like progression, not punishment, and it fits the whole “Orbit gets stronger” framing.
+
+A few small adjustments will make it even more rewarding and less “upsell-y”, while keeping the same gating.
+
+What’s working
+	•	“Starter insights (3)” vs “Full insights” is clean and understandable.
+	•	“Unlock X more insights” is positive and specific. Good.
+	•	Knowledge Sources in settings is the right place for control and transparency.
+	•	Having a dedicated /meta endpoint is smart for consistency.
+	•	iceViews tracking verified closes the loop. That’s a big milestone.
+
+Tweaks I’d make (small, high impact)
+
+1) Change “Level up to unlock” to something more concrete
+
+“Level up” is fine, but it’s slightly game-y and a bit vague. Consider:
+	•	“Add sources to unlock full insights”
+	•	“Power up your Orbit to unlock full insights”
+	•	“Unlock full insights in 2 minutes” (if that’s true)
+
+This keeps the reward framing but grounds it in an action.
+
+2) Make the reward feel immediate, not distant
+
+Where you say “Unlock X more insights”, add a tiny promise line:
+	•	“Most users unlock this by adding About + Services pages.”
+
+That removes uncertainty and increases completion.
+
+3) Make “Full insights” feel like a status, not a plan
+
+If users might associate tiers with payment, keep it neutral:
+	•	Starter insights (3)
+	•	Powered insights (instead of Full insights)
+
+“Powered” ties directly to your system narrative and avoids sounding like a pricing page.
+
+4) One micro-interaction that will sell the upgrade without selling
+
+When they complete power-up, show:
+	•	“Insights increased: 3 → 10”
+	•	Strength jumps with a +X animation
+	•	Confetti optional, but subtle is better (tiny sparkle burst)
+
+That creates the “no turning back” feeling you wanted.
+
+Bottom line
+
+It’s more rewarding than restrictive now. The only risk is if “Level up” feels like a game or a paywall euphemism. Swap it for an action-led line and you’ve nailed it.
+
+If you want the cleanest set:
+	•	Starter insights (3)
+	•	Powered insights
+	•	Power up to unlock 7 more insights (with “2 minutes” if true)
+
+That’s premium, clear, and motivating.

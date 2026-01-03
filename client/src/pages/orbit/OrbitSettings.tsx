@@ -95,12 +95,12 @@ export default function OrbitSettings() {
                 {isPowered ? (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5 animate-pulse" />
-                    Powered
+                    Powered insights
                   </>
                 ) : (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
-                    Basic
+                    Starter (3)
                   </>
                 )}
               </Badge>

@@ -79,7 +79,7 @@ export function LaunchpadHeader({
           {isPowered ? (
             <>
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              Full insights {selectedOrbit?.strengthScore ? `(${selectedOrbit.strengthScore}%)` : ''}
+              Powered insights {selectedOrbit?.strengthScore ? `(${selectedOrbit.strengthScore}%)` : ''}
             </>
           ) : (
             <>

@@ -1014,8 +1014,15 @@ export default function OrbitClaim() {
                       <div>
                         <h3 className="text-xl font-semibold text-white mb-2">Orbit Powered Up</h3>
                         <p className="text-sm text-white/60">
-                          Full insights unlocked · Content-ready ideas enabled
+                          Powered insights unlocked · Content-ready ideas enabled
                         </p>
+                      </div>
+                      {/* Insights increase animation */}
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                        <span className="text-sm text-white/60">Insights:</span>
+                        <span className="text-sm text-white/40 line-through">3</span>
+                        <ArrowRight className="w-3 h-3 text-green-400" />
+                        <span className="text-sm font-semibold text-green-400">10</span>
                       </div>
                     </div>
 
