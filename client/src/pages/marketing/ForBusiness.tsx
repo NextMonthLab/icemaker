@@ -192,8 +192,10 @@ export default function ForBusiness() {
 
         {/* How It Works Section */}
         <SectionSkin 
-          skins={["noise"]} 
-          className="py-16 px-4 bg-neutral-900/50"
+          skins={["spotlight"]} 
+          spotlightColor="rgba(139, 92, 246, 0.06)"
+          spotlightPosition="center"
+          className="py-16 px-4"
           separator="gradient"
         >
           <div className="max-w-4xl mx-auto">
@@ -446,43 +448,6 @@ export default function ForBusiness() {
               </motion.div>
             </div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="mt-16 text-center"
-            >
-              <p className="text-white/40 mb-6">
-                Ready to see what ICE can do for your business?
-              </p>
-              <div className="max-w-lg mx-auto flex flex-col sm:flex-row gap-3 justify-center">
-                <Input
-                  type="url"
-                  placeholder="https://yourdomain.co.uk"
-                  value={siteUrl}
-                  onChange={(e) => {
-                    setSiteUrl(e.target.value);
-                    setError("");
-                  }}
-                  className="h-12 px-5 text-sm bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-blue-500/50"
-                  data-testid="input-preview-url-bottom"
-                />
-                <Button
-                  onClick={handleCreatePreview}
-                  disabled={createPreviewMutation.isPending || !siteUrl.trim()}
-                  className="gap-2 h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-medium"
-                  data-testid="button-create-preview-bottom"
-                >
-                  {createPreviewMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  Create free preview
-                </Button>
-              </div>
-            </motion.div>
           </div>
         </SectionSkin>
 
@@ -520,10 +485,10 @@ export default function ForBusiness() {
 
         {/* Final CTA Section */}
         <SectionSkin 
-          skins={["spotlight", "vignette"]} 
-          spotlightColor="rgba(99, 102, 241, 0.15)"
+          skins={["spotlight"]} 
+          spotlightColor="rgba(255, 255, 255, 0.1)"
           spotlightPosition="center"
-          className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+          className="py-16 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
         >
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-cta-title">

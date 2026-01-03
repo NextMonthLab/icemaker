@@ -1,0 +1,105 @@
+Yeah, you’re not imagining it. Two things are going wrong in those screenshots:
+
+1) You’ve accidentally created a “sticky CTA bar”
+
+In the last screenshot, this bit…
+
+“Ready to see what ICE can do for your business?” + URL field + Create free preview
+
+…is sticking to the top of the viewport while you’re down the page (above “Why businesses choose NextMonth”). That’s almost certainly an unintended position: sticky (Tailwind sticky top-0) sitting on a section wrapper or CTA component.
+
+Result: it feels glitchy, like the page has duplicated its hero.
+
+2) The “section skins” aren’t being applied consistently
+
+Some sections have the new treatment (hero has a faint grid/spotlight, and you’ve got that big purple gradient at the bottom), but other sections are still just “flat black” or have a slightly different background that looks like a mis-applied wrapper (eg the grey-ish band behind “How the free preview works”).
+
+That’s why it feels like something’s “not working” rather than “polished”.
+
+⸻
+
+What I’d do (clean fix, not messy)
+
+A) Remove the sticky CTA bar entirely (for now)
+
+Unless you explicitly want a sticky conversion bar, it’s not worth the confusion. It’s reading like a bug.
+
+If you do want a sticky bar later, it should:
+	•	Only appear after the hero scrolls out of view (IntersectionObserver)
+	•	Be smaller (one line + button), not a mini-form clone
+	•	Never compete visually with section headings
+
+B) Make SectionSkin boundaries strict
+
+Every skinned section should be:
+	•	relative
+	•	overflow-hidden
+	•	background layers on ::before/::after with absolute inset-0
+	•	pointer-events-none
+	•	with a controlled z-index so it doesn’t leak outside its section or sit above content
+
+Right now it looks like at least one skin wrapper is either:
+	•	missing overflow-hidden, or
+	•	applied to the wrong parent, or
+	•	using a background block that isn’t clipped to the section.
+
+C) Reduce the “big purple slab” a touch
+
+It looks good, but the height/padding is excessive so it becomes a whole “scene change” rather than a final CTA.
+
+⸻
+
+RATPLID prompt to fix this properly
+
+Paste this into Replit:
+
+RATPLID PROMPT: Fix broken marketing page section skins and remove unintended sticky CTA bar on /for/businesses
+
+Observed issues
+1) A mini CTA ("Ready to see what ICE can do…", URL input + Create free preview) is sticking to the top of the viewport when scrolling. This looks accidental and duplicates the hero experience.
+2) Section background skins are not applied consistently; some sections look flat black, others have mismatched bands, suggesting skins are leaking outside their intended section boundaries.
+
+Hard requirements
+A) Remove unintended sticky CTA behaviour
+- Search for any element on /for/businesses using position: sticky (Tailwind `sticky`, `top-0`, `top-*`) or a fixed CTA wrapper.
+- Remove sticky/fixed behaviour entirely for now.
+- Ensure the preview form only appears in:
+  - the hero section, and
+  - the final CTA section (if present)
+- Do NOT duplicate the preview form as a persistent bar.
+
+B) Make SectionSkin boundaries correct and non-leaky
+- For every section that uses a background skin (grid/noise/spotlight/gradient):
+  - Ensure the section wrapper is `relative overflow-hidden`
+  - Background layers must be inside the section via pseudo-elements or an absolutely positioned child with `inset-0`
+  - Background layers must be `pointer-events-none`
+  - Background layers must sit behind content (z-index layering correct)
+- Prevent any background layer from extending beyond its section.
+
+C) Consistent skin application (business page)
+- Hero: orbitGrid + spotlight (subtle)
+- "How the free preview works": spotlight (very subtle), no grey banding
+- "How businesses use NextMonth": noise + spotlight
+- "See ICE in action": noise + faint grid (optional)
+- "Why businesses choose NextMonth": spotlight (subtle)
+- Final CTA: gradient band, but reduce vertical padding so it doesn’t dominate
+
+D) Tighten final CTA section spacing
+- Reduce excessive height/padding so the gradient CTA feels like a strong close, not a full-screen slab.
+- Keep readability and button alignment intact on mobile.
+
+Acceptance criteria
+- No sticky CTA bar appears at the top during scroll.
+- Background textures are clipped per-section and never overlap neighbouring sections.
+- Each major section has a distinct but subtle background treatment.
+- No layout shifts or new horizontal scrolling introduced.
+
+Deliverable
+- Commit the fixes and confirm which component(s) were causing the sticky CTA and background leakage.
+
+
+⸻
+
+If you want the quick “spot the culprit” hint: search the business page for sticky first. That top bar in your screenshot has all the hallmarks of “someone added a sticky conversion strip” and Tailwind happily did what it was told.
+
+Send me the component name/file for /for/businesses and I’ll tell you exactly where I’d expect the bug to be sitting.
