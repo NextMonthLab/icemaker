@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, GraduationCap, CheckCircle2, Upload, BookOpen, MessageCircle, Share2, Zap, BarChart3, Shield, Lock, UserCheck, BookMarked } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-import MarketingHeader from "@/components/MarketingHeader";
+import SiteNav from "@/components/SiteNav";
 
 const useCases = [
   {
@@ -52,7 +52,7 @@ export default function ForEducator() {
 
   return (
     <div className="min-h-screen bg-black text-white" data-nm-page="for-educators">
-      <MarketingHeader />
+      <SiteNav variant="marketing" />
 
       <main>
         {/* Hero */}

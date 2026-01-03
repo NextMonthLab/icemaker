@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Film, Clapperboard, Sparkles, MessageCircle, Calendar, Zap, CheckCircle2, Upload, Palette, Share2, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-import MarketingHeader from "@/components/MarketingHeader";
+import SiteNav from "@/components/SiteNav";
 
 const features = [
   {
@@ -58,7 +58,7 @@ export default function ForCreators() {
 
   return (
     <div className="min-h-screen bg-black text-white" data-nm-page="for-creators">
-      <MarketingHeader />
+      <SiteNav variant="marketing" />
 
       <main>
         {/* Hero */}
