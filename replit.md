@@ -101,6 +101,31 @@ For B2B food service companies (e.g., Tugo, Compass Group):
 - **Restaurant (Red Lion Bloxham)**: Successfully extracts 107 menu items across 11 categories with prices, descriptions, and dietary tags
 - **B2B Service (Tugo)**: Detects as 'service' type, extracts food concepts and solutions without prices
 
+### High-Signal Business Data Extraction (January 2026)
+The enhanced extraction pipeline captures richer business context beyond just products/menus:
+
+**New Box Types Added to Schema:**
+- `faq` - Q&A pairs from FAQ pages
+- `team_member` - Staff profiles with name, role, bio
+- `business_profile` - Core identity (name, tagline, industry, key claims, service areas)
+- `contact` - Phones, emails, addresses, social links
+- `opening_hours` - Weekly schedule with special hours/notes
+- `testimonial` - Customer reviews with author, company, rating
+- `trust_signal` - Certifications, awards, partnerships
+
+**Key Files:**
+- `server/services/businessDataExtractor.ts` - AI-powered extractors for each content type
+- High-signal page patterns: `/about`, `/team`, `/faq`, `/contact`, `/testimonials`, `/case-studies`, `/services`
+
+**On-Demand Enrichment API:**
+- `POST /api/orbit/:slug/enrich` - Owner-only, Grow+ tier
+- Crawls high-signal pages, routes to specialist extractors
+- Returns `seedingSummary` with canonical business identity and `aiContext` for chat
+
+**Seeding Composer Functions:**
+- `composeSeedingResult()` - Aggregates extraction results into unified identity
+- `buildAIContextFromSeeding()` - Generates text summary for AI chat context
+
 ## Launchpad Hub (January 2026)
 
 The Launchpad (`/launchpad`) is the unified command center combining Orbit metrics with IceMaker content creation.
