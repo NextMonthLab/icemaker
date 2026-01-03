@@ -255,7 +255,6 @@ export default function Launchpad() {
   ];
 
   const handleStartTour = (path: "orbit-first" | "ice-first") => {
-    setShowOnboarding(false);
     if (path === "ice-first") {
       setActiveTour(path);
       setTourStep(0);

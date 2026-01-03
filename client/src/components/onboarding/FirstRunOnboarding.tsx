@@ -70,7 +70,10 @@ export function FirstRunOnboarding({
     },
     onSuccess: (_, path) => {
       queryClient.invalidateQueries({ queryKey: ["me", "onboarding"] });
-      onStartTour(path);
+      onClose();
+      setTimeout(() => {
+        onStartTour(path);
+      }, 100);
     },
   });
 
