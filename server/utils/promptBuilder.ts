@@ -135,7 +135,7 @@ export function buildVisualPrompt(context: PromptContext): BuiltPrompt {
   
   return {
     prompt: prompt || "A cinematic scene",
-    negativePrompt: negativePrompt || "blurry, low quality, distorted, ugly",
+    negativePrompt: negativePrompt || "blurry, low quality, distorted, ugly, text, words, letters, titles, captions, typography",
     styleKeywords,
     referenceImageUrls,
   };

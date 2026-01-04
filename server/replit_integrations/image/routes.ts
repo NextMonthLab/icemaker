@@ -10,9 +10,12 @@ export function registerImageRoutes(app: Express): void {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
+      // Enhance prompt to ensure no text is rendered in the image
+      const enhancedPrompt = `${prompt}. IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this image. Pure visual imagery only.`;
+      
       const response = await openai.images.generate({
         model: "gpt-image-1",
-        prompt,
+        prompt: enhancedPrompt,
         n: 1,
         size: size as "1024x1024" | "512x512" | "256x256",
       });

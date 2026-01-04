@@ -3283,9 +3283,9 @@ export async function registerRoutes(
         console.log(`[Video] Using Replicate provider with model: ${defaultModel}`);
         
         const result = await generateVideoWithReplicate({
-          prompt,
+          prompt: `${prompt}. No text, words, letters, titles, or captions in the video.`,
           imageUrl: sourceImage,
-          negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+          negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
           aspectRatio: "9:16",
           duration: 5,
           model: defaultModel,
@@ -5297,9 +5297,9 @@ Output only the narration paragraph, nothing else.`;
           console.log(`[Video] Using Replicate provider with model: ${model}`);
           
           const result = await generateVideoWithReplicate({
-            prompt,
+            prompt: `${prompt}. No text, words, letters, titles, or captions in the video.`,
             imageUrl,
-            negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+            negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
             aspectRatio: aspectRatio || "9:16",
             duration: duration || 5,
             model: model || "kling-v1.6-standard",
@@ -5331,16 +5331,16 @@ Output only the narration paragraph, nothing else.`;
           if (imageUrl) {
             taskId = await startImageToVideoGeneration({
               imageUrl,
-              prompt,
-              negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+              prompt: `${prompt}. No text, words, letters, titles, or captions in the video.`,
+              negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
               aspectRatio: aspectRatio || "9:16",
               duration: duration || 5,
               model: model || "kling-v1-6",
             });
           } else {
             taskId = await startTextToVideoGeneration({
-              prompt,
-              negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+              prompt: `${prompt}. No text, words, letters, titles, or captions in the video.`,
+              negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
               aspectRatio: aspectRatio || "9:16",
               duration: duration || 5,
               model: model || "kling-v1-6",
@@ -6768,7 +6768,9 @@ Stay engaging, reference story details, and help the audience understand the nar
       
       // Get video settings from request
       const { model, duration } = req.body;
-      const videoPrompt = prompt || `Cinematic scene: ${card.title}. ${card.content}`;
+      const basePrompt = prompt || `Cinematic scene: ${card.title}. ${card.content}`;
+      // Enhance prompt to ensure no text is rendered in the video
+      const videoPrompt = `${basePrompt}. IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this video. Pure visual imagery only.`;
       
       // Import video generation functions
       const { isReplicateConfigured, startReplicateVideoAsync } = await import("./video");
@@ -6784,7 +6786,7 @@ Stay engaging, reference story details, and help the audience understand the nar
         model: model || "kling-v1.6-standard",
         duration: duration || 5,
         aspectRatio: "9:16",
-        negativePrompt: "blurry, low quality, distorted, watermark, text overlay",
+        negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
       });
       
       // Update the card with the prediction ID

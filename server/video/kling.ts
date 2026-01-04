@@ -123,7 +123,7 @@ export async function startTextToVideoGeneration(
   const payload = {
     model_name: request.model || "kling-v1-6",
     prompt: request.prompt,
-    negative_prompt: request.negativePrompt || "blurry, low quality, distorted",
+    negative_prompt: request.negativePrompt || "blurry, low quality, distorted, text, words, letters, titles, captions, typography",
     aspect_ratio: request.aspectRatio || "9:16",
     duration: String(request.duration || 5),
     cfg_scale: request.cfgScale || 0.5,
@@ -175,7 +175,7 @@ export async function startImageToVideoGeneration(
     model_name: request.model || "kling-v1-6",
     image: imageData,
     prompt: request.prompt || "",
-    negative_prompt: request.negativePrompt || "blurry, low quality, distorted",
+    negative_prompt: request.negativePrompt || "blurry, low quality, distorted, text, words, letters, titles, captions, typography",
     aspect_ratio: request.aspectRatio || "9:16",
     duration: String(request.duration || 5),
     cfg_scale: request.cfgScale || 0.5,
