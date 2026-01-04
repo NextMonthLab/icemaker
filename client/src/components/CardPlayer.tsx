@@ -137,8 +137,12 @@ export default function CardPlayer({
     setCaptionIndex(0);
     setShowSwipeHint(false);
     setIsPlaying(autoplay);
-    // Use preferred media type from card settings, fallback to video if available
-    const useVideo = card.preferredMediaType === 'video' ? hasVideo : false;
+    // Show video if: preferredMediaType is video, OR selected asset is video, OR only video available (no image)
+    const useVideo = hasVideo && (
+      card.preferredMediaType === 'video' || 
+      activeMedia.selectedIsVideo || 
+      !hasImage
+    );
     setShowVideo(!!useVideo);
     
     // Stop any playing audio when card changes
