@@ -8958,7 +8958,15 @@ STRICT RULES:
       // Build system prompt with menu context and transactional intent handling
       const brandName = orbitMeta.customTitle || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       const sourceUrl = orbitMeta.sourceUrl || '';
-      const sourceDomain = sourceUrl ? new URL(sourceUrl).hostname.replace('www.', '') : '';
+      let sourceDomain = '';
+      try {
+        if (sourceUrl) {
+          sourceDomain = new URL(sourceUrl).hostname.replace('www.', '');
+        }
+      } catch {
+        // Invalid URL format - extract domain as fallback
+        sourceDomain = sourceUrl.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] || '';
+      }
       
       const menuSummary = items.slice(0, 40).map((item: any) => 
         `- ${item.name}${item.price ? ` (£${item.price})` : ''}${item.category ? ` [${item.category}]` : ''}${item.description ? `: ${item.description.slice(0, 80)}` : ''}`
