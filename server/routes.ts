@@ -6373,6 +6373,15 @@ Stay engaging, reference story details, and help the audience understand the nar
         fidelityMode: preview.fidelityMode,
         sceneMap: preview.sceneMap,
         createdAt: preview.createdAt.toISOString(),
+        // Music and style settings
+        musicTrackUrl: preview.musicTrackUrl,
+        musicVolume: preview.musicVolume,
+        musicEnabled: preview.musicEnabled,
+        titlePackId: preview.titlePackId,
+        narrationVolume: preview.narrationVolume,
+        // Additional settings
+        projectBible: preview.projectBible,
+        previewAccessToken: preview.previewAccessToken,
       });
     } catch (error) {
       console.error("Error fetching ICE preview:", error);
