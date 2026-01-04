@@ -112,9 +112,27 @@ export default function CardPlayer({
   
   const selectedFontFamily = CARD_FONTS.find(f => f.id === font)?.fontFamily || CARD_FONTS[0].fontFamily;
   
+  const getActiveMedia = () => {
+    if (card.mediaAssets?.length && card.selectedMediaAssetId) {
+      const selected = card.mediaAssets.find(a => a.id === card.selectedMediaAssetId);
+      if (selected && selected.status === 'ready') {
+        return {
+          imageUrl: selected.kind === 'image' ? selected.url : card.image,
+          videoUrl: selected.kind === 'video' ? selected.url : card.generatedVideoUrl,
+        };
+      }
+    }
+    return {
+      imageUrl: card.image,
+      videoUrl: card.generatedVideoUrl,
+    };
+  };
+  
+  const activeMedia = getActiveMedia();
+  
   const hasNarration = card.narrationEnabled && card.narrationStatus === "ready" && card.narrationAudioUrl;
-  const hasVideo = card.videoGenerated && card.generatedVideoUrl && card.videoGenerationStatus === "completed";
-  const hasImage = !!card.image;
+  const hasVideo = card.videoGenerated && activeMedia.videoUrl && card.videoGenerationStatus === "completed";
+  const hasImage = !!activeMedia.imageUrl;
   const hasBothMediaTypes = hasImage && hasVideo;
 
   // Reset all state when card changes
@@ -320,7 +338,7 @@ export default function CardPlayer({
               {showVideo && hasVideo ? (
                 <video
                   ref={videoRef}
-                  src={card.generatedVideoUrl!}
+                  src={activeMedia.videoUrl!}
                   autoPlay
                   loop
                   muted
@@ -328,9 +346,9 @@ export default function CardPlayer({
                   className="w-full h-full object-cover"
                   data-testid="video-player"
                 />
-              ) : card.image ? (
+              ) : activeMedia.imageUrl ? (
                 <img
-                  src={card.image}
+                  src={activeMedia.imageUrl}
                   alt={card.title}
                   className="w-full h-full object-cover"
                 />
@@ -494,9 +512,9 @@ export default function CardPlayer({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`relative overflow-hidden shrink-0 ${fullScreen && isTabletLandscape ? 'h-1/3 flex items-center justify-center bg-black' : 'h-2/5'}`}>
-              {card.image ? (
+              {activeMedia.imageUrl ? (
                 <img
-                  src={card.image}
+                  src={activeMedia.imageUrl}
                   alt={card.title}
                   className={fullScreen && isTabletLandscape 
                     ? "max-w-full max-h-full object-contain"
