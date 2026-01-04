@@ -9681,15 +9681,17 @@ For greetings, thanks, or unclear messages:
     }
   });
 
-  // Orbit ICE Draft - Generate draft from insight (owner only)
+  // Orbit ICE Draft - Generate draft from insight, URL, pasted content, or file (owner only)
   app.post("/api/orbit/:slug/ice/generate", requireAuth, async (req, res) => {
     try {
       const { slug } = req.params;
       const user = req.user as schema.User;
-      const { insightId, format, tone, outputType } = req.body;
+      const { insightId, sourceUrl, sourceContent, sourceFileName, format, tone, outputType } = req.body;
       
-      if (!insightId || !format || !tone || !outputType) {
-        return res.status(400).json({ message: "insightId, format, tone, and outputType are required" });
+      // Must have at least one content source
+      const hasContentSource = insightId || sourceUrl || sourceContent;
+      if (!hasContentSource || !format || !tone || !outputType) {
+        return res.status(400).json({ message: "Content source (insightId, sourceUrl, or sourceContent) plus format, tone, and outputType are required" });
       }
       
       const orbitMeta = await storage.getOrbitMeta(slug);
@@ -9701,31 +9703,54 @@ For greetings, thanks, or unclear messages:
         return res.status(403).json({ message: "Only the orbit owner can generate ICE drafts" });
       }
       
-      // Generate headline based on format
-      const headline = format === "hook_bullets" ? "Did you know...?" 
+      // Generate headline based on format and source
+      let headline = format === "hook_bullets" ? "Did you know...?" 
         : format === "myth_reality" ? "Common myths vs reality"
         : format === "checklist" ? "Your essential checklist"
-        : "The solution you need";
+        : "Your story awaits";
+      
+      // Use source info for the headline if available
+      if (sourceFileName) {
+        headline = `From: ${sourceFileName.replace(/\.[^/.]+$/, '')}`;
+      } else if (sourceUrl) {
+        try {
+          const urlObj = new URL(sourceUrl);
+          headline = `From: ${urlObj.hostname.replace('www.', '')}`;
+        } catch {
+          headline = "From your link";
+        }
+      }
+      
+      // Generate captions based on source content
+      let captions = [
+        "Your content is ready to transform",
+        "Engage your audience with this story",
+        "Share and inspire action",
+      ];
+      
+      if (sourceContent) {
+        // Extract first meaningful sentence as caption
+        const firstSentence = sourceContent.trim().split(/[.!?]/)[0]?.trim();
+        if (firstSentence && firstSentence.length > 10 && firstSentence.length < 200) {
+          captions[0] = firstSentence + (firstSentence.length < 100 ? '.' : '...');
+        }
+      }
       
       // Create persisted draft
       const draft = await storage.createIceDraft({
         businessSlug: slug,
         userId: user.id,
-        insightId,
+        insightId: insightId || `content_${Date.now()}`,
         format: format as schema.IceDraftFormat,
         tone: tone as schema.IceDraftTone,
         outputType: outputType as schema.IceDraftOutputType,
         headline,
-        captions: [
-          "This insight is about your business",
-          "Turn visitors into customers",
-          "Share your story effectively",
-        ],
-        ctaText: "Learn more",
+        captions,
+        ctaText: "View experience",
         status: "draft",
       });
       
-      res.json(draft);
+      res.json({ draft });
     } catch (error) {
       console.error("Error generating ice draft:", error);
       res.status(500).json({ message: "Error generating draft" });
