@@ -1,0 +1,183 @@
+Yes – and this is a really important edge case you’ve just surfaced. You’re not wrong to expect something intelligent to happen there.
+
+Let me be very clear about how it should have handled that, and where the current logic is falling short.
+
+⸻
+
+What actually happened (diagnosis)
+
+You asked the KFC test Orbit about jobs.
+
+The system then implicitly did this:
+
+“Is this a brand insight worth turning into outward content or a narrative voice?”
+
+Answer: No → therefore → do nothing visible
+
+That reveals a hidden (and flawed) assumption in the current pipeline:
+
+Only insight → content-worthy signals are valuable
+
+That’s wrong for an Orbit system.
+
+⸻
+
+Why “jobs” is a valid conversational insight (even if it’s not content)
+
+A question about jobs is not:
+	•	A marketing insight
+	•	A thought leadership moment
+	•	A publishable narrative
+
+But it is:
+	•	A high-intent human interaction
+	•	A functional demand
+	•	A directional signal about what the visitor wants from the organisation
+
+In Orbit terms, it’s not a story.
+It’s a path request.
+
+And path requests should never disappear silently.
+
+⸻
+
+How it should have behaved (correct model)
+
+The system needs to distinguish between Insight Types, not just “insight vs no insight”.
+
+Here’s the missing classification layer:
+
+1. Narrative / Insightful (current system handles this)
+
+Examples:
+	•	“Why does KFC feel different in the UK?”
+	•	“What’s KFC’s culture really like?”
+	•	“Is fast food changing?”
+
+→ These can generate:
+	•	Voices
+	•	Perspectives
+	•	Content formats
+
+2. Transactional / Directional (your jobs question)
+
+Examples:
+	•	“Are you hiring?”
+	•	“What roles are available?”
+	•	“How do I apply?”
+
+→ These should trigger:
+	•	A clear response
+	•	A routing action
+	•	Possibly a human tone, but not a content generator
+
+No voice generation needed.
+No formatting needed.
+But absolutely no silence.
+
+⸻
+
+The correct handling for your exact question
+
+If I were writing the canonical behaviour, it would be:
+
+User asks about jobs
+→ Classify as: Transactional – Careers
+→ Respond immediately with:
+	•	Direct answer
+	•	Clear next step
+	•	Optional warm brand tone
+
+For example (illustrative):
+
+“If you’re looking for roles at KFC, the best place to start is our careers page where we list current restaurant and head office vacancies. Roles change frequently, so that’s always the most up-to-date source. Would you like me to take you there or summarise the types of roles available?”
+
+That’s it.
+No insight card.
+No voice prompt.
+No generation affordance.
+
+But also: no dead end.
+
+⸻
+
+The real bug (this is the key insight)
+
+The bug is not that it didn’t generate a voice.
+
+The bug is that:
+
+The system equated ‘not content-worthy’ with ‘not worth acknowledging’.
+
+That’s dangerous.
+
+In human terms, it feels like:
+
+“I asked a reasonable question and the room went quiet.”
+
+That erodes trust instantly.
+
+⸻
+
+What needs to change in the logic (cleanly)
+
+You need a three-way outcome, not two.
+
+After every user message, the system should decide:
+	1.	Narrative Insight
+	•	Worth exploring
+	•	Can become internal or external story
+	•	Show insight + generation options
+	2.	Transactional / Directional
+	•	Needs an answer or route
+	•	Respond clearly
+	•	No insight UI
+	3.	Low-signal / Chit-chat
+	•	Lightweight reply
+	•	Or polite close
+
+Right now you only really have:
+	•	(1) and (3)
+
+Jobs fell into an unhandled gap between them.
+
+⸻
+
+Why this matters for Orbits specifically
+
+Orbits are not blogs.
+They’re situated intelligence hubs.
+
+People will come asking:
+	•	Jobs
+	•	Locations
+	•	Contact details
+	•	Opening times
+	•	Policies
+	•	Press
+	•	Suppliers
+
+If those don’t get handled cleanly, the Orbit feels performative rather than useful.
+
+And you are very clearly building something useful.
+
+⸻
+
+Straight verdict
+
+Your expectation was correct.
+
+The correct behaviour was:
+	•	Answer the jobs question
+	•	Route the user
+	•	Do nothing with “insight generation”
+	•	Leave no ambiguity
+
+This is a classification gap, not a philosophical one.
+
+If you want, next I can:
+	•	Write the exact classification rules
+	•	Define the “Transactional Intent” schema
+	•	Or help you phrase this as a crisp Replit instruction so it becomes canonical behaviour
+
+You’ve spotted a real system truth here. Good catch.
