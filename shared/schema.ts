@@ -875,6 +875,26 @@ export const iceSceneMapSchema = z.object({
 
 export type IceSceneMap = z.infer<typeof iceSceneMapSchema>;
 
+// Media asset for ICE cards - supports multiple user uploads and AI generations
+export const iceMediaAssetSchema = z.object({
+  id: z.string(), // Unique ID for this asset
+  kind: z.enum(['image', 'video']),
+  source: z.enum(['upload', 'ai']), // User uploaded or AI generated
+  url: z.string(), // Full URL or storage path
+  thumbnailUrl: z.string().optional(), // Poster for video or thumb for image
+  createdAt: z.string(), // ISO timestamp
+  // For AI-generated assets
+  prompt: z.string().optional(), // Base prompt used
+  enhancedPrompt: z.string().optional(), // Enhanced prompt if used
+  negativePrompt: z.string().optional(), // Negative prompt if used
+  // Generation metadata
+  status: z.enum(['ready', 'generating', 'failed']).default('ready'),
+  predictionId: z.string().optional(), // For async generation tracking
+  model: z.string().optional(), // Which AI model was used
+});
+
+export type IceMediaAsset = z.infer<typeof iceMediaAssetSchema>;
+
 export const icePreviewCardSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -882,6 +902,22 @@ export const icePreviewCardSchema = z.object({
   order: z.number(),
   sceneId: z.string().optional(), // Links to scene in sceneMap (for script-exact mode)
   dialoguePreserved: z.array(z.string()).optional(), // Key dialogue lines preserved verbatim
+  
+  // New media asset system (multi-variant support)
+  mediaAssets: z.array(iceMediaAssetSchema).optional(), // All media assets for this card
+  selectedMediaAssetId: z.string().optional(), // Which asset is currently active
+  
+  // Legacy fields (backward compatibility - derived from mediaAssets for old clients)
+  generatedImageUrl: z.string().optional(),
+  generatedVideoUrl: z.string().optional(),
+  videoGenerationStatus: z.string().optional(),
+  videoPredictionId: z.string().optional(),
+  narrationAudioUrl: z.string().optional(),
+  
+  // Prompt enhancement settings
+  enhancePromptEnabled: z.boolean().optional(), // Whether to use enhanced prompts
+  basePrompt: z.string().optional(), // The base prompt from card content
+  enhancedPrompt: z.string().optional(), // LLM-enhanced prompt (editable)
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;

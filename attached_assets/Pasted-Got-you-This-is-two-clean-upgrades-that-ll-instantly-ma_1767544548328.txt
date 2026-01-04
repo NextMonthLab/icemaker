@@ -1,0 +1,138 @@
+Got you. This is two clean upgrades that’ll instantly make ICE feel more “CapCut-pro” and less “one-shot gamble”.
+
+Change 1: Media Variant Picker per Card (user + AI, image + video)
+
+What we want
+
+For each card, users can have multiple media options:
+	•	User uploaded image(s)
+	•	User uploaded video(s)
+	•	AI generated image(s)
+	•	AI generated video(s)
+
+…then choose exactly which one is the “active” media for that card (the one that appears in preview, download, and publish).
+
+UX (simple, obvious)
+
+Inside each card’s Media panel:
+	•	A “Media Library” grid of thumbnails (images) and video posters (videos)
+	•	Each item has:
+	•	Badge: User Upload or AI Generated
+	•	Type: Image or Video
+	•	Created time (optional)
+	•	A Select radio / tick
+	•	The selected one becomes the live card media instantly
+	•	Optional: “Compare” view (nice-to-have) but not required for MVP
+
+Data model (minimum viable)
+	•	Add mediaAssets array to each card:
+	•	id
+	•	kind: image | video
+	•	source: user | ai
+	•	url (or storage key)
+	•	thumbUrl (for video poster / image thumb)
+	•	createdAt
+	•	prompt (for AI assets only)
+	•	status: ready | generating | failed
+	•	Add selectedMediaAssetId on the card
+
+Behaviour rules (important)
+	•	Card rendering always uses selectedMediaAssetId
+	•	When a new AI generation finishes, it is added to mediaAssets but does not auto override selection (unless user explicitly chooses “Auto select newest”)
+	•	If the selected asset is deleted, fall back to the most recent ready asset, otherwise none
+	•	Download and Publish must both pull from the selected asset only
+
+Acceptance criteria
+	•	User can generate 3 AI images and keep 1 selected without losing the others
+	•	User can upload 2 videos, select 1 for the card
+	•	Switching selection updates the card preview immediately
+	•	Publish and Download output matches the selected asset, not “latest generated”
+
+⸻
+
+Change 2: “AI Enhance” Prompt Mode for Media (polished prompt, better outputs)
+
+What we want
+
+Right now you suspect the AI image/video prompt is basically just “card content” (or a description derived from it). That’s fine for baseline, but we need an Enhance option that produces a properly art-directed, model-friendly prompt.
+
+UX
+
+In the card’s AI media section:
+	•	Toggle: Enhance prompt (recommended)
+	•	Show two fields:
+	•	Base prompt (what the system would normally use from card content)
+	•	Enhanced prompt (LLM-generated, editable)
+	•	Button: Regenerate enhanced prompt
+	•	Tiny helper text: “Enhance rewrites your idea into a production-grade prompt for better results.”
+
+Logic
+	•	If Enhance is off: use current behaviour (whatever you already do)
+	•	If Enhance is on:
+	•	Call an LLM “prompt enhancer” that takes:
+	•	Card title
+	•	Card content
+	•	Optional style hints (brand, tone, realism level, aspect ratio locked to 9:16)
+	•	Any user notes like “no text”, “cinematic lighting”, “documentary”, etc.
+	•	Output: a structured, high quality prompt optimised for your chosen generator
+
+Output format (works well in practice)
+
+Have the enhancer return JSON:
+	•	finalPrompt (the one you send to image/video gen)
+	•	negativePrompt (things to avoid)
+	•	styleTags (optional)
+	•	shotNotes (optional, but helps)
+
+Acceptance criteria
+	•	Enhanced prompt is visibly more detailed and production-minded than the base prompt
+	•	User can edit it before generating media
+	•	Enhanced prompt is stored against the AI asset (so later you know what created what)
+	•	No silent changes: user can see what prompt is being used
+
+⸻
+
+Replit build prompt you can paste to Rapplet
+
+Goal: Implement (1) per-card media variant selection for user uploads + AI outputs, and (2) AI-enhanced prompt mode for higher quality image/video generation prompts.
+
+Requirements:
+	1.	Per-card Media Asset Library
+
+	•	Each card supports multiple media assets:
+	•	user uploaded images/videos
+	•	AI generated images/videos
+	•	Add mediaAssets[] to card model and selectedMediaAssetId
+	•	Add UI in card editor to:
+	•	display thumbnails/posters for all assets
+	•	allow selecting exactly one asset as active
+	•	selection updates preview instantly
+	•	Ensure Download + Publish use selected asset only, never “latest generated”
+	•	New AI generations append to library without auto overriding selection (unless user clicks select)
+
+	2.	AI Enhanced Prompt Mode
+
+	•	Audit current AI media prompt creation:
+	•	confirm whether prompt is derived from card content or generated description
+	•	document current behaviour in code comments
+	•	Add toggle “Enhance prompt”
+	•	Base prompt shows current default prompt text
+	•	Enhanced prompt is generated via LLM prompt enhancer and is editable
+	•	Add “Regenerate enhanced prompt” button
+	•	Store enhanced prompt against the created AI media asset
+	•	If enhance is enabled, generator uses enhanced prompt and optional negative prompt
+
+Implementation notes
+	•	Keep changes backward compatible for existing cards with a single media item
+	•	Migration: if a card has existing media, create a mediaAssets entry and set selectedMediaAssetId
+	•	Do not break pricing and upgrade gating: selection is free, generating more AI assets still follows existing billing rules
+
+Definition of done
+	•	A card can hold multiple AI and user media items and the user can choose which one appears
+	•	Enhanced prompt mode produces clearly higher quality prompts and drives visibly better outputs
+
+⸻
+
+If you want the “blown away top notch” results consistently, the secret sauce is not just “more adjectives”. It’s getting the enhancer to behave like a director and DOP, not like a thesaurus. So if you’ve already got style presets (cinematic, documentary, 3D, etc.), we can wire them into the enhancer so it locks to a repeatable look.
+
+If you tell me which generator you’re using for AI images/videos (even just the name), I’ll give you the exact enhancer template that tends to produce the cleanest outputs for that model.
