@@ -40,10 +40,10 @@ const CREATION_STAGES = [
 
 const MUSIC_TRACKS = [
   { id: "none", name: "No Music", url: null },
-  { id: "cinematic", name: "Cinematic", url: "https://cdn.pixabay.com/audio/2024/02/20/audio_8fe6092343.mp3" },
-  { id: "emotional", name: "Emotional", url: "https://cdn.pixabay.com/audio/2024/03/18/audio_8c0d4e4d66.mp3" },
-  { id: "epic", name: "Epic", url: "https://cdn.pixabay.com/audio/2024/01/17/audio_4a97f7d8cd.mp3" },
-  { id: "ambient", name: "Ambient", url: "https://cdn.pixabay.com/audio/2024/05/01/audio_1b9c0a2c87.mp3" },
+  { id: "cinematic", name: "Cinematic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+  { id: "emotional", name: "Emotional", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+  { id: "epic", name: "Epic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+  { id: "ambient", name: "Ambient", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
 ];
 
 interface PreviewCard {
