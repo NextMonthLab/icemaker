@@ -284,6 +284,7 @@ export default function GuestIceBuilderPage() {
             musicVolume,
             musicEnabled,
             titlePackId,
+            narrationVolume,
           }),
         });
       } catch (error) {
@@ -296,7 +297,7 @@ export default function GuestIceBuilderPage() {
         clearTimeout(settingsSaveTimeoutRef.current);
       }
     };
-  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, titlePackId]);
+  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume]);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -378,6 +379,10 @@ export default function GuestIceBuilderPage() {
       // Load title pack
       if (existingPreview.titlePackId) {
         setTitlePackId(existingPreview.titlePackId);
+      }
+      // Load narration volume
+      if (existingPreview.narrationVolume !== undefined) {
+        setNarrationVolume(existingPreview.narrationVolume);
       }
       if (!hasSeenWalkthrough()) {
         setShowWalkthrough(true);
@@ -1224,10 +1229,12 @@ export default function GuestIceBuilderPage() {
                   </p>
                 </div>
 
-                {/* Volume Controls (when music enabled) */}
+                {/* Music Volume (when music enabled) */}
                 {musicEnabled && (
-                  <div className="sm:w-32">
-                    <label className="text-xs text-white/60 mb-1.5 block">Volume</label>
+                  <div className="sm:w-28">
+                    <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
+                      <Music className="w-3 h-3" /> Music
+                    </label>
                     <div className="flex items-center gap-2">
                       <Slider
                         value={[musicVolume]}
@@ -1242,6 +1249,25 @@ export default function GuestIceBuilderPage() {
                     </div>
                   </div>
                 )}
+                
+                {/* Narration Volume */}
+                <div className="sm:w-28">
+                  <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
+                    <Mic className="w-3 h-3" /> Narration
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[narrationVolume]}
+                      onValueChange={([v]) => setNarrationVolume(v)}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="flex-1"
+                      data-testid="slider-narration-volume-editor"
+                    />
+                    <span className="text-xs text-white/50 w-8">{narrationVolume}%</span>
+                  </div>
+                </div>
               </div>
             </div>
 
