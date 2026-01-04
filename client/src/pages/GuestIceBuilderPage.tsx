@@ -1031,6 +1031,80 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
+            {/* Style & Music Panel */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Title Pack Selector */}
+                <div className="flex-1">
+                  <label className="text-xs text-white/60 mb-1.5 block">Style</label>
+                  <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
+                    <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                    <select
+                      value={titlePackId}
+                      onChange={(e) => setTitlePackId(e.target.value)}
+                      className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
+                      data-testid="select-title-pack-editor"
+                    >
+                      {TITLE_PACKS.map((pack) => (
+                        <option key={pack.id} value={pack.id} className="bg-slate-900 text-white">
+                          {pack.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    {TITLE_PACKS.find(p => p.id === titlePackId)?.description}
+                  </p>
+                </div>
+
+                {/* Music Selector */}
+                <div className="flex-1">
+                  <label className="text-xs text-white/60 mb-1.5 block">Background Music</label>
+                  <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
+                    <Music className="w-4 h-4 text-blue-400 shrink-0" />
+                    <select
+                      value={musicTrackUrl || "none"}
+                      onChange={(e) => {
+                        const track = MUSIC_TRACKS.find(t => (t.url || "none") === e.target.value);
+                        setMusicTrackUrl(track?.url || null);
+                        setMusicEnabled(!!track?.url);
+                      }}
+                      className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
+                      data-testid="select-music-track-editor"
+                    >
+                      {MUSIC_TRACKS.map((track) => (
+                        <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
+                          {track.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    {musicEnabled ? "Music will play continuously during preview" : "No background music"}
+                  </p>
+                </div>
+
+                {/* Volume Controls (when music enabled) */}
+                {musicEnabled && (
+                  <div className="sm:w-32">
+                    <label className="text-xs text-white/60 mb-1.5 block">Volume</label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[musicVolume]}
+                        onValueChange={([v]) => setMusicVolume(v)}
+                        min={0}
+                        max={100}
+                        step={5}
+                        className="flex-1"
+                        data-testid="slider-music-volume-editor"
+                      />
+                      <span className="text-xs text-white/50 w-8">{musicVolume}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Professional ICE Editor cards */}
             <div className="space-y-3">
               {cards.map((card, index) => {
@@ -1287,52 +1361,8 @@ export default function GuestIceBuilderPage() {
             )}
           </AnimatePresence>
           
-          {/* Top controls bar - mobile optimized */}
-          <div className="absolute top-4 left-4 right-14 z-[60] flex flex-col sm:flex-row sm:items-center gap-2">
-            {/* Premium upsell - hidden on very small screens, shown abbreviated on mobile */}
-            <div className="hidden sm:flex bg-black/50 backdrop-blur rounded-full px-3 py-1.5 items-center gap-2 shrink-0">
-              <Lock className="w-3 h-3 text-blue-400" />
-              <span className="text-xs text-white/80 whitespace-nowrap">AI images & video with Pro</span>
-            </div>
-            
-            {/* Title Pack selector */}
-            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
-              <Sparkles className="w-3 h-3 text-purple-400" />
-              <select
-                value={titlePackId}
-                onChange={(e) => setTitlePackId(e.target.value)}
-                className="bg-transparent text-[10px] text-white border-none outline-none cursor-pointer max-w-[100px]"
-                data-testid="select-title-pack"
-              >
-                {TITLE_PACKS.map((pack) => (
-                  <option key={pack.id} value={pack.id} className="bg-black text-white">
-                    {pack.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Music selector */}
-            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
-              <Music className="w-3 h-3 text-white/60" />
-              <select
-                value={musicTrackUrl || "none"}
-                onChange={(e) => {
-                  const track = MUSIC_TRACKS.find(t => (t.url || "none") === e.target.value);
-                  setMusicTrackUrl(track?.url || null);
-                  setMusicEnabled(!!track?.url);
-                }}
-                className="bg-transparent text-[10px] text-white border-none outline-none cursor-pointer"
-                data-testid="select-music-track"
-              >
-                {MUSIC_TRACKS.map((track) => (
-                  <option key={track.id} value={track.url || "none"} className="bg-black text-white">
-                    {track.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
+          {/* Top controls bar - mobile optimized (volume only during preview) */}
+          <div className="absolute top-4 left-4 right-14 z-[60] flex items-center gap-2">
             {/* Volume controls - only show when music enabled or narration exists */}
             {(musicEnabled || cards.some(c => c.narrationAudioUrl)) && (
               <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">

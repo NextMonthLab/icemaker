@@ -41,6 +41,7 @@ interface PreviewCard {
   selectedMediaAssetId?: string;
   generatedImageUrl?: string;
   generatedVideoUrl?: string;
+  videoGenerationStatus?: string;
   narrationAudioUrl?: string;
   enhancePromptEnabled?: boolean;
   basePrompt?: string;
