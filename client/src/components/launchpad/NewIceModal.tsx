@@ -80,21 +80,13 @@ export function NewIceModal({
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const generateMutation = useMutation({
-    mutationFn: async (data: { 
-      insightId?: string; 
-      url?: string; 
-      content?: string;
-      fileName?: string;
-    }) => {
+  const generateFromInsightMutation = useMutation({
+    mutationFn: async (insightId: string) => {
       const response = await fetch(`/api/orbit/${businessSlug}/ice/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          insightId: data.insightId,
-          sourceUrl: data.url,
-          sourceContent: data.content,
-          sourceFileName: data.fileName,
+          insightId,
           format: 'story',
           tone: 'professional',
           outputType: 'story',
@@ -106,16 +98,40 @@ export function NewIceModal({
       }
       return response.json();
     },
+    onSuccess: () => {
+      onOpenChange(false);
+      // Stay on launchpad - draft is saved and visible in Recent
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    },
+  });
+
+  const generatePreviewMutation = useMutation({
+    mutationFn: async (data: { type: 'url' | 'text'; value: string }) => {
+      const response = await fetch('/api/ice/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to create preview');
+      }
+      return response.json();
+    },
     onSuccess: (data) => {
       onOpenChange(false);
-      if (data.draft?.id) {
-        setLocation(`/ice/preview/${data.draft.id}`);
+      if (data.id) {
+        setLocation(`/ice/preview/${data.id}`);
       }
     },
     onError: (err: Error) => {
       setError(err.message);
     },
   });
+  
+  const isPending = generateFromInsightMutation.isPending || generatePreviewMutation.isPending;
 
   const handleGenerate = useCallback(async () => {
     setError("");
@@ -125,7 +141,7 @@ export function NewIceModal({
         setError("Please select an insight");
         return;
       }
-      generateMutation.mutate({ insightId: selectedInsightId });
+      generateFromInsightMutation.mutate(selectedInsightId);
     } else if (mode === 'url') {
       if (!urlInput.trim()) {
         setError("Please enter a URL");
@@ -137,7 +153,7 @@ export function NewIceModal({
         setError("Please enter a valid URL");
         return;
       }
-      generateMutation.mutate({ url: urlInput.trim() });
+      generatePreviewMutation.mutate({ type: 'url', value: urlInput.trim() });
     } else if (mode === 'paste') {
       if (!pasteInput.trim()) {
         setError("Please paste some content");
@@ -147,7 +163,7 @@ export function NewIceModal({
         setError("Please provide more content (at least 50 characters)");
         return;
       }
-      generateMutation.mutate({ content: pasteInput.trim() });
+      generatePreviewMutation.mutate({ type: 'text', value: pasteInput.trim() });
     } else if (mode === 'upload') {
       if (!uploadedFile) {
         setError("Please upload a file");
@@ -169,17 +185,14 @@ export function NewIceModal({
           setError("File appears empty or too short (minimum 50 characters)");
           return;
         }
-        generateMutation.mutate({ 
-          content, 
-          fileName: uploadedFile.name 
-        });
+        generatePreviewMutation.mutate({ type: 'text', value: content });
       };
       reader.onerror = () => {
         setError("Failed to read file");
       };
       reader.readAsText(uploadedFile);
     }
-  }, [mode, selectedInsightId, urlInput, pasteInput, uploadedFile, generateMutation]);
+  }, [mode, selectedInsightId, urlInput, pasteInput, uploadedFile, generateFromInsightMutation, generatePreviewMutation]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -395,11 +408,11 @@ export function NewIceModal({
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={!isValid() || generateMutation.isPending}
+              disabled={!isValid() || isPending}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
               data-testid="button-generate-ice"
             >
-              {generateMutation.isPending ? (
+              {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Generating...
