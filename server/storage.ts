@@ -390,6 +390,13 @@ export interface IStorage {
   }): Promise<schema.SocialProofItem[]>;
   updateSocialProofItem(id: number, data: Partial<schema.InsertSocialProofItem>): Promise<schema.SocialProofItem | undefined>;
   deleteSocialProofItem(id: number): Promise<void>;
+
+  // Video Export Jobs
+  createVideoExportJob(data: schema.InsertVideoExportJob): Promise<schema.VideoExportJob>;
+  getVideoExportJob(jobId: string): Promise<schema.VideoExportJob | undefined>;
+  getVideoExportJobsByUser(userId: number, limit?: number): Promise<schema.VideoExportJob[]>;
+  updateVideoExportJob(jobId: string, data: Partial<schema.InsertVideoExportJob>): Promise<schema.VideoExportJob | undefined>;
+  deleteVideoExportJob(jobId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2922,6 +2929,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSocialProofItem(id: number): Promise<void> {
     await db.delete(schema.socialProofItems).where(eq(schema.socialProofItems.id, id));
+  }
+
+  // Video Export Jobs
+  async createVideoExportJob(data: schema.InsertVideoExportJob): Promise<schema.VideoExportJob> {
+    const [result] = await db.insert(schema.videoExportJobs).values(data).returning();
+    return result;
+  }
+
+  async getVideoExportJob(jobId: string): Promise<schema.VideoExportJob | undefined> {
+    return await db.query.videoExportJobs.findFirst({
+      where: eq(schema.videoExportJobs.jobId, jobId),
+    });
+  }
+
+  async getVideoExportJobsByUser(userId: number, limit: number = 20): Promise<schema.VideoExportJob[]> {
+    return await db.query.videoExportJobs.findMany({
+      where: eq(schema.videoExportJobs.userId, userId),
+      orderBy: [desc(schema.videoExportJobs.createdAt)],
+      limit,
+    });
+  }
+
+  async updateVideoExportJob(jobId: string, data: Partial<schema.InsertVideoExportJob>): Promise<schema.VideoExportJob | undefined> {
+    const [result] = await db.update(schema.videoExportJobs)
+      .set(data)
+      .where(eq(schema.videoExportJobs.jobId, jobId))
+      .returning();
+    return result;
+  }
+
+  async deleteVideoExportJob(jobId: string): Promise<void> {
+    await db.delete(schema.videoExportJobs).where(eq(schema.videoExportJobs.jobId, jobId));
   }
 }
 

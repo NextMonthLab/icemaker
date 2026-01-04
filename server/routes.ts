@@ -7570,6 +7570,130 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
 
+  // ============ VIDEO EXPORT ============
+
+  // Create a video export job for an ICE preview
+  app.post("/api/ice/preview/:previewId/export", requireAuth, async (req, res) => {
+    try {
+      const { previewId } = req.params;
+      const { quality = "standard", includeNarration = true, includeMusic = true, titlePackId } = req.body;
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      const user = req.user as schema.User;
+      
+      // Check ownership
+      if (preview.ownerUserId !== user.id) {
+        return res.status(403).json({ message: "Not authorized to export this preview" });
+      }
+      
+      // Check entitlements for export capability
+      const entitlements = await getFullEntitlements(user.id);
+      if (!entitlements.canExport) {
+        return res.status(403).json({ 
+          message: "Video export requires a paid subscription",
+          upgradeRequired: true,
+        });
+      }
+      
+      // Check if object storage is configured
+      const objectStore = await import("./storage/objectStore");
+      if (!objectStore.isObjectStorageConfigured()) {
+        return res.status(503).json({ message: "Object storage not configured for exports" });
+      }
+      
+      // Create the export job
+      const { createExportJob } = await import("./video/exportService");
+      
+      const jobId = await createExportJob({
+        userId: user.id,
+        previewId,
+        quality: quality as any,
+        includeNarration,
+        includeMusic,
+        titlePackId: titlePackId || preview.titlePackId,
+        musicTrackUrl: preview.musicTrackUrl || undefined,
+        musicVolume: preview.musicVolume || 50,
+        narrationVolume: preview.narrationVolume || 100,
+      });
+      
+      res.json({
+        success: true,
+        jobId,
+        message: "Video export started",
+      });
+    } catch (error) {
+      console.error("Error creating video export:", error);
+      res.status(500).json({ message: "Error starting video export" });
+    }
+  });
+
+  // Get video export job status
+  app.get("/api/ice/export/:jobId", requireAuth, async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const user = req.user as schema.User;
+      
+      const job = await storage.getVideoExportJob(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Export job not found" });
+      }
+      
+      // Check ownership
+      if (job.userId !== user.id) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      res.json({
+        jobId: job.jobId,
+        status: job.status,
+        progress: job.progress,
+        currentStep: job.currentStep,
+        outputUrl: job.outputUrl,
+        outputSizeBytes: job.outputSizeBytes,
+        outputDurationSeconds: job.outputDurationSeconds,
+        errorMessage: job.errorMessage,
+        createdAt: job.createdAt,
+        completedAt: job.completedAt,
+        expiresAt: job.expiresAt,
+      });
+    } catch (error) {
+      console.error("Error fetching export status:", error);
+      res.status(500).json({ message: "Error fetching export status" });
+    }
+  });
+
+  // List user's video export jobs
+  app.get("/api/ice/exports", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      const limit = parseInt(req.query.limit as string) || 20;
+      
+      const jobs = await storage.getVideoExportJobsByUser(user.id, limit);
+      
+      res.json({
+        exports: jobs.map(job => ({
+          jobId: job.jobId,
+          status: job.status,
+          progress: job.progress,
+          currentStep: job.currentStep,
+          outputUrl: job.outputUrl,
+          outputSizeBytes: job.outputSizeBytes,
+          outputDurationSeconds: job.outputDurationSeconds,
+          createdAt: job.createdAt,
+          completedAt: job.completedAt,
+          expiresAt: job.expiresAt,
+        })),
+      });
+    } catch (error) {
+      console.error("Error listing exports:", error);
+      res.status(500).json({ message: "Error listing exports" });
+    }
+  });
+
   // AI Prompt Enhancement - generate production-grade prompts for better AI outputs
   app.post("/api/ai/enhance-prompt", requireAuth, async (req, res) => {
     try {

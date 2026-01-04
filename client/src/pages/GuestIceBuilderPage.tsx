@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -150,6 +150,14 @@ export default function GuestIceBuilderPage() {
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
   const [bibleGenerating, setBibleGenerating] = useState(false);
+  const [exportJobId, setExportJobId] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<{
+    status: string;
+    progress: number;
+    currentStep: string;
+    outputUrl?: string;
+  } | null>(null);
+  const exportPollingRef = useRef<NodeJS.Timeout | null>(null);
   
   const handleManualNav = (newIndex: number) => {
     setPreviewCardIndex(newIndex);
@@ -492,6 +500,63 @@ export default function GuestIceBuilderPage() {
       }
     },
   });
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      if (!preview) throw new Error("No preview to export");
+      const res = await apiRequest("POST", `/api/ice/preview/${preview.id}/export`, {
+        quality: "standard",
+        includeNarration: true,
+        includeMusic: musicEnabled,
+        titlePackId,
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setExportJobId(data.jobId);
+      setExportStatus({ status: "queued", progress: 0, currentStep: "Starting export..." });
+      toast({ title: "Export started", description: "Your video is being created. This may take a few minutes." });
+      
+      const pollExportStatus = async () => {
+        if (!data.jobId) return;
+        try {
+          const res = await fetch(`/api/ice/export/${data.jobId}`, { credentials: "include" });
+          if (res.ok) {
+            const status = await res.json();
+            setExportStatus(status);
+            
+            if (status.status === "completed") {
+              if (exportPollingRef.current) clearInterval(exportPollingRef.current);
+              toast({ title: "Export complete!", description: "Your video is ready for download." });
+            } else if (status.status === "failed") {
+              if (exportPollingRef.current) clearInterval(exportPollingRef.current);
+              toast({ title: "Export failed", description: status.errorMessage || "An error occurred", variant: "destructive" });
+            }
+          }
+        } catch (err) {
+          console.error("Error polling export status:", err);
+        }
+      };
+      
+      exportPollingRef.current = setInterval(pollExportStatus, 3000);
+      pollExportStatus();
+    },
+    onError: (error: Error) => {
+      if (error.message.includes("upgradeRequired")) {
+        setShowUpgradeModal(true);
+      } else {
+        toast({ title: "Export failed", description: error.message, variant: "destructive" });
+      }
+    },
+  });
+
+  useEffect(() => {
+    return () => {
+      if (exportPollingRef.current) {
+        clearInterval(exportPollingRef.current);
+      }
+    };
+  }, []);
 
   const [isFileUploading, setIsFileUploading] = useState(false);
   
@@ -1058,6 +1123,45 @@ export default function GuestIceBuilderPage() {
             {/* Professional Tools Bar - always visible for professional users */}
             {isProfessionalMode && (
               <div className="flex items-center justify-end gap-2">
+                {/* Video Export Button */}
+                {exportStatus?.status === "completed" && exportStatus.outputUrl ? (
+                  <a
+                    href={exportStatus.outputUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                    data-testid="button-download-video"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download Video
+                  </a>
+                ) : exportStatus && exportStatus.status !== "failed" ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 rounded-md">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                    <div className="text-xs">
+                      <span className="text-white">{exportStatus.progress}%</span>
+                      <span className="text-white/50 ml-1">{exportStatus.currentStep}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportMutation.mutate()}
+                    disabled={exportMutation.isPending || cards.length === 0}
+                    className="gap-1.5 border-green-500/50 text-green-300 hover:bg-green-500/20"
+                    data-testid="button-export-video"
+                  >
+                    {exportMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    Export Video
+                  </Button>
+                )}
+
                 <Sheet open={showBiblePanel} onOpenChange={setShowBiblePanel}>
                   <SheetTrigger asChild>
                     <Button
