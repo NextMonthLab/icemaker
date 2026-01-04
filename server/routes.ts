@@ -6364,6 +6364,7 @@ Stay engaging, reference story details, and help the audience understand the nar
         title: preview.title,
         cards: preview.cards,
         characters: preview.characters || [],
+        interactivityNodes: preview.interactivityNodes || [],
         sourceType: preview.sourceType,
         sourceValue: preview.sourceValue,
         status: preview.status,

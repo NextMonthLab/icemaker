@@ -54,6 +54,7 @@ interface PreviewData {
   title: string;
   cards: PreviewCard[];
   characters?: StoryCharacter[];
+  interactivityNodes?: InteractivityNodeData[];
   sourceType: string;
   sourceValue: string;
   status?: string;
@@ -199,6 +200,9 @@ export default function GuestIceBuilderPage() {
     if (existingPreview) {
       setPreview(existingPreview);
       setCards(existingPreview.cards);
+      if (existingPreview.interactivityNodes) {
+        setInteractivityNodes(existingPreview.interactivityNodes);
+      }
       if (existingPreview.previewAccessToken) {
         setPreviewAccessToken(existingPreview.previewAccessToken);
       }
@@ -234,13 +238,16 @@ export default function GuestIceBuilderPage() {
   });
 
   const saveCardsMutation = useMutation({
-    mutationFn: async (updatedCards: PreviewCard[]) => {
+    mutationFn: async ({ updatedCards, nodes }: { updatedCards: PreviewCard[], nodes?: InteractivityNodeData[] }) => {
       if (!preview) return;
-      const res = await apiRequest("PUT", `/api/ice/preview/${preview.id}/cards`, { cards: updatedCards });
+      const res = await apiRequest("PUT", `/api/ice/preview/${preview.id}/cards`, { 
+        cards: updatedCards,
+        interactivityNodes: nodes,
+      });
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Cards saved", description: "Your changes have been saved." });
+      toast({ title: "Progress saved", description: "Your changes have been saved." });
     },
   });
 
@@ -324,6 +331,7 @@ export default function GuestIceBuilderPage() {
   // Use refs to track pending save operations and serialize mutations
   const pendingSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsRef = useRef(cards);
+  const nodesRef = useRef(interactivityNodes);
   const saveQueuedRef = useRef(false);
   const savingRef = useRef(false);
   
@@ -331,6 +339,29 @@ export default function GuestIceBuilderPage() {
   useEffect(() => {
     cardsRef.current = cards;
   }, [cards]);
+  
+  // Keep nodesRef in sync with interactivity nodes state and trigger save
+  const nodesInitializedRef = useRef(false);
+  useEffect(() => {
+    nodesRef.current = interactivityNodes;
+    
+    // Don't save on initial load, only on user changes
+    if (!nodesInitializedRef.current) {
+      nodesInitializedRef.current = true;
+      return;
+    }
+    
+    // Debounce save when nodes change
+    if (preview && cardsRef.current.length > 0) {
+      if (pendingSaveRef.current) {
+        clearTimeout(pendingSaveRef.current);
+      }
+      pendingSaveRef.current = setTimeout(() => {
+        pendingSaveRef.current = null;
+        performSave();
+      }, 500);
+    }
+  }, [interactivityNodes]);
   
   // Cleanup pending saves on unmount
   useEffect(() => {
@@ -353,7 +384,10 @@ export default function GuestIceBuilderPage() {
     saveQueuedRef.current = false;
     
     try {
-      await saveCardsMutation.mutateAsync(cardsRef.current);
+      await saveCardsMutation.mutateAsync({ 
+        updatedCards: cardsRef.current,
+        nodes: nodesRef.current,
+      });
     } finally {
       savingRef.current = false;
       
