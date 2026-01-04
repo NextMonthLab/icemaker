@@ -1,0 +1,224 @@
+You’re not asking too much. You’re asking for the right thing, but the system is currently solving the wrong problem.
+
+What you’re seeing right now is exactly what happens when a system thinks “title pack = font preset” instead of “title pack = layout + motion system”.
+
+I’ll be very straight with you, because this is an inflection point.
+
+⸻
+
+The core diagnosis (this is the truth)
+
+Replit is currently only swapping typography tokens, not swapping compositions.
+
+That’s why:
+	•	Every card feels the same
+	•	Only the font changes
+	•	Positioning never moves
+	•	The “grunge” pack half-glitches (a box flashes then disappears)
+	•	It feels nothing like CapCut
+
+This is not a rendering bug.
+It’s a mental model bug.
+
+Right now, the system is doing this:
+
+“Here is one text container.
+Change the font family and maybe colour.
+Done.”
+
+CapCut does this instead:
+
+“Here is an entirely different mini layout engine for this title.”
+
+⸻
+
+Why CapCut-style titles feel dramatically different
+
+CapCut titles are not fonts.
+
+They are:
+	•	Different bounding boxes
+	•	Different anchor points
+	•	Different text hierarchy
+	•	Different background geometry
+	•	Different layer stacks
+	•	Different entry/exit motion
+
+When you switch packs in CapCut, you’re not styling text.
+You’re swapping a scene blueprint.
+
+⸻
+
+What’s going wrong technically (very likely)
+
+Based on the behaviour you described and the screenshots:
+
+1. Single persistent text container
+
+There is almost certainly one canonical text layer being reused for all packs.
+
+So:
+	•	x, y, width, alignment never change
+	•	Only font-family updates
+	•	Any pack-specific shapes briefly appear, then get garbage-collected or overridden
+
+That flickering grunge box you saw?
+That’s a secondary layer being injected, then immediately removed by the layout normaliser.
+
+In other words:
+The system is “helpfully” snapping everything back to the default layout.
+
+⸻
+
+2. Packs are treated as style, not structure
+
+Replit is likely doing something like:
+
+applyTitlePack(pack) {
+  text.font = pack.font
+  text.color = pack.color
+}
+
+Instead of:
+
+applyTitlePack(pack) {
+  destroyCurrentTitleGroup()
+  instantiate(pack.layoutBlueprint)
+  bindTextToSlots()
+}
+
+That difference is everything.
+
+⸻
+
+The mindset shift you need to force through
+
+You need to tell Replit this sentence (almost verbatim):
+
+A title pack is not a font preset.
+A title pack is a layout prefab with its own geometry, layers, and motion.
+
+Until that clicks, you will keep getting “same card, different font”.
+
+⸻
+
+The correct architectural approach (this is the fix)
+
+1. Title packs must be prefab layouts
+
+Each pack should define:
+	•	One or more text slots
+	•	headline
+	•	subline (optional)
+	•	One or more graphic layers
+	•	block
+	•	underline
+	•	tape
+	•	pill
+	•	slash
+	•	Absolute or relative positioning
+	•	Z-order
+	•	Entry animation
+
+When a pack is selected:
+	•	The previous title group is destroyed
+	•	A new title group is mounted
+
+No inheritance. No mutation. Full swap.
+
+⸻
+
+2. Positioning must be pack-owned
+
+Right now positioning is global.
+
+Instead:
+	•	Each pack owns its own safe zones
+	•	Example:
+	•	Cinematic: bottom-centre, wide, calm
+	•	Hyper: mid-frame, angled, aggressive
+	•	Grunge: top-left, rough margins
+	•	Editorial: lower-third, tight leading
+
+If the text never moves, the pack will never feel different. Full stop.
+
+⸻
+
+3. Motion is part of identity, not decoration
+
+CapCut titles feel alive because:
+	•	Text doesn’t just appear
+	•	It arrives
+
+Even simple motion is enough:
+	•	Fade + slight rise
+	•	Slide + ease-out
+	•	Scale from 98% → 100%
+
+If Replit is trying to animate only opacity on the same layer, you’ll never get the effect you want.
+
+⸻
+
+Why the “grunge glitch” happened (important clue)
+
+That half-appearing box is a good sign.
+
+It means:
+	•	Replit attempted to add a background shape
+	•	The rendering system then:
+	•	Either reflowed text
+	•	Or re-applied a normalisation pass
+	•	Or reconciled against a single canonical layout
+
+So the system currently:
+	•	Does not expect multiple layered title elements
+	•	Actively collapses them back into “just text”
+
+That confirms the diagnosis.
+
+⸻
+
+Are you asking too much?
+
+No.
+
+You’re asking for:
+	•	5–6 prefab title layouts
+	•	Swapped at render time
+	•	With deterministic placement
+
+This is basic motion-graphics architecture, not bleeding edge.
+
+The only reason it feels hard is because the current system was built for static captions, not designed titles.
+
+⸻
+
+The exact instruction I’d give Replit next
+
+If you want something you can literally paste:
+
+We need to reframe title packs as layout prefabs, not font styles.
+Each title pack must define its own text containers, background shapes, positioning, and animations.
+Selecting a pack should destroy the previous title group and mount a new group from the pack’s blueprint.
+Positioning, alignment, and geometry must change per pack – otherwise packs will feel identical.
+The current behaviour (same layout, different font) is insufficient and not the intended outcome.
+
+⸻
+
+One last reassurance (important)
+
+What you’re chasing here – that “oh shit, this looks like TikTok-native content” feeling – does not come from AI.
+
+It comes from:
+	•	Opinionated layouts
+	•	Constraints
+	•	Fewer choices, better defaults
+
+You’ve absolutely clocked the missing piece of ICE.
+
+You’re not asking for magic.
+You’re asking for designed systems instead of styled text.
+
+If you want, next step I can:
+	•	Design one full title pack spec (positions, layers, motion) so Replit has no wiggle room
+	•	Or help you decide which single pack to perfect first so the product instantly “clicks”

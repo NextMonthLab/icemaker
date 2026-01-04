@@ -1,6 +1,6 @@
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft,
   Quote,
@@ -238,12 +238,23 @@ function EditDialog({
   onClose: () => void;
   onSave: (id: number, data: any) => void;
 }) {
-  const [cleanQuote, setCleanQuote] = useState(item?.cleanQuoteText || item?.rawQuoteText || '');
-  const [consentStatus, setConsentStatus] = useState<string>(item?.consentStatus || 'pending');
-  const [consentType, setConsentType] = useState<string>(item?.consentType || '');
-  const [attrName, setAttrName] = useState(item?.attributionName || '');
-  const [attrTown, setAttrTown] = useState(item?.attributionTown || '');
-  const [topic, setTopic] = useState(item?.topic || 'other');
+  const [cleanQuote, setCleanQuote] = useState('');
+  const [consentStatus, setConsentStatus] = useState<string>('pending');
+  const [consentType, setConsentType] = useState<string>('');
+  const [attrName, setAttrName] = useState('');
+  const [attrTown, setAttrTown] = useState('');
+  const [topic, setTopic] = useState('other');
+  
+  useEffect(() => {
+    if (item) {
+      setCleanQuote(item.cleanQuoteText || item.rawQuoteText || '');
+      setConsentStatus(item.consentStatus || 'pending');
+      setConsentType(item.consentType || '');
+      setAttrName(item.attributionName || '');
+      setAttrTown(item.attributionTown || '');
+      setTopic(item.topic || 'other');
+    }
+  }, [item?.id]);
   
   if (!item) return null;
   
