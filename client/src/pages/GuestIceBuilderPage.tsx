@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,6 +126,7 @@ export default function GuestIceBuilderPage() {
   const [bulkGeneratingImages, setBulkGeneratingImages] = useState(false);
   const [bulkGeneratingVideos, setBulkGeneratingVideos] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const [narrationMuted, setNarrationMuted] = useState(false);
   
   const paceDelays = { slow: 12000, normal: 5000, fast: 3000 };
   
@@ -1144,7 +1145,9 @@ export default function GuestIceBuilderPage() {
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,
                     publishDate: new Date().toISOString(),
-                    narrationEnabled: false,
+                    narrationEnabled: !narrationMuted && !!cards[previewCardIndex].narrationAudioUrl,
+                    narrationStatus: cards[previewCardIndex].narrationAudioUrl ? "ready" : undefined,
+                    narrationAudioUrl: cards[previewCardIndex].narrationAudioUrl,
                   }}
                   autoplay={true}
                   fullScreen={true}
@@ -1222,6 +1225,25 @@ export default function GuestIceBuilderPage() {
                 />
               ))}
             </div>
+            
+            {/* Narration toggle - only show if any card has narration */}
+            {cards.some(c => c.narrationAudioUrl) && (
+              <button
+                onClick={() => setNarrationMuted(prev => !prev)}
+                className={`bg-black/50 backdrop-blur rounded-full px-2.5 py-1.5 flex items-center gap-1.5 transition-all ${
+                  narrationMuted ? "text-white/40" : "text-purple-400"
+                }`}
+                title={narrationMuted ? "Unmute narration" : "Mute narration"}
+                data-testid="button-toggle-narration"
+              >
+                {narrationMuted ? (
+                  <VolumeX className="w-3.5 h-3.5" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5" />
+                )}
+                <span className="text-[10px]">Narration</span>
+              </button>
+            )}
           </div>
         </div>
       )}
