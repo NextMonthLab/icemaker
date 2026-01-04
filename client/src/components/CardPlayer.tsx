@@ -74,6 +74,11 @@ interface CardPlayerProps {
   brandPreferences?: BrandPreferences | null;
   font?: CardFont;
   fontColor?: string;
+  musicTrackUrl?: string;
+  musicVolume?: number; // 0-100
+  narrationVolume?: number; // 0-100
+  musicEnabled?: boolean;
+  onVolumeChange?: (type: 'music' | 'narration', value: number) => void;
 }
 
 type Phase = "cinematic" | "context";
@@ -87,7 +92,12 @@ export default function CardPlayer({
   fullScreen = false,
   brandPreferences,
   font = 'cinzel',
-  fontColor = '#ffffff'
+  fontColor = '#ffffff',
+  musicTrackUrl,
+  musicVolume = 50,
+  narrationVolume = 100,
+  musicEnabled = false,
+  onVolumeChange
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -101,6 +111,7 @@ export default function CardPlayer({
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isTabletLandscape = useIsTabletLandscape();
   
@@ -163,7 +174,34 @@ export default function CardPlayer({
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
+    // Note: Music continues across cards (don't reset)
   }, [card.id, autoplay, hasVideo]);
+
+  // Music playback - plays continuously across cards
+  useEffect(() => {
+    if (!musicEnabled || !musicTrackUrl || !musicRef.current) return;
+    
+    if (phase === "cinematic" && isPlaying && !audioMuted) {
+      musicRef.current.loop = true;
+      musicRef.current.play().catch(() => {});
+    } else {
+      musicRef.current.pause();
+    }
+  }, [phase, isPlaying, musicEnabled, musicTrackUrl, audioMuted]);
+
+  // Update narration volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = narrationVolume / 100;
+    }
+  }, [narrationVolume]);
+
+  // Update music volume
+  useEffect(() => {
+    if (musicRef.current) {
+      musicRef.current.volume = musicVolume / 100;
+    }
+  }, [musicVolume]);
   
   const toggleMediaType = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -262,6 +300,10 @@ export default function CardPlayer({
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
       }
     };
   }, []);
@@ -507,6 +549,18 @@ export default function CardPlayer({
                 onPause={handleAudioPause}
                 onEnded={handleAudioEnded}
                 data-testid="audio-narration-player"
+              />
+            )}
+            
+            {musicEnabled && musicTrackUrl && (
+              <audio
+                ref={musicRef}
+                src={musicTrackUrl}
+                preload="auto"
+                muted={audioMuted}
+                loop
+                className="hidden"
+                data-testid="audio-music-player"
               />
             )}
 
