@@ -356,7 +356,7 @@ export function composePromptWithBible(context: BiblePromptContext): ComposedBib
   
   // 5. Build final prompt
   const fullPrompt = promptParts.filter(Boolean).join(". ").replace(/\.\./g, ".").trim();
-  const negativePrompt = [...new Set(negativePromptParts)].join(", ");
+  const negativePrompt = Array.from(new Set(negativePromptParts)).join(", ");
   
   return {
     fullPrompt: fullPrompt || "A cinematic scene, high quality, professional",
@@ -533,5 +533,5 @@ function extractPotentialNames(title: string, content: string): string[] {
   );
   
   // Return unique names
-  return [...new Set(names)];
+  return Array.from(new Set(names));
 }
