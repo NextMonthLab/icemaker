@@ -1,4 +1,4 @@
-import { ChevronDown, Zap, Library, Plus } from "lucide-react";
+import { ChevronDown, Zap, Library, Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -105,6 +105,18 @@ export function LaunchpadHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
+        {selectedOrbit && (
+          <Link href={`/orbit/${selectedOrbit.slug}`}>
+            <Button
+              variant="ghost"
+              className="text-white/60 hover:text-white hover:bg-white/10"
+              data-testid="link-view-public"
+            >
+              <ExternalLink className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">View public</span>
+            </Button>
+          </Link>
+        )}
         <Link href="/icemaker/projects" className="hidden md:block">
           <Button
             variant="ghost"
