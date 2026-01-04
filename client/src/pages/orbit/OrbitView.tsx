@@ -154,7 +154,7 @@ export default function OrbitView() {
   // Embed mode: hide nav/chrome when ?embed=true
   const isEmbedMode = searchString.includes('embed=true');
   
-  const [showCustomization, setShowCustomization] = useState(true);
+  const [showCustomization, setShowCustomization] = useState(false);
   const [brandPreferences, setBrandPreferences] = useState<BrandPreferences | null>(null);
   const [experienceType, setExperienceType] = useState<'radar' | 'spatial' | 'classic'>('radar');
   const [showClaimModal, setShowClaimModal] = useState(false);
@@ -272,6 +272,13 @@ export default function OrbitView() {
   const planTier = (viewerContext?.planTier || orbitData?.planTier || 'free') as PlanTierType;
   const PAID_TIERS: PlanTierType[] = ['grow', 'insight', 'intelligence'];
   const isPaidTier = PAID_TIERS.includes(planTier);
+
+  // Only show customization for first-run unclaimed orbits, not for owners viewing their orbit
+  useEffect(() => {
+    if (isFirstRun && isUnclaimed) {
+      setShowCustomization(true);
+    }
+  }, [isFirstRun, isUnclaimed]);
 
   // Fetch hub analytics for owners
   const { data: hubData } = useQuery<{
