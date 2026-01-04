@@ -1,0 +1,218 @@
+Cool. Here’s a production-ready Replit prompt spec you can paste to RAPTLIV/Claude. It’s written so they can scaffold it cleanly without “interpretation drift”.
+
+⸻
+
+Prompt: Auto-Testimonial Capture (Proof Capture Mode) for Orbit
+
+Context
+
+We have Orbit conversations between a business (the Orbit) and a customer. When the customer expresses strong positive sentiment (praise), we want the system to automatically (or semi-automatically) capture that praise as permissioned social proof.
+
+This feature must:
+	1.	Detect “testimonial moments”
+	2.	Ask 1–2 short contextual questions (only when appropriate)
+	3.	Ask explicit permission to use the quote for marketing
+	4.	Save the result into a Social Proof Library with metadata, consent status, and export-ready variants
+
+This must feel human, not robotic. It must never trigger during complaints or sensitive contexts.
+
+⸻
+
+1) Feature Name + Toggle
+
+Implement Proof Capture Mode.
+	•	Add an account-level setting: proof_capture_enabled (default ON for Orbits, but controllable per Orbit)
+	•	Add a conversation-level guard so it triggers at most once per conversation: proof_capture_triggered_at
+
+Also add a manual button available to Orbit operator (or AI) in the conversation UI:
+	•	“Capture as Testimonial” (forces the flow on a selected message if auto did not trigger)
+
+⸻
+
+2) Trigger Detection (Testimonial Moment Classifier)
+
+2.1 Inputs
+
+Given the latest customer message m and recent context (last 10 messages), compute:
+	•	sentiment_score (positive/neutral/negative)
+	•	praise_topic (service, delivery, quality, value, staff, reliability, product, other)
+	•	specificity_score (0–1)
+	•	risk_flags (complaint/refund/legal/medical/anger/sarcasm)
+
+2.2 Trigger Rules
+
+Auto-trigger ONLY if all are true:
+	•	sentiment_score is strongly positive
+	•	AND risk_flags is empty
+	•	AND conversation is not in “support escalation” state
+	•	AND proof_capture_triggered_at is null
+	•	AND (message contains praise keywords OR model classification “testimonial-worthy”)
+	•	AND customer message length >= 6 words (avoid “thanks!”)
+
+Block trigger if any of:
+	•	refund/complaint keywords present (“refund”, “not happy”, “disappointed”, “complain”, “late”, “damaged”, “cancel”)
+	•	legal/sensitive keywords (“lawsuit”, “GDPR”, “solicitor”, etc.)
+	•	profanity or hostility
+	•	customer asks to stop contact
+
+2.3 Confidence threshold
+
+Require confidence >= 0.75. If 0.55–0.74, do NOT auto-trigger, but show a subtle suggestion chip to the Orbit user:
+“Looks like praise - capture as testimonial?”
+
+⸻
+
+3) Conversation Flow (Micro-Interview + Consent)
+
+When triggered, inject a short, friendly assistant message:
+
+Step A: Context Question (1 question)
+
+Pick ONE based on praise_topic:
+	•	service:
+“That means a lot, thank you. What was the main thing we did that made the service feel so good?”
+	•	delivery:
+“Love to hear that. Was it the speed, the updates, or the packaging that stood out most?”
+	•	quality/product:
+“Amazing. What do you like most about the product - the feel, fit, durability, or design?”
+	•	value:
+“Brilliant. What made it feel like good value to you?”
+	•	staff:
+“Thank you. Was there anyone in particular who helped, or was it the overall experience?”
+	•	generic:
+“If you had to describe us in one sentence to a friend, what would you say?”
+
+Step B: Optional Clarifier (only if needed)
+
+Only ask a second question if the response is still generic (specificity_score < 0.5):
+	•	“Was there a specific moment that made you think that?”
+OR
+	•	“What were you unsure about beforehand, and did we change your mind?”
+
+Step C: Permission Request (explicit)
+
+Then ask:
+
+“Would you be happy for us to use your comment as a testimonial in our marketing? You can choose first name + town, or anonymous.”
+
+Provide quick reply options:
+	•	“Yes - name + town”
+	•	“Yes - anonymous”
+	•	“No thanks”
+
+Step D: Attribution confirm (only if name+town)
+
+If yes name+town:
+“Great - what first name and town should we use?”
+
+If anonymous:
+“Perfect - we’ll keep it anonymous.”
+
+If no:
+“No worries at all - thanks again.”
+
+Step E: Save
+
+Once consent is granted, save the testimonial asset.
+
+⸻
+
+4) Data Model (DB + Types)
+
+Create a new table/collection: social_proof_items
+
+Fields:
+	•	id
+	•	orbit_id
+	•	conversation_id
+	•	source_message_id
+	•	raw_quote_text
+	•	clean_quote_text
+	•	topic (enum: service|delivery|quality|value|staff|product|other)
+	•	specificity_score float
+	•	sentiment_score float
+	•	consent_status (enum: pending|granted|declined)
+	•	consent_type (enum: name_town|anonymous|null)
+	•	consent_timestamp
+	•	attribution_name nullable
+	•	attribution_town nullable
+	•	created_at
+	•	status (enum: draft|approved|archived) default draft
+
+Also store:
+	•	generated_variants JSON:
+	•	short (for overlays, <= 90 chars)
+	•	medium (website block, <= 220 chars)
+	•	long (case study seed, <= 500 chars)
+
+⸻
+
+5) Text Cleaning + Variant Generation
+
+After consent is granted:
+	•	Clean quote: remove filler words, keep authentic voice, avoid changing meaning
+	•	Generate 3 variants as above
+	•	Also generate suggested usage tags:
+	•	recommended_placements: homepage, product page, checkout reassurance, case study
+
+No exaggeration. No invented details.
+
+⸻
+
+6) Social Proof Library UI (Orbit Admin)
+
+Add a new section in Orbit Admin:
+Social Proof Library
+
+Features:
+	•	List view with filters by topic + consent + status
+	•	Each item shows:
+	•	clean quote
+	•	attribution (or anonymous)
+	•	topic tag
+	•	consent badge (granted/declined/pending)
+	•	created date
+	•	Detail drawer:
+	•	raw quote, clean quote, variants, conversation link
+	•	approve/archive buttons
+	•	edit clean quote (light editing only)
+	•	Export buttons:
+	•	“Copy for Website”
+	•	“Copy for TikTok Overlay”
+	•	“Send to SmartSite Testimonials API” (if available)
+	•	“Create Case Study Draft” (optional stub)
+
+⸻
+
+7) API Endpoints
+
+Add endpoints:
+	•	POST /api/orbits/:orbitId/social-proof (manual create)
+	•	GET /api/orbits/:orbitId/social-proof (list)
+	•	GET /api/orbits/:orbitId/social-proof/:id (detail)
+	•	PATCH /api/orbits/:orbitId/social-proof/:id (edit status / edit clean text / attribution)
+	•	POST /api/orbits/:orbitId/social-proof/:id/export (returns formatted payload for target)
+	•	Optional: POST /api/smartsite/testimonials/push (integration)
+
+All endpoints require auth + orbit permission checks.
+
+⸻
+
+8) Safety + Compliance Notes
+	•	Always require explicit consent before saving as “granted”
+	•	If consent declined, do not store attribution details; keep minimal record only if needed for audit (consent declined + timestamp)
+	•	Never trigger during complaint/support scenarios
+	•	Rate limit proof capture prompts per conversation
+
+⸻
+
+9) Definition of Done
+	•	Auto-trigger works with guardrails and doesn’t interrupt negative/support flows
+	•	Manual “Capture as Testimonial” works reliably
+	•	Consent flow is explicit with quick replies
+	•	Items appear in Social Proof Library with variants + export
+	•	No cut-off audio or timing issues introduced in conversations
+
+⸻
+
+If you want, I can also write the exact question selection table and the praise keyword list, plus a little “sarcasm/complaint” blacklist to get them to a solid v1 without overreliance on the LLM.

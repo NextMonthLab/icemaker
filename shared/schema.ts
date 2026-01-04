@@ -1544,6 +1544,9 @@ export const orbitMeta = pgTable("orbit_meta", {
   iceUsedThisPeriod: integer("ice_used_this_period").default(0).notNull(),
   icePeriodStart: timestamp("ice_period_start"),
   
+  // Proof Capture Mode (auto-testimonial capture)
+  proofCaptureEnabled: boolean("proof_capture_enabled").default(true).notNull(),
+  
   // Stats
   totalPackVersions: integer("total_pack_versions").default(0).notNull(),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
@@ -1768,6 +1771,10 @@ export const orbitConversations = pgTable("orbit_conversations", {
   // Clustering outputs (populated by batch job)
   extractedQuestions: text("extracted_questions").array(),
   extractedThemes: text("extracted_themes").array(),
+  
+  // Proof Capture (testimonial) tracking - only trigger once per conversation
+  proofCaptureTriggeredAt: timestamp("proof_capture_triggered_at"),
+  proofCaptureSocialProofId: integer("proof_capture_social_proof_id"),
 });
 
 export const insertOrbitConversationSchema = createInsertSchema(orbitConversations).omit({ id: true, startedAt: true, lastMessageAt: true });
@@ -2307,3 +2314,69 @@ export const billingAuditLogs = pgTable("billing_audit_logs", {
 export const insertBillingAuditLogSchema = createInsertSchema(billingAuditLogs).omit({ id: true, createdAt: true });
 export type InsertBillingAuditLog = z.infer<typeof insertBillingAuditLogSchema>;
 export type BillingAuditLog = typeof billingAuditLogs.$inferSelect;
+
+// ============ SOCIAL PROOF (Testimonial Capture) ============
+
+// Social proof topic categories
+export type SocialProofTopic = 'service' | 'delivery' | 'quality' | 'value' | 'staff' | 'product' | 'other';
+
+// Consent status for testimonials
+export type SocialProofConsentStatus = 'pending' | 'granted' | 'declined';
+
+// Consent type when granted
+export type SocialProofConsentType = 'name_town' | 'anonymous';
+
+// Status of social proof item
+export type SocialProofStatus = 'draft' | 'approved' | 'archived';
+
+// Generated variants for different use cases
+export interface SocialProofVariants {
+  short: string;    // For overlays, <= 90 chars
+  medium: string;   // Website block, <= 220 chars
+  long: string;     // Case study seed, <= 500 chars
+}
+
+// Recommended placements for the testimonial
+export type SocialProofPlacement = 'homepage' | 'product_page' | 'checkout_reassurance' | 'case_study';
+
+// Social Proof Items - captured testimonials from Orbit conversations
+export const socialProofItems = pgTable("social_proof_items", {
+  id: serial("id").primaryKey(),
+  
+  // Link to Orbit and conversation
+  businessSlug: text("business_slug").references(() => orbitMeta.businessSlug, { onDelete: "cascade" }).notNull(),
+  conversationId: integer("conversation_id").references(() => orbitConversations.id, { onDelete: "set null" }),
+  sourceMessageId: integer("source_message_id").references(() => orbitMessages.id, { onDelete: "set null" }),
+  
+  // Quote content
+  rawQuoteText: text("raw_quote_text").notNull(),
+  cleanQuoteText: text("clean_quote_text"),
+  
+  // Classification
+  topic: text("topic").$type<SocialProofTopic>().default("other").notNull(),
+  specificityScore: real("specificity_score"),
+  sentimentScore: real("sentiment_score"),
+  
+  // Consent tracking
+  consentStatus: text("consent_status").$type<SocialProofConsentStatus>().default("pending").notNull(),
+  consentType: text("consent_type").$type<SocialProofConsentType>(),
+  consentTimestamp: timestamp("consent_timestamp"),
+  
+  // Attribution (only stored if consent granted with name_town)
+  attributionName: text("attribution_name"),
+  attributionTown: text("attribution_town"),
+  
+  // Generated content
+  generatedVariants: jsonb("generated_variants").$type<SocialProofVariants>(),
+  recommendedPlacements: text("recommended_placements").array().$type<SocialProofPlacement[]>(),
+  
+  // Workflow status
+  status: text("status").$type<SocialProofStatus>().default("draft").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSocialProofItemSchema = createInsertSchema(socialProofItems).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSocialProofItem = z.infer<typeof insertSocialProofItemSchema>;
+export type SocialProofItem = typeof socialProofItems.$inferSelect;
