@@ -127,10 +127,22 @@ export function OrbitShareModal({
 
           <TabsContent value="link" className="space-y-4 pt-4">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-zinc-300 font-mono truncate">
+              <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 overflow-x-auto">
+                <div className="text-sm text-zinc-300 font-mono whitespace-nowrap min-w-0">
                   {shareUrl}
                 </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <a
+                  href={shareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  data-testid="link-open-orbit"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Open in new tab
+                </a>
                 <Button
                   onClick={handleCopyLink}
                   variant="outline"
@@ -146,21 +158,11 @@ export function OrbitShareModal({
                   ) : (
                     <>
                       <Copy className="w-4 h-4 mr-1.5" />
-                      Copy
+                      Copy Link
                     </>
                   )}
                 </Button>
               </div>
-              <a
-                href={shareUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                data-testid="link-open-orbit"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Open in new tab
-              </a>
             </div>
             <p className="text-xs text-zinc-500">
               Share this link to let anyone visit your Orbit.
