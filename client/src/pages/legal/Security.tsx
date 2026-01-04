@@ -188,7 +188,7 @@ export default function Security() {
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2.5 shrink-0" />
-                <span>Contact for data requests: <a href="mailto:hello@nextmonth.io" className="text-cyan-400 hover:text-cyan-300 transition-colors">hello@nextmonth.io</a></span>
+                <span>Contact for data requests: <a href="mailto:hello@nextmonth.io" className="text-cyan-400 hover:text-cyan-300 transition-colors" data-testid="link-email-data-requests">hello@nextmonth.io</a></span>
               </li>
             </ul>
           </section>
@@ -199,14 +199,14 @@ export default function Security() {
               <span><span className="text-pink-400">6.</span> Sub-processors</span>
             </h2>
             <p className="text-white/70 leading-relaxed">
-              We rely on trusted providers for hosting, source control, AI inference, email, and monitoring. We assess providers for their security posture and can share a current list on request. Contact <a href="mailto:hello@nextmonth.io" className="text-pink-400 hover:text-pink-300 transition-colors">hello@nextmonth.io</a> for details.
+              We rely on trusted providers for hosting, source control, AI inference, email, and monitoring. We assess providers for their security posture and can share a current list on request. Contact <a href="mailto:hello@nextmonth.io" className="text-pink-400 hover:text-pink-300 transition-colors" data-testid="link-email-subprocessors">hello@nextmonth.io</a> for details.
             </p>
           </section>
 
           <section className="pt-4">
             <h2 className="text-2xl font-semibold mb-4 text-white">Policies</h2>
             <p className="text-white/60 text-sm mb-6">
-              Full policies are being published. If you need them immediately, email <a href="mailto:hello@nextmonth.io" className="text-blue-400 hover:text-blue-300 transition-colors">hello@nextmonth.io</a>.
+              Full policies are being published. If you need them immediately, email <a href="mailto:hello@nextmonth.io" className="text-blue-400 hover:text-blue-300 transition-colors" data-testid="link-email-policies">hello@nextmonth.io</a>.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {policyLinks.map((policy) => (
@@ -226,7 +226,7 @@ export default function Security() {
             <h2 className="text-xl font-semibold mb-3 text-white">Contact for Security Enquiries</h2>
             <p className="text-white/70">
               For security questions, concerns, or to report a vulnerability, please contact us at{' '}
-              <a href="mailto:hello@nextmonth.io" className="text-blue-400 hover:text-blue-300 transition-colors">hello@nextmonth.io</a>.
+              <a href="mailto:hello@nextmonth.io" className="text-blue-400 hover:text-blue-300 transition-colors" data-testid="link-email-security">hello@nextmonth.io</a>.
             </p>
           </section>
         </div>
@@ -235,14 +235,14 @@ export default function Security() {
       <footer className="py-8 px-4 border-t border-white/10">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/">
-            <span className="text-sm text-white/60 hover:text-foreground transition-colors cursor-pointer">
+            <span className="text-sm text-white/60 hover:text-foreground transition-colors cursor-pointer" data-testid="link-footer-home">
               Back to NextMonth Home
             </span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-white/60">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link href="/cookies" className="hover:text-foreground transition-colors">Cookies</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors" data-testid="link-footer-privacy">Privacy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors" data-testid="link-footer-terms">Terms</Link>
+            <Link href="/cookies" className="hover:text-foreground transition-colors" data-testid="link-footer-cookies">Cookies</Link>
           </div>
         </div>
       </footer>
