@@ -1144,6 +1144,7 @@ export default function GuestIceBuilderPage() {
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,
                     publishDate: new Date().toISOString(),
+                    narrationEnabled: false,
                   }}
                   autoplay={true}
                   fullScreen={true}
