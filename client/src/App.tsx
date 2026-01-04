@@ -32,6 +32,7 @@ import OrbitActions from "@/pages/orbit/OrbitActions";
 import OrbitSettings from "@/pages/orbit/OrbitSettings";
 import OrbitClaim from "@/pages/orbit/OrbitClaim";
 import CatalogueImport from "@/pages/orbit/CatalogueImport";
+import SocialProofLibrary from "@/pages/orbit/SocialProofLibrary";
 import IceMakerHome from "@/pages/icemaker/IceMakerHome";
 import IceMakerCreate from "@/pages/icemaker/IceMakerCreate";
 import IceMakerProjects from "@/pages/icemaker/IceMakerProjects";
@@ -168,6 +169,7 @@ function Router() {
       <Route path="/orbit/:slug/claim" component={OrbitView} />
       <Route path="/orbit/:slug/hub" component={DataHub} />
       <Route path="/orbit/:slug/import" component={CatalogueImport} />
+      <Route path="/orbit/:slug/proof" component={SocialProofLibrary} />
       <Route path="/ice/new" component={TransformationsPage} />
       <Route path="/try" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id" component={GuestIceBuilderPage} />
