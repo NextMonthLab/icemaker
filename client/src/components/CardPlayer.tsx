@@ -283,24 +283,36 @@ export default function CardPlayer({
     return Math.min(Math.max(textReadTime, 2500), 10000);
   }, [hasNarration, audioDuration, card.captions.length]);
   
+  // Clear swipe hint when audio metadata loads (prevents early transition)
+  useEffect(() => {
+    if (hasNarration && audioDuration > 0) {
+      setShowSwipeHint(false);
+    }
+  }, [hasNarration, audioDuration]);
+
   useEffect(() => {
     if (!isPlaying || phase !== "cinematic") return;
     
-    // If we have narration, let the audio ended handler control transitions
-    if (hasNarration && audioDuration > 0) {
-      // Still advance captions in sync with audio
-      const perCaptionDuration = (audioDuration * 1000) / Math.max(card.captions.length, 1);
-      const captionInterval = setInterval(() => {
-        setCaptionIndex((prev) => {
-          const next = prev + 1;
-          if (next >= card.captions.length) {
-            return prev; // Audio end will trigger context phase
-          }
-          return next;
-        });
-      }, perCaptionDuration);
-      
-      return () => clearInterval(captionInterval);
+    // If we have narration, wait for audio metadata before running any timers
+    // The handleAudioEnded callback will control the phase transition
+    if (hasNarration) {
+      if (audioDuration > 0) {
+        // Advance captions in sync with audio duration
+        const perCaptionDuration = (audioDuration * 1000) / Math.max(card.captions.length, 1);
+        const captionInterval = setInterval(() => {
+          setCaptionIndex((prev) => {
+            const next = prev + 1;
+            if (next >= card.captions.length) {
+              return prev; // Audio end will trigger context phase
+            }
+            return next;
+          });
+        }, perCaptionDuration);
+        
+        return () => clearInterval(captionInterval);
+      }
+      // Still waiting for audio metadata - don't start any timers yet
+      return;
     }
     
     // No narration - use smart text-based timing
@@ -321,14 +333,15 @@ export default function CardPlayer({
     return () => clearTimeout(timeout);
   }, [isPlaying, card.captions, phase, captionIndex, calculateCaptionDuration, hasNarration, audioDuration]);
 
+  // Auto-advance after swipe hint (only for non-narration cards)
   useEffect(() => {
-    if (showSwipeHint) {
+    if (showSwipeHint && !hasNarration) {
       const timeout = setTimeout(() => {
         advanceToContext();
       }, 2000);
       return () => clearTimeout(timeout);
     }
-  }, [showSwipeHint, advanceToContext]);
+  }, [showSwipeHint, advanceToContext, hasNarration]);
 
   const handleTap = () => {
     if (phase === "cinematic") {

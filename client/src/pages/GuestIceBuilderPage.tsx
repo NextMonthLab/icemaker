@@ -119,8 +119,6 @@ export default function GuestIceBuilderPage() {
   const [interactivityNodes, setInteractivityNodes] = useState<InteractivityNodeData[]>([]);
   const [previewAccessToken, setPreviewAccessToken] = useState<string | undefined>();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [cardPace, setCardPace] = useState<"slow" | "normal" | "fast">("normal");
-  const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState(true);
   const [cardFont, setCardFont] = useState<CardFont>("cinzel");
   const [cardFontColor, setCardFontColor] = useState("#ffffff");
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -135,24 +133,8 @@ export default function GuestIceBuilderPage() {
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
   const [bibleGenerating, setBibleGenerating] = useState(false);
   
-  const paceDelays = { slow: 12000, normal: 5000, fast: 3000 };
-  
-  const [lastManualNav, setLastManualNav] = useState(0);
-  
-  useEffect(() => {
-    if (!showPreviewModal || !autoAdvanceEnabled) return;
-    if (previewCardIndex >= cards.length - 1) return;
-    
-    const timer = setTimeout(() => {
-      setPreviewCardIndex(prev => Math.min(cards.length - 1, prev + 1));
-    }, paceDelays[cardPace]);
-    
-    return () => clearTimeout(timer);
-  }, [showPreviewModal, previewCardIndex, cardPace, autoAdvanceEnabled, cards.length, lastManualNav]);
-  
   const handleManualNav = (newIndex: number) => {
     setPreviewCardIndex(newIndex);
-    setLastManualNav(Date.now());
   };
   
   const hasSeenWalkthrough = () => {
@@ -1254,25 +1236,6 @@ export default function GuestIceBuilderPage() {
             <div className="hidden sm:flex bg-black/50 backdrop-blur rounded-full px-3 py-1.5 items-center gap-2 shrink-0">
               <Lock className="w-3 h-3 text-blue-400" />
               <span className="text-xs text-white/80 whitespace-nowrap">AI images & video with Pro</span>
-            </div>
-            
-            {/* Pace controls */}
-            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
-              <span className="text-[10px] text-white/60 mr-1">Pace:</span>
-              {(["slow", "normal", "fast"] as const).map((pace) => (
-                <button
-                  key={pace}
-                  onClick={() => setCardPace(pace)}
-                  className={`px-2 py-0.5 text-[10px] rounded-full transition-all ${
-                    cardPace === pace
-                      ? "bg-blue-500 text-white"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                  data-testid={`button-pace-${pace}`}
-                >
-                  {pace.charAt(0).toUpperCase() + pace.slice(1)}
-                </button>
-              ))}
             </div>
             
             {/* Font selector */}
