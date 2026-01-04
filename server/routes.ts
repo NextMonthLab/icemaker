@@ -6541,13 +6541,25 @@ Stay engaging, reference story details, and help the audience understand the nar
         return res.status(policy.statusCode).json({ message: policy.reason || "Not authorized to edit this preview" });
       }
       
-      // Validate and sanitize cards
-      const sanitizedCards = cards.map((card: any, idx: number) => ({
-        id: card.id || `${preview.id}_card_${idx}`,
-        title: String(card.title || "").slice(0, 100),
-        content: String(card.content || "").slice(0, 2000),
-        order: idx,
-      }));
+      // Validate and sanitize cards - preserve generated media fields
+      const existingCards = preview.cards || [];
+      const existingCardMap = new Map(existingCards.map((c: any) => [c.id, c]));
+      
+      const sanitizedCards = cards.map((card: any, idx: number) => {
+        const existingCard = existingCardMap.get(card.id) || {};
+        return {
+          id: card.id || `${preview.id}_card_${idx}`,
+          title: String(card.title || "").slice(0, 100),
+          content: String(card.content || "").slice(0, 2000),
+          order: idx,
+          // Preserve generated media fields from incoming data OR existing data
+          generatedImageUrl: card.generatedImageUrl || existingCard.generatedImageUrl || undefined,
+          generatedVideoUrl: card.generatedVideoUrl || existingCard.generatedVideoUrl || undefined,
+          videoGenerationStatus: card.videoGenerationStatus || existingCard.videoGenerationStatus || undefined,
+          videoPredictionId: card.videoPredictionId || existingCard.videoPredictionId || undefined,
+          narrationAudioUrl: card.narrationAudioUrl || existingCard.narrationAudioUrl || undefined,
+        };
+      });
       
       // Validate and sanitize interactivity nodes if provided
       const updateData: any = { cards: sanitizedCards };
