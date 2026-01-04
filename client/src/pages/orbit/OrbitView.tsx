@@ -941,7 +941,7 @@ export default function OrbitView() {
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Contact Us
                 </Button>
-                {isOwner && !isPreviewMode && (
+                {isOwner && (
                   <>
                     <Button 
                       size="sm"
@@ -953,15 +953,17 @@ export default function OrbitView() {
                       <Share2 className="w-3 h-3 mr-1" />
                       Share
                     </Button>
-                    <Button 
-                      size="sm"
-                      variant="ghost"
-                      className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
-                      onClick={() => setLocation(`/orbit/${slug}/hub`)}
-                      data-testid="button-view-hub"
-                    >
-                      View Data Hub
-                    </Button>
+                    {!isPreviewMode && (
+                      <Button 
+                        size="sm"
+                        variant="ghost"
+                        className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
+                        onClick={() => setLocation(`/orbit/${slug}/hub`)}
+                        data-testid="button-view-hub"
+                      >
+                        View Data Hub
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
