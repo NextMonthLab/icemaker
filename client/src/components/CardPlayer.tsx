@@ -122,9 +122,11 @@ export default function CardPlayer({
   const activeMedia = getActiveMedia();
   
   const hasNarration = card.narrationEnabled && card.narrationStatus === "ready" && card.narrationAudioUrl;
+  // Show video if: selected asset is video, OR videoGenerated flag is set, OR generatedVideoUrl exists (fallback for older cards)
   const hasVideo = !!activeMedia.videoUrl && (
     activeMedia.selectedIsVideo || 
-    (card.videoGenerated && card.videoGenerationStatus === "completed")
+    (card.videoGenerated && card.videoGenerationStatus === "completed") ||
+    !!card.generatedVideoUrl  // Fallback: show if URL exists even without flags
   );
   const hasImage = !!activeMedia.imageUrl;
   const hasBothMediaTypes = hasImage && hasVideo;

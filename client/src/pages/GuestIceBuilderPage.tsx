@@ -54,6 +54,8 @@ interface PreviewCard {
   generatedImageUrl?: string;
   generatedVideoUrl?: string;
   narrationAudioUrl?: string;
+  videoGenerated?: boolean;
+  videoGenerationStatus?: string;
 }
 
 interface InsightOrigin {
