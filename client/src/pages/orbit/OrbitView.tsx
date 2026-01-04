@@ -887,7 +887,7 @@ export default function OrbitView() {
           </div>
         )}
         
-        {/* Owner CTA - show manage button for owners who have already claimed */}
+        {/* Owner CTA - show manage button for free tier owners who have already claimed */}
         {!isEmbedMode && !showCustomization && isOwner && !isUnclaimed && !isPaidTier && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900/95 via-pink-900/95 to-purple-900/95 backdrop-blur-sm border-t border-pink-500/30 py-3 px-4">
             <div className="max-w-lg mx-auto flex flex-col items-center gap-2">
@@ -904,6 +904,40 @@ export default function OrbitView() {
                 >
                   Manage Your Orbit
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Paid tier footer - no branding, brand-colored contact button */}
+        {!isEmbedMode && !showCustomization && isPaidTier && !isUnclaimed && !isFirstRun && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
+            <div className="max-w-lg mx-auto flex items-center justify-end gap-3">
+              <div className="flex items-center gap-2">
+                <Button 
+                  size="sm"
+                  className="text-white text-xs px-3 py-1 h-7"
+                  style={{ 
+                    backgroundColor: accentColor || '#ec4899',
+                    opacity: 0.9
+                  }}
+                  onClick={() => setShowContactModal(true)}
+                  data-testid="button-contact-us"
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  Contact Us
+                </Button>
+                {isOwner && !isPreviewMode && (
+                  <Button 
+                    size="sm"
+                    variant="ghost"
+                    className="text-zinc-400 hover:text-white text-xs px-3 py-1 h-7"
+                    onClick={() => setLocation(`/orbit/${slug}/hub`)}
+                    data-testid="button-view-hub"
+                  >
+                    View Data Hub
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -1242,13 +1276,21 @@ export default function OrbitView() {
       {!showCustomization && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
           <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
-            <span className="text-xs text-white/60">
-              Powered by <span className="text-pink-400 font-medium">NextMonth</span>
-            </span>
+            {/* Hide branding for paid tier users */}
+            {!isPaidTier && (
+              <span className="text-xs text-white/60">
+                Powered by <span className="text-pink-400 font-medium">NextMonth</span>
+              </span>
+            )}
+            {isPaidTier && <span />}
             <div className="flex items-center gap-2">
               <Button 
                 size="sm"
-                className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-3 py-1 h-7"
+                className="text-white text-xs px-3 py-1 h-7"
+                style={{ 
+                  backgroundColor: brandPreferences?.accentColor || preview?.siteIdentity?.primaryColour || '#ec4899',
+                  opacity: 0.9
+                }}
                 onClick={() => setShowContactModal(true)}
                 data-testid="button-contact-us"
               >
