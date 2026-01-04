@@ -6506,10 +6506,10 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
-  // Update cards for an ICE preview (reordering, editing)
+  // Update cards and interactivity nodes for an ICE preview (reordering, editing)
   app.put("/api/ice/preview/:id/cards", async (req, res) => {
     try {
-      const { cards } = req.body;
+      const { cards, interactivityNodes } = req.body;
       if (!Array.isArray(cards)) {
         return res.status(400).json({ message: "Cards array is required" });
       }
@@ -6548,7 +6548,19 @@ Stay engaging, reference story details, and help the audience understand the nar
         order: idx,
       }));
       
-      const updated = await storage.updateIcePreview(req.params.id, { cards: sanitizedCards });
+      // Validate and sanitize interactivity nodes if provided
+      const updateData: any = { cards: sanitizedCards };
+      if (Array.isArray(interactivityNodes)) {
+        const sanitizedNodes = interactivityNodes.map((node: any) => ({
+          id: String(node.id || `node_${Date.now()}`),
+          afterCardIndex: Number(node.afterCardIndex) || 0,
+          isActive: Boolean(node.isActive),
+          selectedCharacterId: node.selectedCharacterId ? String(node.selectedCharacterId) : undefined,
+        }));
+        updateData.interactivityNodes = sanitizedNodes;
+      }
+      
+      const updated = await storage.updateIcePreview(req.params.id, updateData);
       
       // Log successful edit
       const { userIp: logIp, userAgent } = extractRequestInfo(req);
@@ -6556,13 +6568,14 @@ Stay engaging, reference story details, and help the audience understand the nar
         userId: user?.id,
         userIp: logIp,
         userAgent,
-        details: { cardCount: sanitizedCards.length },
+        details: { cardCount: sanitizedCards.length, nodeCount: updateData.interactivityNodes?.length },
       });
       
       res.json({
         id: updated!.id,
         title: updated!.title,
         cards: updated!.cards,
+        interactivityNodes: updated!.interactivityNodes,
       });
     } catch (error) {
       console.error("Error updating ICE preview cards:", error);
