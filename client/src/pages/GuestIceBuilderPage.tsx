@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Card as UiCard, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +35,14 @@ const CREATION_STAGES = [
   { id: "extract", label: "Extracting key moments", duration: 2500 },
   { id: "craft", label: "Crafting your story cards", duration: 2000 },
   { id: "polish", label: "Adding the finishing touches", duration: 1500 },
+];
+
+const MUSIC_TRACKS = [
+  { id: "none", name: "No Music", url: null },
+  { id: "cinematic", name: "Cinematic", url: "https://cdn.pixabay.com/audio/2024/02/20/audio_8fe6092343.mp3" },
+  { id: "emotional", name: "Emotional", url: "https://cdn.pixabay.com/audio/2024/03/18/audio_8c0d4e4d66.mp3" },
+  { id: "epic", name: "Epic", url: "https://cdn.pixabay.com/audio/2024/01/17/audio_4a97f7d8cd.mp3" },
+  { id: "ambient", name: "Ambient", url: "https://cdn.pixabay.com/audio/2024/05/01/audio_1b9c0a2c87.mp3" },
 ];
 
 interface PreviewCard {
@@ -114,6 +123,7 @@ export default function GuestIceBuilderPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [currentStage, setCurrentStage] = useState(-1);
   const stageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const musicAudioRef = useRef<HTMLAudioElement | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewCardIndex, setPreviewCardIndex] = useState(0);
   const [interactivityNodes, setInteractivityNodes] = useState<InteractivityNodeData[]>([]);
@@ -129,6 +139,10 @@ export default function GuestIceBuilderPage() {
   const [bulkGeneratingVideos, setBulkGeneratingVideos] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [narrationMuted, setNarrationMuted] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [musicTrackUrl, setMusicTrackUrl] = useState<string | null>(null);
+  const [musicVolume, setMusicVolume] = useState(50);
+  const [narrationVolume, setNarrationVolume] = useState(100);
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
   const [bibleGenerating, setBibleGenerating] = useState(false);
@@ -136,6 +150,49 @@ export default function GuestIceBuilderPage() {
   const handleManualNav = (newIndex: number) => {
     setPreviewCardIndex(newIndex);
   };
+  
+  // Create/destroy audio element only when modal opens/closes
+  useEffect(() => {
+    if (showPreviewModal && !musicAudioRef.current) {
+      musicAudioRef.current = new Audio();
+      musicAudioRef.current.loop = true;
+    }
+    
+    if (!showPreviewModal && musicAudioRef.current) {
+      musicAudioRef.current.pause();
+      musicAudioRef.current = null;
+    }
+  }, [showPreviewModal]);
+  
+  // Handle track changes, play/pause, and volume updates
+  useEffect(() => {
+    if (!musicAudioRef.current) return;
+    
+    // Update track if changed
+    if (musicTrackUrl && (!musicAudioRef.current.src || !musicAudioRef.current.src.includes(musicTrackUrl.split('/').pop() || ''))) {
+      musicAudioRef.current.src = musicTrackUrl;
+    }
+    
+    // Update volume
+    musicAudioRef.current.volume = musicVolume / 100;
+    
+    // Play/pause based on enabled state
+    if (showPreviewModal && musicEnabled && musicTrackUrl) {
+      musicAudioRef.current.play().catch(() => {});
+    } else {
+      musicAudioRef.current.pause();
+    }
+  }, [showPreviewModal, musicEnabled, musicTrackUrl, musicVolume]);
+  
+  // Cleanup music audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (musicAudioRef.current) {
+        musicAudioRef.current.pause();
+        musicAudioRef.current = null;
+      }
+    };
+  }, []);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -1220,6 +1277,8 @@ export default function GuestIceBuilderPage() {
                   fullScreen={true}
                   font={cardFont}
                   fontColor={cardFontColor}
+                  narrationVolume={narrationVolume}
+                  narrationMuted={narrationMuted}
                   onPhaseChange={(phase) => {
                     if (phase === 'context' && previewCardIndex < cards.length - 1) {
                       setPreviewCardIndex(prev => prev + 1);
@@ -1274,23 +1333,78 @@ export default function GuestIceBuilderPage() {
               ))}
             </div>
             
-            {/* Narration toggle - only show if any card has narration */}
-            {cards.some(c => c.narrationAudioUrl) && (
-              <button
-                onClick={() => setNarrationMuted(prev => !prev)}
-                className={`bg-black/50 backdrop-blur rounded-full px-2.5 py-1.5 flex items-center gap-1.5 transition-all ${
-                  narrationMuted ? "text-white/40" : "text-purple-400"
-                }`}
-                title={narrationMuted ? "Unmute narration" : "Mute narration"}
-                data-testid="button-toggle-narration"
+            {/* Music selector */}
+            <div className="bg-black/50 backdrop-blur rounded-full px-2 py-1.5 flex items-center gap-1 w-fit">
+              <Music className="w-3 h-3 text-white/60" />
+              <select
+                value={musicTrackUrl || "none"}
+                onChange={(e) => {
+                  const track = MUSIC_TRACKS.find(t => (t.url || "none") === e.target.value);
+                  setMusicTrackUrl(track?.url || null);
+                  setMusicEnabled(!!track?.url);
+                }}
+                className="bg-transparent text-[10px] text-white border-none outline-none cursor-pointer"
+                data-testid="select-music-track"
               >
-                {narrationMuted ? (
-                  <VolumeX className="w-3.5 h-3.5" />
-                ) : (
-                  <Volume2 className="w-3.5 h-3.5" />
+                {MUSIC_TRACKS.map((track) => (
+                  <option key={track.id} value={track.url || "none"} className="bg-black text-white">
+                    {track.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Volume controls - only show when music enabled or narration exists */}
+            {(musicEnabled || cards.some(c => c.narrationAudioUrl)) && (
+              <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">
+                {/* Music volume */}
+                {musicEnabled && (
+                  <div className="flex items-center gap-2">
+                    <Music className="w-3 h-3 text-blue-400" />
+                    <Slider
+                      value={[musicVolume]}
+                      onValueChange={([v]) => setMusicVolume(v)}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="w-16"
+                      data-testid="slider-music-volume"
+                    />
+                    <span className="text-[9px] text-white/40 w-6">{musicVolume}%</span>
+                  </div>
                 )}
-                <span className="text-[10px]">Narration</span>
-              </button>
+                
+                {/* Narration volume */}
+                {cards.some(c => c.narrationAudioUrl) && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setNarrationMuted(prev => !prev)}
+                      className={`transition-all ${narrationMuted ? "text-white/40" : "text-purple-400"}`}
+                      title={narrationMuted ? "Unmute narration" : "Mute narration"}
+                      data-testid="button-toggle-narration"
+                    >
+                      {narrationMuted ? (
+                        <VolumeX className="w-3 h-3" />
+                      ) : (
+                        <Volume2 className="w-3 h-3" />
+                      )}
+                    </button>
+                    <Slider
+                      value={[narrationMuted ? 0 : narrationVolume]}
+                      onValueChange={([v]) => {
+                        setNarrationVolume(v);
+                        if (v > 0) setNarrationMuted(false);
+                      }}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="w-16"
+                      data-testid="slider-narration-volume"
+                    />
+                    <span className="text-[9px] text-white/40 w-6">{narrationMuted ? 0 : narrationVolume}%</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
