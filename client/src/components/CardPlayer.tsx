@@ -223,11 +223,28 @@ export default function CardPlayer({
   const handleAudioPause = useCallback(() => {
     setIsAudioPlaying(false);
   }, []);
+
+  const advanceToContext = useCallback(() => {
+    setPhase("context");
+    onPhaseChange?.("context");
+  }, [onPhaseChange]);
+
+  const resetToCinematic = useCallback(() => {
+    setShowSwipeHint(false);
+    setPhase("cinematic");
+    setCaptionIndex(0);
+    setIsPlaying(true);
+    onPhaseChange?.("cinematic");
+  }, [onPhaseChange]);
   
   const handleAudioEnded = useCallback(() => {
     setIsAudioPlaying(false);
     setAudioProgress(0);
-  }, []);
+    // When narration ends, advance to context phase
+    if (phase === "cinematic") {
+      advanceToContext();
+    }
+  }, [phase, advanceToContext]);
   
   const seekAudio = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -249,23 +266,48 @@ export default function CardPlayer({
     };
   }, []);
 
-  const advanceToContext = useCallback(() => {
-    setPhase("context");
-    onPhaseChange?.("context");
-  }, [onPhaseChange]);
-
-  const resetToCinematic = useCallback(() => {
-    setShowSwipeHint(false);
-    setPhase("cinematic");
-    setCaptionIndex(0);
-    setIsPlaying(true);
-    onPhaseChange?.("cinematic");
-  }, [onPhaseChange]);
-
+  // Smart duration calculation: max(narration, text read time, minimum)
+  const calculateCaptionDuration = useCallback((captionText: string): number => {
+    // If we have narration, let audio control timing (handled by handleAudioEnded)
+    if (hasNarration && audioDuration > 0) {
+      // Distribute audio duration across captions
+      const perCaptionDuration = (audioDuration * 1000) / card.captions.length;
+      return Math.max(perCaptionDuration, 2000); // Minimum 2s per caption
+    }
+    
+    // Text read time: ~2.8 words per second (comfortable reading speed)
+    const wordCount = captionText.split(/\s+/).filter(w => w.length > 0).length;
+    const textReadTime = Math.ceil((wordCount / 2.8) * 1000);
+    
+    // Minimum 2.5s, maximum 10s per caption
+    return Math.min(Math.max(textReadTime, 2500), 10000);
+  }, [hasNarration, audioDuration, card.captions.length]);
+  
   useEffect(() => {
     if (!isPlaying || phase !== "cinematic") return;
-
-    const captionInterval = setInterval(() => {
+    
+    // If we have narration, let the audio ended handler control transitions
+    if (hasNarration && audioDuration > 0) {
+      // Still advance captions in sync with audio
+      const perCaptionDuration = (audioDuration * 1000) / Math.max(card.captions.length, 1);
+      const captionInterval = setInterval(() => {
+        setCaptionIndex((prev) => {
+          const next = prev + 1;
+          if (next >= card.captions.length) {
+            return prev; // Audio end will trigger context phase
+          }
+          return next;
+        });
+      }, perCaptionDuration);
+      
+      return () => clearInterval(captionInterval);
+    }
+    
+    // No narration - use smart text-based timing
+    const currentCaption = card.captions[captionIndex] || "";
+    const duration = calculateCaptionDuration(currentCaption);
+    
+    const timeout = setTimeout(() => {
       setCaptionIndex((prev) => {
         const next = prev + 1;
         if (next >= card.captions.length) {
@@ -274,10 +316,10 @@ export default function CardPlayer({
         }
         return next;
       });
-    }, 3000);
+    }, duration);
 
-    return () => clearInterval(captionInterval);
-  }, [isPlaying, card.captions.length, phase]);
+    return () => clearTimeout(timeout);
+  }, [isPlaying, card.captions, phase, captionIndex, calculateCaptionDuration, hasNarration, audioDuration]);
 
   useEffect(() => {
     if (showSwipeHint) {
@@ -364,10 +406,7 @@ export default function CardPlayer({
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none" />
 
-            <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-              <span className="text-xs font-mono text-white/60 bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
-                DAY {card.dayIndex}
-              </span>
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-end">
               <div className="flex items-center gap-2">
                 {hasBothMediaTypes && (
                   <button
@@ -542,8 +581,7 @@ export default function CardPlayer({
             <div className="flex-1 min-h-0 bg-gradient-to-b from-black via-zinc-900 to-zinc-900 p-5 pb-28 flex flex-col overflow-y-auto">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <span className="text-xs font-mono text-primary/80 tracking-widest">DAY {card.dayIndex}</span>
-                  <h2 className="text-xl font-display font-bold text-white mt-1 tracking-wide" data-testid="context-title">
+                  <h2 className="text-xl font-display font-bold text-white tracking-wide" data-testid="context-title">
                     {card.title}
                   </h2>
                 </div>

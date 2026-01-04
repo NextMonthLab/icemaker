@@ -1,0 +1,140 @@
+You’re absolutely right. This is one of those moments where you can feel the difference between a toy editor and a serious, cinematic system.
+
+I’ll break this into clear guidance you can pass directly to RAPTLIV, plus a short why this matters section so they don’t accidentally underplay it.
+
+⸻
+
+Core Principle (Lock This In)
+
+Card duration must be determined by content, not by a preset speed label.
+
+“Slow / Normal / Fast” is fine for slideshows.
+It is not fine for narrative, dialogue, or voice-led storytelling.
+
+ICE is closer to a film editor than a template engine.
+
+⸻
+
+What Should Dictate Card Duration (in order of priority)
+
+1. Narration Length (Hard Minimum)
+
+If narration exists, the card must stay on screen until narration finishes.
+	•	Card duration ≥ narration duration
+	•	Never cut audio mid-sentence
+	•	Add a small buffer at the end (eg. +0.3–0.6s) so it doesn’t feel abrupt
+
+This is non-negotiable. Audio finishing late feels broken, not stylistic.
+
+⸻
+
+2. Text Read Time (Soft Minimum)
+
+Text should remain on screen long enough to be comfortably read.
+
+Use a simple, reliable heuristic:
+	•	Average reading speed: ~150–180 words per minute
+	•	That’s roughly 2.5–3 words per second
+
+So:
+	•	Short text (8–12 words): ~3–4 seconds
+	•	Medium text (20–30 words): ~6–9 seconds
+	•	Long text (40+ words): 10–14 seconds (or auto-split into sections)
+
+If narration is present, use the longer of narration time or read time.
+
+⸻
+
+3. Media Length (Video / Motion)
+
+If a card contains video or animated media:
+	•	Card duration ≥ video duration
+	•	If video loops, either:
+	•	Play once and hold last frame
+	•	Or fade out at narration/text completion
+
+Never cut a video before its natural end unless explicitly instructed.
+
+⸻
+
+Smart Duration Formula (Simple + Defensible)
+
+RAPTLIV can implement this without overengineering:
+
+cardDuration =
+  max(
+    narrationDuration + buffer,
+    textReadDuration,
+    mediaDuration
+  )
+
+Where:
+	•	buffer = 0.3–0.6s
+	•	textReadDuration = (wordCount / 2.8) seconds (rounded up)
+
+This immediately makes ICE feel intelligent.
+
+⸻
+
+Text Density & Auto-Splitting (Important)
+
+If text exceeds a comfortable threshold (eg. 35–40 words):
+	•	Auto-split into two beats within the same card, or
+	•	Suggest splitting into two cards
+
+This prevents:
+	•	Walls of text
+	•	Overlong static visuals
+	•	Viewer fatigue
+
+This is exactly how CapCut and high-end caption tools feel “smart”.
+
+⸻
+
+Kill the “Day 1 / Day 2 / Day 3” Badge (For Now)
+
+Your instinct is correct.
+	•	It adds cognitive noise
+	•	It implies sequence even when the story is emotional or thematic
+	•	It feels like a placeholder, not a design choice
+
+Recommendation:
+	•	Remove entirely for MVP
+	•	Reintroduce later only if the ICE is explicitly a timeline or course
+
+Right now, it weakens immersion.
+
+⸻
+
+Why This Matters (Explain This to Them)
+
+If ICE cuts narration:
+	•	Users think it’s buggy
+
+If text disappears too fast:
+	•	Users think it’s rushed or cheap
+
+If duration adapts naturally:
+	•	Users think it’s cinematic
+	•	They stop noticing the system
+	•	They focus on the story
+
+That’s the goal.
+
+⸻
+
+How I’d Frame This to RAPTLIV (Short Version You Can Paste)
+
+Card timing should be content-driven, not preset-driven.
+Duration must adapt to narration length, text read time, and media length, using the longest of the three. Audio should never be cut off. Text should remain on screen long enough to be comfortably read. The current Slow/Normal/Fast control is too blunt for narrative use and should be replaced (or overridden) by smart duration logic. Also recommend removing the Day 1/2/3 badge for now to reduce UI noise.
+
+⸻
+
+You’ve spotted something fundamental here.
+This is the difference between ICE being “a clever generator” and ICE being a director that knows when to hold the shot.
+
+Next logical step, if you want it:
+	•	A Smart Timing toggle vs Manual Timing
+	•	Or a Cinematic Mode that enforces all of the above automatically
+
+And yes – you’re absolutely right to push on this before launch.
