@@ -8450,10 +8450,17 @@ STRICT RULES:
           
           // Check if we're in the middle of a proof capture flow by examining recent assistant messages
           const lastAssistantMsg = recentAssistantMessages[recentAssistantMessages.length - 1] || '';
-          const isInContextQuestionStage = lastAssistantMsg.includes('What was the main thing') || 
-            lastAssistantMsg.includes('what would you say') ||
-            lastAssistantMsg.includes('stood out most') ||
-            lastAssistantMsg.includes('like most about');
+          // Match context questions from proofCapture.ts TOPIC_QUESTIONS
+          const isInContextQuestionStage = 
+            lastAssistantMsg.includes("I'd love to know more") ||
+            lastAssistantMsg.includes("what was the highlight") ||
+            lastAssistantMsg.includes("what stood out") ||
+            lastAssistantMsg.includes("what was the main thing") ||
+            lastAssistantMsg.includes("what would you say") ||
+            lastAssistantMsg.includes("Tell me more about what") ||
+            lastAssistantMsg.includes("what is it about") ||
+            lastAssistantMsg.includes("what impressed you") ||
+            lastAssistantMsg.includes("what makes it special");
           const isInConsentStage = lastAssistantMsg.includes('Would you be happy for us to use your comment');
           
           console.log('[ProofCapture:Preview] Flow state - Context stage:', isInContextQuestionStage, 'Consent stage:', isInConsentStage);
@@ -9896,11 +9903,17 @@ STRICT RULES:
       
       // Check if we're in the middle of a proof capture flow
       const lastAssistantMsg = recentAssistantMessages[recentAssistantMessages.length - 1] || '';
-      const isInContextQuestionStage = lastAssistantMsg.includes("I'd love to know more") || 
-        lastAssistantMsg.includes('what would you say') ||
-        lastAssistantMsg.includes('what was the highlight') ||
-        lastAssistantMsg.includes('Tell me more about') ||
-        lastAssistantMsg.includes('What is it about');
+      // Match context questions from proofCapture.ts TOPIC_QUESTIONS
+      const isInContextQuestionStage = 
+        lastAssistantMsg.includes("I'd love to know more") ||
+        lastAssistantMsg.includes("what was the highlight") ||
+        lastAssistantMsg.includes("what stood out") ||
+        lastAssistantMsg.includes("what was the main thing") ||
+        lastAssistantMsg.includes("what would you say") ||
+        lastAssistantMsg.includes("Tell me more about what") ||
+        lastAssistantMsg.includes("what is it about") ||
+        lastAssistantMsg.includes("what impressed you") ||
+        lastAssistantMsg.includes("what makes it special");
       const isInConsentStage = lastAssistantMsg.includes('Would you be happy for us to use your comment');
       
       console.log('[ProofCapture] Flow state - Context stage:', isInContextQuestionStage, 'Consent stage:', isInConsentStage);
