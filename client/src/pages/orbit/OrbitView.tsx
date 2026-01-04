@@ -183,6 +183,8 @@ export default function OrbitView() {
   
   // Conversation history for AI chat
   const chatHistoryRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  // Track when proof capture was triggered to prevent repeated prompts
+  const proofCaptureTriggeredRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (slug && slug !== lastTrackedSlug) {
@@ -829,11 +831,27 @@ export default function OrbitView() {
                       message,
                       menuContext,
                       history: chatHistoryRef.current.slice(0, -1), // Exclude current message
+                      proofCaptureTriggeredAt: proofCaptureTriggeredRef.current,
                     }),
                   });
                   if (response.ok) {
                     const data = await response.json();
-                    const assistantResponse = data.response || data.message || "I'm here to help you explore our menu.";
+                    let assistantResponse = data.response || data.message || "I'm here to help you explore our menu.";
+                    
+                    // Handle proof capture flow - system detected praise
+                    if (data.proofCaptureFlow?.triggered) {
+                      proofCaptureTriggeredRef.current = new Date().toISOString();
+                      // Add consent options to the response
+                      const consentOptions = data.proofCaptureFlow.consentOptions || [];
+                      if (consentOptions.length > 0) {
+                        assistantResponse += `\n\nWould you be happy for us to use your comment as a testimonial?\n\n• ${consentOptions.join('\n• ')}`;
+                      }
+                    }
+                    
+                    // If suggestion chip is present, append a subtle nudge
+                    if (data.suggestionChip) {
+                      assistantResponse += `\n\n💬 By the way, if you'd like to leave a testimonial, just let me know!`;
+                    }
                     
                     // Add assistant response to history
                     chatHistoryRef.current.push({ role: 'assistant', content: assistantResponse });

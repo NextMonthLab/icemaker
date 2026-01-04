@@ -8422,12 +8422,68 @@ STRICT RULES:
         await storage.incrementOrbitMetric(orbit.businessSlug, 'conversations');
       }
 
-      // Build response with optional soft limit warning
+      // Check for testimonial-worthy praise in user message (if orbit exists)
+      let proofCaptureFlow = null;
+      let suggestionChip = null;
+      
+      if (orbit && orbit.proofCaptureEnabled !== false) {
+        try {
+          const { classifyTestimonialMoment, shouldTriggerProofCapture, getContextQuestion, getConsentRequest } = await import('./services/proofCapture');
+          
+          const recentUserMessages = history
+            .filter((m: any) => m.role === 'user')
+            .slice(-5)
+            .map((m: any) => m.content);
+          
+          const classification = await classifyTestimonialMoment(message, recentUserMessages);
+          
+          console.log('[ProofCapture:Preview] Classification for message:', message);
+          console.log('[ProofCapture:Preview] Result:', JSON.stringify(classification));
+          
+          const proofCaptureTrigger = shouldTriggerProofCapture(true, null, classification);
+          
+          console.log('[ProofCapture:Preview] Trigger decision:', JSON.stringify(proofCaptureTrigger));
+          
+          if (proofCaptureTrigger.shouldTrigger) {
+            const topicQuestion = getContextQuestion(classification.topic);
+            const consentInfo = getConsentRequest();
+            
+            proofCaptureFlow = {
+              triggered: true,
+              topic: classification.topic,
+              originalMessage: message,
+              confidence: classification.confidence,
+              sentimentScore: classification.sentimentScore,
+              consentOptions: consentInfo.options,
+              followUpQuestion: topicQuestion,
+            };
+          } else if (proofCaptureTrigger.showSuggestionChip) {
+            suggestionChip = {
+              text: "Leave a testimonial",
+              action: "testimonial",
+            };
+          }
+        } catch (err) {
+          console.error('[ProofCapture:Preview] Error during classification:', err);
+        }
+      }
+
+      // Build response with optional soft limit warning and testimonial flow
       const response: Record<string, any> = {
         reply,
         messageCount: newMessageCount,
         capped: newMessageCount >= preview.maxMessages,
       };
+      
+      // Add proof capture flow if triggered
+      if (proofCaptureFlow) {
+        response.proofCaptureFlow = proofCaptureFlow;
+        // Append testimonial prompt to reply
+        response.reply = `${reply}\n\n${proofCaptureFlow.followUpQuestion}\n\nWould you be happy for us to use your comment as a testimonial?\n\n• ${proofCaptureFlow.consentOptions.join('\n• ')}`;
+      } else if (suggestionChip) {
+        response.suggestionChip = suggestionChip;
+        response.reply = `${reply}\n\n💬 By the way, if you'd like to leave a testimonial, just let me know!`;
+      }
       
       // Add soft limit warning if approaching monthly limit
       if (showSoftLimitWarning) {
@@ -9732,7 +9788,7 @@ STRICT RULES:
   app.post("/api/orbit/:slug/chat", async (req, res) => {
     try {
       const { slug } = req.params;
-      const { message, menuContext, history } = req.body;
+      const { message, menuContext, history, proofCaptureTriggeredAt } = req.body;
       
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Message is required" });
@@ -9741,6 +9797,57 @@ STRICT RULES:
       const orbitMeta = await storage.getOrbitMeta(slug);
       if (!orbitMeta) {
         return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Import proof capture module for testimonial detection
+      const { classifyTestimonialMoment, shouldTriggerProofCapture, getContextQuestion, getConsentRequest } = await import('./services/proofCapture');
+      
+      // Check if this message is testimonial-worthy
+      const recentUserMessages = (history || [])
+        .filter((h: any) => h.role === 'user')
+        .slice(-5)
+        .map((h: any) => h.content);
+      
+      const classification = await classifyTestimonialMoment(message, recentUserMessages);
+      const proofCaptureEnabled = orbitMeta.proofCaptureEnabled !== false; // Default to enabled
+      const triggeredAt = proofCaptureTriggeredAt ? new Date(proofCaptureTriggeredAt) : null;
+      
+      console.log('[ProofCapture] Classification for message:', message);
+      console.log('[ProofCapture] Result:', JSON.stringify(classification));
+      
+      const proofCaptureTrigger = shouldTriggerProofCapture(
+        proofCaptureEnabled,
+        triggeredAt,
+        classification
+      );
+      
+      console.log('[ProofCapture] Trigger decision:', JSON.stringify(proofCaptureTrigger));
+      
+      // If testimonial-worthy, respond with proof capture flow
+      if (proofCaptureTrigger.shouldTrigger) {
+        const topicQuestion = getContextQuestion(classification.topic);
+        const consentInfo = getConsentRequest();
+        
+        return res.json({
+          response: topicQuestion,
+          proofCaptureFlow: {
+            triggered: true,
+            topic: classification.topic,
+            originalMessage: message,
+            confidence: classification.confidence,
+            sentimentScore: classification.sentimentScore,
+            consentOptions: consentInfo.options,
+          },
+        });
+      }
+      
+      // If we detected some praise but not high confidence, show a suggestion chip
+      let suggestionChip = null;
+      if (proofCaptureTrigger.showSuggestionChip) {
+        suggestionChip = {
+          text: "Leave a testimonial",
+          action: "testimonial",
+        };
       }
       
       // Get boxes if no menuContext provided
@@ -9848,7 +9955,11 @@ For greetings, thanks, or unclear messages:
         await storage.incrementOrbitMetric(slug, 'conversations');
       }
       
-      res.json({ response });
+      res.json({ 
+        response,
+        suggestionChip,
+        praiseDetected: classification.praiseKeywordsFound.length > 0 ? classification.praiseKeywordsFound : undefined,
+      });
     } catch (error) {
       console.error("Error in orbit chat:", error);
       res.status(500).json({ message: "Error processing chat" });

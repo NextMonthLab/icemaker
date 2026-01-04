@@ -169,9 +169,17 @@ export async function classifyTestimonialMoment(
     };
   }
   
-  // Skip if message is too short (< 6 words)
   const wordCount = customerMessage.trim().split(/\s+/).length;
-  if (wordCount < 6) {
+  
+  // Strong praise keywords that indicate genuine testimonial intent even in short messages
+  const STRONG_PRAISE_KEYWORDS = ['love', 'great', 'amazing', 'fantastic', 'incredible', 'best', 'excellent', 'perfect', 'wonderful', 'brilliant', 'outstanding', 'awesome'];
+  const hasStrongPraise = preFilter.praiseKeywords.some(pk => 
+    STRONG_PRAISE_KEYWORDS.some(sp => pk.toLowerCase().includes(sp))
+  );
+  
+  // Skip if message is too short AND doesn't have strong praise keywords
+  // Allow short messages with strong praise (e.g., "I love KFC", "KFC is amazing")
+  if (wordCount < 6 && !hasStrongPraise) {
     return {
       isTestimonialWorthy: false,
       confidence: 0.9,
@@ -193,6 +201,20 @@ export async function classifyTestimonialMoment(
       specificityScore: 0,
       riskFlags: [],
       praiseKeywordsFound: []
+    };
+  }
+  
+  // For short messages with strong praise, we can fast-path to testimonial-worthy
+  // without AI call since the intent is clear
+  if (wordCount <= 6 && hasStrongPraise && preFilter.praiseKeywords.length > 0) {
+    return {
+      isTestimonialWorthy: true,
+      confidence: 0.8,
+      sentimentScore: 0.9,
+      topic: 'other',
+      specificityScore: 0.3,
+      riskFlags: [],
+      praiseKeywordsFound: preFilter.praiseKeywords
     };
   }
   
