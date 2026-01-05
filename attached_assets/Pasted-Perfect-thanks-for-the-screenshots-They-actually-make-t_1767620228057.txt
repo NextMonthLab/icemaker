@@ -1,0 +1,173 @@
+Perfect – thanks for the screenshots. They actually make the problem crystal clear, and you’re 100% right to trust your instincts here.
+
+Let me walk this through cleanly, then I’ll give you a tight, screenshot-aware message you can send to Radplayers.
+
+⸻
+
+What the screenshots prove (objectively)
+
+Screen 1 – Orbit view (working as expected)
+	•	You are logged in
+	•	The Orbit is claimed
+	•	You see:
+	•	“Welcome back!”
+	•	“Manage your Orbit and view analytics”
+	•	CTA: Manage Your Orbit
+
+So far, this communicates:
+
+“This is yours. You can manage it.”
+
+✅ Good.
+
+⸻
+
+Screen 2 – What actually happens when you click it
+	•	You’re taken to /hub
+	•	You hit a full-page upgrade gate
+	•	Primary CTA: Upgrade to Grow
+	•	Secondary link: “View your Orbit” (which just loops you back)
+
+This communicates:
+
+“You can’t manage anything unless you pay.”
+
+❌ This is the break.
+
+⸻
+
+The precise UX sin that’s happening
+
+This isn’t just “a bit aggressive”.
+
+This is a mislabelled affordance.
+
+The button says:
+
+Manage Your Orbit
+
+But the behaviour is:
+
+Upgrade or leave
+
+That mismatch is what makes it feel wrong.
+
+If the button said:
+	•	“Upgrade to Manage”
+	•	or “Unlock Business Hub”
+
+…then fine. But it doesn’t.
+
+Right now, it’s promising ownership, then enforcing permission.
+
+That’s where trust erodes.
+
+⸻
+
+Reconfirming what we agreed (now with precision)
+
+Let’s lock this in very clearly so there’s no ambiguity when you go back to Radplayers.
+
+Free users who have claimed an Orbit should get:
+
+1. A Basic Management View (not the Business Hub)
+This can be lightweight, but it must exist.
+
+For example:
+	•	Orbit details (name, category, location)
+	•	Status: claimed / live
+	•	Ability to update basic metadata (even if limited)
+	•	Confirmation: “You own this Orbit”
+
+2. Teaser Analytics (read-only)
+Not the full Business Hub.
+
+Think:
+	•	Total visits (last 30 days)
+	•	Total interactions (aggregated)
+	•	A simple message like:
+“Your Orbit has been discovered this month”
+
+This answers the emotional question:
+
+“Is this doing anything?”
+
+3. Visible but locked premium sections
+Inside the view:
+	•	“Audience Insights” (locked)
+	•	“AI Recommendations” (locked)
+	•	“Introductions & Leads” (locked)
+
+Each locked card explains why it matters.
+
+This is desire-driven upsell, not a wall.
+
+⸻
+
+What should be gated by upgrade
+
+The Business Hub itself is a premium space. That’s fine.
+
+So:
+	•	/hub = paid
+	•	But “Manage Your Orbit” should not deep-link straight into /hub for free users.
+
+Instead:
+	•	Free users → Orbit Manager (Lite)
+	•	Paid users → Business Hub
+
+⸻
+
+The clean behavioural fix (one sentence)
+
+If an Orbit is claimed but not upgraded, “Manage Your Orbit” should open a free management view, not the Business Hub upgrade screen.
+
+That’s the whole thing.
+
+⸻
+
+Message you can now send to Radplayers (updated, screenshot-aware)
+
+You can paste this as-is:
+
+⸻
+
+I’ve attached screenshots to show the issue clearly.
+
+When logged in as FlashBuzz (boo.flashbuzz.co.uk), the Orbit is already claimed and I see the CTA “Manage Your Orbit”, which implies basic management access.
+
+However, clicking this routes directly to /hub, which is a full upgrade gate (“Upgrade to unlock your Business Hub”), meaning I can’t manage anything at all.
+
+This feels like a hard block and creates a mismatch between the button label and the behaviour.
+
+What we agreed was:
+	•	Claimed Orbits should have basic management access on the free tier
+	•	Free users should see lightweight / teaser analytics
+	•	The Business Hub itself is premium and unlocked via upgrade
+
+“Manage Your Orbit” should not force an upgrade. It should open a basic Orbit management view for free users, with the Business Hub clearly positioned as an upgrade inside that experience.
+
+Can we adjust the routing so:
+	•	Free, claimed Orbits → basic management view
+	•	Upgraded Orbits → Business Hub
+
+This keeps the upgrade aspirational rather than a hard gate.
+
+⸻
+
+Straight talk, Rob
+
+Your gut is spot on.
+
+This is one of those small-seeming UX decisions that quietly determines whether:
+	•	people trust the platform, or
+	•	feel like they’ve been bait-and-switched.
+
+You’re protecting the long game here.
+
+If you want next, we can:
+	•	Sketch the exact contents of the free Orbit Manager screen
+	•	Rewrite the button labels to be bulletproof
+	•	Or design the upgrade moment copy so it feels like momentum, not pressure
+
+You’re steering this exactly where it needs to go.

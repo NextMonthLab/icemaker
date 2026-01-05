@@ -239,17 +239,140 @@ export default function DataHub() {
   }
 
   if (!hubData.isPaid) {
+    // Free tier: Show basic management view with teaser analytics and locked premium sections
+    const trendIndicator = hubData.activity.visits > 10 ? "↑" : hubData.activity.visits > 0 ? "→" : "–";
+    
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
-            <BarChart3 className="w-8 h-8 text-pink-400" />
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel="Orbit" breadcrumbHref={`/orbit/${slug}`} />
+        <div className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation(`/orbit/${slug}`)}
+              className="text-zinc-400 hover:text-white"
+              data-testid="button-back-to-orbit-free"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold">Manage Your Orbit</h1>
+              <p className="text-sm text-zinc-500">{slug}</p>
+            </div>
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Upgrade to unlock your Business Hub</h2>
-          <p className="text-zinc-400 mb-6 text-sm">
-            See who's visiting, what they're asking, and shape your Orbit to grow your business.
-          </p>
-          <div className="flex flex-col gap-3">
+          
+          {/* Ownership Confirmation */}
+          <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-emerald-400 font-medium">You own this Orbit</p>
+                <p className="text-xs text-zinc-500">Claimed and verified</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Basic Analytics - Teaser Level */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <Eye className="w-5 h-5 text-zinc-400" />
+              Activity Overview
+              <span className="text-xs text-zinc-500 font-normal">(Last 30 days)</span>
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Eye className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs text-zinc-500">{trendIndicator}</span>
+                </div>
+                <p className="text-2xl font-bold">{hubData.activity.visits}</p>
+                <p className="text-xs text-zinc-500">Total Visits</p>
+              </div>
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <MessageCircle className="w-4 h-4 text-purple-400" />
+                </div>
+                <p className="text-2xl font-bold">{hubData.activity.conversations}</p>
+                <p className="text-xs text-zinc-500">Conversations</p>
+              </div>
+            </div>
+            {hubData.activity.visits > 0 && (
+              <p className="text-sm text-zinc-400 mt-4 text-center">
+                <Sparkles className="w-4 h-4 inline mr-1 text-pink-400" />
+                Your Orbit is being discovered!
+              </p>
+            )}
+          </div>
+
+          {/* Locked Premium Sections */}
+          <div className="space-y-4 mb-8">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-zinc-400" />
+              Unlock More Insights
+            </h2>
+            
+            {/* Locked: Audience Insights */}
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-800/10 to-transparent" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-zinc-400">Audience Breakdown</p>
+                    <p className="text-xs text-zinc-600">See who's visiting and when</p>
+                  </div>
+                </div>
+                <Lock className="w-4 h-4 text-zinc-600" />
+              </div>
+            </div>
+
+            {/* Locked: AI Insights */}
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-800/10 to-transparent" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-zinc-400">AI Recommendations</p>
+                    <p className="text-xs text-zinc-600">Personalised growth insights</p>
+                  </div>
+                </div>
+                <Lock className="w-4 h-4 text-zinc-600" />
+              </div>
+            </div>
+
+            {/* Locked: Leads & Introductions */}
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-800/10 to-transparent" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-zinc-400">Leads & Introductions</p>
+                    <p className="text-xs text-zinc-600">Connect with interested visitors</p>
+                  </div>
+                </div>
+                <Lock className="w-4 h-4 text-zinc-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Upgrade CTA - Positioned as advantage, not gate */}
+          <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 rounded-xl p-6 text-center">
+            <h3 className="text-lg font-medium mb-2">Ready for the full picture?</h3>
+            <p className="text-sm text-zinc-400 mb-4">
+              Unlock audience insights, AI recommendations, and lead notifications.
+            </p>
             <Button 
               className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
               data-testid="button-upgrade-to-grow"
@@ -258,13 +381,17 @@ export default function DataHub() {
             >
               {upgradeMutation.isPending ? "Loading..." : "Upgrade to Grow"}
             </Button>
+          </div>
+
+          {/* View Orbit Link */}
+          <div className="text-center mt-6">
             <Button 
               variant="ghost" 
-              onClick={() => setLocation(`/orbit/${slug}?view=public`)}
+              onClick={() => setLocation(`/orbit/${slug}`)}
               className="text-zinc-400"
               data-testid="button-view-orbit"
             >
-              View your Orbit
+              ← View your Orbit
             </Button>
           </div>
         </div>

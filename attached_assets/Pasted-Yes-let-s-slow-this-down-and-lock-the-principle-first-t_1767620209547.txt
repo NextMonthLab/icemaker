@@ -1,0 +1,145 @@
+Yes – let’s slow this down and lock the principle first, then we’ll give Radplayers a clean, unambiguous steer.
+
+You’re right: what you’re seeing right now is a hard paywall, and that’s not what we agreed. It breaks trust and it breaks the product story.
+
+⸻
+
+What we agreed (and why it matters)
+
+Claiming an Orbit ≠ Paying customer
+
+Claiming is the on-ramp. Payment is the accelerator.
+
+If someone claims an Orbit and immediately hits an upgrade wall when they click “Manage your Orbit”, the message they receive is:
+
+“This isn’t really yours unless you pay.”
+
+That’s the wrong psychological contract.
+
+What we actually agreed was:
+
+⸻
+
+✅ Free = Ownership + Orientation
+
+💷 Paid = Power + Advantage
+
+Free (after claiming an Orbit)
+
+Users must be able to manage basic, confidence-building functionality.
+
+That includes:
+
+1. Basic Orbit Management (non-negotiable)
+	•	View Orbit details (name, category, location)
+	•	Confirm they are the owner
+	•	See status: claimed / live / dormant
+
+2. Lightweight Analytics (teaser-level)
+Enough to answer:
+
+“Is anything happening here?”
+
+For example:
+	•	Total visits (lifetime or last 30 days)
+	•	Total interactions (blurred or aggregated)
+	•	A simple trend indicator (↑ ↓ →)
+
+Not deep insight. Just proof of life.
+
+3. Clear “What You’re Missing” Framing
+Inside the free view, we show locked items:
+	•	Audience breakdown (locked)
+	•	AI insights (locked)
+	•	Introductions & recommendations (locked)
+
+This creates desire, not resentment.
+
+⸻
+
+Paid = Strategic Advantage
+
+Upgrade unlocks:
+	•	Real intelligence
+	•	Personalised insights
+	•	Introductions
+	•	Competitive positioning
+	•	Historical depth
+	•	AI recommendations
+
+So the upgrade feels like:
+
+“I can already see this works – now I want the edge.”
+
+Not:
+
+“I can’t even get in.”
+
+⸻
+
+The core rule (this is the line to hold)
+
+Manage your Orbit should NEVER route directly to an upgrade screen.
+
+Upgrade should be:
+	•	A choice
+	•	Triggered by curiosity
+	•	Positioned as advantage, not access
+
+⸻
+
+What’s wrong with the current behaviour
+
+Right now:
+	•	User claims Orbit
+	•	Clicks Manage your Orbit
+	•	Gets forced into upgrade
+	•	Cannot manage anything
+
+That’s a hard block, and it contradicts:
+	•	Our previous agreements
+	•	Good SaaS conversion psychology
+	•	The “free claim” promise
+
+You’re absolutely right to flag it.
+
+⸻
+
+Message you can send to Radplayers (pasteable)
+
+Here’s a clean, calm, unambiguous version you can drop straight in:
+
+⸻
+
+When testing as FlashBuzz (boo.flashbuzz.co.uk), I’ve already claimed the Orbit, but when I click “Manage your Orbit” it routes me directly to an upgrade screen, meaning I can’t manage anything at all.
+
+This feels like a hard block and isn’t what we agreed.
+
+Our intention was:
+	•	Claiming an Orbit gives users basic management access
+	•	Free users can see lightweight analytics (teaser-level, not deep insight)
+	•	Upgrade unlocks advanced intelligence, AI insights, and advantages
+
+“Manage your Orbit” should never force an upgrade. It should open a basic management view, with premium features clearly shown as locked.
+
+The upgrade should feel like an advantage, not a gate just to get in.
+
+Can we adjust the routing so claimed Orbits always open a free management view, with upgrade prompts inside it rather than replacing it?
+
+⸻
+
+Final gut-check (and I’ll be blunt)
+
+You’re thinking about this exactly right.
+
+This is the difference between:
+	•	A platform people trust
+	•	And a platform people bounce off
+
+Fixing this now will materially improve conversion later.
+
+If you want, next step we can:
+	•	Define the exact free management screen layout
+	•	Or write the microcopy that makes people want to upgrade rather than feel forced
+
+Your call.
