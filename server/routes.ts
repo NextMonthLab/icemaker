@@ -9525,8 +9525,8 @@ STRICT RULES:
       // Check both email and username fields (username often stores email for email-based login)
       const userEmail = (user?.email || user?.username)?.toLowerCase() || null;
       
-      // Claimed = has owner ID, owner email, or verified timestamp
-      const isClaimed = !!(orbitMeta.ownerId || orbitMeta.ownerEmail || orbitMeta.verifiedAt);
+      // Claimed = has owner ID or owner email (verifiedAt just means generated, not claimed)
+      const isClaimed = !!(orbitMeta.ownerId || orbitMeta.ownerEmail);
       
       // Determine viewer role: admin if authenticated and owner (by ID or email)
       const isOwnerById = userId && orbitMeta.ownerId === userId;
