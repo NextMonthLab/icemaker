@@ -93,7 +93,7 @@ export function LaunchpadHeader({
         </Badge>
 
         {!isPowered && (
-          <Link href={`/orbit/${selectedOrbit?.slug}/settings`} className="hidden md:block">
+          <Link href={`/orbit/${selectedOrbit?.slug}/hub`} className="hidden md:block">
             <Button
               variant="outline"
               size="sm"
