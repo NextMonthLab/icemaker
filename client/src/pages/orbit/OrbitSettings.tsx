@@ -152,7 +152,7 @@ export default function OrbitSettings() {
 
   return (
     <OrbitLayout>
-      <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-3xl mx-auto">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-2xl mx-auto w-full">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white" data-testid="text-settings-title">
             Strengthen Your Orbit
