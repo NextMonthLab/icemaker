@@ -10877,7 +10877,23 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       
       await objectStorage.uploadBuffer(file.buffer, safeFileName, file.mimetype || 'application/octet-stream', `orbit/${slug}/documents`);
       
-      // Create document record
+      // Extract text BEFORE creating document record (synchronous, not background)
+      const { extractDocumentText } = await import("./services/documentProcessor");
+      let extractedText = '';
+      let pageCount = 0;
+      let extractionError = '';
+      
+      try {
+        const result = await extractDocumentText(file.buffer, fileType);
+        extractedText = result.text || '';
+        pageCount = result.pageCount || 0;
+        console.log(`[OrbitDocuments] Extracted ${extractedText.length} chars, ${pageCount} pages from ${file.originalname}`);
+      } catch (error) {
+        console.error('[OrbitDocuments] Text extraction error:', error);
+        extractionError = error instanceof Error ? error.message : 'Text extraction failed';
+      }
+      
+      // Create document record with extracted text already populated
       const doc = await storage.createOrbitDocument({
         businessSlug: slug,
         uploadedByUserId: user.id,
@@ -10888,28 +10904,11 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         title: title || file.originalname,
         description: description || null,
         category: category || 'other',
-        status: 'processing',
+        status: extractionError ? 'error' : 'ready',
+        extractedText: extractedText || null,
+        pageCount: pageCount || null,
+        errorMessage: extractionError || null,
       });
-      
-      // Process document in background (extract text)
-      (async () => {
-        try {
-          const { extractDocumentText } = await import("./services/documentProcessor");
-          const { text, pageCount } = await extractDocumentText(file.buffer, fileType);
-          
-          await storage.updateOrbitDocument(doc.id, {
-            extractedText: text || null,
-            pageCount: pageCount || null,
-            status: text ? 'ready' : 'ready', // Even if no text, mark as ready
-          });
-        } catch (error) {
-          console.error('[OrbitDocuments] Text extraction error:', error);
-          await storage.updateOrbitDocument(doc.id, {
-            status: 'error',
-            errorMessage: error instanceof Error ? error.message : 'Text extraction failed',
-          });
-        }
-      })();
       
       res.json(doc);
     } catch (error) {
