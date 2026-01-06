@@ -501,11 +501,14 @@ export default function OrbitSettings() {
               </div>
             )}
 
-            {/* Upload Button */}
+            {/* Upload Button - Opens modal on Documents tab so user can select category */}
             <Button
               variant="outline"
               className="w-full border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                setModalTab('docs');
+                setShowAddModal(true);
+              }}
               disabled={isUploading}
               data-testid="button-upload-document"
             >
