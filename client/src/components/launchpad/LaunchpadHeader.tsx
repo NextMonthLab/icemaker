@@ -92,16 +92,16 @@ export function LaunchpadHeader({
           )}
         </Badge>
 
-        {!isPowered && (
-          <Link href={`/orbit/${selectedOrbit?.slug}/sources`} className="hidden md:block">
+        {!isPowered && selectedOrbit && (
+          <Link href={`/orbit/${selectedOrbit.slug}/settings`}>
             <Button
               variant="outline"
               size="sm"
               className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
               data-testid="button-power-up"
             >
-              <Zap className="w-4 h-4 mr-1" />
-              Add sources
+              <Zap className="w-4 h-4 md:mr-1" />
+              <span className="hidden md:inline">Add sources</span>
             </Button>
           </Link>
         )}
