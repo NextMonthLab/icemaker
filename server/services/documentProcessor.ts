@@ -1,11 +1,5 @@
 import type { OrbitDocumentType } from "@shared/schema";
-import { createRequire } from 'module';
-
-// pdf-parse is CommonJS - need to use createRequire for ES modules
-const require = createRequire(import.meta.url);
-const pdfParseModule = require('pdf-parse');
-// The module exports PDFParse as a named export
-const pdfParse = pdfParseModule.PDFParse || pdfParseModule.default || pdfParseModule;
+import { PDFParse } from 'pdf-parse';
 
 export function detectDocumentType(fileName: string): OrbitDocumentType {
   const ext = fileName.toLowerCase().split('.').pop() || '';
@@ -30,10 +24,14 @@ export const MAX_DOCUMENT_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
 
 export async function extractTextFromPdf(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
   try {
-    const data = await pdfParse(buffer);
+    // pdf-parse v2 uses class-based API
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+    
     return {
-      text: data.text?.slice(0, 500000) || '', // Limit to 500k chars
-      pageCount: data.numpages || 0,
+      text: result.text?.slice(0, 500000) || '', // Limit to 500k chars
+      pageCount: result.total || 0,
     };
   } catch (error) {
     console.error('[DocumentProcessor] PDF extraction error:', error);
