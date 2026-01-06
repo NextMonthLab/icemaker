@@ -1,0 +1,268 @@
+Absolutely. Copy and paste this into Replit as your implementation prompt. It’s written to replace “Connect your social media channels” with the curated Hero Posts approach, without breaking anything else.
+
+⸻
+
+Replit Prompt: Replace Social Channel Connect with Curated Hero Posts
+
+Context
+
+We are building Orbit’s social ingestion. The current UI asks users to “Connect your social media channels” (LinkedIn, X, Instagram, Facebook etc). This is too dependent on platform APIs, permissions, and friction.
+
+We want to replace this with a curated workflow called Hero Posts:
+	•	Users paste links to their highest performing social posts (especially LinkedIn)
+	•	Orbit stores these as a curated library
+	•	Orbit extracts themes, hooks, proof, and offers
+	•	Orbit generates follow-up content and strategic insights
+	•	Orbit links back to the original posts, driving traffic to them
+
+This is consent-first, simple, and feels premium.
+
+Goals
+	1.	Replace the current “Connect channels” onboarding with Hero Posts onboarding
+	2.	Support link capture with minimal friction and graceful fallback
+	3.	Create a meaningful “Orbit output” from Hero Posts: patterns, themes, proof library, next actions
+	4.	Keep architecture clean and extensible for future API connectors (optional later)
+
+⸻
+
+UX Changes
+
+Replace the existing page
+
+Update the “Connect your social channels” page into:
+
+Title: Add your Hero Posts
+Subtitle: Paste links to your best social posts and Orbit will learn what works, extract proof, and help you create more.
+
+Primary CTA: Add a Hero Post
+Secondary: Add multiple links (bulk paste)
+Tertiary: Skip for now
+
+Hero Post card capture flow
+
+When user clicks Add a Hero Post, show a modal with:
+
+Required:
+	•	Post URL (input)
+
+Optional, shown as collapsible “Make this stronger” section:
+	•	Platform (auto-detect from URL, user can override)
+	•	Who posted (select a Business Voice, or “Unknown”)
+	•	Why it performed (multi-select chips):
+	•	Comments
+	•	Shares/Reposts
+	•	Likes
+	•	Leads
+	•	Profile views
+	•	DMs
+	•	Other
+	•	Post text (textarea) with helper: “If Orbit cannot read the full text from the link, paste it here.”
+	•	Outcome (textarea): “What happened in the real world because of this post?”
+	•	Tags (free tags): “tax”, “pensions”, “case study”, “hiring”, “culture”, etc.
+
+On save:
+	•	Store it immediately
+	•	Kick off background enrichment
+
+Bulk paste flow
+
+Allow user to paste multiple links at once (one per line). Create a HeroPost record for each, then show them in a list with a status:
+	•	Pending enrichment
+	•	Needs text (if we could not fetch enough)
+	•	Ready
+
+Results view (first wow moment)
+
+After enrichment completes, show:
+	1.	What works for you
+
+	•	Top hooks (question, contrarian take, story, list, client win)
+	•	Top themes (topic clusters)
+	•	Strongest proof types (numbers, testimonials, before/after, authority)
+
+	2.	Your Proof Library
+
+	•	A filtered list of Hero Posts with extracted proof points and outcomes
+
+	3.	Next Posts to write
+
+	•	5 suggested follow-ups, each tied to a Hero Post, each includes a link back suggestion
+
+⸻
+
+Data Model
+
+Create a new entity, adapt to existing DB layer (Prisma/Drizzle/SQL). Suggested fields:
+
+HeroPost
+	•	id (uuid)
+	•	tenantId / orbitId (whatever your tenancy model uses)
+	•	createdByUserId
+	•	sourcePlatform (enum: linkedin, x, instagram, facebook, youtube, tiktok, other)
+	•	url (string, unique per tenant)
+	•	authorName (string, optional)
+	•	authorType (enum: business_voice, company_page, unknown)
+	•	businessVoiceId (nullable)
+	•	title (string, optional, derived from OG title or first line)
+	•	text (text, optional)
+	•	outcomeNote (text, optional)
+	•	performedBecause (json array of strings)
+	•	tags (json array of strings)
+	•	ogImageUrl (string, optional)
+	•	ogDescription (string, optional)
+	•	publishedAt (datetime nullable)
+	•	status (enum: pending, enriching, needs_text, ready, error)
+	•	errorMessage (string nullable)
+	•	extracted (json nullable)
+	•	topics[]
+	•	hookType
+	•	intent (educate/sell/recruit/culture/proof)
+	•	offers[]
+	•	proofPoints[]
+	•	entities[]
+	•	riskFlags[]
+
+HeroPostInsight (optional, can be generated on demand)
+	•	id
+	•	tenantId
+	•	summary (text)
+	•	topThemes (json)
+	•	topHooks (json)
+	•	topProofTypes (json)
+	•	suggestions (json array of “next post” objects)
+	•	updatedAt
+
+⸻
+
+Backend Endpoints
+
+Implement API routes consistent with current code patterns:
+	•	POST /api/hero-posts
+	•	body: { url, platform?, businessVoiceId?, text?, performedBecause?, outcomeNote?, tags? }
+	•	creates record, status=pending
+	•	POST /api/hero-posts/bulk
+	•	body: { urls: string[] }
+	•	returns created items
+	•	GET /api/hero-posts
+	•	list with filters: platform, status, tags, businessVoiceId
+	•	PUT /api/hero-posts/:id
+	•	update fields, especially text, tags, outcome
+	•	DELETE /api/hero-posts/:id
+	•	POST /api/hero-posts/:id/enrich
+	•	triggers enrichment job
+	•	GET /api/hero-posts/insights
+	•	returns computed summary (generate if stale)
+
+⸻
+
+Enrichment Logic
+
+Step 1: URL validation and platform detection
+
+Detect platform by hostname:
+	•	linkedin.com -> linkedin
+	•	x.com, twitter.com -> x
+	•	instagram.com -> instagram
+	•	facebook.com -> facebook
+Else -> other
+
+Step 2: Metadata fetch (safe and lightweight)
+
+Fetch OpenGraph metadata for the URL:
+	•	title
+	•	description
+	•	image
+
+Store these to help the UI.
+
+Important: Do not rely on OG for full post text. It will often be incomplete.
+
+Step 3: Determine if text is required
+
+If we do not have sufficient text:
+	•	If user provided text, use it
+	•	Else set status to needs_text and show UI prompt: “Paste the post text to complete this Hero Post.”
+
+Step 4: NLP extraction (your AI layer)
+
+Run extraction on the best available text:
+	•	hookType classification
+	•	topics
+	•	intent
+	•	proofPoints extraction
+	•	offers extraction
+	•	entities
+	•	generate 3 follow-up post ideas with a suggested “reference link back” line
+
+Store results in extracted JSON.
+
+Step 5: Insights aggregation
+
+Compute across all Hero Posts:
+	•	theme frequency
+	•	hook type frequency
+	•	proof type frequency
+	•	“what to do next” list
+
+Cache this as HeroPostInsight with updatedAt and refresh when new Hero Posts arrive.
+
+⸻
+
+UI Components
+
+Create these components, adapt to the existing design system:
+	1.	HeroPostsPage
+
+	•	Header, explainer, add button
+	•	List of HeroPost cards with status badges
+	•	Filters: platform, voice, tags, status
+
+	2.	AddHeroPostModal
+
+	•	URL field
+	•	Optional sections for text, outcome, tags, voice
+	•	Save
+
+	3.	BulkAddHeroPostsModal
+
+	•	textarea for multiple links
+	•	create all
+
+	4.	HeroPostDetailDrawer
+
+	•	Show: link, OG preview, extracted insights, proof points
+	•	Editable fields: text, outcome, tags
+	•	CTA: “Generate follow-ups”
+
+	5.	HeroPostInsightsPanel
+
+	•	Displays aggregated outputs
+	•	“Next posts to write” list
+
+⸻
+
+Migration and Replacement Strategy
+	•	Keep the existing “Connect social channels” code behind a feature flag or move it into an “Advanced connectors (coming soon)” section.
+	•	Default experience is Hero Posts.
+	•	If there is an existing navigation item “Social Channels”, rename it to “Hero Posts”.
+
+⸻
+
+Acceptance Criteria
+	1.	A user can add a single Hero Post link and see it appear instantly in a list.
+	2.	Bulk add works.
+	3.	Enrichment runs and updates status.
+	4.	If text cannot be fetched, the UI clearly asks user to paste it.
+	5.	Insights page shows meaningful patterns after at least 5 Hero Posts.
+	6.	Each Hero Post always displays and retains the original link, and the UI encourages opening it, driving traffic back.
+
+⸻
+
+Copy and Microcopy (use exactly)
+	•	“Hero Posts are your best performing social posts. Orbit learns from them and helps you create more content that works.”
+	•	“Orbit will never post on your behalf. It only creates drafts for you to approve.”
+	•	“If Orbit cannot read the full text from the link, paste it here.”
+
+⸻
+
+If you want, I can also write the “first 60 seconds” UX script so it feels like Orbit is doing a proper scan (status messaging, progress steps, and the exact wording that makes it feel cinematic rather than admin).
