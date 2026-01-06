@@ -11141,15 +11141,18 @@ ${businessType === 'restaurant' ? '- For menu queries: use £ for prices, refere
       
       const fileType = detectDocumentType(file.originalname);
       const timestamp = Date.now();
-      const storagePath = `.private/orbit/${slug}/documents/${timestamp}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const safeFileName = `${timestamp}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const storagePath = `orbit/${slug}/documents/${safeFileName}`;
       
-      // Upload to object storage
-      const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
-      if (!isObjectStorageConfigured()) {
-        return res.status(503).json({ message: "Object storage not configured" });
+      // Upload to object storage using Replit integration
+      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
+      const objectStorage = new ObjectStorageService();
+      
+      if (!objectStorage.isConfigured()) {
+        return res.status(503).json({ message: "Object storage not configured. Please set up App Storage in the Replit tools panel." });
       }
       
-      await putObject(storagePath, file.buffer, file.mimetype || 'application/octet-stream');
+      await objectStorage.uploadBuffer(file.buffer, safeFileName, file.mimetype || 'application/octet-stream', `orbit/${slug}/documents`);
       
       // Create document record
       const doc = await storage.createOrbitDocument({
