@@ -10003,6 +10003,11 @@ STRICT RULES:
       
       // Get boxes and detect business type
       const boxes = await storage.getOrbitBoxes(slug);
+      
+      // Get uploaded documents for additional context
+      const documents = await storage.getOrbitDocuments(slug);
+      const readyDocs = documents.filter(d => d.status === 'ready' && d.extractedText);
+      
       let items = menuContext;
       if (!items || items.length === 0) {
         items = boxes.slice(0, 60).map(b => ({
@@ -10100,6 +10105,44 @@ STRICT RULES:
         ).join('\n')}`;
       }
       
+      // Add document context if available
+      let documentContext = '';
+      if (readyDocs.length > 0) {
+        const docSections: string[] = [];
+        
+        // Group documents by category for organized context
+        const docsByCategory: Record<string, typeof readyDocs> = {};
+        for (const doc of readyDocs) {
+          const cat = doc.category || 'other';
+          if (!docsByCategory[cat]) docsByCategory[cat] = [];
+          docsByCategory[cat].push(doc);
+        }
+        
+        // Category labels for display
+        const categoryLabels: Record<string, string> = {
+          products: 'Products & Services Info',
+          pricing: 'Pricing Information',
+          policies: 'Policies & Terms',
+          guides: 'How-to Guides',
+          faqs: 'FAQs',
+          company: 'Company Information',
+          other: 'Additional Information',
+        };
+        
+        for (const [category, docs] of Object.entries(docsByCategory)) {
+          const label = categoryLabels[category] || 'Additional Information';
+          const docsContent = docs.map(d => {
+            // Truncate each doc to reasonable size
+            const text = d.extractedText?.slice(0, 3000) || '';
+            return `[${d.title || d.fileName}]\n${text}`;
+          }).join('\n\n');
+          
+          docSections.push(`### ${label}:\n${docsContent}`);
+        }
+        
+        documentContext = `\n## Uploaded Documents:\n${docSections.join('\n\n')}\n`;
+      }
+
       // Build business-type-specific prompt
       let narrativeSection = '';
       if (businessType === 'recruitment') {
@@ -10135,7 +10178,7 @@ For questions about:
       const systemPrompt = `You are a helpful assistant for ${brandName}, a ${businessTypeLabel}. You help visitors learn about our ${offeringsLabel} and find what they need.
 
 ${contextSummary}
-
+${documentContext}
 ## Intent Classification & Response Guidelines:
 
 ### TRANSACTIONAL QUERIES (Answer directly, route clearly):
