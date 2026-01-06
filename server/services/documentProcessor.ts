@@ -1,6 +1,8 @@
 import type { OrbitDocumentType } from "@shared/schema";
+import { createRequire } from 'module';
 
-// pdf-parse is CommonJS - use require
+// pdf-parse is CommonJS - need to use createRequire for ES modules
+const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
 export function detectDocumentType(fileName: string): OrbitDocumentType {
