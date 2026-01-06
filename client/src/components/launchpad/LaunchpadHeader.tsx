@@ -1,4 +1,4 @@
-import { ChevronDown, Zap, Library, Plus, ExternalLink, Share2 } from "lucide-react";
+import { ChevronDown, Zap, Library, Plus, ExternalLink, Share2, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,21 +95,18 @@ export function LaunchpadHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
-        {!isPowered && selectedOrbit && (
-          <Link href={`/orbit/${selectedOrbit.slug}/settings`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 flex-shrink-0"
-              data-testid="button-power-up"
-            >
-              <Zap className="w-4 h-4 md:mr-1" />
-              <span className="hidden md:inline">Add sources</span>
-            </Button>
-          </Link>
-        )}
         {selectedOrbit && (
           <>
+            <Link href={`/orbit/${selectedOrbit.slug}/settings`}>
+              <Button
+                variant="ghost"
+                className="text-white/60 hover:text-white hover:bg-white/10 flex-shrink-0"
+                data-testid="button-orbit-settings"
+              >
+                <Settings className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Sources</span>
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               className="text-white/60 hover:text-white hover:bg-white/10"
