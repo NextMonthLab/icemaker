@@ -3,7 +3,9 @@ import { createRequire } from 'module';
 
 // pdf-parse is CommonJS - need to use createRequire for ES modules
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
+// The module exports PDFParse as a named export
+const pdfParse = pdfParseModule.PDFParse || pdfParseModule.default || pdfParseModule;
 
 export function detectDocumentType(fileName: string): OrbitDocumentType {
   const ext = fileName.toLowerCase().split('.').pop() || '';
