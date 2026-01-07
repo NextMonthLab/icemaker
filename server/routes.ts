@@ -11193,6 +11193,175 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
 
   // ==================== END HERO POSTS ====================
 
+  // ==================== KNOWLEDGE COACH ====================
+  
+  // Get pending knowledge prompts for an Orbit
+  app.get("/api/orbit/:slug/knowledge-coach/prompts", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      const status = req.query.status as string | undefined;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can view knowledge prompts" });
+      }
+      
+      // Check tier eligibility (Grow or Intelligence only)
+      const tier = orbitMeta.planTier;
+      if (tier !== 'grow' && tier !== 'insight' && tier !== 'intelligence') {
+        return res.status(403).json({ 
+          message: "Knowledge Coach is available on Grow and Intelligence plans",
+          upgradeRequired: true
+        });
+      }
+      
+      const prompts = await storage.getKnowledgePrompts(slug, status as any);
+      const pendingCount = await storage.getPendingKnowledgePromptsCount(slug);
+      
+      res.json({ prompts, pendingCount });
+    } catch (error) {
+      console.error("Error getting knowledge prompts:", error);
+      res.status(500).json({ message: "Error getting knowledge prompts" });
+    }
+  });
+  
+  // Generate fresh prompts for the current week
+  app.post("/api/orbit/:slug/knowledge-coach/generate", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can generate prompts" });
+      }
+      
+      const tier = orbitMeta.planTier;
+      if (tier !== 'grow' && tier !== 'insight' && tier !== 'intelligence') {
+        return res.status(403).json({ 
+          message: "Knowledge Coach is available on Grow and Intelligence plans",
+          upgradeRequired: true
+        });
+      }
+      
+      const { generateWeeklyPrompts, getCurrentWeekNumber } = await import("./services/knowledgeCoach");
+      const tierMapping = tier === 'intelligence' ? 'intelligence' : 'grow';
+      const prompts = await generateWeeklyPrompts(slug, tierMapping);
+      
+      res.json({ 
+        prompts, 
+        weekNumber: getCurrentWeekNumber(),
+        message: prompts.length > 0 ? `Generated ${prompts.length} questions for this week` : "No gaps detected - your Orbit is looking great!"
+      });
+    } catch (error) {
+      console.error("Error generating knowledge prompts:", error);
+      res.status(500).json({ message: "Error generating prompts" });
+    }
+  });
+  
+  // Submit an answer to a knowledge prompt
+  app.post("/api/orbit/:slug/knowledge-coach/prompts/:promptId/answer", requireAuth, async (req, res) => {
+    try {
+      const { slug, promptId } = req.params;
+      const user = req.user as schema.User;
+      const { answerText, filedDestination, filedBoxId } = req.body;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can answer prompts" });
+      }
+      
+      if (!answerText || typeof answerText !== 'string' || answerText.trim().length < 10) {
+        return res.status(400).json({ message: "Answer must be at least 10 characters" });
+      }
+      
+      const prompt = await storage.getKnowledgePrompt(parseInt(promptId));
+      if (!prompt || prompt.businessSlug !== slug) {
+        return res.status(404).json({ message: "Prompt not found" });
+      }
+      
+      const { processAnswer } = await import("./services/knowledgeCoach");
+      const result = await processAnswer(
+        parseInt(promptId), 
+        answerText.trim(), 
+        filedDestination || prompt.suggestedDestination,
+        filedBoxId
+      );
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+      
+      // Recalculate strength score after filing new content
+      const boxes = await storage.getOrbitBoxes(slug);
+      const sources = await storage.getOrbitSources(slug);
+      const documents = await storage.getOrbitDocuments(slug);
+      const heroPosts = await storage.getHeroPosts(slug);
+      
+      const { calculateStrengthScore } = await import("./services/orbitStrength");
+      const heroPostKnowledgeCount = heroPosts.filter(p => p.markedAsKnowledge).length;
+      const strengthResult = calculateStrengthScore(sources, documents.length, heroPostKnowledgeCount);
+      
+      await storage.updateOrbitMeta(slug, { 
+        strengthScore: strengthResult.strengthScore 
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Answer saved and filed successfully",
+        newStrengthScore: strengthResult.strengthScore
+      });
+    } catch (error) {
+      console.error("Error processing answer:", error);
+      res.status(500).json({ message: "Error processing answer" });
+    }
+  });
+  
+  // Dismiss a knowledge prompt
+  app.post("/api/orbit/:slug/knowledge-coach/prompts/:promptId/dismiss", requireAuth, async (req, res) => {
+    try {
+      const { slug, promptId } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can dismiss prompts" });
+      }
+      
+      const prompt = await storage.getKnowledgePrompt(parseInt(promptId));
+      if (!prompt || prompt.businessSlug !== slug) {
+        return res.status(404).json({ message: "Prompt not found" });
+      }
+      
+      const { dismissPrompt } = await import("./services/knowledgeCoach");
+      const dismissed = await dismissPrompt(parseInt(promptId));
+      
+      res.json({ success: dismissed });
+    } catch (error) {
+      console.error("Error dismissing prompt:", error);
+      res.status(500).json({ message: "Error dismissing prompt" });
+    }
+  });
+
+  // ==================== END KNOWLEDGE COACH ====================
+
   // ==================== ORBIT DOCUMENTS ====================
   
   // Upload a document
