@@ -1709,6 +1709,17 @@ export const heroPostInsights = pgTable("hero_post_insights", {
     linkBackSuggestion: string;
   }>>(),
   
+  // Brand Voice / Tone of Voice analysis
+  brandVoiceSummary: text("brand_voice_summary"),
+  voiceTraits: jsonb("voice_traits").$type<string[]>(),
+  audienceNotes: text("audience_notes"),
+  toneGuidance: jsonb("tone_guidance").$type<{
+    dosList?: string[];
+    dontsList?: string[];
+    keyPhrases?: string[];
+  }>(),
+  brandVoiceUpdatedAt: timestamp("brand_voice_updated_at"),
+  
   // Cache management
   postCount: integer("post_count").default(0).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
