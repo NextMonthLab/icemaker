@@ -10889,6 +10889,90 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
     }
   });
 
+  // Get brand voice analysis
+  app.get("/api/orbit/:slug/brand-voice", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can view brand voice" });
+      }
+      
+      const insights = await storage.getHeroPostInsights(slug);
+      const posts = await storage.getHeroPosts(slug);
+      
+      res.json({
+        brandVoiceSummary: insights?.brandVoiceSummary || null,
+        voiceTraits: insights?.voiceTraits || [],
+        audienceNotes: insights?.audienceNotes || null,
+        toneGuidance: insights?.toneGuidance || null,
+        brandVoiceUpdatedAt: insights?.brandVoiceUpdatedAt || null,
+        heroPosts: posts,
+        readyPostCount: posts.filter(p => p.status === 'ready').length,
+      });
+    } catch (error) {
+      console.error("Error getting brand voice:", error);
+      res.status(500).json({ message: "Error getting brand voice" });
+    }
+  });
+
+  // Rebuild brand voice analysis
+  app.post("/api/orbit/:slug/brand-voice/rebuild", requireAuth, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const user = req.user as schema.User;
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.ownerId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ message: "Only the orbit owner can rebuild brand voice" });
+      }
+      
+      const posts = await storage.getHeroPosts(slug);
+      const readyPosts = posts.filter(p => p.status === 'ready' && p.postText);
+      
+      if (readyPosts.length === 0) {
+        return res.status(400).json({ 
+          message: "No ready hero posts with text to analyze. Add hero posts first." 
+        });
+      }
+      
+      const { analyzeBrandVoice } = await import("./services/brandVoiceAnalysis");
+      const analysis = await analyzeBrandVoice(posts);
+      
+      if (!analysis) {
+        return res.status(500).json({ message: "Failed to analyze brand voice" });
+      }
+      
+      await storage.upsertHeroPostInsights(slug, {
+        businessSlug: slug,
+        brandVoiceSummary: analysis.brandVoiceSummary,
+        voiceTraits: analysis.voiceTraits,
+        audienceNotes: analysis.audienceNotes,
+        toneGuidance: analysis.toneGuidance,
+        brandVoiceUpdatedAt: new Date(),
+      });
+      
+      res.json({
+        ...analysis,
+        brandVoiceUpdatedAt: new Date(),
+        readyPostCount: readyPosts.length,
+      });
+    } catch (error) {
+      console.error("Error rebuilding brand voice:", error);
+      res.status(500).json({ message: "Error rebuilding brand voice" });
+    }
+  });
+
   // ==================== END HERO POSTS ====================
 
   // ==================== ORBIT DOCUMENTS ====================
