@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Settings, Building2, Globe, Bell, Shield, FileText, Zap, Check, ExternalLink, Plus, X, Link2, Instagram, Linkedin, Facebook, Twitter, Youtube, Upload, Trash2, Loader2, File, Sparkles, RefreshCw, Play, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -25,6 +25,12 @@ interface OrbitSource {
 interface OrbitMeta {
   strengthScore: number;
   planTier: string;
+  customTitle?: string | null;
+  sourceUrl?: string;
+  aiIndexingEnabled?: boolean;
+  autoUpdateKnowledge?: boolean;
+  aiAccuracyAlertsEnabled?: boolean;
+  weeklyReportsEnabled?: boolean;
 }
 
 interface OrbitDocument {
@@ -99,6 +105,15 @@ export default function OrbitSettings() {
   const [selectedSourceType, setSelectedSourceType] = useState<SourceLabel | ''>('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [heroPostUrl, setHeroPostUrl] = useState('');
+  
+  // Settings form state
+  const [businessName, setBusinessName] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [aiIndexingEnabled, setAiIndexingEnabled] = useState(true);
+  const [autoUpdateKnowledge, setAutoUpdateKnowledge] = useState(true);
+  const [aiAccuracyAlertsEnabled, setAiAccuracyAlertsEnabled] = useState(true);
+  const [weeklyReportsEnabled, setWeeklyReportsEnabled] = useState(false);
+  const [settingsInitialized, setSettingsInitialized] = useState(false);
   const [heroPostText, setHeroPostText] = useState('');
   const [docCategory, setDocCategory] = useState('other');
   const [videoUrl, setVideoUrl] = useState('');
@@ -167,6 +182,63 @@ export default function OrbitSettings() {
   const sources = sourcesData?.sources || [];
   const strengthScore = orbitData?.strengthScore ?? 0;
   const isPowered = strengthScore > 0;
+  
+  // Initialize settings from loaded data
+  useEffect(() => {
+    if (orbitData && !settingsInitialized) {
+      setBusinessName(orbitData.customTitle || '');
+      setWebsiteUrl(orbitData.sourceUrl || '');
+      setAiIndexingEnabled(orbitData.aiIndexingEnabled ?? true);
+      setAutoUpdateKnowledge(orbitData.autoUpdateKnowledge ?? true);
+      setAiAccuracyAlertsEnabled(orbitData.aiAccuracyAlertsEnabled ?? true);
+      setWeeklyReportsEnabled(orbitData.weeklyReportsEnabled ?? false);
+      setSettingsInitialized(true);
+    }
+  }, [orbitData, settingsInitialized]);
+  
+  // Save settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settings: {
+      customTitle?: string;
+      sourceUrl?: string;
+      aiIndexingEnabled?: boolean;
+      autoUpdateKnowledge?: boolean;
+      aiAccuracyAlertsEnabled?: boolean;
+      weeklyReportsEnabled?: boolean;
+    }) => {
+      const response = await fetch(`/api/orbit/${slug}/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(settings),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save settings');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Settings saved", description: "Your changes have been saved." });
+      queryClient.invalidateQueries({ queryKey: ["orbit-meta", slug] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+  
+  const handleSaveSettings = () => {
+    saveSettingsMutation.mutate({
+      customTitle: businessName || undefined,
+      sourceUrl: websiteUrl || undefined,
+      aiIndexingEnabled,
+      autoUpdateKnowledge,
+      aiAccuracyAlertsEnabled,
+      weeklyReportsEnabled,
+    });
+  };
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -859,6 +931,8 @@ export default function OrbitSettings() {
                 <label className="text-sm text-white/60 block mb-1">Business Name</label>
                 <Input
                   placeholder="Your Business Name"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
                   className="bg-white/5 border-white/10 text-white"
                   data-testid="input-business-name"
                 />
@@ -867,6 +941,8 @@ export default function OrbitSettings() {
                 <label className="text-sm text-white/60 block mb-1">Website</label>
                 <Input
                   placeholder="https://example.com"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
                   className="bg-white/5 border-white/10 text-white"
                   data-testid="input-website"
                 />
@@ -887,14 +963,22 @@ export default function OrbitSettings() {
                   <p className="text-sm text-white">Allow AI Indexing</p>
                   <p className="text-xs text-white/50">Let AI systems discover your business</p>
                 </div>
-                <Switch defaultChecked data-testid="toggle-ai-indexing" />
+                <Switch 
+                  checked={aiIndexingEnabled} 
+                  onCheckedChange={setAiIndexingEnabled}
+                  data-testid="toggle-ai-indexing" 
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-white">Auto-Update Knowledge</p>
                   <p className="text-xs text-white/50">Automatically sync changes to AI systems</p>
                 </div>
-                <Switch defaultChecked data-testid="toggle-auto-update" />
+                <Switch 
+                  checked={autoUpdateKnowledge} 
+                  onCheckedChange={setAutoUpdateKnowledge}
+                  data-testid="toggle-auto-update" 
+                />
               </div>
             </div>
           </div>
@@ -909,19 +993,32 @@ export default function OrbitSettings() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/70">AI Accuracy Alerts</span>
-                <Switch defaultChecked data-testid="toggle-accuracy-alerts" />
+                <Switch 
+                  checked={aiAccuracyAlertsEnabled} 
+                  onCheckedChange={setAiAccuracyAlertsEnabled}
+                  data-testid="toggle-accuracy-alerts" 
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/70">Weekly Reports</span>
-                <Switch data-testid="toggle-weekly-reports" />
+                <Switch 
+                  checked={weeklyReportsEnabled} 
+                  onCheckedChange={setWeeklyReportsEnabled}
+                  data-testid="toggle-weekly-reports" 
+                />
               </div>
             </div>
           </div>
         </div>
 
         <div className="pt-4">
-          <Button className="bg-blue-500 hover:bg-blue-600" data-testid="button-save-settings">
-            Save Changes
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={saveSettingsMutation.isPending}
+            className="bg-blue-500 hover:bg-blue-600" 
+            data-testid="button-save-settings"
+          >
+            {saveSettingsMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>

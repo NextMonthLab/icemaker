@@ -1547,6 +1547,14 @@ export const orbitMeta = pgTable("orbit_meta", {
   // Proof Capture Mode (auto-testimonial capture)
   proofCaptureEnabled: boolean("proof_capture_enabled").default(true).notNull(),
   
+  // AI Discovery Settings
+  aiIndexingEnabled: boolean("ai_indexing_enabled").default(true).notNull(),
+  autoUpdateKnowledge: boolean("auto_update_knowledge").default(true).notNull(),
+  
+  // Notification Preferences
+  aiAccuracyAlertsEnabled: boolean("ai_accuracy_alerts_enabled").default(true).notNull(),
+  weeklyReportsEnabled: boolean("weekly_reports_enabled").default(false).notNull(),
+  
   // Stats
   totalPackVersions: integer("total_pack_versions").default(0).notNull(),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),

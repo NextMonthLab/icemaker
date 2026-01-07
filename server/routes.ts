@@ -11884,6 +11884,12 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       res.json({
         strengthScore: orbitMeta.strengthScore ?? 0,
         planTier: orbitMeta.planTier || 'free',
+        customTitle: orbitMeta.customTitle,
+        sourceUrl: orbitMeta.sourceUrl,
+        aiIndexingEnabled: orbitMeta.aiIndexingEnabled ?? true,
+        autoUpdateKnowledge: orbitMeta.autoUpdateKnowledge ?? true,
+        aiAccuracyAlertsEnabled: orbitMeta.aiAccuracyAlertsEnabled ?? true,
+        weeklyReportsEnabled: orbitMeta.weeklyReportsEnabled ?? false,
       });
     } catch (error) {
       console.error("Error getting orbit meta:", error);
@@ -13764,6 +13770,44 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
     (req as any).orbitMeta = orbitMeta;
     next();
   };
+
+  // Update Orbit Settings (owner only)
+  app.patch("/api/orbit/:slug/settings", requireOrbitOwner, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { 
+        customTitle, 
+        sourceUrl,
+        aiIndexingEnabled, 
+        autoUpdateKnowledge, 
+        aiAccuracyAlertsEnabled, 
+        weeklyReportsEnabled 
+      } = req.body;
+      
+      const updateData: any = {};
+      if (customTitle !== undefined) updateData.customTitle = customTitle;
+      if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
+      if (aiIndexingEnabled !== undefined) updateData.aiIndexingEnabled = aiIndexingEnabled;
+      if (autoUpdateKnowledge !== undefined) updateData.autoUpdateKnowledge = autoUpdateKnowledge;
+      if (aiAccuracyAlertsEnabled !== undefined) updateData.aiAccuracyAlertsEnabled = aiAccuracyAlertsEnabled;
+      if (weeklyReportsEnabled !== undefined) updateData.weeklyReportsEnabled = weeklyReportsEnabled;
+      
+      const updated = await storage.updateOrbitMeta(slug, updateData);
+      
+      res.json({ 
+        message: "Settings updated",
+        customTitle: updated?.customTitle,
+        sourceUrl: updated?.sourceUrl,
+        aiIndexingEnabled: updated?.aiIndexingEnabled,
+        autoUpdateKnowledge: updated?.autoUpdateKnowledge,
+        aiAccuracyAlertsEnabled: updated?.aiAccuracyAlertsEnabled,
+        weeklyReportsEnabled: updated?.weeklyReportsEnabled,
+      });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Error updating settings" });
+    }
+  });
 
   // ==========================================
   // Voice Settings Routes (ICE Narration)
