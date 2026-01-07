@@ -826,14 +826,6 @@ export default function OrbitView() {
                   setConversationTracked(true);
                 }
                 
-                // Add user message to history
-                chatHistoryRef.current.push({ role: 'user', content: message });
-                
-                // Keep only last 10 messages to avoid token limits
-                if (chatHistoryRef.current.length > 10) {
-                  chatHistoryRef.current = chatHistoryRef.current.slice(-10);
-                }
-                
                 // Use orbit-specific chat endpoint with history
                 try {
                   const response = await fetch(`/api/orbit/${slug}/chat`, {
@@ -842,18 +834,27 @@ export default function OrbitView() {
                     body: JSON.stringify({ 
                       message,
                       menuContext,
-                      history: chatHistoryRef.current.slice(0, -1), // Exclude current message
+                      history: chatHistoryRef.current,
                       proofCaptureTriggeredAt: proofCaptureTriggeredRef.current,
                     }),
                   });
+                  
+                  const data = await response.json();
+                  
+                  // Handle capped responses with unified format
+                  if (data.capped) {
+                    return {
+                      text: data.response || "Message limit reached. Upgrade to continue chatting.",
+                      video: null,
+                    };
+                  }
+                  
                   if (response.ok) {
-                    const data = await response.json();
-                    let assistantResponse = data.response || data.message || "I'm here to help you explore our menu.";
+                    let assistantResponse = data.response || "I'm here to help you explore.";
                     
                     // Handle proof capture flow - system detected praise
                     if (data.proofCaptureFlow?.triggered) {
                       proofCaptureTriggeredRef.current = new Date().toISOString();
-                      // Add consent options to the response
                       const consentOptions = data.proofCaptureFlow.consentOptions || [];
                       if (consentOptions.length > 0) {
                         assistantResponse += `\n\nWould you be happy for us to use your comment as a testimonial?\n\n• ${consentOptions.join('\n• ')}`;
@@ -865,10 +866,14 @@ export default function OrbitView() {
                       assistantResponse += `\n\n💬 By the way, if you'd like to leave a testimonial, just let me know!`;
                     }
                     
-                    // Add assistant response to history
+                    // Update chat history after successful response
+                    chatHistoryRef.current.push({ role: 'user', content: message });
                     chatHistoryRef.current.push({ role: 'assistant', content: assistantResponse });
+                    if (chatHistoryRef.current.length > 10) {
+                      chatHistoryRef.current = chatHistoryRef.current.slice(-10);
+                    }
                     
-                    // Return response with video if present
+                    // Return unified response with video if present
                     return {
                       text: assistantResponse,
                       video: data.suggestedVideo || null,
@@ -877,7 +882,11 @@ export default function OrbitView() {
                 } catch (e) {
                   console.error('Orbit chat error:', e);
                 }
-                return `I'm here to help you explore our menu. We have ${orbitData!.boxes!.length} items available. What would you like to know?`;
+                // Return unified response format even for errors
+                return {
+                  text: `I'm here to help you explore. We have ${orbitData!.boxes!.length} items available. What would you like to know?`,
+                  video: null,
+                };
               }}
             />
           )}
@@ -1268,35 +1277,62 @@ export default function OrbitView() {
         />
       )}
 
-      {!showCustomization && experienceType === 'radar' && (
+      {!showCustomization && experienceType === 'radar' && slug && (
         <RadarGrid
           knowledge={generateSiteKnowledge(preview)}
           accentColor={brandPreferences?.accentColor || preview.siteIdentity.primaryColour || '#3b82f6'}
           lightMode={brandPreferences?.theme === 'light'}
           onInteraction={() => trackMetric('interactions')}
+          orbitSlug={slug}
+          onVideoEvent={async (videoId, event, msWatched) => {
+            try {
+              await fetch(`/api/orbit/${slug}/videos/${videoId}/event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventType: event, msWatched }),
+              });
+            } catch (e) {
+              console.error('Failed to track video event:', e);
+            }
+          }}
           onSendMessage={async (message) => {
             if (!conversationTracked) {
               trackMetric('conversations');
               setConversationTracked(true);
             }
-            const response = await fetch(`/api/previews/${preview.id}/chat`, {
+            // Use unified orbit chat endpoint with access token
+            const response = await fetch(`/api/orbit/${slug}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
+              body: JSON.stringify({ 
+                message, 
+                accessToken: preview.previewAccessToken,
+                history: chatHistoryRef.current,
+              }),
             });
             if (!response.ok) {
               return "Sorry, I couldn't process that request.";
             }
             const data = await response.json();
             if (data.capped) {
-              return data.message || "Message limit reached. Claim this Orbit to continue chatting.";
+              return data.response || "Message limit reached. Claim this Orbit to continue chatting.";
             }
-            return data.reply;
+            // Update chat history
+            chatHistoryRef.current.push({ role: 'user', content: message });
+            chatHistoryRef.current.push({ role: 'assistant', content: data.response });
+            if (chatHistoryRef.current.length > 10) {
+              chatHistoryRef.current = chatHistoryRef.current.slice(-10);
+            }
+            // Return unified response format
+            return {
+              text: data.response,
+              video: data.suggestedVideo || null,
+            };
           }}
         />
       )}
 
-      {!showCustomization && experienceType === 'spatial' && (
+      {!showCustomization && experienceType === 'spatial' && slug && (
         <SpatialSmartSite
           siteIdentity={{
             sourceDomain: preview.siteIdentity.sourceDomain,
@@ -1320,19 +1356,34 @@ export default function OrbitView() {
               trackMetric('conversations');
               setConversationTracked(true);
             }
-            const response = await fetch(`/api/previews/${preview.id}/chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message, previewAccessToken: preview.previewAccessToken }),
-            });
-            if (!response.ok) {
-              return "Sorry, I couldn't process that request.";
+            // Use unified orbit chat endpoint with access token
+            try {
+              const response = await fetch(`/api/orbit/${slug}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  message, 
+                  accessToken: preview.previewAccessToken,
+                  history: chatHistoryRef.current,
+                }),
+              });
+              const data = await response.json();
+              if (data.capped) {
+                return data.response || "Message limit reached. Claim this Orbit to continue chatting.";
+              }
+              if (response.ok && data.response) {
+                // Update chat history
+                chatHistoryRef.current.push({ role: 'user', content: message });
+                chatHistoryRef.current.push({ role: 'assistant', content: data.response });
+                if (chatHistoryRef.current.length > 10) {
+                  chatHistoryRef.current = chatHistoryRef.current.slice(-10);
+                }
+                return data.response;
+              }
+            } catch (e) {
+              console.error('Spatial chat error:', e);
             }
-            const data = await response.json();
-            if (data.capped) {
-              return data.message || "Message limit reached. Claim this Orbit to continue chatting.";
-            }
-            return data.reply;
+            return "Sorry, I couldn't process that request.";
           }}
         />
       )}

@@ -1,0 +1,135 @@
+Yep. This is exactly the right instinct. Right now you’ve basically got two films being edited in parallel using the same footage: “Preview” and “Claimed”. That’s where complexity, bugs, and slow shipping come from.
+
+Here are the specific gaps to prioritise, in the smallest number of consolidation moves, with a hard bias toward one flow, one set of endpoints, one UI, and feature gating instead of duplication.
+
+The 4 gaps that actually matter
+
+1) Two chat pipelines (this is your biggest multiplier)
+
+Problem: Preview chat and claimed chat behave differently (video, testimonials, storage, parsing, event tracking). Every improvement becomes “do it twice”.
+
+Goal: One chat route and one response contract, always.
+
+Consolidation decision (strong recommendation):
+	•	Single endpoint: POST /api/orbit/:slug/chat
+	•	Supports:
+	•	Owner (authenticated)
+	•	Public viewer (token-based access for previews, sharing, sales demos)
+	•	Response always supports the same “capabilities”, but the UI gates what you can actually use.
+
+Why it matters: Chat is the “engine”. Two engines = two futures. Pick one.
+
+⸻
+
+2) OrbitView is rendering two different Radars (duplication = drift)
+
+Problem: You’ve got two UI paths: one with video hooks and rich handling, one without. These will drift forever.
+
+Goal: One OrbitView, one RadarGrid, one set of handlers.
+
+Consolidation approach:
+	•	RadarGrid gets a single capabilities object like:
+	•	canPlayVideo
+	•	canCaptureTestimonial
+	•	canSaveConversation
+	•	canExport
+	•	Those are derived from:
+	•	claimStatus (preview vs claimed)
+	•	planTier
+	•	viewerMode (owner vs public)
+
+Outcome: Same UI, same behaviours, just locked/unlocked.
+
+⸻
+
+3) Two sources of truth for “business identity”
+
+Problem: preview_instances and orbit_meta overlap. That’s the start of data rot and “why is this different here?” bugs.
+
+Goal: One canonical “business snapshot” record.
+
+Most practical rule:
+	•	preview_instances remains canonical for extracted site identity + catalogue + content snapshot.
+	•	orbit_meta becomes ownership/settings only (who owns it, plan tier, customisation, flags, etc.)
+	•	When claimed, you don’t duplicate identity. You link.
+
+Bonus win: Re-indexing and refresh jobs don’t need to care if it’s preview or claimed. Same pipeline.
+
+⸻
+
+4) Analytics and events diverge (you lose truth + you lose conversion insight)
+
+Problem: Previews don’t track key “wow” moments (video starts, plays, completions). That’s literally your conversion funnel signal.
+
+Goal: Track the same events everywhere, but attribute correctly.
+
+Consolidation approach:
+	•	Same event schema for preview + claimed.
+	•	Events include:
+	•	orbitId (or previewId linked to orbit)
+	•	viewerType (public/owner)
+	•	sessionId
+	•	You can still restrict features in preview, but you should still measure intent.
+
+⸻
+
+The “do this first” order (so you stop bleeding complexity)
+
+Phase 1: Unify chat contract (highest leverage)
+	1.	Create a shared OrbitChatService used by both modes.
+	2.	Route preview chat through the orbit chat endpoint using an access token.
+	3.	Ensure preview can receive video suggestions and structured actions, even if playback is gated.
+
+Success test: A preview conversation and a claimed conversation return the same shape of response.
+
+⸻
+
+Phase 2: Unify OrbitView + RadarGrid
+	1.	Delete the “second RadarGrid” path.
+	2.	Add capabilities gating.
+	3.	Make video UI exist in preview but either:
+	•	plays a short teaser only, or
+	•	shows “unlock to play” overlay.
+
+Success test: One component path, different unlock states.
+
+⸻
+
+Phase 3: Canonical data model
+	1.	Remove duplicated identity fields from orbit_meta (or stop reading them).
+	2.	Ensure everything reads business context from preview_instances (or a unified view).
+
+Success test: Updating site snapshot updates both preview and claimed instantly.
+
+⸻
+
+Phase 4: Analytics parity
+	1.	Same event tracking everywhere.
+	2.	Different dashboards if you want, but the data is consistent.
+
+Success test: You can see conversion behaviours from previews clearly.
+
+⸻
+
+The main design principle to keep you sane
+
+Preview is not a different product.
+It’s the same product in demo mode.
+
+If a feature exists, it should exist in preview as:
+	•	fully working,
+	•	partially working (teaser),
+	•	or visible but locked.
+
+But it should not be a separate implementation.
+
+⸻
+
+My blunt take on where you are
+
+You’re not “far off launch”. You’re “one consolidation pass away” from being able to ship confidently.
+
+Right now the risk isn’t that it doesn’t work.
+The risk is that you’ll keep shipping at half speed because every change has to be duplicated and QA’d twice.
+
+If you want, paste the key route files + the OrbitView file references you mentioned, and I’ll turn the above into a concrete “surgery list” (exact deletions, merges, and a new unified interface contract).

@@ -8069,7 +8069,9 @@ Return a JSON object with:
     }
   });
 
-  // Chat with preview
+  // DEPRECATED: Chat with preview (legacy endpoint)
+  // Frontend now uses unified /api/orbit/:slug/chat with accessToken
+  // This endpoint is kept for backward compatibility and will be removed in future
   app.post("/api/previews/:id/chat", chatRateLimiter, chatRequestValidator, chatMessageValidator, async (req, res) => {
     try {
       const { message, previewAccessToken } = req.body;
@@ -9743,11 +9745,12 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
     }
   });
 
-  // Orbit Chat - AI chat with menu/product context and conversation history
+  // Orbit Chat - Unified AI chat endpoint for both owners and public viewers
+  // Supports: authenticated owners OR public access via accessToken
   app.post("/api/orbit/:slug/chat", async (req, res) => {
     try {
       const { slug } = req.params;
-      const { message, menuContext, history, proofCaptureTriggeredAt } = req.body;
+      const { message, menuContext, history, proofCaptureTriggeredAt, accessToken } = req.body;
       
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Message is required" });
@@ -9756,6 +9759,96 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       const orbitMeta = await storage.getOrbitMeta(slug);
       if (!orbitMeta) {
         return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      // Determine access mode: owner (authenticated) or public (token-based)
+      const user = req.isAuthenticated() ? (req.user as any) : null;
+      const isOwner = user && (orbitMeta.ownerId === user.id || orbitMeta.ownerEmail?.toLowerCase() === (user.email || user.username)?.toLowerCase());
+      let isPublicAccess = false;
+      let preview: any = null;
+      let isPaidOrbit = false;
+      let monthlyConversations = 0;
+      let showSoftLimitWarning = false;
+      
+      // Check entitlements for paid tier
+      if (orbitMeta.ownerId) {
+        const entitlements = await getFullEntitlements(orbitMeta.ownerId);
+        isPaidOrbit = entitlements.planName !== 'Free' && entitlements.planName !== 'Viewer';
+      }
+      
+      // If not authenticated owner, check for public access
+      if (!isOwner) {
+        isPublicAccess = true;
+        
+        // For orbits with a preview, validate access token if provided
+        if (orbitMeta.previewId) {
+          preview = await storage.getPreviewInstance(orbitMeta.previewId);
+          
+          // If preview exists and has access token validation
+          if (preview) {
+            // Validate token if provided (optional for public viewing of claimed orbits)
+            if (accessToken) {
+              const { validatePreviewToken } = await import("./publicAccessToken");
+              if (!validatePreviewToken(accessToken, orbitMeta.previewId)) {
+                return res.status(403).json({ message: "Invalid access token" });
+              }
+            }
+            
+            // Check preview expiry and status for unclaimed orbits
+            if (!orbitMeta.verifiedAt) {
+              if (new Date() > new Date(preview.expiresAt)) {
+                await storage.archivePreviewInstance(preview.id);
+                return res.json({
+                  capped: true,
+                  reason: "expired",
+                  response: "This preview has expired. Claim it to keep chatting.",
+                  viewerType: 'public',
+                });
+              }
+              
+              if (preview.status !== "active") {
+                return res.json({
+                  capped: true,
+                  reason: preview.status,
+                  response: `This preview is ${preview.status}.`,
+                  viewerType: 'public',
+                });
+              }
+              
+              // Check message cap for unclaimed previews
+              if (preview.messageCount >= preview.maxMessages) {
+                return res.json({
+                  capped: true,
+                  reason: "message_limit",
+                  response: "You've reached the message limit for this preview. Claim it to continue.",
+                  messageCount: preview.messageCount,
+                  viewerType: 'public',
+                });
+              }
+            }
+          }
+        }
+        
+        // Monthly conversation limit for free/unclaimed orbits (regardless of preview)
+        if (!isPaidOrbit) {
+          monthlyConversations = await storage.getMonthlyConversationCount(slug);
+          
+          if (monthlyConversations >= FREE_CONVERSATION_LIMIT) {
+            return res.json({
+              capped: true,
+              reason: "monthly_limit",
+              ...conversationLimitCopy.hardLimit,
+              monthlyCount: monthlyConversations,
+              limit: FREE_CONVERSATION_LIMIT,
+              upgradeRequired: true,
+              viewerType: 'public',
+            });
+          }
+          
+          if (monthlyConversations >= FREE_CONVERSATION_SOFT_LIMIT) {
+            showSoftLimitWarning = true;
+          }
+        }
       }
       
       // Import proof capture module for testimonial detection
@@ -9947,12 +10040,48 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         await storage.incrementOrbitMetric(slug, 'conversations');
       }
       
-      res.json({ 
+      // For public access with existing preview, track message count
+      if (isPublicAccess && preview && !orbitMeta.verifiedAt) {
+        try {
+          await storage.incrementPreviewMessageCount(preview.id);
+          await storage.updatePreviewInstance(preview.id, {
+            costEstimatePence: (preview.costEstimatePence || 0) + 1,
+            llmCallCount: (preview.llmCallCount || 0) + 1,
+          });
+        } catch (err) {
+          console.error('[OrbitChat] Error updating preview stats:', err);
+        }
+      }
+      
+      // Build unified response
+      const responsePayload: Record<string, any> = { 
         response: cleanResponse,
-        suggestedVideo,
+        suggestedVideo: suggestedVideo || null,
         suggestionChip,
-        praiseDetected: classificationResult?.praiseKeywordsFound?.length ? classificationResult.praiseKeywordsFound : undefined,
-      });
+        viewerType: isOwner ? 'owner' : 'public',
+      };
+      
+      // Add praise detection for testimonial flow
+      if (classificationResult?.praiseKeywordsFound?.length) {
+        responsePayload.praiseDetected = classificationResult.praiseKeywordsFound;
+      }
+      
+      // Add soft limit warning for public access approaching limits
+      if (showSoftLimitWarning) {
+        responsePayload.softLimitWarning = {
+          ...conversationLimitCopy.softLimit,
+          monthlyCount: monthlyConversations + 1,
+          limit: FREE_CONVERSATION_LIMIT,
+        };
+      }
+      
+      // Add message count for public access with unclaimed preview
+      if (isPublicAccess && preview && !orbitMeta.verifiedAt) {
+        responsePayload.messageCount = preview.messageCount + 1;
+        responsePayload.capped = (preview.messageCount + 1) >= preview.maxMessages;
+      }
+      
+      res.json(responsePayload);
     } catch (error) {
       console.error("Error in orbit chat:", error);
       res.status(500).json({ message: "Error processing chat" });
