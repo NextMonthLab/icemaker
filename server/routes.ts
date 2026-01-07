@@ -11312,7 +11312,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       const heroPosts = await storage.getHeroPosts(slug);
       
       const { calculateStrengthScore } = await import("./services/orbitStrength");
-      const heroPostKnowledgeCount = heroPosts.filter(p => p.markedAsKnowledge).length;
+      const heroPostKnowledgeCount = heroPosts.filter(p => p.useAsKnowledge).length;
       const strengthResult = calculateStrengthScore(sources, documents.length, heroPostKnowledgeCount);
       
       await storage.updateOrbitMeta(slug, { 

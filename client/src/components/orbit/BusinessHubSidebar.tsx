@@ -15,12 +15,13 @@ import {
   Bell,
   Database,
   Box,
-  Radar
+  Radar,
+  GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads' | 'notifications' | 'data-sources' | 'cubes' | 'ai-discovery';
+export type HubPanel = 'overview' | 'grid' | 'ice' | 'brand' | 'settings' | 'conversations' | 'leads' | 'notifications' | 'data-sources' | 'cubes' | 'ai-discovery' | 'knowledge-coach';
 
 interface BusinessHubSidebarProps {
   isOwner: boolean;
@@ -138,6 +139,14 @@ export function BusinessHubSidebar({
       label: 'AI Discovery', 
       icon: Radar,
       description: 'Control how AI sees you',
+      available: isPaidTier,
+      tierRequired: 'grow',
+    },
+    { 
+      id: 'knowledge-coach' as HubPanel, 
+      label: 'Knowledge Coach', 
+      icon: GraduationCap,
+      description: 'Fill knowledge gaps',
       available: isPaidTier,
       tierRequired: 'grow',
     },

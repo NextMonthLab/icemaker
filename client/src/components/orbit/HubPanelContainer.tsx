@@ -9,6 +9,7 @@ import { HubDataSourcesPanel } from "./HubDataSourcesPanel";
 import { HubCubesPanel } from "./HubCubesPanel";
 import { HubAIDiscoveryPanel } from "./HubAIDiscoveryPanel";
 import { HubSettingsPanel } from "./HubSettingsPanel";
+import { HubKnowledgeCoachPanel } from "./HubKnowledgeCoachPanel";
 import type { HubPanel } from "./BusinessHubSidebar";
 
 interface HubPanelContainerProps {
@@ -67,6 +68,9 @@ export function HubPanelContainer({
     
     case 'ai-discovery':
       return <HubAIDiscoveryPanel businessSlug={businessSlug} planTier={planTier} />;
+    
+    case 'knowledge-coach':
+      return <HubKnowledgeCoachPanel businessSlug={businessSlug} planTier={planTier} />;
     
     case 'settings':
       return (
