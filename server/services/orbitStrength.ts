@@ -11,50 +11,38 @@ interface StrengthResult {
   breakdown: Record<string, number>;
 }
 
+// Points for factual sources that add knowledge to Orbit
 const SCORE_MAP: Record<string, number> = {
   about: 15,
   services: 25,
   faq: 15,
   contact: 10,
   homepage: 10,
-  linkedin: 5,
-  instagram: 5,
-  facebook: 5,
-  twitter: 5,
-  tiktok: 5,
-  youtube: 5,
   document: 10, // Each document with extracted text adds 10 points
 };
 
+// Social links don't add to strength - they're for visitor navigation, not knowledge
 const SOCIAL_LABELS = ['linkedin', 'instagram', 'facebook', 'twitter', 'tiktok', 'youtube'];
-const SOCIAL_CAP = 20;
 const DOCUMENT_CAP = 30; // Max 30 points from documents (3 docs)
 
 export function calculateStrengthScore(sources: SourceInput[], documentCount: number = 0): StrengthResult {
   const breakdown: Record<string, number> = {};
   let totalScore = 0;
-  let socialScore = 0;
 
   for (const source of sources) {
     if (!source.value || source.value.trim() === '') continue;
     
     const label = source.label;
-    const points = SCORE_MAP[label] || 0;
     
+    // Skip social links - they don't add knowledge, just navigation
     if (SOCIAL_LABELS.includes(label)) {
-      const newSocialScore = Math.min(socialScore + points, SOCIAL_CAP);
-      const actualPoints = newSocialScore - socialScore;
-      socialScore = newSocialScore;
-      
-      if (actualPoints > 0) {
-        breakdown[label] = actualPoints;
-        totalScore += actualPoints;
-      }
-    } else {
-      if (!breakdown[label]) {
-        breakdown[label] = points;
-        totalScore += points;
-      }
+      continue;
+    }
+    
+    const points = SCORE_MAP[label] || 0;
+    if (!breakdown[label] && points > 0) {
+      breakdown[label] = points;
+      totalScore += points;
     }
   }
 
