@@ -1,0 +1,159 @@
+Here you go, Rob, as a Replit prompt you can paste in. After that I’ll answer the tile movement idea properly (short version: yes, but do it like “space dust”, not like a washing machine).
+
+⸻
+
+Replit Prompt: Universal Orbit UI Shell + Subtle Tile Motion + Intent Reordering
+
+Build Context
+We have multiple Orbit pages (routes like /orbit/[slug]). Any UI improvements must apply universally to all Orbits, not just one topic. We need to refactor the Orbit experience into a shared, reusable “Orbit Shell” component, then layer orbit-specific content (title, starter tiles, CTAs) via a config object or API payload.
+
+Non-negotiables
+	•	Do not rebuild the product. This is a refactor and enhancement only.
+	•	Keep the existing Orbit architecture, data flow, and styling system wherever possible.
+	•	Any visual/interaction improvements must be global and automatically applied to every Orbit route.
+	•	Orbit-specific copy and tiles should come only from orbit config/data.
+
+Goals
+	1.	Create a universal OrbitShell UI used by every Orbit.
+	2.	Improve the “first 5 seconds” experience: stronger intro, proof-of-life signal, clearer tile affordance.
+	3.	Add subtle, tasteful “alive” motion to tiles at rest (very light drift/sway).
+	4.	Add an optional “intent gravity” mode: when the user clicks a tile or asks a question, tiles re-rank and gently reflow so the most relevant topics float closer to the centre (or primary focal area).
+	5.	Make sure this motion is accessible, respects reduced-motion settings, and never harms performance.
+
+Implementation Requirements
+
+A) OrbitShell (Global Component)
+Create a reusable component, eg:
+	•	OrbitShell.tsx (or equivalent)
+Responsibilities:
+	•	Renders universal Orbit chat UI (header/title, intro, input bar, send button)
+	•	Renders tile canvas behind or around the chat UI (existing tile system)
+	•	Accepts orbit data as props:
+	•	orbitTitle
+	•	orbitSlug
+	•	starterTiles (array)
+	•	ctas (optional array)
+	•	uiFlags (proof-of-life on/off, motion on/off, etc.)
+
+All orbit routes should use OrbitShell, not their own duplicated UI.
+
+B) Orbit Config Contract
+Create a contract for orbit-specific content, eg:
+	•	orbits.config.ts or API payload shape
+Fields:
+	•	slug
+	•	title
+	•	starterTiles: { id, label, sublabel?, intentTags?, priority?, type? }[]
+	•	ctas?: { id, label, type, href?, action? }[] (optional)
+	•	uiOverrides?: { accent?, disableMotion?, disableIntentGravity? } (optional, default global)
+
+Ensure the UI defaults are global and consistent. Orbits may only override if explicitly allowed.
+
+C) Global UI Improvements (Applied to All Orbits)
+	1.	Replace passive intro copy with an “alive” template:
+
+	•	Example template: “This Orbit tracks what people are asking about {topic}. Tap a tile, or ask your own question.”
+
+	2.	Add a single proof-of-life indicator (only if we have truthful data). Options:
+
+	•	“Trending now”
+	•	“Updated recently”
+	•	“Popular questions”
+If we do not have real metrics, do not fake numbers. Use a generic signal like “Trending now” without stats.
+
+	3.	Tile metadata badges (global styling):
+
+	•	Show small badge labels if available: “Trending”, “New”, “Debated”, “Most saved”
+	•	If no data exists, fall back to none.
+
+D) Subtle Tile Motion (Ambient Drift)
+Add extremely subtle motion so tiles feel alive when idle:
+	•	Use a low-amplitude, slow animation (drift/sway)
+	•	Must not cause motion sickness
+	•	Must be GPU-friendly (transform/translate only, no layout thrash)
+	•	Must pause or reduce when:
+	•	prefers-reduced-motion is enabled
+	•	user is actively dragging/scrolling
+	•	device is low power (optional)
+Implementation options:
+	•	CSS keyframes on transforms for each tile with slight randomised phase/offset
+	•	Or requestAnimationFrame with per-tile noise offsets (Perlin/simple sine) but keep it light
+
+E) Intent Gravity Reordering (On Interaction)
+When a user clicks a tile or submits a question:
+	1.	Determine an “intent vector”:
+
+	•	If tile clicked: use its intentTags / id
+	•	If question asked: basic keyword match against tile tags/labels (lightweight heuristic is fine for now)
+
+	2.	Compute relevance scores for all tiles based on shared tags/keywords.
+	3.	Animate tiles to new positions so the most relevant tiles move closer to the primary focal zone (near the chat window centre or a designated anchor point).
+	4.	The movement must be smooth and readable:
+
+	•	Use spring-like transitions (Framer Motion allowed if already present, otherwise CSS transitions)
+	•	Do not teleport tiles
+	•	Avoid overlaps (use existing layout rules if any; otherwise implement simple collision avoidance or grid snap)
+
+	5.	After a timeout (eg 10–20 seconds) or on next interaction, either:
+
+	•	Keep the new arrangement (preferred, feels intelligent)
+	•	Or slowly relax back to a baseline arrangement
+
+Important: “reorder” should feel like gravity, not sorting a list. It’s a spatial reflow, not a shuffle.
+
+F) Performance + Accessibility
+	•	Must hit 60fps on modern phones.
+	•	Avoid expensive reflows; prefer transforms.
+	•	Respect prefers-reduced-motion.
+	•	Ensure tiles remain tappable with correct hit targets.
+	•	Do not block main thread with heavy physics. Keep it simple.
+
+Deliverables
+	1.	Refactor: all orbit routes now render OrbitShell.
+	2.	Orbit config system created and used.
+	3.	Ambient drift motion implemented globally with reduced-motion support.
+	4.	Intent gravity reordering implemented on tile click and question submit.
+	5.	Minimal documentation in code comments explaining:
+
+	•	where to add new orbits
+	•	how to add intent tags
+	•	how to tune motion intensity safely
+
+Testing Checklist
+	•	Check at least 3 different orbit slugs render correctly and identically (except content).
+	•	Confirm motion is subtle and not distracting.
+	•	Confirm reduced-motion disables animations.
+	•	Confirm tapping tiles still works reliably.
+	•	Confirm reordering animation is smooth and doesn’t overlap or jitter.
+	•	Confirm mobile performance remains strong.
+
+⸻
+
+My take on the “subtle movement + gravity reordering” idea
+
+Yes. It’s a strong move because it makes the UI feel like it has a pulse, which is exactly what Orbits should feel like.
+
+But here’s the trap: too much motion makes it feel gimmicky and cheap. You want Interstellar, not screensaver from a 2006 office PC.
+
+The right approach
+	•	Ambient drift should be barely noticeable until you stop and stare.
+	•	Reordering should only happen for a reason (a click, a question, a “new intent” signal).
+	•	Movement should feel like:
+	•	“things are being pulled into relevance”
+	•	not “the app is rearranging itself for fun”
+
+A solid default behaviour
+	•	Idle: 1–3px drift, 8–18 second cycles, slightly randomised per tile.
+	•	Interaction: tiles within the user’s intent cluster glide 20–60px closer to the focal zone.
+	•	Non-relevant tiles drift slightly outward, but never disappear or fly off.
+
+One important rule
+
+If the tiles move, they must still feel stable enough to tap. If a user goes to tap and the tile slides away, you’ll make people irrationally angry.
+
+If you want, next I can give you:
+	•	the exact motion parameters to use (safe ranges)
+	•	a simple scoring heuristic for relevance (without AI calls)
+	•	and a “don’t be annoying” set of UX constraints for motion
+
+But the prompt above is enough for Replit to start implementing cleanly.

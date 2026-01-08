@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { OrbitBox } from "./OrbitBox";
 import { ProductTile } from "./ProductTile";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { AmbientMotion } from "./AmbientMotion";
+import { ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useIntentGravity } from "@/lib/useIntentGravity";
+import { getOrbitConfig, OrbitTile } from "@/lib/orbitConfig";
 
 interface OrbitBoxData {
   id: string;
@@ -16,6 +20,7 @@ interface OrbitBoxData {
   imageUrl?: string;
   availability?: 'in_stock' | 'out_of_stock' | 'limited';
   tags?: string[];
+  intentTags?: string[];
 }
 
 interface OrbitGridProps {
@@ -23,6 +28,11 @@ interface OrbitGridProps {
   isUnclaimed?: boolean;
   enableCategoryClustering?: boolean;
   maxVisiblePerCategory?: number;
+  orbitSlug?: string;
+  onTileClick?: (tile: OrbitBoxData) => void;
+  disableMotion?: boolean;
+  disableIntentGravity?: boolean;
+  activeIntent?: string[];
 }
 
 interface CategorySection {
@@ -38,9 +48,37 @@ export function OrbitGrid({
   boxes, 
   isUnclaimed = false, 
   enableCategoryClustering = true,
-  maxVisiblePerCategory = MAX_VISIBLE_DEFAULT 
+  maxVisiblePerCategory = MAX_VISIBLE_DEFAULT,
+  orbitSlug,
+  onTileClick,
+  disableMotion = false,
+  disableIntentGravity = false,
+  activeIntent = [],
 }: OrbitGridProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  
+  const orbitConfig = orbitSlug ? getOrbitConfig(orbitSlug) : null;
+  const motionDisabled = disableMotion || orbitConfig?.uiOverrides?.disableMotion;
+  const gravityDisabled = disableIntentGravity || orbitConfig?.uiOverrides?.disableIntentGravity;
+  
+  const boxesWithIntent = boxes.map(box => ({
+    ...box,
+    intentTags: box.intentTags || box.themes || [],
+  }));
+  
+  const { 
+    orderedTiles, 
+    relevanceScores, 
+    isAnimating,
+    getGravityOffset 
+  } = useIntentGravity({
+    tiles: boxesWithIntent,
+    disabled: gravityDisabled,
+  });
+  
+  const effectiveBoxes = gravityDisabled || activeIntent.length === 0 
+    ? boxesWithIntent 
+    : orderedTiles as OrbitBoxData[];
 
   if (boxes.length === 0) {
     return (
@@ -58,38 +96,57 @@ export function OrbitGrid({
   const shouldCluster = enableCategoryClustering && hasProducts && products.some(p => p.category);
 
   if (!shouldCluster) {
-    const visibleBoxes = boxes.slice(0, MAX_TOTAL_VISIBLE);
+    const visibleBoxes = effectiveBoxes.slice(0, MAX_TOTAL_VISIBLE);
     return (
       <div 
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 ${isAnimating ? 'orbit-grid-animating' : ''}`}
         data-testid="orbit-grid"
       >
-        {visibleBoxes.map((box) => (
-          productTypes.includes(box.type) ? (
-            <ProductTile
-              key={box.id}
-              id={box.id}
-              title={box.title}
-              description={box.summary}
-              price={box.price}
-              currency={box.currency}
-              category={box.category}
-              imageUrl={box.imageUrl}
-              availability={box.availability}
-              tags={box.tags}
-            />
-          ) : (
-            <OrbitBox
-              key={box.id}
-              id={box.id}
-              type={box.type as any}
-              title={box.title}
-              summary={box.summary}
-              themes={box.themes}
-              isUnclaimed={isUnclaimed}
-            />
-          )
-        ))}
+        {visibleBoxes.map((box, index) => {
+          const relevanceScore = relevanceScores.get(box.id) || 0;
+          const gravityOffset = getGravityOffset(box.id);
+          const isHighRelevance = relevanceScore > 0.5;
+          
+          return (
+            <AmbientMotion 
+              key={box.id} 
+              index={index}
+              disabled={motionDisabled}
+              className={`transition-transform duration-500 ease-out ${isHighRelevance ? 'ring-2 ring-pink-500/30 rounded-lg' : ''}`}
+            >
+              <div 
+                style={{
+                  transform: `translate3d(${gravityOffset.x}px, ${gravityOffset.y}px, 0)`,
+                  transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+                onClick={() => onTileClick?.(box)}
+              >
+                {productTypes.includes(box.type) ? (
+                  <ProductTile
+                    id={box.id}
+                    title={box.title}
+                    description={box.summary}
+                    price={box.price}
+                    currency={box.currency}
+                    category={box.category}
+                    imageUrl={box.imageUrl}
+                    availability={box.availability}
+                    tags={box.tags}
+                  />
+                ) : (
+                  <OrbitBox
+                    id={box.id}
+                    type={box.type as any}
+                    title={box.title}
+                    summary={box.summary}
+                    themes={box.themes}
+                    isUnclaimed={isUnclaimed}
+                  />
+                )}
+              </div>
+            </AmbientMotion>
+          );
+        })}
         {boxes.length > MAX_TOTAL_VISIBLE && (
           <div className="col-span-full text-center py-4">
             <p className="text-sm text-zinc-500">
@@ -139,23 +196,30 @@ export function OrbitGrid({
   let totalVisible = 0;
 
   return (
-    <div className="space-y-8" data-testid="orbit-grid-categorized">
+    <div className={`space-y-8 ${isAnimating ? 'orbit-grid-animating' : ''}`} data-testid="orbit-grid-categorized">
       {otherBoxes.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">
             Content
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {otherBoxes.slice(0, 8).map((box) => (
-              <OrbitBox
-                key={box.id}
-                id={box.id}
-                type={box.type as any}
-                title={box.title}
-                summary={box.summary}
-                themes={box.themes}
-                isUnclaimed={isUnclaimed}
-              />
+            {otherBoxes.slice(0, 8).map((box, index) => (
+              <AmbientMotion 
+                key={box.id} 
+                index={index}
+                disabled={motionDisabled}
+              >
+                <div onClick={() => onTileClick?.(box)}>
+                  <OrbitBox
+                    id={box.id}
+                    type={box.type as any}
+                    title={box.title}
+                    summary={box.summary}
+                    themes={box.themes}
+                    isUnclaimed={isUnclaimed}
+                  />
+                </div>
+              </AmbientMotion>
             ))}
           </div>
         </div>
@@ -204,19 +268,26 @@ export function OrbitGrid({
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {visibleItems.map((item) => (
-                <ProductTile
-                  key={item.id}
-                  id={item.id}
-                  title={item.title}
-                  description={item.summary}
-                  price={item.price}
-                  currency={item.currency}
-                  category={item.category}
-                  imageUrl={item.imageUrl}
-                  availability={item.availability}
-                  tags={item.tags}
-                />
+              {visibleItems.map((item, index) => (
+                <AmbientMotion 
+                  key={item.id} 
+                  index={totalVisible + index}
+                  disabled={motionDisabled}
+                >
+                  <div onClick={() => onTileClick?.(item)}>
+                    <ProductTile
+                      id={item.id}
+                      title={item.title}
+                      description={item.summary}
+                      price={item.price}
+                      currency={item.currency}
+                      category={item.category}
+                      imageUrl={item.imageUrl}
+                      availability={item.availability}
+                      tags={item.tags}
+                    />
+                  </div>
+                </AmbientMotion>
               ))}
             </div>
           </div>
