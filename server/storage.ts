@@ -438,6 +438,85 @@ export interface IStorage {
   getVideoExportJobsByUser(userId: number, limit?: number): Promise<schema.VideoExportJob[]>;
   updateVideoExportJob(jobId: string, data: Partial<schema.InsertVideoExportJob>): Promise<schema.VideoExportJob | undefined>;
   deleteVideoExportJob(jobId: string): Promise<void>;
+
+  // ============ INDUSTRY ORBIT SYSTEM ============
+  
+  // Industry Entities
+  createIndustryEntity(data: schema.InsertIndustryEntity): Promise<schema.IndustryEntity>;
+  getIndustryEntity(id: number): Promise<schema.IndustryEntity | undefined>;
+  getIndustryEntitiesByOrbit(orbitId: number): Promise<schema.IndustryEntity[]>;
+  getIndustryEntityByName(orbitId: number, name: string): Promise<schema.IndustryEntity | undefined>;
+  updateIndustryEntity(id: number, data: Partial<schema.InsertIndustryEntity>): Promise<schema.IndustryEntity | undefined>;
+  deleteIndustryEntity(id: number): Promise<void>;
+  
+  // Industry Products
+  createIndustryProduct(data: schema.InsertIndustryProduct): Promise<schema.IndustryProduct>;
+  getIndustryProduct(id: number): Promise<schema.IndustryProduct | undefined>;
+  getIndustryProductsByOrbit(orbitId: number): Promise<schema.IndustryProduct[]>;
+  getIndustryProductByName(orbitId: number, name: string): Promise<schema.IndustryProduct | undefined>;
+  updateIndustryProduct(id: number, data: Partial<schema.InsertIndustryProduct>): Promise<schema.IndustryProduct | undefined>;
+  deleteIndustryProduct(id: number): Promise<void>;
+  
+  // Product Specs
+  createProductSpec(data: schema.InsertProductSpec): Promise<schema.ProductSpec>;
+  getProductSpecs(productId: number): Promise<schema.ProductSpec[]>;
+  updateProductSpec(id: number, data: Partial<schema.InsertProductSpec>): Promise<schema.ProductSpec | undefined>;
+  deleteProductSpec(id: number): Promise<void>;
+  deleteProductSpecsByProduct(productId: number): Promise<void>;
+  
+  // Industry Reviews
+  createIndustryReview(data: schema.InsertIndustryReview): Promise<schema.IndustryReview>;
+  getIndustryReview(id: number): Promise<schema.IndustryReview | undefined>;
+  getIndustryReviewsByOrbit(orbitId: number): Promise<schema.IndustryReview[]>;
+  updateIndustryReview(id: number, data: Partial<schema.InsertIndustryReview>): Promise<schema.IndustryReview | undefined>;
+  deleteIndustryReview(id: number): Promise<void>;
+  
+  // Industry Assets
+  createIndustryAsset(data: schema.InsertIndustryAsset): Promise<schema.IndustryAsset>;
+  getIndustryAsset(id: number): Promise<schema.IndustryAsset | undefined>;
+  getIndustryAssetsByOrbit(orbitId: number): Promise<schema.IndustryAsset[]>;
+  deleteIndustryAsset(id: number): Promise<void>;
+  
+  // Community Links
+  createCommunityLink(data: schema.InsertCommunityLink): Promise<schema.CommunityLink>;
+  getCommunityLink(id: number): Promise<schema.CommunityLink | undefined>;
+  getCommunityLinksByOrbit(orbitId: number): Promise<schema.CommunityLink[]>;
+  updateCommunityLink(id: number, data: Partial<schema.InsertCommunityLink>): Promise<schema.CommunityLink | undefined>;
+  deleteCommunityLink(id: number): Promise<void>;
+  
+  // Topic Tiles
+  createTopicTile(data: schema.InsertTopicTile): Promise<schema.TopicTile>;
+  getTopicTile(id: number): Promise<schema.TopicTile | undefined>;
+  getTopicTilesByOrbit(orbitId: number): Promise<schema.TopicTile[]>;
+  updateTopicTile(id: number, data: Partial<schema.InsertTopicTile>): Promise<schema.TopicTile | undefined>;
+  deleteTopicTile(id: number): Promise<void>;
+  
+  // Pulse Sources
+  createPulseSource(data: schema.InsertPulseSource): Promise<schema.PulseSource>;
+  getPulseSource(id: number): Promise<schema.PulseSource | undefined>;
+  getPulseSourcesByOrbit(orbitId: number): Promise<schema.PulseSource[]>;
+  getEnabledPulseSources(): Promise<schema.PulseSource[]>;
+  updatePulseSource(id: number, data: Partial<schema.InsertPulseSource>): Promise<schema.PulseSource | undefined>;
+  deletePulseSource(id: number): Promise<void>;
+  
+  // Pulse Snapshots
+  createPulseSnapshot(data: schema.InsertPulseSnapshot): Promise<schema.PulseSnapshot>;
+  getLatestPulseSnapshot(sourceId: number): Promise<schema.PulseSnapshot | undefined>;
+  getPulseSnapshots(sourceId: number, limit?: number): Promise<schema.PulseSnapshot[]>;
+  
+  // Pulse Events
+  createPulseEvent(data: schema.InsertPulseEvent): Promise<schema.PulseEvent>;
+  getPulseEvent(id: number): Promise<schema.PulseEvent | undefined>;
+  getPulseEventsByOrbit(orbitId: number, status?: schema.PulseEventStatus): Promise<schema.PulseEvent[]>;
+  updatePulseEvent(id: number, data: Partial<schema.InsertPulseEvent>): Promise<schema.PulseEvent | undefined>;
+  
+  // Alignments
+  createAlignment(data: schema.InsertAlignment): Promise<schema.Alignment>;
+  getAlignment(orbitId: number, userId: number): Promise<schema.Alignment | undefined>;
+  getAlignmentsByOrbit(orbitId: number): Promise<schema.Alignment[]>;
+  getAlignmentsByUser(userId: number): Promise<schema.Alignment[]>;
+  updateAlignment(id: number, data: Partial<schema.InsertAlignment>): Promise<schema.Alignment | undefined>;
+  deleteAlignment(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3278,6 +3357,357 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVideoExportJob(jobId: string): Promise<void> {
     await db.delete(schema.videoExportJobs).where(eq(schema.videoExportJobs.jobId, jobId));
+  }
+
+  // ============ INDUSTRY ORBIT SYSTEM ============
+
+  // Industry Entities
+  async createIndustryEntity(data: schema.InsertIndustryEntity): Promise<schema.IndustryEntity> {
+    const [result] = await db.insert(schema.industryEntities).values(data).returning();
+    return result;
+  }
+
+  async getIndustryEntity(id: number): Promise<schema.IndustryEntity | undefined> {
+    return await db.query.industryEntities.findFirst({
+      where: eq(schema.industryEntities.id, id),
+    });
+  }
+
+  async getIndustryEntitiesByOrbit(orbitId: number): Promise<schema.IndustryEntity[]> {
+    return await db.query.industryEntities.findMany({
+      where: eq(schema.industryEntities.orbitId, orbitId),
+      orderBy: [asc(schema.industryEntities.name)],
+    });
+  }
+
+  async getIndustryEntityByName(orbitId: number, name: string): Promise<schema.IndustryEntity | undefined> {
+    return await db.query.industryEntities.findFirst({
+      where: and(
+        eq(schema.industryEntities.orbitId, orbitId),
+        eq(schema.industryEntities.name, name)
+      ),
+    });
+  }
+
+  async updateIndustryEntity(id: number, data: Partial<schema.InsertIndustryEntity>): Promise<schema.IndustryEntity | undefined> {
+    const [result] = await db.update(schema.industryEntities)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.industryEntities.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteIndustryEntity(id: number): Promise<void> {
+    await db.delete(schema.industryEntities).where(eq(schema.industryEntities.id, id));
+  }
+
+  // Industry Products
+  async createIndustryProduct(data: schema.InsertIndustryProduct): Promise<schema.IndustryProduct> {
+    const [result] = await db.insert(schema.industryProducts).values(data).returning();
+    return result;
+  }
+
+  async getIndustryProduct(id: number): Promise<schema.IndustryProduct | undefined> {
+    return await db.query.industryProducts.findFirst({
+      where: eq(schema.industryProducts.id, id),
+    });
+  }
+
+  async getIndustryProductsByOrbit(orbitId: number): Promise<schema.IndustryProduct[]> {
+    return await db.query.industryProducts.findMany({
+      where: eq(schema.industryProducts.orbitId, orbitId),
+      orderBy: [asc(schema.industryProducts.name)],
+    });
+  }
+
+  async getIndustryProductByName(orbitId: number, name: string): Promise<schema.IndustryProduct | undefined> {
+    return await db.query.industryProducts.findFirst({
+      where: and(
+        eq(schema.industryProducts.orbitId, orbitId),
+        eq(schema.industryProducts.name, name)
+      ),
+    });
+  }
+
+  async updateIndustryProduct(id: number, data: Partial<schema.InsertIndustryProduct>): Promise<schema.IndustryProduct | undefined> {
+    const [result] = await db.update(schema.industryProducts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.industryProducts.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteIndustryProduct(id: number): Promise<void> {
+    await db.delete(schema.industryProducts).where(eq(schema.industryProducts.id, id));
+  }
+
+  // Product Specs
+  async createProductSpec(data: schema.InsertProductSpec): Promise<schema.ProductSpec> {
+    const [result] = await db.insert(schema.productSpecs).values(data).returning();
+    return result;
+  }
+
+  async getProductSpecs(productId: number): Promise<schema.ProductSpec[]> {
+    return await db.query.productSpecs.findMany({
+      where: eq(schema.productSpecs.productId, productId),
+    });
+  }
+
+  async updateProductSpec(id: number, data: Partial<schema.InsertProductSpec>): Promise<schema.ProductSpec | undefined> {
+    const [result] = await db.update(schema.productSpecs)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.productSpecs.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteProductSpec(id: number): Promise<void> {
+    await db.delete(schema.productSpecs).where(eq(schema.productSpecs.id, id));
+  }
+
+  async deleteProductSpecsByProduct(productId: number): Promise<void> {
+    await db.delete(schema.productSpecs).where(eq(schema.productSpecs.productId, productId));
+  }
+
+  // Industry Reviews
+  async createIndustryReview(data: schema.InsertIndustryReview): Promise<schema.IndustryReview> {
+    const [result] = await db.insert(schema.industryReviews).values(data).returning();
+    return result;
+  }
+
+  async getIndustryReview(id: number): Promise<schema.IndustryReview | undefined> {
+    return await db.query.industryReviews.findFirst({
+      where: eq(schema.industryReviews.id, id),
+    });
+  }
+
+  async getIndustryReviewsByOrbit(orbitId: number): Promise<schema.IndustryReview[]> {
+    return await db.query.industryReviews.findMany({
+      where: eq(schema.industryReviews.orbitId, orbitId),
+      orderBy: [desc(schema.industryReviews.publishedAt)],
+    });
+  }
+
+  async updateIndustryReview(id: number, data: Partial<schema.InsertIndustryReview>): Promise<schema.IndustryReview | undefined> {
+    const [result] = await db.update(schema.industryReviews)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.industryReviews.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteIndustryReview(id: number): Promise<void> {
+    await db.delete(schema.industryReviews).where(eq(schema.industryReviews.id, id));
+  }
+
+  // Industry Assets
+  async createIndustryAsset(data: schema.InsertIndustryAsset): Promise<schema.IndustryAsset> {
+    const [result] = await db.insert(schema.industryAssets).values(data).returning();
+    return result;
+  }
+
+  async getIndustryAsset(id: number): Promise<schema.IndustryAsset | undefined> {
+    return await db.query.industryAssets.findFirst({
+      where: eq(schema.industryAssets.id, id),
+    });
+  }
+
+  async getIndustryAssetsByOrbit(orbitId: number): Promise<schema.IndustryAsset[]> {
+    return await db.query.industryAssets.findMany({
+      where: eq(schema.industryAssets.orbitId, orbitId),
+    });
+  }
+
+  async deleteIndustryAsset(id: number): Promise<void> {
+    await db.delete(schema.industryAssets).where(eq(schema.industryAssets.id, id));
+  }
+
+  // Community Links
+  async createCommunityLink(data: schema.InsertCommunityLink): Promise<schema.CommunityLink> {
+    const [result] = await db.insert(schema.communityLinks).values(data).returning();
+    return result;
+  }
+
+  async getCommunityLink(id: number): Promise<schema.CommunityLink | undefined> {
+    return await db.query.communityLinks.findFirst({
+      where: eq(schema.communityLinks.id, id),
+    });
+  }
+
+  async getCommunityLinksByOrbit(orbitId: number): Promise<schema.CommunityLink[]> {
+    return await db.query.communityLinks.findMany({
+      where: eq(schema.communityLinks.orbitId, orbitId),
+    });
+  }
+
+  async updateCommunityLink(id: number, data: Partial<schema.InsertCommunityLink>): Promise<schema.CommunityLink | undefined> {
+    const [result] = await db.update(schema.communityLinks)
+      .set(data)
+      .where(eq(schema.communityLinks.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteCommunityLink(id: number): Promise<void> {
+    await db.delete(schema.communityLinks).where(eq(schema.communityLinks.id, id));
+  }
+
+  // Topic Tiles
+  async createTopicTile(data: schema.InsertTopicTile): Promise<schema.TopicTile> {
+    const [result] = await db.insert(schema.topicTiles).values(data).returning();
+    return result;
+  }
+
+  async getTopicTile(id: number): Promise<schema.TopicTile | undefined> {
+    return await db.query.topicTiles.findFirst({
+      where: eq(schema.topicTiles.id, id),
+    });
+  }
+
+  async getTopicTilesByOrbit(orbitId: number): Promise<schema.TopicTile[]> {
+    return await db.query.topicTiles.findMany({
+      where: eq(schema.topicTiles.orbitId, orbitId),
+      orderBy: [desc(schema.topicTiles.priority)],
+    });
+  }
+
+  async updateTopicTile(id: number, data: Partial<schema.InsertTopicTile>): Promise<schema.TopicTile | undefined> {
+    const [result] = await db.update(schema.topicTiles)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.topicTiles.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteTopicTile(id: number): Promise<void> {
+    await db.delete(schema.topicTiles).where(eq(schema.topicTiles.id, id));
+  }
+
+  // Pulse Sources
+  async createPulseSource(data: schema.InsertPulseSource): Promise<schema.PulseSource> {
+    const [result] = await db.insert(schema.pulseSources).values(data).returning();
+    return result;
+  }
+
+  async getPulseSource(id: number): Promise<schema.PulseSource | undefined> {
+    return await db.query.pulseSources.findFirst({
+      where: eq(schema.pulseSources.id, id),
+    });
+  }
+
+  async getPulseSourcesByOrbit(orbitId: number): Promise<schema.PulseSource[]> {
+    return await db.query.pulseSources.findMany({
+      where: eq(schema.pulseSources.orbitId, orbitId),
+    });
+  }
+
+  async getEnabledPulseSources(): Promise<schema.PulseSource[]> {
+    return await db.query.pulseSources.findMany({
+      where: eq(schema.pulseSources.isEnabled, true),
+    });
+  }
+
+  async updatePulseSource(id: number, data: Partial<schema.InsertPulseSource>): Promise<schema.PulseSource | undefined> {
+    const [result] = await db.update(schema.pulseSources)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.pulseSources.id, id))
+      .returning();
+    return result;
+  }
+
+  async deletePulseSource(id: number): Promise<void> {
+    await db.delete(schema.pulseSources).where(eq(schema.pulseSources.id, id));
+  }
+
+  // Pulse Snapshots
+  async createPulseSnapshot(data: schema.InsertPulseSnapshot): Promise<schema.PulseSnapshot> {
+    const [result] = await db.insert(schema.pulseSnapshots).values(data).returning();
+    return result;
+  }
+
+  async getLatestPulseSnapshot(sourceId: number): Promise<schema.PulseSnapshot | undefined> {
+    return await db.query.pulseSnapshots.findFirst({
+      where: eq(schema.pulseSnapshots.pulseSourceId, sourceId),
+      orderBy: [desc(schema.pulseSnapshots.fetchedAt)],
+    });
+  }
+
+  async getPulseSnapshots(sourceId: number, limit: number = 10): Promise<schema.PulseSnapshot[]> {
+    return await db.query.pulseSnapshots.findMany({
+      where: eq(schema.pulseSnapshots.pulseSourceId, sourceId),
+      orderBy: [desc(schema.pulseSnapshots.fetchedAt)],
+      limit,
+    });
+  }
+
+  // Pulse Events
+  async createPulseEvent(data: schema.InsertPulseEvent): Promise<schema.PulseEvent> {
+    const [result] = await db.insert(schema.pulseEvents).values(data).returning();
+    return result;
+  }
+
+  async getPulseEvent(id: number): Promise<schema.PulseEvent | undefined> {
+    return await db.query.pulseEvents.findFirst({
+      where: eq(schema.pulseEvents.id, id),
+    });
+  }
+
+  async getPulseEventsByOrbit(orbitId: number, status?: schema.PulseEventStatus): Promise<schema.PulseEvent[]> {
+    const conditions = [eq(schema.pulseEvents.orbitId, orbitId)];
+    if (status) {
+      conditions.push(eq(schema.pulseEvents.status, status));
+    }
+    return await db.query.pulseEvents.findMany({
+      where: and(...conditions),
+      orderBy: [desc(schema.pulseEvents.detectedAt)],
+    });
+  }
+
+  async updatePulseEvent(id: number, data: Partial<schema.InsertPulseEvent>): Promise<schema.PulseEvent | undefined> {
+    const [result] = await db.update(schema.pulseEvents)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.pulseEvents.id, id))
+      .returning();
+    return result;
+  }
+
+  // Alignments
+  async createAlignment(data: schema.InsertAlignment): Promise<schema.Alignment> {
+    const [result] = await db.insert(schema.alignments).values(data).returning();
+    return result;
+  }
+
+  async getAlignment(orbitId: number, userId: number): Promise<schema.Alignment | undefined> {
+    return await db.query.alignments.findFirst({
+      where: and(
+        eq(schema.alignments.orbitId, orbitId),
+        eq(schema.alignments.userId, userId)
+      ),
+    });
+  }
+
+  async getAlignmentsByOrbit(orbitId: number): Promise<schema.Alignment[]> {
+    return await db.query.alignments.findMany({
+      where: eq(schema.alignments.orbitId, orbitId),
+    });
+  }
+
+  async getAlignmentsByUser(userId: number): Promise<schema.Alignment[]> {
+    return await db.query.alignments.findMany({
+      where: eq(schema.alignments.userId, userId),
+    });
+  }
+
+  async updateAlignment(id: number, data: Partial<schema.InsertAlignment>): Promise<schema.Alignment | undefined> {
+    const [result] = await db.update(schema.alignments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.alignments.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteAlignment(id: number): Promise<void> {
+    await db.delete(schema.alignments).where(eq(schema.alignments.id, id));
   }
 }
 

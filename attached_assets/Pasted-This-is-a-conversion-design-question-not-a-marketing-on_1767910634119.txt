@@ -1,0 +1,195 @@
+This is a conversion design question, not a marketing one — and if you get it right, it’ll feel obvious rather than salesy.
+
+The core principle is this:
+
+Industry Orbits orient you.
+Business Orbits operationalise you.
+
+So the goal is not to “sell” a Business Orbit.
+It’s to make it feel like the natural next step once someone realises, “this matters to me specifically.”
+
+Below is the clean, universal way to do that.
+
+⸻
+
+First: where not to do it (important)
+
+Do not:
+	•	Add a big CTA banner
+	•	Add popups on arrival
+	•	Add “Create your own Orbit” buttons everywhere
+	•	Interrupt first-time exploration
+
+That turns a neutral Industry Orbit into a funnel — and that breaks trust.
+
+⸻
+
+The right mental shift for the user
+
+When a business user is in the Smart Glasses Industry Orbit, they should gradually think:
+	•	“This is useful”
+	•	“This is neutral”
+	•	“This is helping me understand the space”
+	•	…then…
+	•	“But my situation is more specific than this.”
+
+That last thought is your opening.
+
+Your job is to recognise that moment and respond, not force it.
+
+⸻
+
+The universal mechanism: Contextual Reflection
+
+The pattern
+
+You surface the idea of a Business Orbit only when the user expresses specificity.
+
+That means:
+	•	They ask a company-specific question
+	•	They ask about their customers
+	•	They ask about positioning
+	•	They ask about decisions (“should we…”)
+
+At that moment, the Industry Orbit gently reflects back:
+
+“That’s a business-specific question.”
+
+And then offers a next step.
+
+⸻
+
+How this looks in practice (clean and subtle)
+
+1. Inside responses (primary method)
+
+When the user asks something like:
+	•	“Are smart glasses worth it for our retail stores?”
+	•	“Should we be investing in smart glasses in 2026?”
+	•	“How would smart glasses affect our compliance?”
+
+The response ends with a quiet divider, not a CTA:
+
+This Orbit gives a neutral industry view.
+If you want answers tailored to your business, you can spin up a private Orbit that builds on this intelligence.
+
+Then:
+	•	a single button: “Create a Business Orbit”
+	•	secondary text: Takes under a minute
+
+No pricing. No hype. No urgency.
+
+This works because it feels like capability, not upsell.
+
+⸻
+
+2. A persistent but non-invasive affordance (secondary)
+
+In the Industry Orbit UI (same for all Industry Orbits):
+
+A small, consistent element, e.g. top-right or side rail:
+
+“Apply this to your business →”
+
+That’s it.
+
+Not:
+	•	“Start free”
+	•	“Create now”
+	•	“Upgrade”
+
+Just:
+
+Apply this to your business
+
+Clicking it explains:
+	•	Industry Orbit = neutral, shared
+	•	Business Orbit = private, opinionated, decision-focused
+
+This reinforces the distinction you’ve worked so hard to protect.
+
+⸻
+
+3. The “mirror moment” (high leverage)
+
+After a user has:
+	•	Clicked several tiles
+	•	Read multiple responses
+	•	Spent time in the Orbit
+
+You can surface a one-time inline reflection:
+
+“You’ve been exploring how smart glasses are changing the industry.
+Many teams create a private Orbit to explore what this means for them.”
+
+Then:
+	•	“Create a Business Orbit” (primary)
+	•	“Keep exploring” (secondary)
+
+Important:
+This appears once, ever, per user per Industry Orbit.
+
+That makes it feel respectful.
+
+⸻
+
+How Business Orbits should be framed (this matters)
+
+Never frame it as:
+	•	“your own chatbot”
+	•	“your own AI”
+	•	“custom answers”
+
+Frame it as:
+
+“A private Orbit that builds on industry intelligence, but learns from your context.”
+
+Key differences you should clearly state:
+	•	Industry Orbit: neutral, shared, observational
+	•	Business Orbit: private, decision-oriented, opinionated by design
+
+That makes the upgrade feel necessary, not optional.
+
+⸻
+
+One very important rule
+
+Never suggest that the Industry Orbit is “insufficient.”
+
+It is sufficient — for orientation.
+
+The Business Orbit exists because:
+	•	businesses have constraints
+	•	businesses have goals
+	•	businesses have risk
+
+That’s not a flaw in the Industry Orbit. It’s reality.
+
+⸻
+
+The one-sentence positioning you should bake into the system
+
+You’ll probably want this somewhere canonical:
+
+“Industry Orbits help you understand what’s happening. Business Orbits help you decide what to do about it.”
+
+If Replit, Claude, designers, and copy all align on that sentence, everything stays clean.
+
+⸻
+
+Why this will work (and scale)
+	•	It respects neutrality
+	•	It avoids aggressive conversion
+	•	It triggers only when relevance is proven
+	•	It works identically across all Industry Orbits
+	•	It reinforces your core distinction instead of blurring it
+
+And crucially:
+
+People won’t feel sold to.
+They’ll feel invited.
+
+If you want, next we can:
+	•	write the exact copy blocks for those moments
+	•	define the trigger logic precisely
+	•	or design the first-run experience of a Business Orbit that makes the value obvious in under 30 seconds
