@@ -12,7 +12,7 @@ export function QALibrary() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: questionsData, isLoading: loadingQuestions, refetch: refetchQuestions } = useQuery({
+  const { data: questionsData, isLoading: loadingQuestions, isError: questionsError, refetch: refetchQuestions } = useQuery({
     queryKey: ["smartglasses-questions"],
     queryFn: async () => {
       const res = await fetch("/api/smartglasses/questions");
@@ -22,7 +22,7 @@ export function QALibrary() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: answersData, isLoading: loadingAnswers } = useQuery({
+  const { data: answersData, isLoading: loadingAnswers, isError: answersError } = useQuery({
     queryKey: ["smartglasses-answers", expandedQuestion],
     queryFn: async () => {
       if (!expandedQuestion) return { answers: [] };
@@ -46,6 +46,13 @@ export function QALibrary() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["smartglasses-answers", expandedQuestion] });
+    },
+    onError: () => {
+      toast({
+        title: "Vote failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -87,6 +94,14 @@ export function QALibrary() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
           </div>
+        ) : questionsError ? (
+          <div className="text-center py-12">
+            <p className="text-zinc-400 mb-4">Unable to load questions. Please try again.</p>
+            <Button variant="outline" onClick={() => refetchQuestions()} className="border-zinc-700">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
         ) : (
           <div className="space-y-4">
             {questions.map((q) => (
@@ -122,6 +137,8 @@ export function QALibrary() {
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
                       </div>
+                    ) : answersError ? (
+                      <p className="text-zinc-500 text-center py-4">Unable to load answers. Please try again.</p>
                     ) : answers.length === 0 ? (
                       <p className="text-zinc-500 text-center py-4">No answers yet for this question.</p>
                     ) : (
