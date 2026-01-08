@@ -40,6 +40,8 @@ import IceMakerProjects from "@/pages/icemaker/IceMakerProjects";
 import IceMakerTemplates from "@/pages/icemaker/IceMakerTemplates";
 import IceMakerSettings from "@/pages/icemaker/IceMakerSettings";
 import Library from "@/pages/Library";
+import SmartGlassesPage from "@/pages/smartglasses/SmartGlassesPage";
+import SmartGlassesPartnersPage from "@/pages/smartglasses/PartnersPage";
 import { useSearch } from "wouter";
 
 function OrbitRouter() {
@@ -144,6 +146,12 @@ function Router() {
       <Route path="/for/knowledge" component={ForKnowledge} />
       <Route path="/ai-discovery-control" component={AIDiscoveryControl} />
       <Route path="/ai-discovery" component={AIDiscoveryControl} />
+      
+      <Route path="/smartglasses" component={SmartGlassesPage} />
+      <Route path="/smartglasses/partners" component={SmartGlassesPartnersPage} />
+      <Route path="/smartglasses/friend" component={SmartGlassesPage} />
+      <Route path="/smartglasses/influencer" component={SmartGlassesPage} />
+      
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />

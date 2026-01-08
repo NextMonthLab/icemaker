@@ -1,0 +1,156 @@
+PROMPT: Build a category discovery page for NextMonth called “Smart Glasses” with an Orbit-powered audit, a premium deep-dive chat upgrade, and a clearly labelled “Surfaced Products” section at the bottom.
+
+CONTEXT
+You are building a NextMonth category discovery page that helps users learn about Smart Glasses, run a lightweight “audit” of their needs, and then either:
+1) Continue free exploration, or
+2) Upgrade to premium for deeper chat, saved briefs, and creator content tools.
+
+IMPORTANT INTEGRITY RULE
+There must be a clear separation between:
+- Editorial content (facts, explanations, neutral guidance)
+- Commercial content (surfaced products)
+Paid placement must NEVER influence editorial recommendations.
+The bottom section must be clearly labelled as “Surfaced Products” and each item must be labelled “Sponsored” if it is paid.
+
+PAGE ROUTE
+Create a page at:
+- /smartglasses
+
+PAGE GOALS
+1) Educate: explain smart glasses simply, with structured sections and practical examples.
+2) Guide: provide an “Audit” that maps a user to recommended use-cases and considerations.
+3) Convert: offer a premium upgrade for deep chat, saved briefs, and creator tools.
+4) Monetise ethically: include a bottom “Surfaced Products” section for paid placements, clearly labelled.
+
+UI REQUIREMENTS
+Build a modern, clean page with these sections:
+
+1) Hero
+- Title: “Smart Glasses”
+- Subtitle: “Understand the tech, compare options, and stay ahead of what’s next.”
+- Primary CTA button: “Start the Smart Glasses Audit”
+- Secondary CTA button: “Explore what people are asking”
+- Include a small trust note under CTAs:
+  “Editorial guidance is neutral. Surfaced Products are clearly labelled.”
+
+2) Quick explainer tiles (3 to 6 tiles)
+- “What smart glasses are”
+- “Best for creators”
+- “Best for everyday use”
+- “Privacy and etiquette”
+- “Battery and comfort”
+- “Price expectations”
+
+3) The Audit (interactive)
+A step-by-step audit widget that asks:
+- Budget range: under £300, £300-£600, £600-£1,200, £1,200+
+- Primary goal: content creation, fitness, commuting, work, accessibility, experimenting
+- Must-have features: camera, open-ear audio, AR display, prescription support, long battery, lightweight
+- Privacy comfort level: low, medium, high
+- Phone ecosystem: iPhone, Android, mixed
+- Optional: wear glasses already? yes/no
+
+Audit output should generate:
+- A short “Your profile” summary
+- A list of “Top considerations”
+- A list of “Likely best category fits” (not brand picks, category fits)
+Examples of category fits:
+- “Camera-first creator glasses”
+- “Audio-first everyday glasses”
+- “True AR display glasses”
+- “Enterprise workflow glasses”
+- “Accessibility and assistive glasses”
+
+Under the audit output, show 2 CTAs:
+- “Ask the Orbit about my results” (free, limited turns)
+- “Unlock premium deep dive” (premium)
+
+4) Trending questions section
+A list of 8 to 12 questions people commonly ask about smart glasses.
+Include a “Refresh” button which simulates updating the list from the backend.
+Examples:
+- “Are smart glasses worth it in 2026?”
+- “Which smart glasses have the best camera?”
+- “Can I wear them with prescription lenses?”
+- “How do they handle privacy and recording?”
+- “Do AR glasses work outdoors?”
+- “What is the difference between smart glasses and AR glasses?”
+
+5) Creator Mode teaser (ICE Maker)
+A section describing creator features:
+- “Turn questions into content”
+- “Hook ideas, scripts, captions”
+- “Comparison templates”
+- “Posting plan”
+CTA: “Unlock Creator Mode”
+
+6) Premium value section
+A pricing-style panel with benefits:
+- Deep chat with memory for this category
+- Save briefs and comparison packs
+- Creator Mode exports
+- Early access to new features
+CTA: “Go Premium”
+
+7) Surfaced Products (bottom section, commercial)
+This is a distinct block with:
+- Title: “Surfaced Products”
+- Subtitle: “Paid placements from selected providers. These do not affect editorial guidance.”
+Render 6 to 12 product cards with:
+- Product name
+- One-line pitch
+- Price range indicator
+- Tag chips: “Sponsored”, “New”, “Best for creators”, “Best for comfort”, etc
+- A button: “View details”
+- A button: “Add to comparison”
+Each card must display “Sponsored” when sponsored = true.
+
+Also include a small link-style CTA at the end:
+- “Want your product surfaced here?” which links to /smartglasses/partners (placeholder page is fine)
+
+DATA MODEL (mock first, structured for future)
+Create a simple backend API layer (or mocked service) for:
+A) Trending questions
+- GET /api/smartglasses/questions
+
+B) Surfaced products
+- GET /api/smartglasses/surfaced-products
+Return an array with fields:
+  id, name, pitch, priceRange, tags[], sponsored(boolean), imageUrl(optional), detailsUrl(optional)
+
+C) Audit result helper (optional)
+- POST /api/smartglasses/audit
+Accept audit answers and return:
+  profileSummary, considerations[], categoryFits[]
+
+For now you can implement audit logic in the frontend deterministically, but structure it so it could be moved server-side later.
+
+CHAT ENTRY (lightweight)
+Add a small embedded chat panel that can be opened after audit results.
+- Free users: limit to e.g. 5 messages per day (mock this with local state)
+- Premium users: unlimited (mock “premium” with a toggle in dev)
+
+DESIGN AND COPY RULES
+- Use UK English spelling.
+- Do not use long dashes (avoid “—”).
+- Make the sponsored section visually distinct and clearly labelled.
+- Keep the page fast and modular.
+
+DELIVERABLES
+1) The /smartglasses page implemented with all sections above.
+2) Any required components in a clean folder structure.
+3) Mock API routes or service files for questions and surfaced products.
+4) A placeholder /smartglasses/partners page with a simple vendor interest form (name, company, product, website, email).
+
+TECH NOTES
+- If this project uses React + Vite, place the page in client/src/pages/SmartGlasses.tsx and add routing.
+- Keep components reusable: AuditWizard, TrendingQuestions, SurfacedProductsGrid, PremiumPanel.
+- Do not break existing routes or layout.
+- Ensure the page looks good on mobile and desktop.
+
+QUALITY CHECKLIST
+- Editorial vs sponsored separation is explicit in UI copy.
+- Audit feels useful and produces clear outputs.
+- Surfaced Products section is clearly commercial and labelled.
+- No long dash characters are used in copy.
+- All sections render without backend dependencies.

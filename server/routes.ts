@@ -15024,6 +15024,120 @@ GUIDELINES:
     return code;
   }
 
+  // ============ SMART GLASSES CATEGORY DISCOVERY ============
+  // In-memory storage for mock data (would be database in production)
+  const smartGlassesQuestions = [
+    { id: "1", question: "Are smart glasses worth it in 2026?", heat: 95, updatedAt: new Date().toISOString() },
+    { id: "2", question: "Which smart glasses have the best camera quality?", heat: 88, updatedAt: new Date().toISOString() },
+    { id: "3", question: "Can I wear smart glasses with prescription lenses?", heat: 85, updatedAt: new Date().toISOString() },
+    { id: "4", question: "How long does the battery last on smart glasses?", heat: 82, updatedAt: new Date().toISOString() },
+    { id: "5", question: "Are smart glasses safe for daily use?", heat: 78, updatedAt: new Date().toISOString() },
+    { id: "6", question: "What is the difference between smart glasses and AR glasses?", heat: 75, updatedAt: new Date().toISOString() },
+    { id: "7", question: "Can smart glasses record video discreetly?", heat: 72, updatedAt: new Date().toISOString() },
+    { id: "8", question: "Do smart glasses work with both iPhone and Android?", heat: 70, updatedAt: new Date().toISOString() },
+    { id: "9", question: "What features should I look for in smart glasses?", heat: 68, updatedAt: new Date().toISOString() },
+    { id: "10", question: "How do I clean and maintain smart glasses?", heat: 62, updatedAt: new Date().toISOString() },
+  ];
+
+  const smartGlassesAnswers: Record<string, any[]> = {
+    "1": [
+      { id: "a1-1", questionId: "1", answer: "Smart glasses have matured significantly. For content creators, audio-first models offer excellent value for hands-free capture. For AR enthusiasts, the technology is improving but still has trade-offs in battery life and display quality. Consider your primary use case before purchasing.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 42, downvotes: 3, productRefs: [] },
+      { id: "a1-2", questionId: "1", answer: "I bought a pair for commuting and they have been genuinely useful. The audio quality is better than I expected and not having to fish out my earbuds is convenient. Worth it for me.", sourceType: "community", updatedAt: new Date().toISOString(), upvotes: 28, downvotes: 5, productRefs: [] },
+    ],
+    "2": [
+      { id: "a2-1", questionId: "2", answer: "Camera quality varies significantly by price point. Budget models typically offer 720p or 1080p, while premium options reach 4K. Look for optical image stabilisation if you plan to record while moving. Consider low-light performance as well, as this is often where cheaper models struggle.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 35, downvotes: 2, productRefs: [] },
+    ],
+    "3": [
+      { id: "a3-1", questionId: "3", answer: "Many smart glasses brands now offer prescription lens options. Some work with third-party opticians, while others have in-house programmes. Expect to pay an additional £100-300 for prescription lenses. Check compatibility before purchasing.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 56, downvotes: 1, productRefs: [] },
+      { id: "a3-2", questionId: "3", answer: "I got prescription lenses fitted to mine through my local optician. Took about two weeks and works perfectly. Just make sure to check the frame compatibility first.", sourceType: "community", updatedAt: new Date().toISOString(), upvotes: 19, downvotes: 0, productRefs: [] },
+    ],
+    "4": [
+      { id: "a4-1", questionId: "4", answer: "Battery life typically ranges from 4-8 hours depending on usage. Audio playback drains less than video recording. Most models charge via their case, similar to wireless earbuds. Plan for a mid-day charge if you use features heavily.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 31, downvotes: 4, productRefs: [] },
+    ],
+    "5": [
+      { id: "a5-1", questionId: "5", answer: "Current smart glasses meet standard safety regulations. The main considerations are weight distribution (heavier frames can cause discomfort), audio exposure levels, and screen time for AR models. Take breaks as you would with any screen-based device.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 22, downvotes: 1, productRefs: [] },
+    ],
+    "6": [
+      { id: "a6-1", questionId: "6", answer: "Smart glasses add digital features like audio, camera, and simple notifications to traditional eyewear. AR glasses go further by projecting visual information into your field of view. Smart glasses are generally lighter and have better battery life, while AR glasses offer more immersive experiences at higher cost.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 67, downvotes: 2, productRefs: [] },
+    ],
+    "7": [
+      { id: "a7-1", questionId: "7", answer: "Most reputable smart glasses have visible recording indicators (LED lights) to signal when capture is active. This is both an ethical design choice and a legal requirement in many regions. Discreet recording without indicators raises privacy concerns and may be illegal in some jurisdictions.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 44, downvotes: 8, productRefs: [] },
+    ],
+    "8": [
+      { id: "a8-1", questionId: "8", answer: "Most smart glasses support both iOS and Android, though some features may work better on one platform. Check the manufacturer's compatibility list, as certain models have deeper integration with specific ecosystems. Voice assistants like Siri or Google Assistant may have different levels of support.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 25, downvotes: 3, productRefs: [] },
+    ],
+    "9": [
+      { id: "a9-1", questionId: "9", answer: "Key features to consider: audio quality and open-ear design, camera resolution and stabilisation, battery life, prescription lens compatibility, comfort and weight, water resistance, companion app quality, and ecosystem integration. Prioritise based on your primary use case.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 38, downvotes: 1, productRefs: [] },
+    ],
+    "10": [
+      { id: "a10-1", questionId: "10", answer: "Clean lenses with a microfibre cloth, avoiding paper products that can scratch. Use the provided case for storage. Keep charging contacts clean and dry. Avoid extreme temperatures. Most frames can be cleaned with mild soap and water, but check manufacturer guidelines first.", sourceType: "editorial", updatedAt: new Date().toISOString(), upvotes: 15, downvotes: 0, productRefs: [] },
+    ],
+  };
+
+  const smartGlassesSurfacedProducts = [
+    { id: "sp1", name: "AudioVue Pro", pitch: "Premium open-ear audio with crystal clear calls and music", priceRange: "£299 - £349", tags: [{ label: "Audio-first", type: "best_for_comfort" }], sponsored: true, imageUrl: null, detailsUrl: null },
+    { id: "sp2", name: "CreatorFrame X1", pitch: "4K capture with instant social sharing and editing tools", priceRange: "£399 - £449", tags: [{ label: "Best for creators", type: "best_for_creators" }], sponsored: true, imageUrl: null, detailsUrl: null },
+    { id: "sp3", name: "LensLink Lite", pitch: "Affordable entry point with solid audio and basic camera", priceRange: "£149 - £199", tags: [{ label: "Budget friendly", type: "budget_friendly" }], sponsored: true, imageUrl: null, detailsUrl: null },
+    { id: "sp4", name: "VisionArc Elite", pitch: "True AR display with productivity and navigation features", priceRange: "£899 - £999", tags: [{ label: "Premium", type: "premium" }, { label: "AR Display", type: "new" }], sponsored: true, imageUrl: null, detailsUrl: null },
+    { id: "sp5", name: "WorkSight Pro", pitch: "Enterprise-grade with secure connectivity and long battery", priceRange: "£549 - £649", tags: [{ label: "For work", type: "best_for_comfort" }], sponsored: true, imageUrl: null, detailsUrl: null },
+    { id: "sp6", name: "SportVision Active", pitch: "Sweat-resistant with real-time fitness metrics display", priceRange: "£329 - £379", tags: [{ label: "Fitness", type: "new" }], sponsored: true, imageUrl: null, detailsUrl: null },
+  ];
+
+  // GET /api/smartglasses/questions - return trending questions
+  app.get("/api/smartglasses/questions", (req, res) => {
+    res.json({ questions: smartGlassesQuestions });
+  });
+
+  // GET /api/smartglasses/answers - return answers for a question
+  app.get("/api/smartglasses/answers", (req, res) => {
+    const questionId = req.query.questionId as string;
+    if (!questionId) {
+      return res.status(400).json({ message: "questionId is required" });
+    }
+    const answers = smartGlassesAnswers[questionId] || [];
+    const sorted = [...answers].sort((a, b) => {
+      const scoreA = a.upvotes - a.downvotes;
+      const scoreB = b.upvotes - b.downvotes;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    res.json({ answers: sorted });
+  });
+
+  // POST /api/smartglasses/answers/:answerId/vote - vote on an answer
+  app.post("/api/smartglasses/answers/:answerId/vote", (req, res) => {
+    const { answerId } = req.params;
+    const { vote } = req.body;
+    if (!vote || !["up", "down"].includes(vote)) {
+      return res.status(400).json({ message: "vote must be 'up' or 'down'" });
+    }
+    for (const questionId of Object.keys(smartGlassesAnswers)) {
+      const answers = smartGlassesAnswers[questionId];
+      const answer = answers.find((a: any) => a.id === answerId);
+      if (answer) {
+        if (vote === "up") answer.upvotes++;
+        else answer.downvotes++;
+        return res.json({ answer });
+      }
+    }
+    res.status(404).json({ message: "Answer not found" });
+  });
+
+  // GET /api/smartglasses/surfaced-products - return sponsored products
+  app.get("/api/smartglasses/surfaced-products", (req, res) => {
+    res.json({ products: smartGlassesSurfacedProducts });
+  });
+
+  // POST /api/smartglasses/partner-inquiry - submit partner inquiry
+  app.post("/api/smartglasses/partner-inquiry", (req, res) => {
+    const { name, company, product, website, email } = req.body;
+    if (!name || !company || !product || !website || !email) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    console.log("[Smart Glasses Partner Inquiry]", { name, company, product, website, email });
+    res.json({ success: true, message: "Thanks. We will be in touch within 2 working days." });
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
   startWeeklyKnowledgeCoachJob(storage);

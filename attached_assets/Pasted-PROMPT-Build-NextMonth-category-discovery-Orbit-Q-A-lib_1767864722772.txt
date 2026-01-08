@@ -1,0 +1,232 @@
+PROMPT: Build NextMonth category discovery + Orbit Q&A library for “Smart Glasses” with ethical monetisation, shareable answer cards, and cost-controlled static responses.
+
+CONTEXT
+We are building a category experience for NextMonth at /smartglasses. It should feel like:
+- A discovery page (SEO-friendly, educational)
+- An interactive audit (maps user needs to category fits, not brand picks)
+- An Orbit Q&A library (popular questions with stored answers and voting)
+- A conversion layer with three CTAs:
+  1) Become a Friend (free newsletter)
+  2) Become an Influencer (paid subscription: deep chat + ICE Maker for SmartGlasses)
+  3) Advertise (sponsored display placements, clearly labelled, not affecting editorial)
+
+CRITICAL INTEGRITY RULES (NON-NEGOTIABLE)
+1) Editorial content must be neutral and not influenced by paid placements.
+2) Sponsored content must be clearly labelled “Sponsored” and appear only in the commercial section.
+3) If sponsored products are ever shown in a chat or comparison, they must still be labelled “Sponsored”.
+4) No long dash characters in copy (do not use “—”). Use normal hyphens if needed.
+5) Use UK English spelling.
+
+ROUTES
+- /smartglasses                     -> main discovery page
+- /smartglasses/partners            -> vendor interest page (advertise here)
+Optional (placeholders are fine):
+- /smartglasses/friend              -> newsletter signup page (or modal)
+- /smartglasses/influencer          -> influencer subscription upsell page
+
+TECH ASSUMPTIONS
+- React + Vite frontend
+- Express backend (server/routes.ts)
+- TypeScript
+- Use React Query for fetching API data with 5-minute stale time
+
+HIGH LEVEL GOAL
+Keep AI costs low by serving popular questions and answers from a static library first.
+Only generate a new answer when:
+- the question has no stored answer
+- the stored answer is stale/outdated
+- the user asks a follow-up requiring personalised context
+For this scaffold, implement the library and voting; the AI generation can be mocked as “Generate new answer” (admin/dev button).
+
+PAGE REQUIREMENTS: /smartglasses
+Build a clean, modern page with these sections:
+
+1) HERO
+Title: Smart Glasses
+Subtitle: Understand the tech, compare options, and stay ahead of what’s next.
+Primary CTA: Start the Smart Glasses Audit (scroll to audit)
+Secondary CTA: Explore popular questions (scroll to Q&A)
+Trust note under CTAs:
+"Editorial guidance is neutral. Sponsored placements are clearly labelled."
+
+Add three CTA buttons somewhere prominent (hero or a CTA band under hero):
+- Become a Friend (free)
+- Become an Influencer (paid)
+- Advertise here (sponsored display)
+
+2) QUICK EXPLAINERS GRID (editorial)
+6 tiles, educational and neutral. Example titles:
+- What smart glasses are
+- Smart glasses vs AR glasses
+- Best for creators (what to look for)
+- Comfort, battery and fit
+- Privacy and recording etiquette
+- What to expect at different budgets
+
+3) THE AUDIT (editorial, interactive)
+A step-by-step wizard that asks:
+- Budget range: under £300, £300-£600, £600-£1,200, £1,200+
+- Primary goal: content creation, fitness, commuting, work, accessibility, experimenting
+- Must-have features (multi-select): camera, open-ear audio, AR display, prescription support, long battery, lightweight
+- Privacy comfort: low, medium, high
+- Phone ecosystem: iPhone, Android, mixed
+- Optional: already wear glasses? yes/no
+
+Audit output:
+- Profile summary (short paragraph)
+- Top considerations (bullets)
+- Category fits (cards), with matchScore 0-100, for example:
+  - Camera-first creator glasses
+  - Audio-first everyday glasses
+  - True AR display glasses
+  - Accessibility and assistive glasses
+  - Enterprise workflow glasses
+
+IMPORTANT: Audit output must not recommend specific brands.
+Below results show two CTAs:
+- Ask the Orbit about my results (opens Q&A/chat panel, free limited)
+- Unlock Influencer Mode (paid upsell)
+
+4) ORBIT Q&A LIBRARY (editorial but powered by stored answers)
+This is the key cost-control feature.
+
+Display:
+- A list of 8-12 popular questions (from API)
+- Clicking a question opens its stored answers as “Answer cards”
+
+Answer cards must include:
+- Answer text (stored)
+- Source label (eg “Editorial”)
+- Freshness label: “Updated: <date>”
+- Voting: 👍 Helpful, 👎 Not helpful
+- Share button: “Share”
+- Optional button: “Ask a follow-up” (free limited)
+
+Share button behaviour:
+- It generates a shareable link that points to NextMonth, not the vendor.
+- It should share a URL like:
+  /smartglasses?qa=<questionId>&answer=<answerId>
+- When visited, the page scrolls to that answer card and highlights it.
+- If the answer card references a product, the product link is secondary (a button inside the card), but the shared link always brings people back to NextMonth first.
+
+Voting logic:
+- 👍 increments upvotes
+- 👎 increments downvotes
+- Answers should be ranked by a simple score (upvotes - downvotes), and then by recency.
+- Add a small note: “Help improve this Orbit by voting.”
+
+Free usage limit (mock):
+- Free users can open the Q&A and ask follow-ups up to 5 messages per day (store count in localStorage).
+- Influencer subscription removes the limit (mock with a dev toggle).
+
+5) FRIEND OF SMART GLASSES (free CTA)
+A section that explains:
+"Get the latest Smart Glasses insights and news in a simple newsletter."
+CTA: Become a Friend (opens signup form or navigates to /smartglasses/friend)
+
+6) INFLUENCER MODE (paid CTA)
+A section explaining:
+- Unlimited deep chat (category-specific)
+- Save briefs and talking points
+- Create Smart Glasses ICE packs: hooks, scripts, captions, comparison formats, posting plans
+CTA: Become an Influencer (go to /smartglasses/influencer)
+
+7) ADVERTISE HERE (commercial CTA)
+A short section explaining:
+- Display-only sponsored placements
+- Clearly labelled
+- Does not affect editorial guidance
+CTA: Advertise here (go to /smartglasses/partners)
+
+8) SPONSORED DISPLAY SECTION (commercial, visually distinct, bottom of page)
+Title: Sponsored products
+Subtitle:
+"Paid placements from selected providers. These do not affect editorial guidance."
+
+Render 6-12 product cards from API:
+- name
+- pitch
+- priceRange
+- tags
+- sponsored badge must be visible when sponsored=true
+Buttons:
+- View details (detailsUrl if present)
+- Add to comparison (can be mocked)
+
+IMPORTANT:
+For scaffolding, do not mark real-world brand products as sponsored in mock data.
+Use placeholder/fictitious product names for sponsored=true to avoid confusion.
+
+A small text link at the end:
+"Want your product featured here?" -> /smartglasses/partners
+
+PARTNERS PAGE: /smartglasses/partners
+Simple vendor interest form:
+- Name (required)
+- Company (required)
+- Product name (required)
+- Website URL (required)
+- Email (required)
+Submit -> POST /api/smartglasses/partner-inquiry
+Show success message: “Thanks. We will be in touch within 2 working days.”
+
+DATA TYPES
+Create a types file for SmartGlasses including:
+
+- TrendingQuestion: id, question, heat (1-100), updatedAt
+- StoredAnswer: id, questionId, answer, sourceType ('editorial'|'community'), updatedAt, upvotes, downvotes, productRefs?[]
+- ProductRef: id, name, detailsUrl (optional), sponsored (boolean)
+- SurfacedProduct: id, name, pitch, priceRange, tags[], sponsored, imageUrl?, detailsUrl?
+- PartnerInquiry: name, company, product, website, email
+
+API ENDPOINTS (mocked server)
+1) GET /api/smartglasses/questions
+Return 8-12 questions with heat and updatedAt.
+
+2) GET /api/smartglasses/answers?questionId=...
+Return 2-5 stored answers for that question.
+Include upvotes/downvotes and updatedAt.
+Include optional productRefs for some answers.
+
+3) POST /api/smartglasses/answers/:answerId/vote
+Body: { vote: "up" | "down" }
+Update counts in memory (OK for mock). Return updated answer.
+
+4) GET /api/smartglasses/surfaced-products
+Return 6-12 products.
+Use fictitious names for any sponsored=true products.
+
+5) POST /api/smartglasses/partner-inquiry
+Log to console and return success.
+
+OPTIONAL DEV FEATURE (helps validate the model)
+Add a small dev-only button in Q&A view:
+"Generate new answer (mock)"
+When clicked, it appends a new stored answer entry for that question with current timestamp and 0 votes.
+This simulates AI generating an answer once, then it being stored for future serving.
+
+STATE AND CACHING
+- Use React Query for questions, answers, surfaced products.
+- 5-minute stale time, cache responses.
+- Store free chat message count in localStorage with a daily reset key.
+- Implement the share link highlighting by reading URL query params and scrolling to the relevant card.
+
+UI QUALITY
+- Mobile responsive
+- Clear visual separation for the commercial sponsored section (different background, clear label)
+- No long dashes in any text
+- UK English spelling throughout
+
+DELIVERABLES
+- /smartglasses page implemented with all sections above
+- /smartglasses/partners page with working form posting to API
+- API routes added in server/routes.ts
+- Reusable components for:
+  HeroSection
+  QuickExplainersGrid
+  AuditWizard + WizardSummary
+  QALibrary (questions list)
+  AnswerCard (vote + share)
+  SponsoredProductsGrid (commercial)
+  SponsoredBadge
+- Types and API client helpers
