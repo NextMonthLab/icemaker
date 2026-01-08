@@ -4,14 +4,26 @@ import type { SocialProofTopic } from "@shared/schema";
 const openai = new OpenAI();
 
 // Keyword lists for quick rule-based filtering
+// Note: "like" is handled separately via PRAISE_PATTERNS to avoid false positives
+// (e.g., "What's it like?" should not trigger testimonial capture)
 const PRAISE_KEYWORDS = [
   "amazing", "fantastic", "excellent", "wonderful", "brilliant", "outstanding",
   "incredible", "superb", "perfect", "love", "loved", "loving", "great",
-  "like", "liked", "really like", "enjoy", "enjoyed", "enjoying",
-  "best", "awesome", "impressed", "impressed", "exceptional", "remarkable",
+  "enjoy", "enjoyed", "enjoying",
+  "best", "awesome", "impressed", "exceptional", "remarkable",
   "thank you so much", "thanks so much", "really appreciate", "highly recommend",
   "would recommend", "definitely recommend", "can't recommend enough",
   "exceeded expectations", "beyond expectations", "blown away", "delighted"
+];
+
+// Patterns that indicate genuine praise (for words like "like" that are ambiguous)
+const PRAISE_PATTERNS = [
+  /\bi (really |truly |absolutely )?(like|liked)\b/i,           // "I like", "I really like"
+  /\bwe (really |truly |absolutely )?(like|liked)\b/i,          // "We like", "We really like"  
+  /\b(really |truly |absolutely )?liked (it|this|them|the|your)\b/i, // "liked it", "really liked the..."
+  /\b(really |truly |absolutely )?like (it|this|them|the|your)\b/i,  // "like it", "really like the..."
+  /\bi('m| am) (so |very |really )?(happy|pleased|satisfied)\b/i,    // "I'm so happy"
+  /\bthis is (so |really |very )?(good|great|amazing)\b/i,           // "This is so good"
 ];
 
 const COMPLAINT_KEYWORDS = [
@@ -207,10 +219,20 @@ function quickPreFilter(message: string): {
   const praiseKeywords: string[] = [];
   const riskFlags: string[] = [];
   
-  // Check for praise keywords
+  // Check for praise keywords (unambiguous positive words)
   for (const keyword of PRAISE_KEYWORDS) {
     if (lowerMessage.includes(keyword)) {
       praiseKeywords.push(keyword);
+    }
+  }
+  
+  // Check for praise patterns (handles ambiguous words like "like" in context)
+  for (const pattern of PRAISE_PATTERNS) {
+    if (pattern.test(message)) {
+      const match = message.match(pattern);
+      if (match) {
+        praiseKeywords.push(match[0]);
+      }
     }
   }
   
@@ -269,7 +291,8 @@ export async function classifyTestimonialMoment(
   const wordCount = customerMessage.trim().split(/\s+/).length;
   
   // Strong praise keywords that indicate genuine testimonial intent even in short messages
-  const STRONG_PRAISE_KEYWORDS = ['love', 'like', 'enjoy', 'great', 'amazing', 'fantastic', 'incredible', 'best', 'excellent', 'perfect', 'wonderful', 'brilliant', 'outstanding', 'awesome'];
+  // Note: "like" is excluded as it requires context (handled via PRAISE_PATTERNS)
+  const STRONG_PRAISE_KEYWORDS = ['love', 'enjoy', 'great', 'amazing', 'fantastic', 'incredible', 'best', 'excellent', 'perfect', 'wonderful', 'brilliant', 'outstanding', 'awesome'];
   const hasStrongPraise = preFilter.praiseKeywords.some(pk => 
     STRONG_PRAISE_KEYWORDS.some(sp => pk.toLowerCase().includes(sp))
   );
