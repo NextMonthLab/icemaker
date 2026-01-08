@@ -169,6 +169,7 @@ function Router() {
       <Route path="/orbit/:slug" component={OrbitRouter} />
       <Route path="/orbit/:slug/claim" component={OrbitView} />
       <Route path="/orbit/:slug/hub" component={DataHub} />
+      <Route path="/orbit/:slug/datahub" component={DataHub} />
       <Route path="/orbit/:slug/hero-posts" component={HeroPosts} />
       <Route path="/orbit/:slug/sources" component={OrbitSettings} />
       <Route path="/orbit/:slug/settings" component={OrbitSettings} />
