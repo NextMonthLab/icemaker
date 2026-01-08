@@ -1498,11 +1498,37 @@ export type OrbitGenerationStatus = 'idle' | 'generating' | 'ready' | 'failed' |
 // Orbit tier levels (locked decision)
 export type OrbitTier = 'free' | 'grow' | 'insight' | 'intelligence';
 
+// ============ ORBIT TYPE DOCTRINE (LOCKED - SYSTEM INVARIANT) ============
+// This distinction is architectural, philosophical, and non-negotiable.
+// 
+// INDUSTRY ORBITS: Neutral, unowned, public intelligence spaces.
+//   - Can NEVER be claimed, owned, or controlled by a user, brand, or organisation.
+//   - "Inhabited, not owned" - users participate but don't control.
+//   - Pre-seeded with foundational knowledge, continuously updated.
+//   - Detect events even with zero user activity.
+//
+// STANDARD ORBITS: Claimable, owned by users/brands.
+//   - May be claimed and grant ownership + editorial control.
+//   - Intelligence emerges primarily through user interaction.
+//   - May be opinionated, biased, commercial, or project-specific.
+//
+// FORBIDDEN ACTIONS (treat as hard errors):
+//   - Claiming an Industry Orbit
+//   - Assigning an "owner" to an Industry Orbit
+//   - Allowing Industry Orbits to go dormant due to inactivity
+// =========================================================================
+export type OrbitType = 'industry' | 'standard';
+
 // Orbit Meta - tracks business orbits and links to existing preview data
 export const orbitMeta = pgTable("orbit_meta", {
   id: serial("id").primaryKey(),
   businessSlug: text("business_slug").notNull().unique(),
   sourceUrl: text("source_url").notNull(),
+  
+  // CRITICAL: Orbit Type (immutable after creation) - determines all permissions and lifecycle
+  // 'industry' = neutral, unowned, public intelligence space (e.g., Smart Glasses)
+  // 'standard' = claimable, ownable by users/brands (default for business orbits)
+  orbitType: text("orbit_type").$type<OrbitType>().default("standard").notNull(),
   
   // Link to existing preview (uses existing preview system for rich data)
   previewId: text("preview_id").references(() => previewInstances.id),

@@ -9435,10 +9435,12 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       const PAID_TIERS = ['grow', 'insight', 'intelligence'];
       const isPaidTier = PAID_TIERS.includes(planTier);
       
-      // Permission flags based on hierarchy: viewerRole → claimStatus → planTier
+      // Permission flags based on hierarchy: viewerRole → claimStatus → planTier → orbitType
       const canEditAppearance = viewerRole === 'admin';
       const canDeepScan = viewerRole === 'admin' && isClaimed && isPaidTier;
-      const canSeeClaimCTA = viewerRole === 'public' && !isClaimed;
+      // DOCTRINE: Industry Orbits can NEVER be claimed - hide claim CTA
+      const isIndustryOrbit = orbitMeta.orbitType === 'industry';
+      const canSeeClaimCTA = viewerRole === 'public' && !isClaimed && !isIndustryOrbit;
       const canAccessHub = viewerRole === 'admin' && isClaimed;
       const isFirstRun = viewerRole === 'admin' && !isClaimed;
       
@@ -9447,6 +9449,8 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         isClaimed,
         isFirstRun,
         planTier,
+        orbitType: orbitMeta.orbitType || 'standard',
+        isIndustryOrbit,
         canEditAppearance,
         canDeepScan,
         canSeeClaimCTA,
@@ -9585,6 +9589,15 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       const orbitMeta = await storage.getOrbitMeta(slug);
       if (!orbitMeta) {
         return res.status(404).json({ message: "Orbit not found" });
+      }
+
+      // DOCTRINE GUARD: Industry Orbits can NEVER be claimed
+      // This is a system invariant - Industry Orbits are neutral, unowned public spaces
+      if (orbitMeta.orbitType === 'industry') {
+        return res.status(403).json({ 
+          message: "This is an Industry Orbit and cannot be claimed. Industry Orbits are neutral, community-owned spaces.",
+          code: "INDUSTRY_ORBIT_CLAIM_FORBIDDEN"
+        });
       }
 
       if (orbitMeta.ownerId || orbitMeta.verifiedAt) {

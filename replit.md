@@ -56,6 +56,31 @@ Key architectural decisions and features include:
 -   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with real database persistence. Includes: Business Name (`customTitle`), Website URL (`sourceUrl`), AI Discovery Settings (`aiIndexingEnabled`, `autoUpdateKnowledge`), and Notification Preferences (`aiAccuracyAlertsEnabled`, `weeklyReportsEnabled`). API endpoint: `PATCH /api/orbit/:slug/settings`.
 -   **Category Discovery Pages**: Educational category pages with SEO-friendly discovery content, interactive audits, Q&A libraries with voting, and clearly-separated sponsored content. First category: Smart Glasses at `/smartglasses`.
 -   **Smart Glasses Discovery**: Full category experience at `/smartglasses` featuring: Hero with CTAs (Become a Friend, Become an Influencer, Advertise), Quick Explainers grid (6 educational tiles), Interactive Audit Wizard (6-step questionnaire: budget, goal, features, privacy, ecosystem, glasses), Q&A Library with stored answers and voting (upvote/downvote with shareable links), CTAs for subscription tiers, and Sponsored Products grid (clearly labelled commercial section). Partner inquiry form at `/smartglasses/partners`. Uses in-memory mock data for cost-controlled static responses. Editorial content is neutral; sponsored content is clearly labelled.
+-   **Orbit Tile Motion System**: Subtle ambient drift animation (1-3px, 8-18s cycles) for tiles with `prefers-reduced-motion` support. Intent Gravity reordering animates relevant tiles closer to focal zone on user interaction.
+
+## Orbit Type Doctrine (LOCKED - SYSTEM INVARIANT)
+This distinction is architectural, philosophical, and non-negotiable. Schema field: `orbit_type: 'industry' | 'standard'` in `orbit_meta` table.
+
+### Industry Orbits
+- **Can NEVER be claimed, owned, or controlled** by a user, brand, or organisation.
+- "Inhabited, not owned" - users participate but don't control.
+- Pre-seeded with foundational knowledge, continuously updated.
+- Detect events even with zero user activity.
+- Participation modes: Friend (observer), Influencer (signal contributor), Sponsor (clearly labelled, non-influential).
+- **Participation never grants editorial control or changes answers.**
+- Example: Smart Glasses (`/orbit/smart-glasses`) is an Industry Orbit.
+
+### Standard Orbits
+- May be claimed and grant ownership + editorial control.
+- Intelligence emerges primarily through user interaction.
+- May be opinionated, biased, commercial, or project-specific.
+- Default for business orbits created via website extraction.
+
+### Forbidden Actions (Hard Errors)
+- Claiming an Industry Orbit
+- Assigning an "owner" to an Industry Orbit
+- Allowing sponsors to influence answers
+- Allowing Industry Orbits to go dormant due to inactivity
 
 ## External Dependencies
 -   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

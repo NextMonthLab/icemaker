@@ -1,0 +1,155 @@
+You’re absolutely right. This is one of those “set the constitution before you build the city” moments.
+
+If Replit doesn’t understand this distinction as a hard, architectural rule, it will slowly erode it through convenience, shortcuts, or “helpful” abstractions. And once that happens, it’s almost impossible to claw back trust.
+
+So yes: this needs to be written in stone.
+
+Below is a canonical Replit prompt whose sole job is to lock the distinction permanently. This is not a feature prompt. This is a doctrine prompt.
+
+You should treat this as non-negotiable system context for anything Orbit-related going forward.
+
+⸻
+
+Replit Canonical Prompt: Orbit Type Doctrine (LOCKED)
+
+Context
+
+We are building a system called Orbits. There are two fundamentally different types of Orbits:
+	1.	Standard Orbits
+	2.	Industry Orbits
+
+They share the same UI shell and interaction mechanics, but they are governed by different rules of ownership, seeding, neutrality, and monetisation.
+
+This distinction is architectural, philosophical, and non-negotiable.
+
+You must treat this as a hard system constraint.
+
+⸻
+
+Core Doctrine (Must Not Be Violated)
+
+1. Industry Orbits Are Neutral and Unowned
+	•	Industry Orbits can NEVER be claimed, owned, or controlled by a user, brand, or organisation.
+	•	There is no concept of “Orbit owner” for Industry Orbits.
+	•	Industry Orbits are public, neutral intelligence spaces.
+	•	They exist independently of user participation.
+	•	Their credibility depends on the absence of ownership.
+
+Industry Orbits are inhabited, not owned.
+
+Any design, feature, or data model that implies ownership of an Industry Orbit is invalid and must not be implemented.
+
+⸻
+
+2. Participation ≠ Control (Industry Orbits)
+
+Users may align with Industry Orbits through clearly defined participation modes:
+	•	Friend (observer / subscriber)
+	•	Influencer (question-shaper / signal contributor)
+	•	Sponsor (clearly labelled, non-influential commercial presence)
+
+Important constraints:
+	•	Participation never grants editorial control.
+	•	Participation never changes answers.
+	•	Participation never suppresses competitors.
+	•	Participation never reorders intelligence outputs.
+
+Any UI or permission system that blurs participation with control is incorrect.
+
+⸻
+
+3. Standard Orbits Are Claimable and Owned
+	•	Standard Orbits may be claimed by a user, brand, or organisation.
+	•	Claiming a Standard Orbit grants ownership and editorial control.
+	•	Standard Orbits may be opinionated, biased, commercial, or project-specific.
+	•	Standard Orbits may fork, remix, or adapt intelligence from Industry Orbits.
+
+Ownership is allowed only for Standard Orbits.
+
+⸻
+
+4. Intelligence Source Differences (Critical)
+
+Industry Orbits
+	•	Pre-seeded with foundational knowledge
+	•	Continuously updated via monitored pulse feeds (manufacturers, publications, experts)
+	•	Detect events even with zero user activity
+	•	Learn from user interaction without becoming dependent on it
+
+Standard Orbits
+	•	Begin as blank canvases
+	•	Intelligence emerges primarily through user interaction
+	•	Do not require pulse feeds
+	•	May optionally import or reference Industry Orbit insights
+
+These are different intelligence lifecycles and must be modelled separately.
+
+⸻
+
+5. UI Must Be Identical, Semantics Must Not
+	•	Industry Orbits and Standard Orbits share the same Orbit UI shell.
+	•	The difference is behavioural and semantic, not visual.
+	•	Any attempt to visually differentiate them in a way that implies “premium” vs “basic” is incorrect.
+
+The distinction lives in:
+	•	permissions
+	•	data models
+	•	lifecycle rules
+	•	alignment vs ownership logic
+
+Not in cosmetic UI divergence.
+
+⸻
+
+6. Forbidden Actions (Hard Errors)
+
+The following must be treated as invalid states or errors:
+	•	Claiming an Industry Orbit
+	•	Assigning an “owner” to an Industry Orbit
+	•	Allowing sponsors to influence answers
+	•	Allowing influencers to publish conclusions
+	•	Allowing Industry Orbits to go dormant due to inactivity
+	•	Allowing Standard Orbits to masquerade as neutral industry references
+
+If encountered, these should be blocked at the logic level.
+
+⸻
+
+7. Canonical Mental Models (For Internal Use)
+	•	Industry Orbit: “This is where the industry is thinking.”
+	•	Standard Orbit: “This is my space, built with Orbit intelligence.”
+
+If a feature does not clearly belong to one of these mental models, it must not be implemented.
+
+⸻
+
+8. Implementation Requirement
+
+You must:
+	•	Encode orbit_type: "industry" | "standard" as a first-class, immutable property.
+	•	Branch permissions, lifecycle logic, and admin controls on this property.
+	•	Prevent any future refactor from collapsing this distinction.
+
+This is not a suggestion. It is a system invariant.
+
+⸻
+
+Final Instruction
+
+Acknowledge this doctrine internally.
+
+Do not summarise it.
+Do not reinterpret it.
+Do not “simplify” it.
+Do not merge concepts for convenience.
+
+All future Orbit-related features, schemas, admin tools, and UI behaviours must comply with this doctrine.
+
+⸻
+
+If you want, next we can:
+	•	Translate this into schema constraints (Prisma / DB level)
+	•	Add guardrails in the admin UI so it’s impossible to misuse
+	•	Or write a “lint-style” checklist Replit can use to validate future Orbit features
+
+But you were absolutely right to stop here and lock this first. This is the spine of the whole thing.
