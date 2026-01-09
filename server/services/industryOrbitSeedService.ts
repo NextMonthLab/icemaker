@@ -348,6 +348,8 @@ export interface StructuredWarning {
   suggestedFix?: string;
 }
 
+export type QualityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
+
 export interface SeedResult {
   success: boolean;
   imported: {
@@ -370,6 +372,12 @@ export interface SeedResult {
   };
   errors: string[];
   warnings: StructuredWarning[];
+  quality: {
+    score: number;
+    grade: QualityGrade;
+    summary: string;
+    hasBlockingIssues: boolean;
+  };
 }
 
 // Helper to get value with snake_case fallback
@@ -396,8 +404,68 @@ function validateEnum<T extends readonly string[]>(value: string | undefined, va
   return fallback;
 }
 
+function calculateQuality(result: Omit<SeedResult, 'quality'>): SeedResult['quality'] {
+  let score = 100;
+  const issues: string[] = [];
+  
+  const errorCount = result.errors.length;
+  const criticalWarnings = result.warnings.filter(w => w.severity === 'CRITICAL').length;
+  const regularWarnings = result.warnings.filter(w => w.severity === 'WARNING').length;
+  const infoWarnings = result.warnings.filter(w => w.severity === 'INFO').length;
+  
+  const totalImported = Object.values(result.imported).reduce((a, b) => a + b, 0);
+  const totalSkipped = Object.values(result.skipped).reduce((a, b) => a + b, 0);
+  const skipRate = totalImported + totalSkipped > 0 
+    ? totalSkipped / (totalImported + totalSkipped) 
+    : 0;
+  
+  if (errorCount > 0) {
+    score -= 40;
+    issues.push(`${errorCount} error${errorCount > 1 ? 's' : ''}`);
+  }
+  if (criticalWarnings > 0) {
+    score -= criticalWarnings * 15;
+    issues.push(`${criticalWarnings} critical warning${criticalWarnings > 1 ? 's' : ''}`);
+  }
+  if (regularWarnings > 0) {
+    score -= regularWarnings * 5;
+    issues.push(`${regularWarnings} warning${regularWarnings > 1 ? 's' : ''}`);
+  }
+  if (skipRate > 0.5) {
+    score -= 20;
+    issues.push(`${Math.round(skipRate * 100)}% records skipped`);
+  } else if (skipRate > 0.2) {
+    score -= 10;
+    issues.push(`${Math.round(skipRate * 100)}% records skipped`);
+  }
+  
+  score = Math.max(0, Math.min(100, score));
+  
+  let grade: QualityGrade;
+  if (score >= 90) grade = 'A';
+  else if (score >= 75) grade = 'B';
+  else if (score >= 60) grade = 'C';
+  else if (score >= 40) grade = 'D';
+  else grade = 'F';
+  
+  const hasBlockingIssues = errorCount > 0 || criticalWarnings > 0;
+  
+  let summary: string;
+  if (hasBlockingIssues) {
+    summary = `Import has blocking issues: ${issues.join(', ')}`;
+  } else if (issues.length > 0) {
+    summary = `Import completed with issues: ${issues.join(', ')}`;
+  } else if (totalImported === 0) {
+    summary = 'No records imported';
+  } else {
+    summary = `Imported ${totalImported} record${totalImported > 1 ? 's' : ''} successfully`;
+  }
+  
+  return { score, grade, summary, hasBlockingIssues };
+}
+
 export async function importSeedPack(orbitId: number, pack: SeedPack): Promise<SeedResult> {
-  const result: SeedResult = {
+  const baseResult = {
     success: true,
     imported: {
       coreConcepts: 0,
@@ -417,9 +485,11 @@ export async function importSeedPack(orbitId: number, pack: SeedPack): Promise<S
       tiles: 0,
       pulseSources: 0,
     },
-    errors: [],
-    warnings: [],
+    errors: [] as string[],
+    warnings: [] as StructuredWarning[],
   };
+  
+  const result = baseResult;
 
   try {
     // Check for unsupported CPAC sections and group into single INFO warning
@@ -546,10 +616,10 @@ export async function importSeedPack(orbitId: number, pack: SeedPack): Promise<S
         if (manufacturerRef) {
           manufacturerEntityId = entityIdMap.get(manufacturerRef);
           if (!manufacturerEntityId) {
-            // Strict mode: skip this product entirely
+            // Strict mode: skip this product entirely - CRITICAL because it indicates data integrity issues
             result.warnings.push({
               code: 'MISSING_MANUFACTURER_REF',
-              severity: 'WARNING',
+              severity: 'CRITICAL',
               message: `Product "${product.name}" skipped: manufacturer "${manufacturerRef}" not found in entities`,
               path: `${productPath}.manufacturerEntityId`,
               suggestedFix: `Add entity with id "${manufacturerRef}" to entities array, or remove manufacturerEntityId from product`
@@ -725,7 +795,10 @@ export async function importSeedPack(orbitId: number, pack: SeedPack): Promise<S
     result.errors.push(error instanceof Error ? error.message : String(error));
   }
 
-  return result;
+  return {
+    ...result,
+    quality: calculateQuality(result),
+  };
 }
 
 export async function getOrbitDefinition(orbitId: number) {

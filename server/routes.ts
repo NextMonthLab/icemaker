@@ -15210,6 +15210,7 @@ GUIDELINES:
         skipped: result.skipped,
         errors: result.errors,
         warnings: result.warnings || [],
+        quality: result.quality,
       });
       
     } catch (error) {
