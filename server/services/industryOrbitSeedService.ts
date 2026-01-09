@@ -495,7 +495,7 @@ export async function importSeedPack(orbitId: number, pack: SeedPack): Promise<S
         const rawCategory = product.category;
         const category = validateEnum(rawCategory, VALID_PRODUCT_CATEGORIES, 'category', 'consumer');
         const rawStatus = product.status;
-        const status = validateEnum(rawStatus, VALID_PRODUCT_STATUSES, 'status', 'announced');
+        const status = validateEnum(rawStatus, VALID_PRODUCT_STATUSES, 'status', 'shipping');
         const releaseDate = getVal<string>(product, 'releaseDate', 'release_date');
         const primaryUrl = getVal<string>(product, 'primaryUrl', 'primary_url');
         const mediaRefs = getVal<ProductMediaRefs>(product, 'mediaRefs', 'media_refs');
