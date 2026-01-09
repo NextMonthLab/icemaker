@@ -15153,7 +15153,7 @@ GUIDELINES:
 
   // ============ INDUSTRY ORBIT SEED API ============
   
-  const { seedPackSchema, importSeedPack, getOrbitDefinition } = await import("./services/industryOrbitSeedService");
+  const { seedPackSchema, importSeedPack, getOrbitDefinition, getOrbitFrontPage } = await import("./services/industryOrbitSeedService");
   
   // POST /api/industry-orbits/:slug/seed - Import seed pack
   app.post("/api/industry-orbits/:slug/seed", async (req, res) => {
@@ -15249,6 +15249,41 @@ GUIDELINES:
     } catch (error) {
       console.error("[Industry Orbit Definition] Error:", error);
       res.status(500).json({ message: "Failed to get orbit definition" });
+    }
+  });
+  
+  // GET /api/industry-orbits/:slug/front-page - Curated front page sections
+  app.get("/api/industry-orbits/:slug/front-page", async (req, res) => {
+    const { slug } = req.params;
+    
+    try {
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta) {
+        return res.status(404).json({ message: "Orbit not found" });
+      }
+      
+      if (orbitMeta.orbitType !== 'industry') {
+        return res.status(403).json({ 
+          message: "Front page endpoint is only available for Industry Orbits",
+          code: "NOT_INDUSTRY_ORBIT"
+        });
+      }
+      
+      const frontPage = await getOrbitFrontPage(
+        orbitMeta.id, 
+        orbitMeta.customTitle || orbitMeta.businessName || slug
+      );
+      
+      res.json({
+        orbitId: orbitMeta.id,
+        slug,
+        type: 'industry',
+        ...frontPage,
+      });
+      
+    } catch (error) {
+      console.error("[Industry Orbit Front Page] Error:", error);
+      res.status(500).json({ message: "Failed to get front page" });
     }
   });
   

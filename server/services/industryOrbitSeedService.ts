@@ -765,3 +765,241 @@ export async function getOrbitDefinition(orbitId: number) {
     },
   };
 }
+
+// Front page curated content for Industry Orbit UI
+export interface FrontPageBrand {
+  id: number;
+  name: string;
+  initials: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  productCount: number;
+  trustLevel: string;
+}
+
+export interface FrontPageProduct {
+  id: number;
+  name: string;
+  summary: string | null;
+  status: string;
+  category: string;
+  manufacturerName: string | null;
+  manufacturerInitials: string;
+  referenceUrls: string[];
+  intentTags: string[];
+  specCount: number;
+  primarySpec: { key: string; value: string } | null;
+}
+
+export interface FrontPageSection<T> {
+  visible: boolean;
+  count: number;
+  items: T[];
+}
+
+export interface FrontPageData {
+  hero: {
+    title: string;
+    subtitle: string;
+    entityCount: number;
+    productCount: number;
+  };
+  brands: FrontPageSection<FrontPageBrand>;
+  featuredProducts: FrontPageSection<FrontPageProduct>;
+  latestTiles: FrontPageSection<{
+    id: number;
+    label: string;
+    sublabel: string | null;
+    intentTags: string[];
+    priority: number;
+  }>;
+  startHere: FrontPageSection<{
+    id: number;
+    label: string;
+    whyItMatters: string | null;
+    starterQuestions: string[];
+  }>;
+  communities: FrontPageSection<{
+    id: number;
+    name: string;
+    url: string;
+    communityType: string;
+    regionTags: string[];
+  }>;
+  sources: FrontPageSection<{
+    id: number;
+    name: string;
+    url: string;
+    sourceType: string;
+    trustLevel: string;
+  }>;
+}
+
+function getInitials(name: string): string {
+  return name.split(/\s+/).map(w => w[0]?.toUpperCase() || '').slice(0, 2).join('');
+}
+
+export async function getOrbitFrontPage(orbitId: number, orbitName: string): Promise<FrontPageData> {
+  const [entities, products, tiles, coreConcepts, communities, pulseSources] = await Promise.all([
+    storage.getIndustryEntitiesByOrbit(orbitId),
+    storage.getIndustryProductsByOrbit(orbitId),
+    storage.getTopicTilesByOrbit(orbitId),
+    storage.getCoreConceptsByOrbit(orbitId),
+    storage.getCommunityLinksByOrbit(orbitId),
+    storage.getPulseSourcesByOrbit(orbitId),
+  ]);
+
+  // Get specs for all products
+  const productsWithSpecs = await Promise.all(
+    products.map(async (product) => {
+      const specs = await storage.getProductSpecs(product.id);
+      return { ...product, specs };
+    })
+  );
+
+  // Filter products: must have manufacturer (data quality requirement)
+  const validProducts = productsWithSpecs.filter(p => p.manufacturerEntityId !== null);
+  
+  // Build entity lookup
+  const entityMap = new Map(entities.map(e => [e.id, e]));
+  
+  // Count products per entity
+  const productCountByEntity = new Map<number, number>();
+  for (const p of validProducts) {
+    if (p.manufacturerEntityId) {
+      productCountByEntity.set(p.manufacturerEntityId, (productCountByEntity.get(p.manufacturerEntityId) || 0) + 1);
+    }
+  }
+
+  // Brands section (manufacturers only, sorted by product count)
+  const manufacturers = entities
+    .filter(e => e.entityType === 'manufacturer')
+    .map(e => ({
+      id: e.id,
+      name: e.name,
+      initials: getInitials(e.name),
+      logoUrl: e.logoAssetId ? `/api/assets/${e.logoAssetId}` : null,
+      websiteUrl: e.websiteUrl,
+      productCount: productCountByEntity.get(e.id) || 0,
+      trustLevel: e.trustLevel || 'independent',
+    }))
+    .sort((a, b) => b.productCount - a.productCount);
+
+  // Featured products selection logic:
+  // 1. intentTags includes 'featured'
+  // 2. Fallback: highest spec completeness, then newest
+  const featuredProducts = validProducts
+    .map(p => {
+      const manufacturer = p.manufacturerEntityId ? entityMap.get(p.manufacturerEntityId) : null;
+      return {
+        id: p.id,
+        name: p.name,
+        summary: p.summary,
+        status: p.status,
+        category: p.category,
+        manufacturerName: manufacturer?.name || null,
+        manufacturerInitials: manufacturer ? getInitials(manufacturer.name) : '?',
+        referenceUrls: (p.referenceUrls as string[]) || [],
+        intentTags: (p.intentTags as string[]) || [],
+        specCount: p.specs?.length || 0,
+        primarySpec: p.specs?.[0] ? { key: p.specs[0].specKey, value: p.specs[0].specValue } : null,
+        isFeatured: ((p.intentTags as string[]) || []).includes('featured'),
+        createdAt: p.createdAt,
+      };
+    })
+    .sort((a, b) => {
+      // Featured first
+      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+      // Then by spec count (more specs = more complete)
+      if (a.specCount !== b.specCount) return b.specCount - a.specCount;
+      // Then newest first
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    })
+    .slice(0, 6)
+    .map(({ isFeatured, createdAt, ...rest }) => rest);
+
+  // Latest tiles (sorted by priority desc, then newest)
+  const latestTiles = tiles
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0))
+    .slice(0, 6)
+    .map(t => ({
+      id: t.id,
+      label: t.label,
+      sublabel: t.sublabel,
+      intentTags: (t.intentTags as string[]) || [],
+      priority: t.priority || 0,
+    }));
+
+  // Start here (core concepts with starter questions)
+  const startHere = coreConcepts
+    .filter(c => c.starterQuestions && (c.starterQuestions as string[]).length > 0)
+    .slice(0, 4)
+    .map(c => ({
+      id: c.id,
+      label: c.label,
+      whyItMatters: c.whyItMatters,
+      starterQuestions: (c.starterQuestions as string[]) || [],
+    }));
+
+  // Communities
+  const communityItems = communities.slice(0, 6).map(c => ({
+    id: c.id,
+    name: c.name,
+    url: c.url,
+    communityType: c.communityType,
+    regionTags: (c.regionTags as string[]) || [],
+  }));
+
+  // Sources (pulse sources, sorted by trust level)
+  const trustOrder = { official: 0, trade: 1, independent: 2 };
+  const sourceItems = pulseSources
+    .filter(s => s.isEnabled)
+    .sort((a, b) => (trustOrder[a.trustLevel as keyof typeof trustOrder] || 2) - (trustOrder[b.trustLevel as keyof typeof trustOrder] || 2))
+    .slice(0, 6)
+    .map(s => ({
+      id: s.id,
+      name: s.name,
+      url: s.url,
+      sourceType: s.sourceType,
+      trustLevel: s.trustLevel,
+    }));
+
+  return {
+    hero: {
+      title: orbitName,
+      subtitle: `Discover ${validProducts.length} products from ${manufacturers.length} brands`,
+      entityCount: manufacturers.length,
+      productCount: validProducts.length,
+    },
+    brands: {
+      visible: manufacturers.length > 0,
+      count: manufacturers.length,
+      items: manufacturers,
+    },
+    featuredProducts: {
+      visible: featuredProducts.length > 0,
+      count: featuredProducts.length,
+      items: featuredProducts,
+    },
+    latestTiles: {
+      visible: latestTiles.length > 0,
+      count: latestTiles.length,
+      items: latestTiles,
+    },
+    startHere: {
+      visible: startHere.length > 0,
+      count: startHere.length,
+      items: startHere,
+    },
+    communities: {
+      visible: communityItems.length > 0,
+      count: communityItems.length,
+      items: communityItems,
+    },
+    sources: {
+      visible: sourceItems.length > 0,
+      count: sourceItems.length,
+      items: sourceItems,
+    },
+  };
+}

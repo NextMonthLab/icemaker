@@ -1,0 +1,102 @@
+Do 3 first, then 2, then 1.
+
+Here’s why (and what to do inside each), with zero faffing about.
+
+Priority order
+
+3) Build the CPAC-driven front page components (do this now)
+
+Because your biggest risk right now isn’t importer correctness, it’s that Smart Glasses still feels like “a database behind a chat box”.
+
+You already have enough data (4 concepts, 7 entities, 9 products, 6 tiles, 5 communities, 2 pulse sources) to make a premium hub. The UI is what turns this into something monetisable.
+
+Front page layout (CPAC-driven, auto-hiding empty sections):
+	1.	Hero: Smart Glasses + one-line value + 2 CTAs
+	•	CTA 1: Get weekly Smart Glasses updates (Friend)
+	•	CTA 2: Unlock Influencer mode (paid)
+	2.	Brand strip (logos) OR if no logos, show Brand cards (name + “latest tile count” + “products count”)
+	3.	Featured products (needs intentTags; until then, fallback to “Most viewed” or “Newest imported”)
+	4.	Latest updates (tiles)
+	5.	Start here (core concepts + starter questions)
+	6.	Communities (with regionTags)
+	7.	Pulse sources (small, credible footer section: “Sources we monitor”)
+
+Important: if logos are missing, don’t leave a blank. Show a clean “Brands” row with initials placeholders. That still feels designed.
+
+Also fix the visible data issues in the UI layer while you’re here:
+	•	Hide / quarantine anything flagged legacy-bad (orphan products, invalid status) with a badge:
+	•	“Needs data cleanup” (admin only)
+	•	Public users should never see “Mystery Glasses”.
+
+2) Add quality score/grade/summary (next)
+
+Once the UI is premium, you want the pipeline to be operationally smooth.
+
+Add these to the import response:
+	•	hasBlockingIssues (bool)
+	•	blockingIssuesCount
+	•	qualityScore (0–100)
+	•	grade (A/B/C/D)
+	•	summary (one line)
+
+Suggested scoring (simple, effective):
+	•	Start 100
+	•	-30 for each ERROR/CRITICAL
+	•	-10 for each WARNING
+	•	INFO doesn’t reduce score
+
+Grade:
+	•	A: 90–100
+	•	B: 80–89
+	•	C: 65–79
+	•	D: <65
+
+This gives you a single number to drive automation and “safe to publish” logic.
+
+1) Severity upgrade for missing manufacturer ref (last, but still do it)
+
+This is polish. You already did strict skipping + warnings, which is the real protection.
+
+Upgrade:
+	•	MISSING_MANUFACTURER_REF severity -> ERROR
+	•	hasBlockingIssues: true if any ERRORs
+	•	Keep success: true if you want non-blocking imports, but make it explicit it’s not clean.
+
+⸻
+
+What you should ask Rapplet to do immediately (copy/paste)
+
+Instruction:
+	1.	Build /orbit/:slug front page sections (Hero, Brands, Featured Products, Latest Tiles, Start Here, Communities, Sources).
+	2.	Each section must auto-hide if its count is zero.
+	3.	Add a fallback “Brands row without logos” using entity initials until logoAssetId exists.
+	4.	Add “featured products” selection logic:
+	•	first choice: intentTags includes featured
+	•	fallback: newest imported / most viewed / highest spec completeness
+	5.	Add “data cleanup safety”:
+	•	Public UI must not show products with missing manufacturer or invalid status
+	•	Admin UI can show them with a “needs cleanup” badge and a fix action link.
+
+⸻
+
+One more thing: fix your current data before you judge the UI
+
+Right now you’ve got:
+	•	3 orphan products
+	•	“Mystery Glasses”
+	•	invalid status values (“available”)
+
+If you build the front page and it still feels messy, it won’t be the UI’s fault, it’ll be the legacy data.
+
+So alongside the front page build, have Rapplet run a one-time cleanup migration:
+	•	Delete or quarantine “Mystery Glasses”
+	•	For orphan products:
+	•	either map to correct manufacturer
+	•	or set status = "draft" and hide from public
+	•	Convert available -> shipping (only if it truly means shipping, otherwise set unknown)
+
+No hero section can survive a poisoned dataset.
+
+⸻
+
+If you want, I’ll write the exact acceptance criteria for the front page (what “done” looks like), so you can keep Rapplet tight and avoid “it’s built but it’s still underwhelming”.
