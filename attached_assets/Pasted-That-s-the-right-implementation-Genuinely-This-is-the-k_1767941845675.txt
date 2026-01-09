@@ -1,0 +1,100 @@
+That’s the right implementation. Genuinely. This is the kind of “boring correctness” that stops a popular Orbit turning into a data swamp.
+
+Now you’ve got three immediate wins:
+	•	Trust: no dodgy products sneaking in with phantom manufacturers.
+	•	Operability: warnings are now actionable and machine-readable.
+	•	Scale readiness: strict mode + skipped counts = you can automate imports without silent rot.
+
+Now the next step is to turn this into a commercial-quality Orbit experience and a repeatable pipeline.
+
+1) One tweak I’d still make: WARNING vs ERROR
+
+Right now, a missing manufacturer ref is a WARNING. But in strict mode you’re skipping data. That’s functionally more serious than a warning.
+
+I’d do this:
+	•	MISSING_MANUFACTURER_REF → severity: "ERROR" (or "CRITICAL")
+	•	Keep success: true if you want, but also add:
+	•	hasBlockingIssues: true
+	•	blockingIssuesCount: 1
+
+Why: it gives you a clean threshold for automation:
+	•	if hasBlockingIssues, don’t auto-publish to production Orbits
+	•	but still allow import for dev/testing
+
+2) Add a one-line import “health grade”
+
+You’re already 90% there. Add:
+	•	qualityScore (0–100)
+	•	grade (A/B/C/D)
+	•	summary (1 sentence)
+
+Example:
+	•	“Imported 2 items. Skipped 1 product due to missing manufacturer reference. Fix manufacturer entity to import fully.”
+
+This will save you ridiculous time later.
+
+3) The commercial layer: make CPAC drive the UI
+
+Now that imports are clean, the Orbit needs to stop feeling like “chat”.
+
+Minimum Smart Glasses front page (CPAC-driven, no AI needed):
+	1.	Brand strip (entities with logos / mediaRefs)
+	2.	Featured products (products intentTags: featured, best_sellers, new)
+	3.	Latest tiles (topic_tiles)
+	4.	Start here (core concepts + starter questions)
+	5.	Top questions (cached answers if you’ve got them; otherwise “popular prompts”)
+
+If any of those sections has zero items, the UI should auto-hide it (no empty spaces).
+
+4) Monetisation triggers you can ship without extra complexity
+
+You said earlier you want:
+	•	Friend of Smart Glasses (newsletter)
+	•	Influencer (paid: unlimited chat + ICE creation)
+	•	Advertise (sponsor cards)
+
+Now that you’ve got intentTags, you can do this cleanly:
+
+Friend CTA trigger (free)
+
+Trigger when user:
+	•	views 2+ tiles OR
+	•	clicks 2+ products OR
+	•	reads 2+ core concepts
+
+Influencer trigger (paid)
+
+Trigger when user asks:
+	•	3+ RECOMMENDATION or COMPARISON intent queries
+OR they hit a message limit
+
+Advertise trigger (B2B)
+
+Show persistently but subtly:
+	•	“Sponsor a product slot” (only if traffic threshold met, else “Register interest”)
+
+This is the sustainable bit: you monetise behaviour, not vibes.
+
+5) Make “Strict mode” visible in the admin UX
+
+Because you’re skipping records, the admin should show an Import Report panel:
+	•	Imported counts
+	•	Skipped counts
+	•	Warnings table (filter by severity)
+	•	“Download fixed seed pack” button (optional later)
+
+If you don’t expose this, you’ll end up hunting logs like a caveman.
+
+6) The one thing I’d ask Rapplet for next
+
+Not more implementation updates. I want proof in the UI.
+
+Ask Rapplet for:
+	•	A screenshot (or route) of the Smart Glasses Orbit front page
+	•	And the API payload the UI uses to render it
+
+Because the next risk isn’t schema or import. It’s: “we’ve got great data but it’s still underwhelming”.
+
+⸻
+
+If you paste the current front page payload (even a shortened one: entities/products/tiles counts + one example item from each), I’ll tell you exactly what to surface where so it feels like a premium industry hub and not “Orbit Chat with a fancy database”.
