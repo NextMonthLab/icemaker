@@ -20,7 +20,7 @@ export default function SmartGlassesPage() {
   const qaRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
 
-  const { data: frontPage } = useQuery<IndustryOrbitFrontPage>({
+  const { data: frontPage, isLoading: frontPageLoading, error: frontPageError } = useQuery<IndustryOrbitFrontPage>({
     queryKey: ["/api/industry-orbits", ORBIT_SLUG, "front-page"],
     queryFn: async () => {
       const res = await fetch(`/api/industry-orbits/${ORBIT_SLUG}/front-page`);
@@ -29,6 +29,10 @@ export default function SmartGlassesPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+  
+  if (frontPageError) {
+    console.error("Front page error:", frontPageError);
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -60,6 +64,21 @@ export default function SmartGlassesPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <HeroSection onStartAudit={scrollToAudit} onExploreQuestions={scrollToQA} />
+      
+      {frontPageLoading && (
+        <section className="py-12 px-4 border-t border-zinc-800">
+          <div className="max-w-6xl mx-auto">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 w-48 bg-zinc-800 rounded" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-32 bg-zinc-800 rounded-xl" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
       
       {frontPage && <BrandsGrid brands={frontPage.brands} />}
       
