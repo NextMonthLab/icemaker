@@ -325,7 +325,14 @@ export function RadarGrid({ knowledge, onSendMessage, onVideoEvent, orbitSlug, a
       }
       case 'qa': {
         const qa = selectedItem as import('@/lib/siteKnowledge').QA;
-        message = `${qa.question}\n\n${qa.answer}`;
+        const sublabel = qa.sublabel || '';
+        const hasContextualAnswer = qa.answer && qa.answer.length > 50 && !qa.answer.toLowerCase().includes('long-lasting') && !qa.answer.toLowerCase().includes('tap to');
+        
+        if (hasContextualAnswer) {
+          message = `${qa.question}\n\n${qa.answer}`;
+        } else {
+          message = `${qa.question}\n\n${sublabel ? sublabel + '\n\n' : ''}I'll help you find the best options. What matters most to you?\n\n• Camera quality\n• Display features\n• All-day battery\n• Compact design`;
+        }
         break;
       }
       case 'community': {
