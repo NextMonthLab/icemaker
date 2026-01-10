@@ -16,7 +16,6 @@ import { VisibilityBadge } from "@/components/VisibilityBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import CardPlayer from "@/components/CardPlayer";
-import { TITLE_PACKS, DEFAULT_TITLE_PACK_ID, getTitlePackById } from "@shared/titlePacks";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import previewCardBackground from "@assets/generated_images/minimal_sunset_with_top_silhouettes.png";
@@ -29,7 +28,6 @@ import { ContinuityPanel } from "@/components/ContinuityPanel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen } from "lucide-react";
 import type { ProjectBible } from "@shared/schema";
-import { TitlePackSelector } from "@/components/ice-maker/TitlePackSelector";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { createDefaultCaptionState, type CaptionState } from "@/caption-engine/schemas";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -137,7 +135,6 @@ export default function GuestIceBuilderPage() {
   const [interactivityNodes, setInteractivityNodes] = useState<InteractivityNodeData[]>([]);
   const [previewAccessToken, setPreviewAccessToken] = useState<string | undefined>();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [titlePackId, setTitlePackId] = useState(DEFAULT_TITLE_PACK_ID);
   const [captionState, setCaptionState] = useState<CaptionState>(() => createDefaultCaptionState());
   const [showCaptionSettings, setShowCaptionSettings] = useState(false);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -298,7 +295,6 @@ export default function GuestIceBuilderPage() {
             musicTrackUrl,
             musicVolume,
             musicEnabled,
-            titlePackId,
             narrationVolume,
           }),
         });
@@ -312,7 +308,7 @@ export default function GuestIceBuilderPage() {
         clearTimeout(settingsSaveTimeoutRef.current);
       }
     };
-  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume]);
+  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume]);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -390,10 +386,6 @@ export default function GuestIceBuilderPage() {
       }
       if (existingPreview.musicEnabled !== undefined) {
         setMusicEnabled(existingPreview.musicEnabled);
-      }
-      // Load title pack
-      if (existingPreview.titlePackId) {
-        setTitlePackId(existingPreview.titlePackId);
       }
       // Load narration volume
       if (existingPreview.narrationVolume !== undefined) {
@@ -515,7 +507,6 @@ export default function GuestIceBuilderPage() {
         quality: "standard",
         includeNarration: true,
         includeMusic: musicEnabled,
-        titlePackId,
       });
       return res.json();
     },
@@ -1265,19 +1256,9 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
-            {/* Style & Music Panel */}
+            {/* Music Panel */}
             <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Title Pack Selector */}
-                <div className="flex-1">
-                  <label className="text-xs text-white/60 mb-1.5 block">Style</label>
-                  <TitlePackSelector
-                    value={titlePackId}
-                    onChange={setTitlePackId}
-                    compact
-                  />
-                </div>
-
                 {/* Music Selector */}
                 <div className="flex-1">
                   <label className="text-xs text-white/60 mb-1.5 block">Background Music</label>
@@ -1644,7 +1625,6 @@ export default function GuestIceBuilderPage() {
                   }}
                   autoplay={true}
                   fullScreen={true}
-                  titlePackId={titlePackId}
                   captionState={captionState}
                   narrationVolume={narrationVolume}
                   narrationMuted={narrationMuted}

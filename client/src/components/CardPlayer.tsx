@@ -6,6 +6,9 @@ import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
 import type { CaptionState } from "@/caption-engine/schemas";
+import { captionPresets } from "@/caption-engine/presets/captionPresets";
+import { typographyTokens } from "@/caption-engine/tokens/typography";
+import { colorTokens } from "@/caption-engine/tokens/colors";
 
 function useIsTabletLandscape() {
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
@@ -45,13 +48,7 @@ interface BrandPreferences {
   selectedImages: string[];
 }
 
-import { 
-  getTitlePackById, 
-  splitTextIntoHeadlineAndSupporting, 
-  getLayerStylesWithText,
-  DEFAULT_TITLE_PACK_ID, 
-  type TitlePack 
-} from "@shared/titlePacks";
+import { splitTextIntoHeadlineAndSupporting } from "@shared/titlePacks";
 
 interface CardPlayerProps {
   card: Card;
@@ -61,10 +58,9 @@ interface CardPlayerProps {
   onPhaseChange?: (phase: "cinematic" | "context") => void;
   fullScreen?: boolean;
   brandPreferences?: BrandPreferences | null;
-  titlePackId?: string;
   narrationVolume?: number; // 0-100
   narrationMuted?: boolean;
-  captionState?: CaptionState; // Caption Engine state for karaoke/animations
+  captionState?: CaptionState; // Caption Engine state for presets/karaoke/animations
 }
 
 type Phase = "cinematic" | "context";
@@ -77,7 +73,6 @@ export default function CardPlayer({
   onPhaseChange,
   fullScreen = false,
   brandPreferences,
-  titlePackId = DEFAULT_TITLE_PACK_ID,
   narrationVolume = 100,
   narrationMuted = false,
   captionState
@@ -101,8 +96,6 @@ export default function CardPlayer({
   const bgColor = theme === 'dark' ? '#0a0a0a' : '#f5f5f5';
   const textColor = theme === 'dark' ? 'white' : '#1a1a1a';
   const mutedTextColor = theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
-  
-  const titlePack = getTitlePackById(titlePackId) || getTitlePackById(DEFAULT_TITLE_PACK_ID)!;
   
   const getActiveMedia = () => {
     if (card.mediaAssets?.length && card.selectedMediaAssetId) {
@@ -519,43 +512,60 @@ export default function CardPlayer({
                     (() => {
                       const captionText = card.captions[captionIndex];
                       const { headline, supporting } = splitTextIntoHeadlineAndSupporting(captionText);
-                      const headlineStyles = getLayerStylesWithText(headline, titlePack.headline, titlePack, fullScreen);
-                      const supportingStyles = titlePack.supporting && supporting
-                        ? getLayerStylesWithText(supporting, titlePack.supporting, titlePack, fullScreen) 
-                        : null;
                       
-                      // Caption Engine karaoke/animation indicator
+                      // Caption Engine: resolve preset styling
+                      const presetId = captionState?.presetId || 'clean_white';
+                      const preset = captionPresets[presetId] || captionPresets.clean_white;
+                      const typography = typographyTokens[preset.typography] || typographyTokens.sans;
+                      const colors = colorTokens[preset.colors] || colorTokens.shadowWhite;
+                      
+                      // Karaoke settings
                       const karaokeEnabled = captionState?.karaokeEnabled;
-                      const karaokeStyle = captionState?.karaokeStyle || 'weight';
-                      const animationEnabled = captionState?.animationId && captionState.animationId !== 'none';
+                      const karaokeStyle = captionState?.karaokeStyle || preset.karaokeStyle || 'weight';
                       
-                      // Professional caption styling - clean, modern, social-media ready
-                      const professionalTextShadow = '0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)';
+                      // Build professional caption styles from tokens
+                      const baseFontSize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
+                      const professionalTextShadow = colors.shadow || '0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)';
                       const glowShadow = '0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8)';
+                      
+                      const headlineStyles: React.CSSProperties = {
+                        fontFamily: typography.fontFamily,
+                        fontSize: `${baseFontSize}px`,
+                        fontWeight: typography.fontWeight,
+                        lineHeight: typography.lineHeight,
+                        letterSpacing: `${typography.letterSpacing}px`,
+                        textTransform: typography.textTransform || 'none',
+                        color: colors.text,
+                        textShadow: karaokeEnabled && karaokeStyle === 'glow' ? glowShadow : professionalTextShadow,
+                        WebkitTextStroke: colors.stroke ? `${colors.strokeWidth || 1}px ${colors.stroke}` : undefined,
+                      };
+                      
+                      const supportingStyles: React.CSSProperties = {
+                        fontFamily: typography.fontFamily,
+                        fontSize: `${baseFontSize * 0.65}px`,
+                        fontWeight: 500,
+                        lineHeight: 1.4,
+                        color: colors.textSecondary || colors.text,
+                        textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.4)',
+                        opacity: 0.9,
+                      };
                       
                       return (
                         <div className="flex flex-col items-center gap-4 px-6 w-full">
-                          {/* Headline - professional styling with proper shadows */}
+                          {/* Headline - Caption Engine styling */}
                           <p 
-                            className="font-bold leading-tight max-w-full text-center"
-                            style={{
-                              ...headlineStyles,
-                              textShadow: karaokeEnabled && karaokeStyle === 'glow' ? glowShadow : professionalTextShadow,
-                              letterSpacing: '-0.01em',
-                            }}
+                            className="leading-tight max-w-full text-center"
+                            style={headlineStyles}
                             data-testid="text-headline"
                           >
                             {headline}
                           </p>
                           
-                          {/* Supporting text - cleaner, more readable */}
-                          {supporting && supportingStyles && (
+                          {/* Supporting text */}
+                          {supporting && (
                             <p 
                               className="leading-relaxed max-w-full text-center"
-                              style={{
-                                ...supportingStyles,
-                                textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.4)',
-                              }}
+                              style={supportingStyles}
                               data-testid="text-supporting"
                             >
                               {supporting}
