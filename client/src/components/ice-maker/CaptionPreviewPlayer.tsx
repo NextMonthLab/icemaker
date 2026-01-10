@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { Player, PlayerRef } from "@remotion/player";
 import { IcePreviewComposition } from "@/remotion/compositions";
 import type { CaptionState } from "@/caption-engine/schemas";
@@ -24,21 +24,50 @@ export function CaptionPreviewPlayer({
   className = "",
   showControls = true,
 }: CaptionPreviewPlayerProps) {
-  const playerRef = React.useRef<PlayerRef>(null);
+  const playerRef = useRef<PlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [currentFrame, setCurrentFrame] = useState(0);
   
+  const durationInFrames = useMemo(() => 
+    getDurationInFrames(durationMs, defaultVerticalConfig.fps),
+    [durationMs]
+  );
+  
   const config = useMemo(() => ({
     ...defaultVerticalConfig,
-    durationInFrames: getDurationInFrames(durationMs, defaultVerticalConfig.fps),
-  }), [durationMs]);
+    durationInFrames,
+  }), [durationInFrames]);
   
   const inputProps = useMemo(() => ({
     videoUrl,
     imageUrl,
     captionState,
   }), [videoUrl, imageUrl, captionState]);
+  
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+    const handleFrameUpdate = (e: { detail: { frame: number } }) => {
+      setCurrentFrame(Math.round(e.detail.frame));
+    };
+    
+    player.addEventListener("play", handlePlay);
+    player.addEventListener("pause", handlePause);
+    player.addEventListener("ended", handleEnded);
+    player.addEventListener("frameupdate", handleFrameUpdate as EventListener);
+    
+    return () => {
+      player.removeEventListener("play", handlePlay);
+      player.removeEventListener("pause", handlePause);
+      player.removeEventListener("ended", handleEnded);
+      player.removeEventListener("frameupdate", handleFrameUpdate as EventListener);
+    };
+  }, []);
   
   const handlePlayPause = useCallback(() => {
     const player = playerRef.current;
@@ -49,18 +78,24 @@ export function CaptionPreviewPlayer({
     } else {
       player.play();
     }
-    setIsPlaying(!isPlaying);
   }, [isPlaying]);
   
   const handleReset = useCallback(() => {
     const player = playerRef.current;
     if (!player) return;
     player.seekTo(0);
+    player.pause();
     setCurrentFrame(0);
+    setIsPlaying(false);
   }, []);
   
   const handleMuteToggle = useCallback(() => {
-    setIsMuted(!isMuted);
+    const player = playerRef.current;
+    if (player) {
+      const newMuted = !isMuted;
+      player.setVolume(newMuted ? 0 : 1);
+      setIsMuted(newMuted);
+    }
   }, [isMuted]);
   
   const handleSeek = useCallback((value: number[]) => {
@@ -70,8 +105,6 @@ export function CaptionPreviewPlayer({
     player.seekTo(frame);
     setCurrentFrame(frame);
   }, []);
-  
-  const progressPercent = (currentFrame / config.durationInFrames) * 100;
   
   return (
     <div className={`flex flex-col ${className}`}>
