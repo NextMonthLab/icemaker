@@ -28,6 +28,8 @@ import { analyticsRateLimiter, activationRateLimiter, chatRateLimiter, getClient
 import { logAuthFailure, logAccessDenied, logTokenError, logAdminAction } from "./securityLogger";
 import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, analyticsMetadataValidator, analyticsTypeValidator, analyticsMetadataStringValidator, adminRequestValidator, adminReasonValidator } from "./requestValidation";
 import { canReadUniverse, canWriteUniverse, canReadIcePreview, canWriteIcePreview, canReadOrbit, canWriteOrbit, logAuditEvent, extractRequestInfo } from "./authPolicies";
+import { ingestUrlAndGenerateTiles, groupTilesByCategory } from "./services/topicTileGenerator";
+import { saveOrbitIngestion, loadOrbitIngestion, checkOrbitCache, getOrbitTiles } from "./services/orbitTileStorage";
 
 function getAppBaseUrl(req: any): string {
   if (process.env.PUBLIC_APP_URL) {
@@ -15986,6 +15988,147 @@ Current category: ${categoryName}`;
     } catch (error) {
       console.error("[CPAC Diff] Error:", error);
       res.status(500).json({ message: "Failed to analyze CPAC diff" });
+    }
+  });
+
+  // ============ TOPIC TILES URL INGESTION ============
+  
+  // POST /api/orbit/ingest-url - Ingest a website URL and generate topic tiles
+  app.post("/api/orbit/ingest-url", async (req, res) => {
+    try {
+      const { url, forceRescan } = req.body;
+      
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "URL is required" 
+        });
+      }
+      
+      // Validate URL format
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
+      } catch {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid URL format" 
+        });
+      }
+      
+      // Check cache (unless forceRescan)
+      if (!forceRescan) {
+        const cacheCheck = await checkOrbitCache(parsedUrl.href, 24);
+        if (cacheCheck.withinCachePeriod && cacheCheck.orbitId) {
+          const cached = await loadOrbitIngestion(cacheCheck.orbitId);
+          if (cached) {
+            console.log(`[IngestURL] Using cached result for ${url} (orbitId: ${cacheCheck.orbitId})`);
+            return res.json({
+              success: true,
+              orbitId: cached.orbitId,
+              tiles: cached.tiles,
+              crawlReport: cached.crawlReport,
+              cached: true,
+              message: `Using cached results from ${cacheCheck.scannedAt}`,
+            });
+          }
+        }
+      }
+      
+      console.log(`[IngestURL] Starting fresh ingestion for ${url}`);
+      
+      // Perform ingestion
+      const result = await ingestUrlAndGenerateTiles(parsedUrl.href);
+      
+      // Save to storage
+      await saveOrbitIngestion(result);
+      
+      res.json({
+        success: true,
+        orbitId: result.orbitId,
+        tiles: result.tiles,
+        crawlReport: result.crawlReport,
+        cached: false,
+        message: `Generated ${result.tiles.length} tiles from ${result.crawlReport.pagesSucceeded} pages`,
+      });
+      
+    } catch (error: any) {
+      console.error("[IngestURL] Error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to ingest URL" 
+      });
+    }
+  });
+  
+  // GET /api/orbit/:orbitId/tiles - Get tiles for an orbit
+  app.get("/api/orbit-tiles/:orbitId", async (req, res) => {
+    try {
+      const { orbitId } = req.params;
+      
+      const result = await loadOrbitIngestion(orbitId);
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Orbit not found" 
+        });
+      }
+      
+      const groupedTiles = groupTilesByCategory(result.tiles);
+      
+      res.json({
+        success: true,
+        orbitId: result.orbitId,
+        inputUrl: result.inputUrl,
+        scannedAt: result.scannedAt,
+        tiles: result.tiles,
+        groupedTiles,
+        crawlReport: result.crawlReport,
+      });
+      
+    } catch (error: any) {
+      console.error("[GetTiles] Error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to get tiles" 
+      });
+    }
+  });
+  
+  // GET /api/orbit-tiles/:orbitId/grouped - Get tiles grouped by category (for Netflix layout)
+  app.get("/api/orbit-tiles/:orbitId/grouped", async (req, res) => {
+    try {
+      const { orbitId } = req.params;
+      
+      const tiles = await getOrbitTiles(orbitId);
+      if (!tiles) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Orbit not found" 
+        });
+      }
+      
+      const groupedTiles = groupTilesByCategory(tiles);
+      
+      res.json({
+        success: true,
+        orbitId,
+        groupedTiles,
+        rows: [
+          { title: 'Top Insights', tiles: groupedTiles['Top Insights'] },
+          { title: 'Services & Offers', tiles: groupedTiles['Services & Offers'] },
+          { title: 'FAQs & Objections', tiles: groupedTiles['FAQs & Objections'] },
+          { title: 'Proof & Trust', tiles: groupedTiles['Proof & Trust'] },
+          { title: 'Recommendations', tiles: groupedTiles['Recommendations'] },
+        ].filter(row => row.tiles.length > 0),
+      });
+      
+    } catch (error: any) {
+      console.error("[GetGroupedTiles] Error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to get grouped tiles" 
+      });
     }
   });
 
