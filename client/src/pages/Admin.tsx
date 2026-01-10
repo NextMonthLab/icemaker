@@ -70,57 +70,57 @@ function AdminOverview() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+                <Users className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</p>
-                <p className="text-xs text-zinc-400">Total Users</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalUsers || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Users</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-purple-400" />
+                <Globe className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats?.totalOrbits || 0}</p>
-                <p className="text-xs text-zinc-400">Total Orbits</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalOrbits || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Orbits</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-400" />
+                <TrendingUp className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats?.totalVisits30d || 0}</p>
-                <p className="text-xs text-zinc-400">Visits (30d)</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalVisits30d || 0}</p>
+                <p className="text-xs text-muted-foreground">Visits (30d)</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-pink-400" />
+                <MessageCircle className="w-5 h-5 text-pink-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats?.totalConversations30d || 0}</p>
-                <p className="text-xs text-zinc-400">Conversations (30d)</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalConversations30d || 0}</p>
+                <p className="text-xs text-muted-foreground">Conversations (30d)</p>
               </div>
             </div>
           </CardContent>
@@ -128,35 +128,35 @@ function AdminOverview() {
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-sm font-medium">Users by Role</CardTitle>
+            <CardTitle className="text-foreground text-sm font-medium">Users by Role</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {stats?.usersByRole?.map(({ role, count }) => (
                 <div key={role} className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-400 capitalize">{role}</span>
-                  <span className="text-sm font-medium text-white">{count}</span>
+                  <span className="text-sm text-muted-foreground capitalize">{role}</span>
+                  <span className="text-sm font-medium text-foreground">{count}</span>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-sm font-medium">Orbit Types</CardTitle>
+            <CardTitle className="text-foreground text-sm font-medium">Orbit Types</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Industry Orbits</span>
-                <span className="text-sm font-medium text-white">{stats?.industryOrbits || 0}</span>
+                <span className="text-sm text-muted-foreground">Industry Orbits</span>
+                <span className="text-sm font-medium text-foreground">{stats?.industryOrbits || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Business Orbits</span>
-                <span className="text-sm font-medium text-white">{stats?.standardOrbits || 0}</span>
+                <span className="text-sm text-muted-foreground">Business Orbits</span>
+                <span className="text-sm font-medium text-foreground">{stats?.standardOrbits || 0}</span>
               </div>
             </div>
           </CardContent>
@@ -181,7 +181,7 @@ function AdminUsers() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -190,46 +190,46 @@ function AdminUsers() {
     <div className="space-y-4">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" />
+              <Users className="w-4 h-4 text-blue-500" />
               <div>
-                <p className="text-lg font-semibold text-white">{users?.length || 0}</p>
-                <p className="text-xs text-zinc-500">Total Users</p>
+                <p className="text-lg font-semibold text-foreground">{users?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Users</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-red-400" />
+              <Shield className="w-4 h-4 text-red-500" />
               <div>
-                <p className="text-lg font-semibold text-white">{users?.filter(u => u.isAdmin).length || 0}</p>
-                <p className="text-xs text-zinc-500">Admins</p>
+                <p className="text-lg font-semibold text-foreground">{users?.filter(u => u.isAdmin).length || 0}</p>
+                <p className="text-xs text-muted-foreground">Admins</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-purple-400" />
+              <Crown className="w-4 h-4 text-purple-500" />
               <div>
-                <p className="text-lg font-semibold text-white">{users?.filter(u => u.role === 'creator' || u.role === 'influencer').length || 0}</p>
-                <p className="text-xs text-zinc-500">Creators</p>
+                <p className="text-lg font-semibold text-foreground">{users?.filter(u => u.role === 'creator' || u.role === 'influencer').length || 0}</p>
+                <p className="text-xs text-muted-foreground">Creators</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-green-400" />
+              <Sparkles className="w-4 h-4 text-green-500" />
               <div>
-                <p className="text-lg font-semibold text-white">{users?.reduce((sum, u) => sum + u.iceCount, 0) || 0}</p>
-                <p className="text-xs text-zinc-500">Total ICEs</p>
+                <p className="text-lg font-semibold text-foreground">{users?.reduce((sum, u) => sum + u.iceCount, 0) || 0}</p>
+                <p className="text-xs text-muted-foreground">Total ICEs</p>
               </div>
             </div>
           </CardContent>
@@ -242,60 +242,60 @@ function AdminUsers() {
           placeholder="Search by username or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500"
+          className="max-w-sm bg-card border-border"
           data-testid="input-user-search"
         />
-        <span className="text-sm text-zinc-500">{filteredUsers?.length || 0} users</span>
+        <span className="text-sm text-muted-foreground">{filteredUsers?.length || 0} users</span>
       </div>
       
       {/* User Table - Desktop */}
-      <Card className="bg-zinc-900 border-zinc-800 hidden md:block">
+      <Card className="bg-card border-border hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">User</th>
-                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">Role</th>
-                  <th className="text-center py-3 px-4 text-zinc-400 font-medium">Orbits</th>
-                  <th className="text-center py-3 px-4 text-zinc-400 font-medium">ICEs</th>
-                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">Joined</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">Orbits</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">ICEs</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers?.map(user => (
-                  <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30" data-testid={`row-user-${user.id}`}>
+                  <tr key={user.id} className="border-b border-border/50 hover:bg-muted/30" data-testid={`row-user-${user.id}`}>
                     <td className="py-3 px-4">
                       <div>
-                        <p className="text-white font-medium">{user.username}</p>
-                        <p className="text-xs text-zinc-500">{user.email || 'No email'}</p>
+                        <p className="text-foreground font-medium">{user.username}</p>
+                        <p className="text-xs text-muted-foreground">{user.email || 'No email'}</p>
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        user.isAdmin ? 'bg-red-500/10 text-red-400' :
-                        user.role === 'creator' ? 'bg-purple-500/10 text-purple-400' :
-                        user.role === 'influencer' ? 'bg-blue-500/10 text-blue-400' :
-                        'bg-zinc-700 text-zinc-300'
+                        user.isAdmin ? 'bg-red-500/10 text-red-500' :
+                        user.role === 'creator' ? 'bg-purple-500/10 text-purple-500' :
+                        user.role === 'influencer' ? 'bg-blue-500/10 text-blue-500' :
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {user.isAdmin ? 'Admin' : user.role || 'Viewer'}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
                       {user.orbitCount > 0 ? (
-                        <span className="text-white font-medium">{user.orbitCount}</span>
+                        <span className="text-foreground font-medium">{user.orbitCount}</span>
                       ) : (
-                        <span className="text-zinc-600">—</span>
+                        <span className="text-muted-foreground/50">—</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-center">
                       {user.iceCount > 0 ? (
-                        <span className="text-white font-medium">{user.iceCount}</span>
+                        <span className="text-foreground font-medium">{user.iceCount}</span>
                       ) : (
-                        <span className="text-zinc-600">—</span>
+                        <span className="text-muted-foreground/50">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-zinc-500 text-xs">
+                    <td className="py-3 px-4 text-muted-foreground text-xs">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -309,31 +309,31 @@ function AdminUsers() {
       {/* User List - Mobile */}
       <div className="md:hidden space-y-2">
         {filteredUsers?.map(user => (
-          <Card key={user.id} className="bg-zinc-900 border-zinc-800" data-testid={`card-user-${user.id}`}>
+          <Card key={user.id} className="bg-card border-border" data-testid={`card-user-${user.id}`}>
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-white font-medium truncate">{user.username}</p>
+                    <p className="text-foreground font-medium truncate">{user.username}</p>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
-                      user.isAdmin ? 'bg-red-500/10 text-red-400' :
-                      user.role === 'creator' ? 'bg-purple-500/10 text-purple-400' :
-                      user.role === 'influencer' ? 'bg-blue-500/10 text-blue-400' :
-                      'bg-zinc-700 text-zinc-300'
+                      user.isAdmin ? 'bg-red-500/10 text-red-500' :
+                      user.role === 'creator' ? 'bg-purple-500/10 text-purple-500' :
+                      user.role === 'influencer' ? 'bg-blue-500/10 text-blue-500' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                       {user.isAdmin ? 'Admin' : user.role || 'Viewer'}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500 truncate">{user.email || 'No email'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email || 'No email'}</p>
                 </div>
                 <div className="flex items-center gap-3 text-center shrink-0">
                   <div>
-                    <p className="text-white text-sm font-medium">{user.orbitCount || '—'}</p>
-                    <p className="text-[10px] text-zinc-600">Orbits</p>
+                    <p className="text-foreground text-sm font-medium">{user.orbitCount || '—'}</p>
+                    <p className="text-[10px] text-muted-foreground/50">Orbits</p>
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">{user.iceCount || '—'}</p>
-                    <p className="text-[10px] text-zinc-600">ICEs</p>
+                    <p className="text-foreground text-sm font-medium">{user.iceCount || '—'}</p>
+                    <p className="text-[10px] text-muted-foreground/50">ICEs</p>
                   </div>
                 </div>
               </div>
@@ -361,10 +361,10 @@ function AdminIndustryOrbits() {
 
   if (!orbits || orbits.length === 0) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-card border-border">
         <CardContent className="py-12 text-center">
-          <Layers className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-          <p className="text-zinc-400">No industry orbits found</p>
+          <Layers className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="text-muted-foreground">No industry orbits found</p>
           <Link href="/admin/cpac">
             <Button className="mt-4" variant="outline">
               Create Industry Orbit
@@ -378,7 +378,7 @@ function AdminIndustryOrbits() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Industry Orbits</h3>
+        <h3 className="text-lg font-semibold text-foreground">Industry Orbits</h3>
         <Link href="/admin/cpac">
           <Button variant="outline" size="sm">
             <Plus className="w-4 h-4 mr-2" />
@@ -389,7 +389,7 @@ function AdminIndustryOrbits() {
       
       <div className="grid gap-4">
         {orbits.map(orbit => (
-          <Card key={orbit.id} className="bg-zinc-900 border-zinc-800">
+          <Card key={orbit.id} className="bg-card border-border">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -397,8 +397,8 @@ function AdminIndustryOrbits() {
                     <Globe className="w-6 h-6 text-purple-400" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">{orbit.businessSlug}</h4>
-                    <p className="text-xs text-zinc-400">
+                    <h4 className="font-medium text-foreground">{orbit.businessSlug}</h4>
+                    <p className="text-xs text-muted-foreground">
                       {orbit.generationStatus === 'ready' ? 'Active' : orbit.generationStatus}
                     </p>
                   </div>
@@ -769,11 +769,11 @@ export default function Admin() {
 
   if (!isCreatorOrAdmin) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background">
         <GlobalNav context="app" />
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-          <h2 className="text-2xl font-semibold mb-4 text-white">Creator Access Required</h2>
-          <p className="text-zinc-400 mb-6">
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">Creator Access Required</h2>
+          <p className="text-muted-foreground mb-6">
             Become a creator to start building your own stories and universes.
           </p>
           <Link href="/become-creator">
@@ -788,50 +788,50 @@ export default function Admin() {
 
   if (universesLoading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background">
         <GlobalNav context="app" />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <GlobalNav context="app" />
       <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in pb-24">
         
         {/* Admin Command Center Header */}
         <div className="flex items-center gap-4">
           <Link href="/launchpad">
-            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-white">Admin Command Center</h1>
-            <p className="text-sm text-zinc-500">Platform management and oversight</p>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">Admin Command Center</h1>
+            <p className="text-sm text-muted-foreground">Platform management and oversight</p>
           </div>
         </div>
         
         {/* Tab Navigation - scrollable on mobile */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AdminTab)} className="space-y-6">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="bg-zinc-900 border border-zinc-800 p-1 inline-flex min-w-max">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-overview">
+            <TabsList className="bg-card border border-border p-1 inline-flex min-w-max">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-overview">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-users">
+              <TabsTrigger value="users" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-users">
                 <Users className="w-4 h-4 mr-2" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="industry-orbits" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-industry">
+              <TabsTrigger value="industry-orbits" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-industry">
                 <Globe className="w-4 h-4 mr-2" />
                 Industry Orbits
               </TabsTrigger>
-              <TabsTrigger value="content" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-content">
+              <TabsTrigger value="content" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-content">
                 <Layers className="w-4 h-4 mr-2" />
                 Content
               </TabsTrigger>
