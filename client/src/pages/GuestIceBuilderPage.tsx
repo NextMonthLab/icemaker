@@ -30,6 +30,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { BookOpen } from "lucide-react";
 import type { ProjectBible } from "@shared/schema";
 import { TitlePackSelector } from "@/components/ice-maker/TitlePackSelector";
+import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
+import { createDefaultCaptionState, type CaptionState } from "@/caption-engine/schemas";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -134,6 +138,8 @@ export default function GuestIceBuilderPage() {
   const [previewAccessToken, setPreviewAccessToken] = useState<string | undefined>();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [titlePackId, setTitlePackId] = useState(DEFAULT_TITLE_PACK_ID);
+  const [captionState, setCaptionState] = useState<CaptionState>(() => createDefaultCaptionState());
+  const [showCaptionSettings, setShowCaptionSettings] = useState(false);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showBulkImageConfirm, setShowBulkImageConfirm] = useState(false);
@@ -1362,6 +1368,34 @@ export default function GuestIceBuilderPage() {
                 </div>
               </div>
             </div>
+
+            {/* Advanced Caption Settings */}
+            <Collapsible open={showCaptionSettings} onOpenChange={setShowCaptionSettings} className="mb-4">
+              <CollapsibleTrigger asChild>
+                <button 
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/10 rounded-lg hover:bg-white/[0.05] transition-colors"
+                  data-testid="button-toggle-caption-settings"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-pink-400" />
+                    <span className="text-sm font-medium text-white">Advanced Caption Settings</span>
+                    <span className="text-xs text-white/50 ml-2">
+                      {captionState.karaokeEnabled ? "Karaoke On" : ""} 
+                      {captionState.animationId !== "none" ? ` • ${captionState.animationId}` : ""}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-white/60 transition-transform ${showCaptionSettings ? "rotate-180" : ""}`} />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4">
+                  <CaptionStylePicker
+                    captionState={captionState}
+                    onStateChange={setCaptionState}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Professional ICE Editor cards */}
             <div className="space-y-3">
