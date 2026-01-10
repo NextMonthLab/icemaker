@@ -1645,6 +1645,7 @@ export default function GuestIceBuilderPage() {
                   autoplay={true}
                   fullScreen={true}
                   titlePackId={titlePackId}
+                  captionState={captionState}
                   narrationVolume={narrationVolume}
                   narrationMuted={narrationMuted}
                   onPhaseChange={(phase) => {

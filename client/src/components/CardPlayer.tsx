@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
+import type { CaptionState } from "@/caption-engine/schemas";
 
 function useIsTabletLandscape() {
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
@@ -63,6 +64,7 @@ interface CardPlayerProps {
   titlePackId?: string;
   narrationVolume?: number; // 0-100
   narrationMuted?: boolean;
+  captionState?: CaptionState; // Caption Engine state for karaoke/animations
 }
 
 type Phase = "cinematic" | "context";
@@ -77,7 +79,8 @@ export default function CardPlayer({
   brandPreferences,
   titlePackId = DEFAULT_TITLE_PACK_ID,
   narrationVolume = 100,
-  narrationMuted = false
+  narrationMuted = false,
+  captionState
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -521,8 +524,32 @@ export default function CardPlayer({
                         ? getLayerStylesWithText(supporting, titlePack.supporting, titlePack, fullScreen) 
                         : null;
                       
+                      // Caption Engine karaoke/animation indicator
+                      const karaokeEnabled = captionState?.karaokeEnabled;
+                      const karaokeStyle = captionState?.karaokeStyle || 'weight';
+                      const animationEnabled = captionState?.animationId && captionState.animationId !== 'none';
+                      
                       return (
                         <div className="flex flex-col items-center gap-3 px-4">
+                          {/* Caption Engine indicator */}
+                          {(karaokeEnabled || animationEnabled) && (
+                            <div 
+                              className="absolute top-4 right-4 flex items-center gap-2 px-2 py-1 rounded-full bg-black/50 text-xs"
+                              data-testid="indicator-caption-effects"
+                            >
+                              {karaokeEnabled && (
+                                <span className="text-pink-400 flex items-center gap-1">
+                                  <span className="animate-pulse">●</span> Karaoke
+                                </span>
+                              )}
+                              {animationEnabled && (
+                                <span className="text-blue-400">
+                                  {captionState?.animationId}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
                           {/* Accent shape background for grunge-tape pack */}
                           {titlePack.accentShape?.type === 'tape' && (
                             <div 
@@ -538,10 +565,16 @@ export default function CardPlayer({
                             />
                           )}
                           
-                          {/* Headline */}
+                          {/* Headline with optional karaoke styling */}
                           <p 
-                            className="font-bold leading-snug max-w-full"
-                            style={headlineStyles}
+                            className={`font-bold leading-snug max-w-full ${karaokeEnabled ? 'transition-all duration-300' : ''}`}
+                            style={{
+                              ...headlineStyles,
+                              // Add subtle karaoke preview effect
+                              ...(karaokeEnabled && karaokeStyle === 'glow' ? {
+                                textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4)'
+                              } : {}),
+                            }}
                             data-testid="text-headline"
                           >
                             {headline}
