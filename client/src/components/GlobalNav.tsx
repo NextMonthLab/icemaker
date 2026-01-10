@@ -14,8 +14,11 @@ import {
   Film,
   GraduationCap,
   Compass,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
@@ -59,10 +62,15 @@ export default function GlobalNav({
 }: GlobalNavProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
+  };
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const getInitials = (name: string) => {
@@ -244,6 +252,23 @@ export default function GlobalNav({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem 
+                      onClick={toggleTheme} 
+                      className="cursor-pointer text-white/80 hover:text-white"
+                      data-testid="global-menu-theme"
+                    >
+                      {theme === 'dark' ? (
+                        <>
+                          <Sun className="w-4 h-4 mr-2" />
+                          Light Mode
+                        </>
+                      ) : (
+                        <>
+                          <Moon className="w-4 h-4 mr-2" />
+                          Dark Mode
+                        </>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-400 hover:text-red-300" data-testid="global-menu-logout">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
