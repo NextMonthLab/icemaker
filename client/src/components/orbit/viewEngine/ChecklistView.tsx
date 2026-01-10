@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Check, AlertCircle, Star, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChecklistViewData, ChecklistItem } from "@shared/orbitViewEngine";
+import { orbitTokens } from "@/lib/designTokens";
 
 interface ChecklistViewProps {
   data: ChecklistViewData;
@@ -44,7 +45,8 @@ export function ChecklistView({ data, onToggle }: ChecklistViewProps) {
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"
+            className="h-full rounded-full"
+            style={{ backgroundColor: orbitTokens.typeAccents.product }}
           />
         </div>
         <span className="text-xs text-white/60 tabular-nums">

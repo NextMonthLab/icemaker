@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Award, AlertTriangle, Target, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ShortlistViewData, ShortlistItem } from "@shared/orbitViewEngine";
+import { orbitTokens } from "@/lib/designTokens";
 
 interface ShortlistViewProps {
   data: ShortlistViewData;
@@ -59,18 +60,17 @@ function ShortlistCard({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: rank * 0.1 }}
-      className={cn(
-        "relative p-4 rounded-xl border transition-all",
-        isTop 
-          ? "bg-gradient-to-r from-pink-500/10 to-purple-500/10 border-pink-500/30" 
-          : "bg-white/5 border-white/10 hover:border-white/20"
-      )}
+      className="relative p-4 rounded-xl border transition-all bg-white/5 hover:border-white/20"
+      style={{
+        borderColor: isTop ? orbitTokens.winner.border : 'rgba(255,255,255,0.1)',
+        backgroundColor: isTop ? orbitTokens.winner.bg : 'rgba(255,255,255,0.05)',
+      }}
     >
       <div className="absolute -left-2 -top-2 w-6 h-6 rounded-full bg-black flex items-center justify-center border border-white/20">
-        <span className={cn(
-          "text-xs font-bold",
-          isTop ? "text-pink-400" : "text-white/60"
-        )}>
+        <span 
+          className="text-xs font-bold"
+          style={{ color: isTop ? orbitTokens.winner.text : 'rgba(255,255,255,0.6)' }}
+        >
           {rank}
         </span>
       </div>
@@ -95,7 +95,7 @@ function ShortlistCard({
             <h4 className="text-sm font-medium text-white truncate">{item.name}</h4>
             {item.score && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10">
-                <Award className="w-3 h-3 text-pink-400" />
+                <Award className="w-3 h-3" style={{ color: orbitTokens.winner.text }} />
                 <span className="text-xs text-white/80">{item.score}</span>
               </div>
             )}

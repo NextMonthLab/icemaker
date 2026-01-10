@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Trophy, ChevronDown, ChevronUp, Star, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompareViewData, CompareRow } from "@shared/orbitViewEngine";
+import { orbitTokens } from "@/lib/designTokens";
 
 interface CompareViewProps {
   data: CompareViewData;
@@ -54,10 +55,16 @@ export function CompareView({ data, onAskAbout }: CompareViewProps) {
   return (
     <div className="flex flex-col">
       {winner && (
-        <div className="mx-4 mt-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/30">
+        <div 
+          className="mx-4 mt-4 p-3 rounded-xl border"
+          style={{
+            backgroundColor: orbitTokens.winner.bg,
+            borderColor: orbitTokens.winner.border,
+          }}
+        >
           <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-medium text-amber-300">Top Pick</span>
+            <Trophy className="w-4 h-4" style={{ color: orbitTokens.winner.text }} />
+            <span className="text-xs font-medium" style={{ color: orbitTokens.winner.text }}>Top Pick</span>
           </div>
           <p className="text-sm text-white font-medium">{winner.name}</p>
           {winner.verdict && (
@@ -105,10 +112,10 @@ export function CompareView({ data, onAskAbout }: CompareViewProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className={cn(
-                  "border-b border-white/5 hover:bg-white/5 transition-colors",
-                  row.id === data.winner_id && "bg-amber-500/5"
-                )}
+                className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                style={{
+                  backgroundColor: row.id === data.winner_id ? orbitTokens.winner.bg : undefined,
+                }}
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -129,14 +136,14 @@ export function CompareView({ data, onAskAbout }: CompareViewProps) {
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium text-white">{row.name}</p>
                         {row.id === data.winner_id && (
-                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                          <Star className="w-3 h-3 fill-current" style={{ color: orbitTokens.winner.text }} />
                         )}
                       </div>
                       {row.brand && (
                         <p className="text-xs text-white/40">{row.brand}</p>
                       )}
                       {row.price && (
-                        <p className="text-xs text-pink-400">{row.price}</p>
+                        <p className="text-xs text-white/60">{row.price}</p>
                       )}
                     </div>
                   </div>
@@ -155,7 +162,7 @@ export function CompareView({ data, onAskAbout }: CompareViewProps) {
                     title="Ask about this"
                     data-testid={`ask-about-${row.id}`}
                   >
-                    <MessageCircle className="w-4 h-4 text-white/30 group-hover:text-pink-400 transition-colors" />
+                    <MessageCircle className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors" />
                   </button>
                 </td>
               </motion.tr>
