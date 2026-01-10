@@ -29,6 +29,7 @@ import { ContinuityPanel } from "@/components/ContinuityPanel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen } from "lucide-react";
 import type { ProjectBible } from "@shared/schema";
+import { TitlePackSelector } from "@/components/ice-maker/TitlePackSelector";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -1264,24 +1265,11 @@ export default function GuestIceBuilderPage() {
                 {/* Title Pack Selector */}
                 <div className="flex-1">
                   <label className="text-xs text-white/60 mb-1.5 block">Style</label>
-                  <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
-                    <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-                    <select
-                      value={titlePackId}
-                      onChange={(e) => setTitlePackId(e.target.value)}
-                      className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
-                      data-testid="select-title-pack-editor"
-                    >
-                      {TITLE_PACKS.map((pack) => (
-                        <option key={pack.id} value={pack.id} className="bg-slate-900 text-white">
-                          {pack.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <p className="text-[10px] text-white/40 mt-1">
-                    {TITLE_PACKS.find(p => p.id === titlePackId)?.description}
-                  </p>
+                  <TitlePackSelector
+                    value={titlePackId}
+                    onChange={setTitlePackId}
+                    compact
+                  />
                 </div>
 
                 {/* Music Selector */}

@@ -2,7 +2,6 @@ import { Link, useLocation } from "wouter";
 import { 
   Sparkles,
   LayoutDashboard,
-  FolderOpen,
   Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,7 +11,6 @@ import React from "react";
 const iceMakerNavItems = [
   { href: "/icemaker", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/icemaker/create", icon: Plus, label: "Create Experience" },
-  { href: "/icemaker/projects", icon: FolderOpen, label: "My Projects" },
 ];
 
 export default function IceMakerLayout({ children }: { children: React.ReactNode }) {

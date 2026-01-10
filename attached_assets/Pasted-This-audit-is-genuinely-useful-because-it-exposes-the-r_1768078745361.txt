@@ -1,0 +1,79 @@
+This audit is genuinely useful, because it exposes the real problem: naming + routing ambiguity, not “two builders”.
+
+My opinion: do (1) and (2), in a specific order, and add one extra move that will stop this confusion from resurfacing.
+
+Priority order
+
+1) Add the full Title Pack selector to ICE Preview (/ice/preview/:id)
+
+Do this first because it directly impacts “CapCut-level polish” and the user-visible experience.
+
+What “full” means (minimum spec):
+	•	Same caption preset engine as the builder (12 presets / 5 animations / 6 title styles, if that’s your target set)
+	•	Selector UI shows:
+	•	Title Pack name
+	•	1-line description
+	•	Thumbnail preview
+	•	“Apply” action
+	•	Changes apply instantly in preview and persist to the ICE record
+	•	Locked behaviour: preview and editor must look identical in styling (no “preview looks cheaper” drift)
+
+Add health points
+	•	ICEPREV_001 Preview loads for valid id (Critical)
+	•	ICEPREV_002 Title Pack selector renders (High)
+	•	ICEPREV_003 Selecting a pack updates renderables + persists (High)
+	•	ICEPREV_004 Preview render uses same token system as builder (High)
+	•	ICEPREV_005 No fallback styling used (Red if fallback)
+
+2) Clean up the IceMaker navigation shell (Projects/Templates)
+
+Do this second because right now it’s false choice architecture: it looks like features exist, but they don’t. That quietly damages trust.
+
+Two acceptable approaches (pick one, I recommend A):
+
+A) Hide/disable until real
+	•	Remove Projects/Templates from nav, or mark clearly as “Coming soon”
+	•	Keep Home + Create + Settings only
+	•	Templates can remain if they actually create a prefilled ICE (not just link to create)
+
+B) Make them minimally real
+	•	Projects: list recent ICEs from local storage / API (even if basic)
+	•	Templates: actually instantiate a new ICE with that template ID, not just route to create
+
+Add health points
+	•	ICENAV_001 Nav shows only functional links (High)
+	•	ICENAV_002 Projects page not accessible unless functional (High) or shows real list (if you build it)
+	•	ICENAV_003 Templates create a prefilled ICE (High) or are hidden (High)
+
+3) The extra move you need: rename /preview/:id in UI copy to “Orbit Preview”
+
+You don’t necessarily need to change the route immediately, but you must eliminate the conceptual collision.
+
+In UI labels and internal naming:
+	•	/preview/:id = Orbit Preview
+	•	/ice/preview/:id = ICE Preview
+
+Add a banner on Orbit Preview (admin-only is fine):
+
+“This is Orbit site preview, not ICE playback.”
+
+Add health point
+	•	PREVIEW_001 Orbit Preview clearly labelled as Orbit (Medium)
+
+One “no fragmentation” rule to enforce
+
+Any new page must pass:
+	•	“Is this inside the correct product area?”
+	•	“Does it duplicate an existing route?”
+	•	“Is there a Health Contract item for it?”
+
+If not: it doesn’t ship.
+
+⸻
+
+What to tell the implementer (copy/paste)
+
+If you want something you can paste straight back:
+	•	“Yes: implement the Title Pack selector on /ice/preview/:id as top priority. Then remove or clearly disable non-functional Projects/Templates navigation. Also rename all UI references so /preview/:id is explicitly ‘Orbit Preview’ and never mentioned as ICE. Add the health points listed so we can’t regress.”
+
+If you paste me the current route map (just the list of ICE and Orbit routes), I’ll write a tight “route ownership” contract so this never happens again.

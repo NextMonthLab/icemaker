@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "title": "NextMonth Orbit Behaviour Contract",
-  "description": "41-item contract defining expected Orbit system behaviours with evidence-based verification, including Ingestion v2 and compliance checks",
+  "description": "51-item contract defining expected Orbit system behaviours with evidence-based verification, including Ingestion v2, compliance, ICE Preview, and ICE Navigation checks",
   "lastUpdated": "2026-01-10",
   "categories": {
     "chat_core": "Core chat functionality",
@@ -14,7 +14,9 @@
     "security": "Access control and validation",
     "performance": "Response times and limits",
     "ingestion_v2": "Ingestion v2 discovery, sampling, throttling, caching",
-    "compliance": "Robots.txt respect and friction handling"
+    "compliance": "Robots.txt respect and friction handling",
+    "ice_preview": "ICE Preview playback and styling",
+    "ice_navigation": "ICE Maker navigation and routing"
   },
   "items": [
     {
@@ -502,6 +504,105 @@
         "haltOnFriction": true,
         "maxRetriesPerUrl": 1
       }
+    },
+    {
+      "id": "ICEPREV_001",
+      "category": "ice_preview",
+      "title": "ICE Preview loads for valid id",
+      "description": "ICE Preview page at /ice/preview/:id renders successfully for valid ICE IDs",
+      "severity": "critical",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_ice_preview_loaded",
+      "endpoint": "GET /ice/preview/:id",
+      "component": "GuestIceBuilderPage"
+    },
+    {
+      "id": "ICEPREV_002",
+      "category": "ice_preview",
+      "title": "Title Pack selector renders",
+      "description": "TitlePackSelector component renders with all 5 title pack options",
+      "severity": "high",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_title_pack_selector",
+      "endpoint": null,
+      "component": "TitlePackSelector"
+    },
+    {
+      "id": "ICEPREV_003",
+      "category": "ice_preview",
+      "title": "Selecting a pack updates renderables and persists",
+      "description": "Changing title pack updates preview instantly and saves to ICE record",
+      "severity": "high",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_title_pack_saved",
+      "endpoint": "PUT /api/ice/preview/:id/settings",
+      "component": null
+    },
+    {
+      "id": "ICEPREV_004",
+      "category": "ice_preview",
+      "title": "Preview render uses same token system as builder",
+      "description": "CardPlayer uses same titlePack tokens for consistent styling between builder and preview",
+      "severity": "high",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_token_consistency",
+      "endpoint": null,
+      "component": "CardPlayer"
+    },
+    {
+      "id": "ICEPREV_005",
+      "category": "ice_preview",
+      "title": "No fallback styling used",
+      "description": "Preview never falls back to default styling when titlePackId is set",
+      "severity": "medium",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_no_fallback",
+      "endpoint": null,
+      "component": "CardPlayer"
+    },
+    {
+      "id": "ICENAV_001",
+      "category": "ice_navigation",
+      "title": "Nav shows only functional links",
+      "description": "IceMaker navigation only displays links to working features",
+      "severity": "high",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_nav_functional",
+      "endpoint": null,
+      "component": "IceMakerLayout"
+    },
+    {
+      "id": "ICENAV_002",
+      "category": "ice_navigation",
+      "title": "Projects page hidden or shows real list",
+      "description": "Projects page is either hidden from nav or displays actual user projects",
+      "severity": "high",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_projects_functional",
+      "endpoint": null,
+      "component": "IceMakerProjects"
+    },
+    {
+      "id": "ICENAV_003",
+      "category": "ice_navigation",
+      "title": "Templates create prefilled ICE or are hidden",
+      "description": "Templates either instantiate actual prefilled ICE or are hidden from navigation",
+      "severity": "high",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_templates_functional",
+      "endpoint": null,
+      "component": "IceMakerTemplates"
+    },
+    {
+      "id": "PREVIEW_001",
+      "category": "orbit_navigation",
+      "title": "Orbit Preview clearly labelled as Orbit",
+      "description": "The /preview/:id page is explicitly labelled as Orbit Preview in UI to avoid confusion with ICE Preview",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_orbit_preview_label",
+      "endpoint": null,
+      "component": "PreviewPage"
     }
   ],
   "severityLevels": {
