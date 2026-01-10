@@ -362,7 +362,7 @@ export default function Launchpad() {
 
   if (orbitsLoading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background">
         <GlobalNav context="app" onStartTour={handleOpenTourFromMenu} />
         <div className="flex items-center justify-center min-h-[80vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -373,7 +373,7 @@ export default function Launchpad() {
 
   if (!hasOrbits) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background">
         <GlobalNav context="app" onStartTour={handleOpenTourFromMenu} />
         <div className="flex items-center justify-center min-h-[80vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -383,7 +383,7 @@ export default function Launchpad() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <GlobalNav context="app" onStartTour={handleOpenTourFromMenu} />
       
       <FirstRunOnboarding
@@ -442,7 +442,7 @@ export default function Launchpad() {
             />
           </div>
 
-          <div className="lg:w-1/3 border-l border-white/10 bg-white/[0.02]">
+          <div className="lg:w-1/3 border-l border-border bg-muted/30">
             <IceBuilderPanel
               selectedInsight={selectedInsight}
               draft={currentDraft}
@@ -484,7 +484,7 @@ export default function Launchpad() {
         )}
 
         {mobileTab === "builder" && (
-          <div className="flex-1 overflow-y-auto bg-white/[0.02]">
+          <div className="flex-1 overflow-y-auto bg-muted/30">
             <IceBuilderPanel
               selectedInsight={selectedInsight}
               draft={currentDraft}
@@ -496,9 +496,9 @@ export default function Launchpad() {
 
         {mobileTab === "recent" && (
           <div className="flex-1 p-4 overflow-y-auto">
-            <h2 className="text-lg font-semibold text-white mb-4">Recent Content</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Recent Content</h2>
             {recentDrafts.length === 0 ? (
-              <p className="text-white/60 text-sm">No recent drafts yet. Create your first content from an insight.</p>
+              <p className="text-muted-foreground text-sm">No recent drafts yet. Create your first content from an insight.</p>
             ) : (
               <div className="space-y-3">
                 {recentDrafts.map((draft) => (
@@ -508,11 +508,11 @@ export default function Launchpad() {
                       setCurrentDraft(draft);
                       setMobileTab("builder");
                     }}
-                    className="p-4 rounded-lg bg-white/5 border border-white/10"
+                    className="p-4 rounded-lg bg-muted/50 border border-border"
                     data-testid={`mobile-draft-${draft.id}`}
                   >
-                    <p className="font-medium text-white truncate">{draft.headline}</p>
-                    <p className="text-xs text-white/50 mt-1">{draft.status === "published" ? "Published" : "Draft"}</p>
+                    <p className="font-medium text-foreground truncate">{draft.headline}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{draft.status === "published" ? "Published" : "Draft"}</p>
                   </div>
                 ))}
               </div>
@@ -522,12 +522,12 @@ export default function Launchpad() {
       </div>
 
       {/* Mobile Tab Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-black/95 backdrop-blur border-t border-white/10 z-50">
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-background/95 backdrop-blur border-t border-border z-50">
         <div className="flex">
           <button
             onClick={() => setMobileTab("insights")}
             className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
-              mobileTab === "insights" ? "text-purple-400" : "text-white/60"
+              mobileTab === "insights" ? "text-primary" : "text-muted-foreground"
             }`}
             data-testid="tab-insights"
           >
@@ -537,7 +537,7 @@ export default function Launchpad() {
           <button
             onClick={() => setMobileTab("builder")}
             className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
-              mobileTab === "builder" ? "text-purple-400" : "text-white/60"
+              mobileTab === "builder" ? "text-primary" : "text-muted-foreground"
             }`}
             data-testid="tab-builder"
           >
@@ -547,7 +547,7 @@ export default function Launchpad() {
           <button
             onClick={() => setMobileTab("recent")}
             className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
-              mobileTab === "recent" ? "text-purple-400" : "text-white/60"
+              mobileTab === "recent" ? "text-primary" : "text-muted-foreground"
             }`}
             data-testid="tab-recent"
           >
@@ -559,7 +559,7 @@ export default function Launchpad() {
 
       {/* Mobile Builder Sheet (alternative full-screen approach) */}
       <Sheet open={mobileBuilderOpen && mobileTab !== "builder"} onOpenChange={setMobileBuilderOpen}>
-        <SheetContent side="bottom" className="h-[90vh] bg-black border-white/10 p-0">
+        <SheetContent side="bottom" className="h-[90vh] bg-background border-border p-0">
           <IceBuilderPanel
             selectedInsight={selectedInsight}
             draft={currentDraft}
