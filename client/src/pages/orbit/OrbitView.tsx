@@ -14,6 +14,8 @@ import { HubPanelContainer } from "@/components/orbit/HubPanelContainer";
 import { OrbitGrid } from "@/components/orbit/OrbitGrid";
 import { OrbitShareModal } from "@/components/orbit/OrbitShareModal";
 import { IndustryOrbitLanding } from "@/components/orbit/IndustryOrbitLanding";
+import { ViewWindscreen, MobileViewSheet } from "@/components/orbit/viewEngine/ViewWindscreen";
+import type { ViewPayload } from "@shared/orbitViewEngine";
 import type { SiteKnowledge } from "@/lib/siteKnowledge";
 import GlobalNav from "@/components/GlobalNav";
 import {
@@ -193,6 +195,11 @@ export default function OrbitView() {
   // Industry Orbit view mode: 'landing' shows the polished front page, 'map' shows the radar grid
   const [industryViewMode, setIndustryViewMode] = useState<'landing' | 'map'>('landing');
   
+  // View Engine state for industry orbits
+  const [activeView, setActiveView] = useState<ViewPayload | null>(null);
+  const [viewFollowups, setViewFollowups] = useState<string[]>([]);
+  const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+  
   // Conversation history for AI chat
   const chatHistoryRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   // Track when proof capture was triggered to prevent repeated prompts
@@ -310,6 +317,62 @@ export default function OrbitView() {
       } catch (e) {
         console.error('Orbit chat error:', e);
         return { text: "Sorry, I couldn't process that request. Please try again.", video: null };
+      }
+    };
+  };
+
+  // View-enhanced chat handler for industry orbits
+  const createIndustryViewChatHandler = () => {
+    return async (message: string): Promise<ChatResponse> => {
+      if (!conversationTracked) {
+        trackMetric('conversations');
+        setConversationTracked(true);
+      }
+      
+      try {
+        const response = await fetch(`/api/industry-orbits/${slug}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message,
+            history: chatHistoryRef.current,
+            category: industryFrontPage?.hero?.title || 'Smart Glasses',
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          return { text: errorData.message || "Sorry, something went wrong.", video: null };
+        }
+        
+        const data = await response.json();
+        
+        // Update view engine state if a view was returned
+        if (data.view) {
+          setActiveView(data.view);
+          setViewFollowups(data.followups || []);
+        }
+        
+        // Handle disambiguation as chip options
+        let responseText = data.message;
+        if (data.disambiguation) {
+          responseText += `\n\n${data.disambiguation.question}\n`;
+          data.disambiguation.options.forEach((opt: { label: string }) => {
+            responseText += `• ${opt.label}\n`;
+          });
+        }
+        
+        // Update chat history
+        chatHistoryRef.current.push({ role: 'user', content: message });
+        chatHistoryRef.current.push({ role: 'assistant', content: responseText });
+        if (chatHistoryRef.current.length > 10) {
+          chatHistoryRef.current = chatHistoryRef.current.slice(-10);
+        }
+        
+        return { text: responseText, video: null };
+      } catch (e) {
+        console.error('Industry orbit chat error:', e);
+        return { text: "Sorry, I couldn't process that request.", video: null };
       }
     };
   };
@@ -917,23 +980,55 @@ export default function OrbitView() {
       );
     }
     
-    // Map view - radar grid with chat
+    // Map view - radar grid with chat + view engine windscreen
     if (knowledge) {
+      const handleAskAboutRow = (query: string) => {
+        // Send the query through the chat handler
+        createIndustryViewChatHandler()(query);
+      };
+      
+      const handleFollowupClick = (followup: string) => {
+        createIndustryViewChatHandler()(followup);
+      };
+      
       return (
         <div className="min-h-screen bg-background text-foreground flex flex-col relative">
           {!isEmbedMode && (
             <GlobalNav context="orbit" showBreadcrumb breadcrumbLabel={title} />
           )}
-          <div className="flex-1">
+          <div className={`flex-1 ${activeView && !isMobile ? 'mr-[420px]' : ''}`}>
             <RadarGrid
               knowledge={knowledge}
               accentColor={accentColor}
               lightMode={false}
               onInteraction={() => trackMetric('interactions')}
               orbitSlug={slug}
-              onSendMessage={createChatHandler()}
+              onSendMessage={createIndustryViewChatHandler()}
             />
           </div>
+          
+          {/* Desktop Windscreen - right side pane */}
+          {activeView && !isMobile && (
+            <ViewWindscreen
+              view={activeView}
+              followups={viewFollowups}
+              onClose={() => setActiveView(null)}
+              onAskAbout={handleAskAboutRow}
+              onFollowupClick={handleFollowupClick}
+            />
+          )}
+          
+          {/* Mobile View Sheet - full screen overlay */}
+          {activeView && isMobile && (
+            <MobileViewSheet
+              view={activeView}
+              followups={viewFollowups}
+              onClose={() => setActiveView(null)}
+              onAskAbout={handleAskAboutRow}
+              onFollowupClick={handleFollowupClick}
+            />
+          )}
+          
           {/* Back to landing + footer */}
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-t border-white/10 py-2 px-4">
             <div className="max-w-lg mx-auto flex items-center justify-between gap-3">

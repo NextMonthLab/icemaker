@@ -15154,6 +15154,75 @@ GUIDELINES:
     res.json({ success: true, message: "Thanks. We will be in touch within 2 working days." });
   });
 
+  // ============ INDUSTRY ORBIT VIEW ENGINE CHAT ============
+  
+  // POST /api/industry-orbits/:slug/chat - View-enhanced chat for industry orbits
+  app.post("/api/industry-orbits/:slug/chat", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { message, history = [], category } = req.body;
+      
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      const orbitMeta = await storage.getOrbitMeta(slug);
+      if (!orbitMeta || orbitMeta.orbitType !== 'industry') {
+        return res.status(404).json({ message: "Industry orbit not found" });
+      }
+      
+      const { runViewEnginePipeline } = await import('./services/orbitViewEngine');
+      const { generateChatResponse } = await import('./services/orbitChatService');
+      
+      const categoryName = category || orbitMeta.customTitle || slug.replace(/-/g, ' ');
+      
+      const systemPrompt = `You are an expert assistant for the ${categoryName} category. You help users discover, compare, and understand products in this space.
+
+Key behaviors:
+- Be concise and factual
+- When comparing products, highlight key differentiators
+- When recommending, consider user's stated needs
+- Include specific product names and attributes when relevant
+- Format responses for readability with bullet points when appropriate
+
+Current category: ${categoryName}`;
+
+      const historyForAI = (history || [])
+        .filter((msg: any) => msg.role === 'user' || msg.role === 'assistant')
+        .slice(-6)
+        .map((msg: any) => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
+      
+      const chatResponse = await generateChatResponse(systemPrompt, historyForAI, message, { maxTokens: 400 });
+      
+      const pipelineResult = await runViewEnginePipeline({
+        userMessage: message,
+        chatResponse,
+        category: categoryName,
+        recentTopics: historyForAI.slice(-2).map((m: any) => m.content),
+        useMockData: false
+      });
+      
+      console.log('[ViewEngine] Pipeline result:', {
+        intent: pipelineResult.logs.intent.primary_intent,
+        viewType: pipelineResult.response.view?.type || 'none',
+        confidence: pipelineResult.logs.intent.confidence,
+        reasonCodes: pipelineResult.logs.decision.reasonCodes
+      });
+      
+      res.json({
+        message: pipelineResult.response.message,
+        view: pipelineResult.response.view || null,
+        followups: pipelineResult.response.followups || [],
+        disambiguation: pipelineResult.response.disambiguation || null,
+        meta: pipelineResult.response.meta || null
+      });
+      
+    } catch (error) {
+      console.error("[IndustryOrbitChat] Error:", error);
+      res.status(500).json({ message: "Error processing chat" });
+    }
+  });
+
   // ============ INDUSTRY ORBIT SEED API ============
   
   const { seedPackSchema, importSeedPack, getOrbitDefinition, getOrbitFrontPage, getOrbitKnowledge } = await import("./services/industryOrbitSeedService");
