@@ -117,13 +117,26 @@ export default function AdminCpac() {
 
   const analyzeDiffMutation = useMutation({
     mutationFn: async (cpacJson: string) => {
-      const parsed = JSON.parse(cpacJson);
+      let parsed;
+      try {
+        parsed = JSON.parse(cpacJson);
+      } catch {
+        throw new Error("Invalid JSON format. Please check the file contents.");
+      }
+      
+      if (!parsed.formatVersion) {
+        throw new Error("Invalid CPAC format: missing formatVersion field");
+      }
+      
       const res = await fetch(`/api/industry-orbits/${selectedOrbit}/cpac/diff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed),
       });
-      if (!res.ok) throw new Error("Failed to analyze diff");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to analyze diff");
+      }
       return res.json();
     },
     onSuccess: (result) => {
@@ -508,6 +521,16 @@ export default function AdminCpac() {
                       <li key={i}>{warn}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {diffResult.summary.totalAdditions === 0 && diffResult.summary.potentialDuplicates === 0 && (
+                <div className="p-4 bg-zinc-800/50 rounded-lg text-center">
+                  <CheckCircle2 className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
+                  <p className="text-zinc-400">No new entries detected</p>
+                  <p className="text-sm text-zinc-500 mt-1">
+                    The uploaded CPAC contains entries that already exist in the database
+                  </p>
                 </div>
               )}
 

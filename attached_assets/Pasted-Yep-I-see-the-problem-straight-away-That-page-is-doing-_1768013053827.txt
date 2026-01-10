@@ -1,0 +1,83 @@
+Yep, I see the problem straight away. That page is doing “traditional website landing”, when Orbit should feel like an interface. If someone lands and sees a catalogue page, they’ll treat it like a brochure and bounce.
+
+What you want is the right instinct: get people to the money immediately.
+
+Here’s a clean, copy-paste set of instructions you can give Replit (RAPTOR/REPLAYER).
+
+⸻
+
+Replit brief: Kill the catalogue landing. Launch Orbit immediately.
+
+The issue
+
+The current /orbit/:slug page behaves like a traditional splash or catalogue page (vendors, products, stats, scroll content). It feels slow, conventional, and risks early drop-off.
+
+Orbit should feel like the future of the internet. The first thing a user should experience is the Orbit UI itself.
+
+New behaviour: “Instant Launch”
+
+Desktop (laptop)
+	•	When a user visits /orbit/smart-glasses, they should land straight into the Orbit experience.
+	•	Keep a simple, premium header that is persistent:
+	•	Title: “Smart Glasses” in Apple-quality typography
+	•	Optional small hero image of smart glasses (subtle, not huge)
+	•	Nothing else that looks like a marketing landing page
+	•	The main screen should be the Orbit UI immediately (chat + map experience).
+	•	If you want a “start point”, use a small overlay card, not a full page.
+
+Mobile
+	•	Remove the long scroll and catalogue sections completely.
+	•	Instead show a micro splash overlay for 1 to 2 seconds max:
+	•	“Smart Glasses”
+	•	Subtitle: “The living map of the companies, products, and ideas shaping wearable computing.”
+	•	Then automatically transition into the Orbit UI.
+	•	Allow tap to skip instantly. No waiting.
+
+UI content to remove
+	•	Vendor lists
+	•	Product lists
+	•	“6 brands, 6 products” catalogue framing
+	•	Anything that encourages scrolling before the Orbit experience starts
+
+These can exist inside Orbit as views, not as a static page.
+
+Why
+	•	Orbit is an interactive interface, not a brochure
+	•	Speed to value matters more than explaining what it is
+	•	The map and chat are the hook, not a list of items
+
+⸻
+
+Implementation notes (so they build it cleanly)
+
+Route behaviour
+	•	/orbit/:slug should render the Orbit UI directly
+	•	Optional: show an IntroOverlay component on first load only
+	•	Desktop: either none, or a very small overlay that can be dismissed
+	•	Mobile: auto dismiss after 1 to 2 seconds, skip on tap
+
+Loading state
+
+If Orbit data is still loading, show a calm, neutral loading state:
+	•	Title + subtitle
+	•	Small spinner
+	•	No colourful blocks
+
+Acceptance criteria
+	1.	Visiting /orbit/smart-glasses reaches the Orbit UI immediately on desktop.
+	2.	On mobile, the intro overlay lasts max 2 seconds and then transitions automatically.
+	3.	No vendor or product catalogue sections appear on the landing route.
+	4.	The header is persistent and minimal, with premium typography and optional small hero image.
+	5.	Users can skip the intro instantly.
+
+⸻
+
+Optional improvement that fits your “future internet” goal
+
+Instead of two big buttons (“Ask” vs “Explore”), default to a single primary mode:
+	•	Launch straight into chat, with the map already present behind or alongside it.
+	•	The map becomes a visual context layer, not a separate destination.
+
+⸻
+
+If you want, I’ll write you a one paragraph “why we are doing this” rationale in board-facing language, because this is one of those decisions that sounds subjective until you frame it as reducing friction and increasing time-to-value.
