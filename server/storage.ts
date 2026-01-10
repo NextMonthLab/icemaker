@@ -613,11 +613,11 @@ export class DatabaseStorage implements IStorage {
     // Count visits and conversations (30 days)
     const analytics = await db
       .select({
-        totalVisits: sql<number>`COALESCE(SUM(total_visits), 0)`,
-        totalConversations: sql<number>`COALESCE(SUM(total_conversations), 0)`,
+        totalVisits: sql<number>`COALESCE(SUM(visits), 0)`,
+        totalConversations: sql<number>`COALESCE(SUM(conversations), 0)`,
       })
       .from(schema.orbitAnalytics)
-      .where(gte(schema.orbitAnalytics.lastUpdated, thirtyDaysAgo));
+      .where(gte(schema.orbitAnalytics.date, thirtyDaysAgo));
     
     return {
       totalUsers,
