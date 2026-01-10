@@ -74,6 +74,7 @@ import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
 import BlogPublisherPage from "@/pages/admin/BlogPublisherPage";
 import IndustryOrbitAssets from "@/pages/admin/IndustryOrbitAssets";
+import OrbitHealthDashboard from "@/pages/admin/OrbitHealthDashboard";
 import GuestIceBuilderPage from "@/pages/GuestIceBuilderPage";
 import CaptionDemo from "@/pages/CaptionDemo";
 import IceCheckoutPage from "@/pages/IceCheckoutPage";
@@ -122,6 +123,7 @@ const ProtectedTransformationDetailPage = withAuth(TransformationDetailPage);
 const ProtectedCharacterCreatorPage = withAuth(CharacterCreatorPage);
 const ProtectedBlogPublisherPage = withAuth(BlogPublisherPage);
 const ProtectedIndustryOrbitAssets = withAuth(IndustryOrbitAssets);
+const ProtectedOrbitHealthDashboard = withAuth(OrbitHealthDashboard);
 const ProtectedAdminUniverseDetail = withAuth(AdminUniverseDetail);
 const ProtectedVisualBible = withAuth(VisualBible);
 const ProtectedExportPage = withAuth(ExportPage);
@@ -219,6 +221,7 @@ function Router() {
       <Route path="/admin/characters/new" component={ProtectedCharacterCreatorPage} />
       <Route path="/admin/blog" component={ProtectedBlogPublisherPage} />
       <Route path="/admin/industry-assets" component={ProtectedIndustryOrbitAssets} />
+      <Route path="/admin/orbits/health" component={ProtectedOrbitHealthDashboard} />
       <Route path="/admin/universes/:id" component={ProtectedAdminUniverseDetail} />
       <Route path="/admin/universes/:id/visual-bible" component={ProtectedVisualBible} />
       <Route path="/admin/universes/:id/export" component={ProtectedExportPage} />

@@ -30,6 +30,7 @@ import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, 
 import { canReadUniverse, canWriteUniverse, canReadIcePreview, canWriteIcePreview, canReadOrbit, canWriteOrbit, logAuditEvent, extractRequestInfo } from "./authPolicies";
 import { ingestUrlAndGenerateTiles, groupTilesByCategory } from "./services/topicTileGenerator";
 import { saveOrbitIngestion, loadOrbitIngestion, getOrbitTiles } from "./services/orbitTileStorage";
+import { generateHealthReport, getContract } from "./services/orbitHealthRunner";
 
 function getAppBaseUrl(req: any): string {
   if (process.env.PUBLIC_APP_URL) {
@@ -3437,6 +3438,40 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching industry orbits:", error);
       res.status(500).json({ message: "Error fetching industry orbits" });
+    }
+  });
+
+  // ============ ORBIT HEALTH DASHBOARD ROUTES ============
+  
+  app.get("/api/admin/orbits/health", requireAdmin, async (req, res) => {
+    try {
+      const orbitSlug = req.query.slug as string | undefined;
+      const report = await generateHealthReport(orbitSlug);
+      res.json(report);
+    } catch (error: any) {
+      console.error("Error generating health report:", error);
+      res.status(500).json({ message: "Error generating health report", error: error.message });
+    }
+  });
+  
+  app.get("/api/admin/orbits/health/contract", requireAdmin, async (req, res) => {
+    try {
+      const contract = getContract();
+      res.json(contract);
+    } catch (error: any) {
+      console.error("Error fetching contract:", error);
+      res.status(500).json({ message: "Error fetching contract", error: error.message });
+    }
+  });
+  
+  app.get("/api/admin/orbits/health/:slug", requireAdmin, async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const report = await generateHealthReport(slug);
+      res.json(report);
+    } catch (error: any) {
+      console.error("Error generating health report for orbit:", error);
+      res.status(500).json({ message: "Error generating health report", error: error.message });
     }
   });
 
