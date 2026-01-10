@@ -1,10 +1,17 @@
-import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, ImageIcon, CheckCircle, Trash2, Settings, Image as PhotoIcon, Clapperboard, ExternalLink, Music, Wand2, User, MoreHorizontal, Globe, MessageCircle, TrendingUp, Layers } from "lucide-react";
+import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, ImageIcon, CheckCircle, Trash2, Settings, Image as PhotoIcon, Clapperboard, ExternalLink, Music, Wand2, User, MoreHorizontal, Globe, MessageCircle, TrendingUp, Layers, ArrowLeft, Shield, Crown, Sparkles } from "lucide-react";
+import GlobalNav from "@/components/GlobalNav";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -638,10 +645,11 @@ export default function Admin() {
 
   if (!isCreatorOrAdmin) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-black">
+        <GlobalNav context="app" />
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-          <h2 className="text-2xl font-display font-bold mb-4">Creator Access Required</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="text-2xl font-semibold mb-4 text-white">Creator Access Required</h2>
+          <p className="text-zinc-400 mb-6">
             Become a creator to start building your own stories and universes.
           </p>
           <Link href="/become-creator">
@@ -650,49 +658,61 @@ export default function Admin() {
             </Button>
           </Link>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (universesLoading) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-black">
+        <GlobalNav context="app" />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 animate-in fade-in">
+    <div className="min-h-screen bg-black">
+      <GlobalNav context="app" />
+      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in pb-24">
         
         {/* Admin Command Center Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight">Admin Command Center</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/launchpad">
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-white">Admin Command Center</h1>
+            <p className="text-sm text-zinc-500">Platform management and oversight</p>
+          </div>
         </div>
         
-        {/* Tab Navigation */}
+        {/* Tab Navigation - scrollable on mobile */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AdminTab)} className="space-y-6">
-          <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-zinc-800" data-testid="tab-overview">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-zinc-800" data-testid="tab-users">
-              <Users className="w-4 h-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="industry-orbits" className="data-[state=active]:bg-zinc-800" data-testid="tab-industry">
-              <Globe className="w-4 h-4 mr-2" />
-              Industry Orbits
-            </TabsTrigger>
-            <TabsTrigger value="content" className="data-[state=active]:bg-zinc-800" data-testid="tab-content">
-              <Layers className="w-4 h-4 mr-2" />
-              Content
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="bg-zinc-900 border border-zinc-800 p-1 inline-flex min-w-max">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-overview">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="users" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-users">
+                <Users className="w-4 h-4 mr-2" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="industry-orbits" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-industry">
+                <Globe className="w-4 h-4 mr-2" />
+                Industry Orbits
+              </TabsTrigger>
+              <TabsTrigger value="content" className="data-[state=active]:bg-zinc-800 text-sm px-3" data-testid="tab-content">
+                <Layers className="w-4 h-4 mr-2" />
+                Content
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
           <TabsContent value="overview">
             <AdminOverview />
@@ -1569,6 +1589,6 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </div>
   );
 }

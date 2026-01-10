@@ -1,0 +1,340 @@
+Right. Let’s lock this down properly so Replit cannot “sort of” implement it. This is a full execution plan with guardrails, build order, folder structure, data contracts, UI rules, quality gates, and definition of done.
+
+Copy and paste this into Replit as a single prompt.
+
+⸻
+
+Replit Master Plan: ICE Maker Caption and Title Engine (CapCut-level quality)
+
+Goal
+
+Build a professional caption + title graphics system inside ICE Maker that feels “CapCut good” by default, with minimal user effort.
+
+It must be:
+	•	consistent between preview and export
+	•	token and preset driven (extendable, versioned)
+	•	safe by default (no unreadable captions, no platform UI overlap)
+	•	predictable (same input renders same output every time)
+	•	calm and premium (colour used sparingly, most colour comes from footage)
+
+Primary output formats
+	•	Preview: in editor
+	•	Export: MP4 (can ship behind a feature flag until stable, but the architecture must support it without rewrites)
+
+⸻
+
+1) Product rules (guardrails)
+
+These are non-negotiable and must be enforced in code, not “best effort”.
+
+Caption layout guardrails
+	1.	Max 2 lines per caption group
+	2.	Max 38 characters per line at 1080x1920 (adjust slightly per safe profile if needed)
+	3.	Min display time 1200ms per caption group
+	4.	Max display time 4000ms per caption group
+	5.	No caption inside platform safe zones (TikTok/Reels/Shorts/Universal profiles)
+	6.	Captions must never touch frame edges: minimum horizontal margin 60px at 1080 width
+
+Karaoke guardrails
+	1.	Karaoke only allowed when word timings exist AND confidence threshold is met
+	2.	If confidence is low or timings missing, auto disable karaoke and fall back to segment captions
+	3.	Karaoke highlight must be subtle: weight/brightness shift, no bouncing during reading
+
+Animation guardrails
+	1.	Animate only on entrance/exit, not while reading
+	2.	Default durations: entrance 200 to 300ms, exit 150 to 200ms
+	3.	No continuous jitter effects by default
+
+Preset guardrails
+	1.	Users choose presets, not individual design knobs first
+	2.	Advanced overrides exist but are clamped to safe ranges
+	3.	Presets are versioned and existing ICE projects must not break if presets update
+
+⸻
+
+2) Architecture (single code path for preview and export)
+
+Rendering engine: Remotion
+	•	Build caption and title layers as React components in Remotion
+	•	Preview using @remotion/player in ICE Maker editor
+	•	Export using Remotion renderer in Node (Phase 1)
+	•	Optional Remotion Lambda (Phase 2) behind a feature flag once stable
+
+Licensing and compliance
+	•	Support REMOTION_LICENSE_KEY as an env var
+	•	Build the export pipeline so licensing configuration is a deployment concern, not a refactor
+
+⸻
+
+3) Data model and contracts (canonical schema)
+
+Single canonical object per ICE project
+
+Create CaptionState stored against ICE project id.
+
+CaptionState must include
+	•	schemaVersion
+	•	tokenVersion
+	•	presetId (caption)
+	•	animationId
+	•	titlePresetId (optional)
+	•	safeAreaProfileId
+	•	karaokeEnabled (requested) and karaokeEffective (actual after gating)
+	•	transcriptionProvider and confidence
+	•	captions[] (segments with timings)
+	•	phraseGroups[] (grouped, line-broken display units)
+	•	overrides (optional, whitelisted only)
+
+Timing inputs allowed
+	•	Word timings (preferred)
+	•	Segment timings (fallback)
+
+Validation
+
+Use Zod schemas and validate:
+	•	on load
+	•	on save
+	•	before render
+	•	before export
+
+Invalid states must auto fall back to safe defaults and show a clear UI warning.
+
+⸻
+
+4) Presets and tokens (MVP library)
+
+Presets to ship
+	•	12 caption presets
+	•	5 motion presets
+	•	6 title/lower third presets
+
+Token system
+
+Implement tokens for:
+	•	typography (family, size scale, weight scale, line height)
+	•	colours (mostly neutral)
+	•	background treatments (pill, panel, blur, none)
+	•	effects (stroke, shadow)
+	•	karaoke highlight behaviour
+	•	spacing and margins
+	•	animation parameters
+
+Versioning
+	•	Tokens and presets have versions
+	•	ICE projects store the versions they were created with
+	•	If a token changes incompatibly, add a migration or bump major version
+
+⸻
+
+5) Caption logic engine (the part CapCut gets right)
+
+Build a pipeline that always runs in this order:
+	1.	Ingest transcript (word timings if present, else segments)
+	2.	Clean timings (fix overlaps, enforce min durations)
+	3.	Group into phrases (target 1.5 to 3.5s)
+	4.	Apply line breaking (max 2 lines)
+	5.	Apply safe area positioning rules
+	6.	Decide karaoke eligibility (confidence gating)
+	7.	Render layers (preview/export share the same components)
+
+Grouping rules
+	•	Break on punctuation first
+	•	Then break on pauses
+	•	Then break on conjunctions (and, but, so, because)
+	•	If a phrase exceeds limits, regroup aggressively even if it breaks style
+
+Safe area profiles
+
+Implement at least:
+	•	Universal (default)
+	•	TikTok
+	•	Instagram Reels
+	•	YouTube Shorts
+
+Captions should sit above the bottom safe zone by an offset (60 to 80px).
+
+⸻
+
+6) ICE Maker UI implementation (calm, premium)
+
+Style picker
+	•	Horizontal strip of preset thumbnails (not dropdown)
+	•	Thumbnails show live preview of captions against current frame
+	•	Minimal UI chrome (neutral surfaces)
+
+Controls (MVP)
+	•	Caption preset picker
+	•	Animation picker (secondary)
+	•	Safe area profile picker
+	•	Karaoke toggle (only enabled if eligible)
+	•	“Auto style” button suggests 3 presets based on frame brightness/contrast
+
+Advanced section (collapsed)
+
+Allow a few overrides only:
+	•	font size (+/- within safe range)
+	•	vertical offset (within safe range)
+	•	background on/off (if allowed by preset)
+	•	karaoke on/off
+
+All overrides clamped.
+
+⸻
+
+7) Export pipeline (high execution, safe)
+
+Phase 1 export
+	•	Server side Remotion render to MP4
+	•	Track progress
+	•	Store artefact
+	•	Return download link or store in project
+
+Export quality gates
+
+Export must be blocked if:
+	•	safe zones violated
+	•	more than 2 lines
+	•	line length exceeds max
+	•	timings overlap or are too short
+	•	karaoke requested but not eligible (auto disable is fine, but must be explicit)
+
+Phase 2 export (optional)
+	•	Remotion Lambda behind feature flag
+	•	Add quotas per user and per plan
+	•	Add cost monitoring
+
+⸻
+
+8) Transcription integration (provider abstraction)
+
+Create an interface so we can swap providers:
+	•	transcribe(media) => TranscriptResult
+	•	TranscriptResult includes:
+	•	segments
+	•	optional words with timestamps
+	•	confidence metadata
+
+MVP: implement one provider. Must support fallback where captions can be generated from segments only.
+
+⸻
+
+9) Folder structure (so implementation stays disciplined)
+
+Create or align to this structure:
+	•	src/caption-engine/
+	•	schemas/
+	•	tokens/
+	•	presets/
+	•	grouping/
+	•	safe-area/
+	•	karaoke/
+	•	validate/
+	•	index.ts
+	•	src/remotion/
+	•	compositions/
+	•	layers/CaptionLayer.tsx
+	•	layers/TitleLayer.tsx
+	•	layers/LowerThirdLayer.tsx
+	•	utils/animation.ts
+	•	utils/layout.ts
+	•	src/ice-maker/editor/
+	•	CaptionStylePicker.tsx
+	•	CaptionControls.tsx
+	•	CaptionPreviewPlayer.tsx
+	•	CaptionWarnings.tsx
+	•	src/server/export/
+	•	renderMp4.ts
+	•	progress.ts
+	•	storage.ts
+
+⸻
+
+10) Milestones (build order)
+
+This is the build sequence. Do not jump ahead.
+
+Milestone 1: Foundation
+	•	CaptionState schema + Zod validation
+	•	Basic Remotion composition showing captions over video
+	•	Remotion player preview embedded in ICE Maker
+
+Milestone 2: Preset engine
+	•	Tokens + resolver
+	•	6 caption presets + 2 animations
+	•	Style picker UI working
+
+Milestone 3: Grouping + safe areas
+	•	Phrase grouping engine
+	•	Line breaking engine
+	•	Safe area clamp profiles implemented
+	•	Guardrail warnings in UI
+
+Milestone 4: Karaoke + transcription provider
+	•	Provider integration
+	•	Confidence gating
+	•	Karaoke highlight (weight/brightness shift only)
+	•	Fallback mode
+
+Milestone 5: Titles and lower thirds
+	•	6 title presets
+	•	Basic timing controls
+
+Milestone 6: Export MP4
+	•	Server side render
+	•	Progress UI
+	•	Export readiness checks and hard blocks
+
+⸻
+
+11) Definition of Done (must pass all)
+
+Functional DoD
+	1.	Selecting a caption preset instantly produces a professional looking result
+	2.	Captions never overlap safe zones on any supported profile
+	3.	Karaoke works only when eligible, otherwise disables automatically and tells the user
+	4.	Preview and export match visually
+	5.	Export blocks on invalid states with clear warnings
+	6.	Preset updates do not break existing ICE projects
+
+Quality DoD
+	1.	No loud colour blocks by default
+	2.	UI is calm, neutral, premium
+	3.	No “2009 tool” look, avoid colourful panels
+	4.	Performance acceptable on typical laptop and modern mobiles
+
+Tests DoD
+
+Provide automated tests for:
+	•	long sentences
+	•	fast speech
+	•	missing word timings
+	•	low confidence timings
+	•	safe area enforcement
+	•	line break limits
+
+Add a small set of visual reference renders for regression checks.
+
+⸻
+
+12) Deliverables Replit must provide
+	•	Working feature in ICE Maker editor
+	•	Preset library in JSON and components
+	•	CaptionState persisted and versioned
+	•	Export endpoint and UI (or feature flagged if not ready, but implemented)
+	•	Documentation in docs/caption-engine.md including:
+	•	schema
+	•	preset list
+	•	safe area rules
+	•	how to add a new preset safely
+
+⸻
+
+Acceptance Criteria (simple)
+
+If I upload a video, ICE Maker produces captions that look as good as a standard CapCut preset without me tweaking anything, and exports an MP4 that matches what I previewed, with safe zones respected.
+
+⸻
+
+If you want, I can also generate:
+	1.	A “ticket list” version of the above (20–30 tasks with owners, dependencies, and acceptance checks).
+	2.	The actual starter JSON for the 12 presets, 5 animations, 6 titles, written in a clean token format so Replit can implement directly.
