@@ -296,6 +296,13 @@ export default function GuestIceBuilderPage() {
             musicVolume,
             musicEnabled,
             narrationVolume,
+            captionSettings: {
+              presetId: captionState.presetId,
+              animationId: captionState.animationId,
+              safeAreaProfileId: captionState.safeAreaProfileId,
+              karaokeEnabled: captionState.karaokeEnabled,
+              karaokeStyle: captionState.karaokeStyle,
+            },
           }),
         });
       } catch (error) {
@@ -308,7 +315,7 @@ export default function GuestIceBuilderPage() {
         clearTimeout(settingsSaveTimeoutRef.current);
       }
     };
-  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume]);
+  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume, captionState.presetId, captionState.animationId, captionState.karaokeEnabled, captionState.karaokeStyle, captionState.safeAreaProfileId]);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -390,6 +397,17 @@ export default function GuestIceBuilderPage() {
       // Load narration volume
       if (existingPreview.narrationVolume !== undefined) {
         setNarrationVolume(existingPreview.narrationVolume);
+      }
+      // Load caption settings from server
+      if (existingPreview.captionSettings) {
+        setCaptionState(prev => ({
+          ...prev,
+          presetId: existingPreview.captionSettings.presetId || prev.presetId,
+          animationId: existingPreview.captionSettings.animationId || prev.animationId,
+          safeAreaProfileId: existingPreview.captionSettings.safeAreaProfileId || prev.safeAreaProfileId,
+          karaokeEnabled: existingPreview.captionSettings.karaokeEnabled ?? prev.karaokeEnabled,
+          karaokeStyle: existingPreview.captionSettings.karaokeStyle || prev.karaokeStyle,
+        }));
       }
       if (!hasSeenWalkthrough()) {
         setShowWalkthrough(true);
