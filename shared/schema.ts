@@ -1067,8 +1067,17 @@ export const icePreviews = pgTable("ice_previews", {
   narrationVolume: integer("narration_volume").default(100), // 0-100 volume level
   musicEnabled: boolean("music_enabled").default(false),
   
-  // Typography settings (Title Packs)
-  titlePackId: text("title_pack_id").default("cinematic-subtitles"), // Selected title pack for visual style
+  // Typography settings (Title Packs - legacy)
+  titlePackId: text("title_pack_id").default("cinematic-subtitles"), // Legacy title pack for visual style
+  
+  // Caption Engine settings (replaces Title Packs)
+  captionSettings: jsonb("caption_settings").$type<{
+    presetId?: string;
+    animationId?: string;
+    safeAreaProfileId?: string;
+    karaokeEnabled?: boolean;
+    karaokeStyle?: string;
+  }>(),
   
   // Access control
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted
