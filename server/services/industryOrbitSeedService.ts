@@ -1220,6 +1220,7 @@ export async function getOrbitKnowledge(orbitId: number, orbitName: string): Pro
       intentTags: (p.intentTags as string[]) || [],
       imageUrl: p.heroImageUrl || null,
       manufacturerLogoUrl,
+      releaseDate: p.releaseDate ? p.releaseDate.toISOString() : null,
     };
   });
 

@@ -278,7 +278,13 @@ export function KnowledgeTile({ item, relevanceScore, position, accentColor, zoo
       }
       case 'product': {
         const prod = item as import('@/lib/siteKnowledge').Product;
-        return prod.summary || prod.category || 'Product';
+        let summary = prod.summary || prod.category || 'Product';
+        if (prod.releaseDate) {
+          const date = new Date(prod.releaseDate);
+          const dateStr = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          summary = `${dateStr} · ${summary}`;
+        }
+        return summary;
       }
       case 'concept': {
         const concept = item as import('@/lib/siteKnowledge').Concept;

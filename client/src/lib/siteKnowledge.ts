@@ -97,6 +97,7 @@ export interface Product extends KnowledgeItem {
   intentTags: string[];
   imageUrl?: string | null;
   manufacturerLogoUrl?: string | null;
+  releaseDate?: string | null; // ISO date string for announcement/release date
 }
 
 export interface Concept extends KnowledgeItem {

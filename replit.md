@@ -44,7 +44,7 @@ Key architectural decisions and features include:
 -   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence for Business Name, Website URL, AI Discovery Settings, and Notification Preferences.
 -   **Category Discovery Pages**: Educational category pages with SEO-friendly content, interactive audits, Q&A libraries, and sponsored content, starting with Smart Glasses (`/smartglasses`).
 -   **Orbit Type Doctrine**: Architectural distinction between 'industry' and 'standard' orbits. Industry Orbits are pre-seeded, continuously updated, cannot be claimed or owned by users, and participation never grants editorial control. Standard Orbits may be claimed, grant ownership, and intelligence emerges through user interaction.
--   **CPAC v1.0.0 (FROZEN)**: Canonical Pulse And Content format for Industry Orbit seed packs. See `docs/CPAC-v1-specification.md` for full schema, enum values, quality scoring rules, and severity doctrine. Future changes must be additive only (v1.x) or require v2.0.0.
+-   **Orbit Seed Pack v1.0.0 (FROZEN)**: JSON format for seeding Industry Orbits with products, entities, communities, and tiles. Formerly known as CPAC (Canonical Pulse And Content). See `docs/CPAC-v1-specification.md` for full schema, enum values, quality scoring rules, and severity doctrine. Key fields: products should include `releaseDate` (announcement date), `summary` (rich description with target audience), and communities should include `notes` (context explaining what the community is and why it matters). Future changes must be additive only (v1.x) or require v2.0.0.
 
 ## External Dependencies
 -   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
