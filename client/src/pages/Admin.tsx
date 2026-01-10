@@ -165,59 +165,181 @@ function AdminOverview() {
 }
 
 function AdminUsers() {
+  const [searchTerm, setSearchTerm] = useState("");
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => api.getAdminUsers(),
   });
 
+  const filteredUsers = users?.filter(user => 
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
       </div>
     );
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader>
-        <CardTitle className="text-white">Registered Users</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800">
-                <th className="text-left py-3 px-4 text-zinc-400 font-medium">Username</th>
-                <th className="text-left py-3 px-4 text-zinc-400 font-medium">Email</th>
-                <th className="text-left py-3 px-4 text-zinc-400 font-medium">Role</th>
-                <th className="text-left py-3 px-4 text-zinc-400 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users?.map(user => (
-                <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                  <td className="py-3 px-4 text-white font-medium">{user.username}</td>
-                  <td className="py-3 px-4 text-zinc-400">{user.email || '—'}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+    <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-400" />
+              <div>
+                <p className="text-lg font-semibold text-white">{users?.length || 0}</p>
+                <p className="text-xs text-zinc-500">Total Users</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-red-400" />
+              <div>
+                <p className="text-lg font-semibold text-white">{users?.filter(u => u.isAdmin).length || 0}</p>
+                <p className="text-xs text-zinc-500">Admins</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-purple-400" />
+              <div>
+                <p className="text-lg font-semibold text-white">{users?.filter(u => u.role === 'creator' || u.role === 'influencer').length || 0}</p>
+                <p className="text-xs text-zinc-500">Creators</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-green-400" />
+              <div>
+                <p className="text-lg font-semibold text-white">{users?.reduce((sum, u) => sum + u.iceCount, 0) || 0}</p>
+                <p className="text-xs text-zinc-500">Total ICEs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Search */}
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder="Search by username or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500"
+          data-testid="input-user-search"
+        />
+        <span className="text-sm text-zinc-500">{filteredUsers?.length || 0} users</span>
+      </div>
+      
+      {/* User Table - Desktop */}
+      <Card className="bg-zinc-900 border-zinc-800 hidden md:block">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">User</th>
+                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">Role</th>
+                  <th className="text-center py-3 px-4 text-zinc-400 font-medium">Orbits</th>
+                  <th className="text-center py-3 px-4 text-zinc-400 font-medium">ICEs</th>
+                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers?.map(user => (
+                  <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30" data-testid={`row-user-${user.id}`}>
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="text-white font-medium">{user.username}</p>
+                        <p className="text-xs text-zinc-500">{user.email || 'No email'}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.isAdmin ? 'bg-red-500/10 text-red-400' :
+                        user.role === 'creator' ? 'bg-purple-500/10 text-purple-400' :
+                        user.role === 'influencer' ? 'bg-blue-500/10 text-blue-400' :
+                        'bg-zinc-700 text-zinc-300'
+                      }`}>
+                        {user.isAdmin ? 'Admin' : user.role || 'Viewer'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {user.orbitCount > 0 ? (
+                        <span className="text-white font-medium">{user.orbitCount}</span>
+                      ) : (
+                        <span className="text-zinc-600">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {user.iceCount > 0 ? (
+                        <span className="text-white font-medium">{user.iceCount}</span>
+                      ) : (
+                        <span className="text-zinc-600">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-zinc-500 text-xs">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* User List - Mobile */}
+      <div className="md:hidden space-y-2">
+        {filteredUsers?.map(user => (
+          <Card key={user.id} className="bg-zinc-900 border-zinc-800" data-testid={`card-user-${user.id}`}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-medium truncate">{user.username}</p>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
                       user.isAdmin ? 'bg-red-500/10 text-red-400' :
                       user.role === 'creator' ? 'bg-purple-500/10 text-purple-400' :
+                      user.role === 'influencer' ? 'bg-blue-500/10 text-blue-400' :
                       'bg-zinc-700 text-zinc-300'
                     }`}>
                       {user.isAdmin ? 'Admin' : user.role || 'Viewer'}
                     </span>
-                  </td>
-                  <td className="py-3 px-4 text-zinc-500 text-xs">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+                  </div>
+                  <p className="text-xs text-zinc-500 truncate">{user.email || 'No email'}</p>
+                </div>
+                <div className="flex items-center gap-3 text-center shrink-0">
+                  <div>
+                    <p className="text-white text-sm font-medium">{user.orbitCount || '—'}</p>
+                    <p className="text-[10px] text-zinc-600">Orbits</p>
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">{user.iceCount || '—'}</p>
+                    <p className="text-[10px] text-zinc-600">ICEs</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, db } from "./storage";
-import { sql, eq, desc, gte } from "drizzle-orm";
+import { sql, eq, desc, gte, isNotNull } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
@@ -3379,11 +3379,35 @@ export async function registerRoutes(
     }
   });
   
-  // Get all users for admin user management
+  // Get all users for admin user management with detailed stats
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      // Return users without password hash for security
+      
+      // Get orbit ownership counts per user
+      const orbitCounts = await db
+        .select({
+          ownerId: schema.orbitMeta.ownerId,
+          count: sql<number>`count(*)`,
+        })
+        .from(schema.orbitMeta)
+        .where(isNotNull(schema.orbitMeta.ownerId))
+        .groupBy(schema.orbitMeta.ownerId);
+      
+      const orbitCountMap = new Map(orbitCounts.map(o => [o.ownerId, Number(o.count)]));
+      
+      // Get ICE draft counts per user
+      const iceCounts = await db
+        .select({
+          userId: schema.iceDrafts.userId,
+          count: sql<number>`count(*)`,
+        })
+        .from(schema.iceDrafts)
+        .groupBy(schema.iceDrafts.userId);
+      
+      const iceCountMap = new Map(iceCounts.map(i => [i.userId, Number(i.count)]));
+      
+      // Return users without password hash, with orbit and ICE counts
       const safeUsers = users.map(u => ({
         id: u.id,
         username: u.username,
@@ -3391,6 +3415,8 @@ export async function registerRoutes(
         role: u.role,
         isAdmin: u.isAdmin,
         createdAt: u.createdAt,
+        orbitCount: orbitCountMap.get(u.id) || 0,
+        iceCount: iceCountMap.get(u.id) || 0,
       }));
       res.json(safeUsers);
     } catch (error) {

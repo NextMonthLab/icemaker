@@ -358,6 +358,8 @@ class ApiClient {
     role: string | null;
     isAdmin: boolean | null;
     createdAt: string;
+    orbitCount: number;
+    iceCount: number;
   }>> {
     return this.request("/admin/users");
   }
