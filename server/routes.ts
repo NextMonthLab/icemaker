@@ -10001,7 +10001,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       try {
         const { sendEmail } = await import("./services/email");
         await sendEmail({
-          to: process.env.ADMIN_EMAIL || 'admin@nextmonth.io',
+          to: process.env.ADMIN_EMAIL || 'hello@nextmonth.io',
           subject: `Priority Setup Request: ${slug}`,
           html: `
             <h2>New Priority Setup Request</h2>
