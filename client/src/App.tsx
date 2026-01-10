@@ -74,6 +74,7 @@ import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
 import BlogPublisherPage from "@/pages/admin/BlogPublisherPage";
 import IndustryOrbitAssets from "@/pages/admin/IndustryOrbitAssets";
 import GuestIceBuilderPage from "@/pages/GuestIceBuilderPage";
+import CaptionDemo from "@/pages/CaptionDemo";
 import IceCheckoutPage from "@/pages/IceCheckoutPage";
 import CheckoutSuccessPage from "@/pages/CheckoutSuccessPage";
 import AdminUniverseDetail from "@/pages/AdminUniverseDetail";
@@ -164,6 +165,7 @@ function Router() {
       <Route path="/icemaker/projects" component={Library} />
       <Route path="/icemaker/templates" component={IceMakerTemplates} />
       <Route path="/icemaker/settings" component={IceMakerSettings} />
+      <Route path="/icemaker/captions" component={CaptionDemo} />
       
       <Route path="/orbit" component={OrbitHome} />
       <Route path="/orbit/my" component={MyOrbits} />
