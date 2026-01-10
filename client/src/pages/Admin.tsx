@@ -209,10 +209,10 @@ function AdminAllOrbits() {
         {filteredOrbits?.map((orbit) => (
           <Card key={orbit.businessSlug} className="bg-card border-border hover:border-purple-500/30 transition-colors">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-foreground truncate">{orbit.businessName}</h3>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="font-medium text-foreground">{orbit.businessName}</h3>
                     {orbit.orbitType === 'industry' && (
                       <span className="px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400">Industry</span>
                     )}
@@ -223,8 +223,8 @@ function AdminAllOrbits() {
                       <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">Generating</span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground truncate">{orbit.businessSlug}</p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">{orbit.businessSlug}</p>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
                       {orbit.visits30d} visits
@@ -238,7 +238,7 @@ function AdminAllOrbits() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                   <Link href={`/orbit/${orbit.businessSlug}`}>
                     <Button variant="outline" size="sm" className="gap-1" data-testid={`button-view-orbit-${orbit.businessSlug}`}>
                       <Globe className="w-3 h-3" />
