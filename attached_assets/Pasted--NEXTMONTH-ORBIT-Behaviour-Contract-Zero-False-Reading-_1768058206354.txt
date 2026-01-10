@@ -1,0 +1,212 @@
+# NEXTMONTH / ORBIT: Behaviour Contract + Zero-False-Reading Health Dashboard (IMPLEMENTATION PROMPT)
+
+You are working inside the NextMonth Admin Panel codebase. Your goal is to build an “Orbit Behaviour Health Dashboard” that gives ROBUST, NON-DECEPTIVE status signals for all required Orbit UI behaviours.
+
+CRITICAL REQUIREMENT
+- We must never show a “false green”.
+- If a check cannot be proven, it must be AMBER (unknown), not green.
+- Green only when we have deterministic evidence or fully asserted playback evidence with client render confirmation.
+
+PRIMARY OUTCOME
+Add a new Admin Panel section:
+Admin Panel → Orbits → Health
+
+This page shows a Green/Amber/Red table of Orbit behaviours, with “Evidence Packs” per item (payload + render events + trace + logs).
+
+--------------------------------------------------------------------
+1) DEFINITIONS: WHAT “NO FALSE READINGS” MEANS
+--------------------------------------------------------------------
+Statuses:
+- GREEN: Verified by deterministic evidence OR verified by playback assertions AND verified that the intended UI component rendered.
+- RED: Deterministic failure OR playback ran and required assertions failed OR errors occurred in the required path.
+- AMBER: Unknown / insufficient evidence / test not run / run crashed / dependency unavailable / ambiguity.
+
+Rule: HEURISTICS CAN NEVER BE GREEN.
+“Quality” or “tone” checks must be AMBER/RED only, or excluded from the main RAG table.
+
+--------------------------------------------------------------------
+2) IMPLEMENT THE “ORBIT EVIDENCE PROTOCOL” (MANDATORY)
+--------------------------------------------------------------------
+We need machine-verifiable footprints so checks do not rely on vibes.
+
+Every assistant response in Orbit must include a structured, parseable metadata block (JSON) that we control.
+This block must include:
+- nm_policyVersion: string (e.g. "orbit-policy@2026-01-10.1")
+- nm_traceId: UUID string
+- nm_renderables: array of objects with:
+  - type: "comparison_table" | "rich_link" | "youtube" | "image_carousel" | "product_card" | "cta_block" | etc
+  - id: stable ID
+  - version: component version string
+  - dataHash: hash of the data payload (stable hashing)
+  - required: boolean
+- nm_tools: array of tool calls attempted with:
+  - toolName
+  - success
+  - latencyMs
+  - errorCode (if any)
+- nm_sources: array describing sources used (kind + identifiers)
+- nm_cache: object with { expectedCacheKey?, cacheHit?, cacheWrite?, cacheAgeSeconds? } where applicable
+
+Client-side (Orbit UI) MUST emit render events to a logging endpoint whenever it renders any nm_renderables item:
+Event name: nm_render_event
+Payload includes:
+- nm_traceId
+- componentId / type
+- componentVersion
+- propsHash (hash of props passed to component)
+- renderSuccess boolean
+- renderError (if any)
+
+IMPORTANT:
+- The Health Dashboard must mark GREEN on playback tests ONLY when BOTH:
+  (1) the server response includes the required nm_renderables markers AND
+  (2) the client emitted nm_render_event for those markers with renderSuccess=true
+
+If either side is missing, status cannot be GREEN.
+
+--------------------------------------------------------------------
+3) CREATE THE “ORBIT BEHAVIOUR CONTRACT v1” (30 ITEMS)
+--------------------------------------------------------------------
+Implement a contract file stored in repo, versioned:
+- /config/orbitBehaviourContract.v1.json
+
+Each contract item schema:
+{
+  "id": "OB-001",
+  "name": "YouTube URLs embed as playable cards with metadata",
+  "type": "deterministic" | "playback" | "heuristic",
+  "severity": "high" | "medium" | "low",
+  "test": {
+    "prompt": "...",              // for playback items
+    "expected": {
+      "requiredRenderables": [
+        { "type": "youtube", "minCount": 1 }
+      ],
+      "requiredClientRenders": [
+        { "type": "youtube", "minCount": 1 }
+      ],
+      "requiredFields": [
+        "nm_policyVersion",
+        "nm_traceId",
+        "nm_renderables"
+      ]
+    }
+  },
+  "deterministicChecks": [
+    // for deterministic items: endpoint checks, flag checks, schema checks
+  ],
+  "notes": "where it breaks"
+}
+
+Populate 30 initial items covering (at minimum):
+A) Rich content rendering
+- Rich link cards for general URLs (title/domain/preview where available)
+- YouTube embeds with metadata
+- Image carousel for image results when requested/available
+- Comparison tables render via component, not markdown
+- Any other special Orbit components currently expected (cards, tables, etc)
+
+B) Conversation framing / policy adherence (ONLY if machine-checkable)
+- Presence of a CTA block when required (must be a renderable marker)
+- No legacy/irrelevant modules in UI (must be detectable via UI render events / feature flags)
+
+C) Caching / performance behaviour
+- Popular Q&A cached and served statically (verify via nm_cache markers and/or API headers)
+- Tool calls not repeated when cache hit is expected
+
+D) Tooling / integrations (deterministic)
+- Required API keys present
+- Endpoints reachable
+- Component registry intact
+- Logging endpoint receiving events
+
+E) Guardrails
+- If markdown fallback is used where component is required, it must be flagged as RED.
+  (Add server marker like nm_fallbackUsed: true AND emit it; Health Dashboard treats as failure on those items.)
+
+--------------------------------------------------------------------
+4) BUILD THE PLAYBACK RUNNER (SERVER-SIDE)
+--------------------------------------------------------------------
+Add a backend route to run the playback suite on demand:
+POST /api/orbits/health/run
+- Runs all playback tests OR a subset by ids
+- Stores results + evidence in DB:
+  - runId
+  - timestamp
+  - policyVersion
+  - each OB item: status, assertions, traceIds, evidence blobs
+Evidence blobs include:
+- the raw assistant response (including nm metadata block)
+- tool call logs
+- errors
+
+Because client render proof is needed, implement one of:
+Option 1 (preferred):
+- A headless browser run (Playwright) that loads the Orbit UI, submits the test prompt, waits for nm_render_event emissions, and records them.
+Option 2 (acceptable MVP):
+- A “Test Harness Orbit page” in the Admin Panel that runs the prompts in a controlled iframe and captures render events.
+If you cannot implement client render proof immediately, playback items must remain AMBER, not GREEN.
+
+--------------------------------------------------------------------
+5) BUILD THE HEALTH DASHBOARD UI (ADMIN PANEL)
+--------------------------------------------------------------------
+Route: /admin/orbits/health
+
+UI requirements:
+- Summary: total Greens/Ambers/Reds + “last run time” + “policy version”
+- Table listing all contract items:
+  Columns: Status (G/A/R), ID, Name, Type, Severity, Last Verified, Confidence (based only on evidence completeness), View Evidence
+- “Run full suite now” button
+- Filters: show Reds only, show by severity, show deterministic/playback
+
+Evidence view (drawer/modal):
+- Contract item details
+- Latest result status + why
+- Evidence pack:
+  - Server response metadata JSON
+  - Render events captured (nm_render_event)
+  - Logs
+  - Trace IDs
+  - Optional screenshot if headless browser is used
+
+CRITICAL: Do not show GREEN without evidence. If evidence missing → AMBER.
+
+--------------------------------------------------------------------
+6) STOP PROMPTS OVERWRITING ORBIT LOGIC (“POLICY LOCK”)
+--------------------------------------------------------------------
+Add an explicit, versioned Orbit Policy file:
+- /config/orbitPolicy.v1.md (or json)
+The runtime must always inject it as the highest priority system policy.
+The nm_policyVersion in responses must match the active policy version.
+The Health Dashboard must display the active policy version.
+
+--------------------------------------------------------------------
+7) IMPLEMENTATION ORDER (DO THIS IN SEQUENCE)
+--------------------------------------------------------------------
+1. Create contract schema + contract file with 30 items
+2. Add evidence protocol to server response (nm_* metadata block)
+3. Add client nm_render_event logging endpoint + emit events on render
+4. Build deterministic checks runner (fast wins)
+5. Build Health Dashboard UI that reads stored results
+6. Add playback runner (test harness) and store evidence packs
+7. Wire “Run full suite now” to execute and refresh results
+
+--------------------------------------------------------------------
+8) ACCEPTANCE CRITERIA
+--------------------------------------------------------------------
+A) There must be no “false green”.
+- For playback checks, green requires both server evidence AND client render evidence.
+- Missing/partial evidence → AMBER.
+
+B) At least 15 deterministic checks operational.
+C) At least 8 playback checks implemented end-to-end with client render confirmation.
+D) Evidence packs are viewable per item and include trace IDs + raw metadata.
+
+Deliver the following:
+- PR with new health dashboard route + backend runner
+- Contract file with 30 items
+- Evidence protocol implemented in server + client
+- Basic documentation: /docs/orbit-health-dashboard.md
+
+DO NOT REMOVE OR SIMPLIFY THESE REQUIREMENTS.
+If anything is uncertain, default to AMBER rather than GREEN.
