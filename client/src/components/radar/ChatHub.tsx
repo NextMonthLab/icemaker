@@ -21,19 +21,74 @@ interface Message {
   video?: SuggestedVideo | null;
 }
 
-function renderMessageContent(content: string, accentColor: string) {
+function renderMessageContent(
+  content: string, 
+  accentColor: string, 
+  onChipClick?: (text: string) => void,
+  lightMode: boolean = false
+) {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
   const phonePattern = /\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
   
   const lines = content.split('\n');
   
-  return lines.map((line, lineIdx) => {
+  // Detect if this message has bullet point options (• or - at start of line)
+  const bulletLines = lines.filter(line => /^[•\-]\s/.test(line.trim()));
+  const hasBulletOptions = bulletLines.length >= 2;
+  
+  // Separate content into regular text and bullet options
+  const regularLines: string[] = [];
+  const optionLines: string[] = [];
+  
+  lines.forEach(line => {
+    if (hasBulletOptions && /^[•\-]\s/.test(line.trim())) {
+      optionLines.push(line.trim().replace(/^[•\-]\s*/, ''));
+    } else {
+      regularLines.push(line);
+    }
+  });
+  
+  // Render regular content
+  const regularContent = regularLines.map((line, lineIdx) => {
     const elements = lineIdx > 0 
       ? [<br key={`br-${lineIdx}`} />, ...renderLine(line, lineIdx, accentColor)]
       : renderLine(line, lineIdx, accentColor);
     return <React.Fragment key={`line-${lineIdx}`}>{elements}</React.Fragment>;
   });
+  
+  // Render quick-select chips for bullet options
+  const chipContent = hasBulletOptions && optionLines.length > 0 ? (
+    <div key="chips" className="flex flex-wrap gap-2 mt-3">
+      {optionLines.map((option, idx) => (
+        <button
+          key={`chip-${idx}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChipClick?.(option);
+          }}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-105 active:scale-95 ${
+            lightMode 
+              ? 'bg-white text-gray-800 hover:bg-gray-50 shadow-sm border border-gray-200' 
+              : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+          }`}
+          style={{ 
+            borderColor: `${accentColor}40`,
+          }}
+          data-testid={`quick-select-${idx}`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  ) : null;
+  
+  return (
+    <>
+      {regularContent}
+      {chipContent}
+    </>
+  );
   
   function isUrl(str: string): boolean {
     return str.startsWith('http://') || str.startsWith('https://');
@@ -219,6 +274,31 @@ export function ChatHub({
     }
   };
 
+  const handleChipClick = async (text: string) => {
+    if (isTyping) return;
+    
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    
+    const keywords = extractKeywords(text);
+    onIntentChange?.(keywords);
+    
+    setIsTyping(true);
+    try {
+      const response = await onSendMessage(text);
+      const responseText = typeof response === 'string' ? response : response.text;
+      const video = typeof response === 'string' ? null : response.video;
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText, video }]);
+      
+      const responseKeywords = extractKeywords(responseText);
+      onIntentChange?.([...keywords, ...responseKeywords]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble responding right now. Please try again." }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   if (isMinimized) {
     return (
       <motion.button
@@ -299,7 +379,7 @@ export function ChatHub({
                 style={msg.role === 'assistant' ? { backgroundColor: `${accentColor}15` } : {}}
               >
                 {msg.role === 'assistant' 
-                  ? renderMessageContent(msg.content, accentColor)
+                  ? renderMessageContent(msg.content, accentColor, handleChipClick, lightMode)
                   : msg.content}
               </div>
               
