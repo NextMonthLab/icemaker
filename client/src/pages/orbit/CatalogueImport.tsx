@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useParams } from "wouter";
-import { Upload, FileJson, FileSpreadsheet, AlertCircle, CheckCircle2, Package, Trash2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Upload, FileJson, FileSpreadsheet, AlertCircle, CheckCircle2, Package, Trash2, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import OrbitLayout from "@/components/OrbitLayout";
+import { UrlIngestForm, TileRow, TileDrawer, TileDrawerOverlay } from "@/components/orbit-tiles";
+import type { OrbitTile, OrbitCrawlReport } from "../../../../shared/orbitTileTypes";
 
 interface ImportItem {
   title: string;
@@ -30,10 +34,48 @@ interface ImportResult {
   errors?: { index: number; error: string }[];
 }
 
+interface IngestResponse {
+  success: boolean;
+  orbitId: string;
+  tiles: OrbitTile[];
+  crawlReport: OrbitCrawlReport;
+  cached?: boolean;
+  message?: string;
+}
+
+interface GroupedTiles {
+  'Top Insights': OrbitTile[];
+  'Services & Offers': OrbitTile[];
+  'FAQs & Objections': OrbitTile[];
+  'Proof & Trust': OrbitTile[];
+  'Recommendations': OrbitTile[];
+}
+
+function groupTilesByCategory(tiles: OrbitTile[]): GroupedTiles {
+  const groups: GroupedTiles = {
+    'Top Insights': [],
+    'Services & Offers': [],
+    'FAQs & Objections': [],
+    'Proof & Trust': [],
+    'Recommendations': [],
+  };
+  
+  for (const tile of tiles) {
+    if (groups[tile.category as keyof GroupedTiles]) {
+      groups[tile.category as keyof GroupedTiles].push(tile);
+    } else {
+      groups['Top Insights'].push(tile);
+    }
+  }
+  
+  return groups;
+}
+
 export default function CatalogueImport() {
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
   
+  // Manual import state
   const [jsonInput, setJsonInput] = useState("");
   const [parsedItems, setParsedItems] = useState<ImportItem[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -41,6 +83,55 @@ export default function CatalogueImport() {
   const [boxType, setBoxType] = useState<'product' | 'menu_item'>('product');
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  
+  // Website Intelligence state
+  const [tiles, setTiles] = useState<OrbitTile[]>([]);
+  const [crawlReport, setCrawlReport] = useState<OrbitCrawlReport | null>(null);
+  const [selectedTile, setSelectedTile] = useState<OrbitTile | null>(null);
+  const [lastUrl, setLastUrl] = useState<string | null>(null);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
+  
+  const ingestMutation = useMutation({
+    mutationFn: async ({ url, forceRescan }: { url: string; forceRescan?: boolean }) => {
+      const response = await fetch(`/api/orbit/${slug}/ingest-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url, forceRescan }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to ingest URL');
+      }
+      
+      return response.json() as Promise<IngestResponse>;
+    },
+    onSuccess: (data) => {
+      setTiles(data.tiles);
+      setCrawlReport(data.crawlReport);
+      setResultMessage(data.message || null);
+      toast({
+        title: "Website scanned",
+        description: `Generated ${data.tiles.length} topic tiles`,
+      });
+    },
+  });
+  
+  const handleUrlIngest = async (url: string, forceRescan?: boolean) => {
+    setLastUrl(url);
+    setResultMessage(null);
+    await ingestMutation.mutateAsync({ url, forceRescan });
+  };
+  
+  const groupedTiles = groupTilesByCategory(tiles);
+  const tileRows = [
+    { title: 'Top Insights', tiles: groupedTiles['Top Insights'] },
+    { title: 'Services & Offers', tiles: groupedTiles['Services & Offers'] },
+    { title: 'FAQs & Objections', tiles: groupedTiles['FAQs & Objections'] },
+    { title: 'Proof & Trust', tiles: groupedTiles['Proof & Trust'] },
+    { title: 'Recommendations', tiles: groupedTiles['Recommendations'] },
+  ].filter(row => row.tiles.length > 0);
 
   const parseJson = (input: string) => {
     setParseError(null);
@@ -206,14 +297,27 @@ export default function CatalogueImport() {
       <div className="p-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white" data-testid="text-import-title">
-            Import Catalogue
+            Import Data
           </h1>
           <p className="text-white/60 text-sm">
-            Import products or menu items from JSON or CSV
+            Import products, menu items, or extract insights from a website
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="manual" className="data-[state=active]:bg-pink-500" data-testid="tab-manual-import">
+              <Upload className="w-4 h-4 mr-2" />
+              Manual Import
+            </TabsTrigger>
+            <TabsTrigger value="website" className="data-[state=active]:bg-pink-500" data-testid="tab-website-intelligence">
+              <Globe className="w-4 h-4 mr-2" />
+              Website Intelligence
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="manual" className="mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-white/5 border border-white/10">
               <div className="flex items-center gap-3 mb-4">
@@ -436,9 +540,9 @@ export default function CatalogueImport() {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-          <h3 className="text-sm font-medium text-blue-300 mb-2">JSON Format</h3>
-          <pre className="text-xs text-white/60 overflow-x-auto">
+            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <h3 className="text-sm font-medium text-blue-300 mb-2">JSON Format</h3>
+              <pre className="text-xs text-white/60 overflow-x-auto">
 {`[
   {
     "title": "Margherita Pizza",
@@ -449,8 +553,103 @@ export default function CatalogueImport() {
     "imageUrl": "https://..."
   }
 ]`}
-          </pre>
-        </div>
+              </pre>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="website" className="mt-6">
+            <div className="space-y-6">
+              <UrlIngestForm
+                onSubmit={handleUrlIngest}
+                isLoading={ingestMutation.isPending}
+                error={ingestMutation.error?.message}
+                lastUrl={lastUrl}
+              />
+              
+              {ingestMutation.isPending && (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="relative mb-6">
+                    <Globe className="w-16 h-16 text-white/30" />
+                    <Loader2 className="w-8 h-8 text-pink-400 absolute -bottom-2 -right-2 animate-spin" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Analyzing Website
+                  </h3>
+                  <p className="text-white/60 max-w-md">
+                    Crawling pages, extracting content, and generating insights. This may take up to 60 seconds.
+                  </p>
+                </div>
+              )}
+              
+              {!ingestMutation.isPending && crawlReport && (
+                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-white font-medium">
+                        {crawlReport.pagesSucceeded} of {crawlReport.pagesAttempted} pages scanned
+                      </span>
+                    </div>
+                    <div className="text-white/60">
+                      {tiles.length} tiles generated
+                    </div>
+                    <div className="text-white/60">
+                      {(crawlReport.crawlDurationMs / 1000).toFixed(1)}s
+                    </div>
+                    {resultMessage && (
+                      <div className="text-white/60 italic">
+                        {resultMessage}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {crawlReport.errors.length > 0 && (
+                    <div className="mt-3 flex items-start gap-2 text-sm text-amber-400">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>
+                        {crawlReport.errors.length} page{crawlReport.errors.length > 1 ? 's' : ''} could not be crawled
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!ingestMutation.isPending && tileRows.length > 0 && (
+                <div className="space-y-8">
+                  {tileRows.map((row) => (
+                    <TileRow
+                      key={row.title}
+                      title={row.title}
+                      tiles={row.tiles}
+                      onTileClick={setSelectedTile}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {!ingestMutation.isPending && tiles.length === 0 && lastUrl && !ingestMutation.error && (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Globe className="w-16 h-16 text-white/30 mb-6" />
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    No tiles generated
+                  </h3>
+                  <p className="text-white/60 max-w-md">
+                    We couldn't extract enough content from this website. Try a different URL or check if the site is accessible.
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <TileDrawerOverlay 
+          isOpen={!!selectedTile} 
+          onClose={() => setSelectedTile(null)} 
+        />
+        <TileDrawer 
+          tile={selectedTile} 
+          onClose={() => setSelectedTile(null)} 
+        />
       </div>
     </OrbitLayout>
   );

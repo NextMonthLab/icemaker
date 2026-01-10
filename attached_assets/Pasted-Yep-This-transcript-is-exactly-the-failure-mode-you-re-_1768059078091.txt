@@ -1,0 +1,69 @@
+Yep. This transcript is exactly the failure mode you’re worried about: they’re “shipping” by creating new pages and flows, then rationalising it afterwards. That fragments Orbit, overwrites your intended patterns, and wastes your investment.
+
+You need to tell Replit two things, very clearly:
+	1.	Stop building new Orbit surfaces unless they’re explicitly inside the Orbit Contract.
+	2.	Before implementing anything Orbit-related, they must update the Behaviour Contract + Health Dashboard checks so regressions are impossible to miss.
+
+Here’s a message you can paste to Replit that will put them back in lane, without being aggressive, but with proper teeth.
+
+⸻
+
+
+Team – I need you to get on top of Orbit consistency immediately.
+
+The transcript below is the exact failure mode I’m trying to eliminate:
+- Features are being implemented in isolation (“I’ll add /orbit/ingest…”) without aligning to the existing Orbit flows.
+- Then afterwards we discover it’s fragmented and needs rework.
+This is bleeding value and undermining Orbit’s core promise.
+
+NON-NEGOTIABLE RULES GOING FORWARD (Orbit work):
+1) ONE ORBIT EXPERIENCE ONLY
+   - Do not create new Orbit routes/pages/flows unless explicitly approved and mapped in the Orbit Behaviour Contract.
+   - Orbit ingestion MUST live within the existing Orbit import flow (/orbit/:slug/import) unless we decide otherwise deliberately.
+   - No standalone pages that aren’t tied to a specific Orbit context.
+
+2) NO MORE “FEELS DONE” – WE NEED PROOF
+   - Before shipping any Orbit feature, you must add/maintain machine-verifiable evidence that the UI behaves as specified.
+   - Green/Amber/Red must never be a guess. No false greens.
+
+3) SHIP THE ORBIT BEHAVIOUR HEALTH DASHBOARD FIRST (or at minimum, Phase 1–3)
+   This is now a blocking foundation because we’re losing track of what Orbit should do and regressions are slipping through.
+   Implement the “Orbit Behaviour Health Dashboard” with:
+   - A versioned Orbit Behaviour Contract (30 items to start)
+   - Orbit Evidence Protocol (nm_* metadata in responses + client render events)
+   - Deterministic checks runner (feature flags, component registry, endpoints, logging)
+   - Dashboard UI to show Reds and evidence packs
+
+   If playback runner (Playwright) is not ready yet, those checks MUST remain AMBER, not green.
+
+4) CHANGE CONTROL
+   - Any change that alters Orbit UI behaviour must:
+     a) update the contract item(s)
+     b) ensure evidence markers + render events exist
+     c) show proof in the dashboard evidence pack
+
+IMMEDIATE ACTIONS REQUIRED:
+A) Remove fragmentation: integrate the URL ingestion feature into /orbit/:slug/import (CatalogueImport) and remove /orbit/ingest unless I explicitly approve keeping it.
+B) Start the Health Dashboard implementation as the top priority. Use the spec I provided (Orbit Behaviour Health Dashboard prompt) as the exact build brief.
+C) Provide me with:
+   - the contract file location + the first 30 items committed
+   - the evidence protocol implementation details (server + client)
+   - a screenshot of the Health page with at least 10 deterministic checks showing status + evidence
+
+The priority is not “more features”, it’s Orbit behaving like a coherent, futuristic system every time – and us being able to SEE when it doesn’t.
+
+
+⸻
+
+Why this wording works
+	•	It doesn’t argue about the specific mistake, it changes the operating system: no new surfaces, contract-first, evidence-first.
+	•	It makes the Health Dashboard a foundation, not a “nice to have”.
+	•	It removes their ability to mark things “complete” without proof.
+
+One extra bit of bite (optional, but effective)
+
+If you want to make it even harder for them to drift again, add this line under “Change Control”:
+
+“If a feature cannot be verified by the Health Dashboard, it is not considered shipped.”
+
+If you want, I can also turn this into a shorter “Pinned Rules” message for the top of the Replit project chat, so every new loop starts with the same guardrails.

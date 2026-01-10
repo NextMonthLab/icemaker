@@ -359,8 +359,8 @@ function enforceTileMinimum(tiles: OrbitTile[], inputUrl: string, pageCount: num
   return tiles;
 }
 
-export async function ingestUrlAndGenerateTiles(inputUrl: string): Promise<OrbitIngestResult> {
-  const orbitId = `orbit_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+export async function ingestUrlAndGenerateTiles(inputUrl: string, providedOrbitId?: string): Promise<OrbitIngestResult> {
+  const orbitId = providedOrbitId || `orbit_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   
   console.log(`[TopicTileGenerator] Starting ingestion for ${inputUrl} (orbitId: ${orbitId})`);
   

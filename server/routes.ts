@@ -29,7 +29,7 @@ import { logAuthFailure, logAccessDenied, logTokenError, logAdminAction } from "
 import { analyticsRequestValidator, chatRequestValidator, chatMessageValidator, analyticsMetadataValidator, analyticsTypeValidator, analyticsMetadataStringValidator, adminRequestValidator, adminReasonValidator } from "./requestValidation";
 import { canReadUniverse, canWriteUniverse, canReadIcePreview, canWriteIcePreview, canReadOrbit, canWriteOrbit, logAuditEvent, extractRequestInfo } from "./authPolicies";
 import { ingestUrlAndGenerateTiles, groupTilesByCategory } from "./services/topicTileGenerator";
-import { saveOrbitIngestion, loadOrbitIngestion, checkOrbitCache, getOrbitTiles } from "./services/orbitTileStorage";
+import { saveOrbitIngestion, loadOrbitIngestion, getOrbitTiles } from "./services/orbitTileStorage";
 
 function getAppBaseUrl(req: any): string {
   if (process.env.PUBLIC_APP_URL) {
@@ -15993,10 +15993,20 @@ Current category: ${categoryName}`;
 
   // ============ TOPIC TILES URL INGESTION ============
   
-  // POST /api/orbit/ingest-url - Ingest a website URL and generate topic tiles
-  app.post("/api/orbit/ingest-url", async (req, res) => {
+  // POST /api/orbit/:slug/ingest-url - Ingest a website URL and generate topic tiles for a specific Orbit
+  app.post("/api/orbit/:slug/ingest-url", async (req, res) => {
     try {
+      const { slug } = req.params;
       const { url, forceRescan } = req.body;
+      
+      // Validate orbit exists
+      const orbit = await storage.getOrbitMeta(slug);
+      if (!orbit) {
+        return res.status(404).json({
+          success: false,
+          message: `Orbit '${slug}' not found`,
+        });
+      }
       
       if (!url || typeof url !== 'string') {
         return res.status(400).json({ 
@@ -16016,36 +16026,40 @@ Current category: ${categoryName}`;
         });
       }
       
-      // Check cache (unless forceRescan)
+      // Check cache for this specific orbit (unless forceRescan)
       if (!forceRescan) {
-        const cacheCheck = await checkOrbitCache(parsedUrl.href, 24);
-        if (cacheCheck.withinCachePeriod && cacheCheck.orbitId) {
-          const cached = await loadOrbitIngestion(cacheCheck.orbitId);
-          if (cached) {
-            console.log(`[IngestURL] Using cached result for ${url} (orbitId: ${cacheCheck.orbitId})`);
+        const cached = await loadOrbitIngestion(slug);
+        if (cached) {
+          const cacheAge = Date.now() - new Date(cached.scannedAt).getTime();
+          const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+          if (cacheAge < maxCacheAge) {
+            console.log(`[IngestURL] Using cached result for orbit ${slug}`);
             return res.json({
               success: true,
-              orbitId: cached.orbitId,
+              orbitId: slug,
               tiles: cached.tiles,
               crawlReport: cached.crawlReport,
               cached: true,
-              message: `Using cached results from ${cacheCheck.scannedAt}`,
+              message: `Using cached results from ${cached.scannedAt}`,
             });
           }
         }
       }
       
-      console.log(`[IngestURL] Starting fresh ingestion for ${url}`);
+      console.log(`[IngestURL] Starting fresh ingestion for ${url} (orbit: ${slug})`);
       
-      // Perform ingestion
-      const result = await ingestUrlAndGenerateTiles(parsedUrl.href);
+      // Perform ingestion with the orbit slug as the ID
+      const result = await ingestUrlAndGenerateTiles(parsedUrl.href, slug);
       
-      // Save to storage
-      await saveOrbitIngestion(result);
+      // Save to storage under this orbit's slug
+      await saveOrbitIngestion({
+        ...result,
+        orbitId: slug, // Override with orbit slug
+      });
       
       res.json({
         success: true,
-        orbitId: result.orbitId,
+        orbitId: slug,
         tiles: result.tiles,
         crawlReport: result.crawlReport,
         cached: false,
