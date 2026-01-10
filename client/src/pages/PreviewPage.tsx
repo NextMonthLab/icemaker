@@ -169,7 +169,7 @@ function BrandHeader({
         </div>
         <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
           <Sparkles className="w-3 h-3" />
-          <span className="text-xs font-medium">Preview</span>
+          <span className="text-xs font-medium" data-testid="text-orbit-preview-label">Orbit Preview</span>
         </div>
       </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -444,7 +444,7 @@ function ChatOverlay({
                     style={{ background: accentColor, color: accentColor === '#ffffff' || accentColor === '#f5f5f5' ? 'black' : 'white' }}
                     data-testid="button-cap-reached-claim"
                   >
-                    Continue conversation - Claim this Smart Site
+                    Continue conversation - Claim this Orbit Preview
                   </button>
                 ) : (
                   <div className="flex gap-2">
@@ -862,8 +862,8 @@ export default function PreviewPage() {
   if (!preview) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Preview Not Found</h2>
-        <p className="text-muted-foreground mb-6">This preview may have expired or been archived.</p>
+        <h2 className="text-2xl font-bold mb-4">Orbit Preview Not Found</h2>
+        <p className="text-muted-foreground mb-6">This Orbit Preview may have expired or been archived.</p>
         <Button onClick={() => window.location.href = "/"} data-testid="button-go-home">Go Home</Button>
       </div>
     );
@@ -873,8 +873,8 @@ export default function PreviewPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
         <Archive className="w-16 h-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold mb-4">Preview Archived</h2>
-        <p className="text-muted-foreground mb-6">This preview has been archived and is no longer available.</p>
+        <h2 className="text-2xl font-bold mb-4">Orbit Preview Archived</h2>
+        <p className="text-muted-foreground mb-6">This Orbit Preview has been archived and is no longer available.</p>
         <Button onClick={() => window.location.href = "/"} data-testid="button-go-home">Go Home</Button>
       </div>
     );
@@ -884,8 +884,8 @@ export default function PreviewPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
         <Sparkles className="w-16 h-16 text-primary mb-4" />
-        <h2 className="text-2xl font-bold mb-4">Preview Claimed!</h2>
-        <p className="text-muted-foreground mb-6">This preview has been claimed and is now a full Smart Site.</p>
+        <h2 className="text-2xl font-bold mb-4">Orbit Preview Claimed!</h2>
+        <p className="text-muted-foreground mb-6">This Orbit Preview has been claimed and is now a full Orbit experience.</p>
         <Button onClick={() => window.location.href = "/"} data-testid="button-go-home">Go Home</Button>
       </div>
     );
@@ -994,7 +994,7 @@ export default function PreviewPage() {
       <Dialog open={showPaywall} onOpenChange={setShowPaywall}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Your Smart Site is ready</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Your Orbit Preview is ready</DialogTitle>
             <DialogDescription className="text-base pt-2">
               To keep it live and claim the leads it is already uncovering, activate it.
             </DialogDescription>
