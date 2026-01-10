@@ -77,10 +77,10 @@ export function InsightCard({
         isHighlighted
           ? "bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/50 animate-pulse"
           : isSelected
-          ? "bg-white/[0.03] border-l-2 border-l-blue-500 border-white/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+          ? "bg-muted/30 border-l-2 border-l-blue-500 border-border shadow-[0_0_15px_rgba(59,130,246,0.1)]"
           : isContentReady
           ? "bg-purple-500/5 border-purple-500/20 hover:border-purple-500/40 hover:bg-purple-500/10"
-          : "bg-white/[0.02] border-white/10 hover:border-blue-500/30 hover:bg-white/[0.04]"
+          : "bg-muted/20 border-border hover:border-blue-500/30 hover:bg-muted/40"
       }`}
       data-testid={`insight-card-${insight.id}`}
     >
@@ -95,15 +95,15 @@ export function InsightCard({
               {kindConfig.label}
             </Badge>
             {insight.contentPotentialScore >= 70 && (
-              <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-300 text-xs">
+              <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-400 text-xs">
                 High potential
               </Badge>
             )}
           </div>
-          <h4 className="font-medium text-white mb-1 truncate">
+          <h4 className="font-medium text-foreground mb-1 truncate">
             {insight.title}
           </h4>
-          <p className="text-sm text-white/60 line-clamp-2">{insight.meaning}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{insight.meaning}</p>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge
               variant="outline"
@@ -115,12 +115,12 @@ export function InsightCard({
               <Badge
                 key={tag}
                 variant="outline"
-                className="border-white/20 text-white/60"
+                className="border-border text-muted-foreground"
               >
                 {tag}
               </Badge>
             ))}
-            <span className="text-xs text-white/40">{insight.source}</span>
+            <span className="text-xs text-muted-foreground/60">{insight.source}</span>
           </div>
         </div>
         {isContentReady ? (

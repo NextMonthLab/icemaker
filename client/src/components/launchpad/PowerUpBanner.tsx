@@ -10,7 +10,7 @@ interface PowerUpBannerProps {
 export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
   return (
     <div
-      className="relative overflow-hidden bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 border-y border-white/10"
+      className="relative overflow-hidden bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 border-y border-border"
       data-testid="powerup-banner"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-blue-500/5 animate-pulse" />
@@ -25,13 +25,13 @@ export function PowerUpBanner({ orbitSlug, onUpgrade }: PowerUpBannerProps) {
             <div className="flex items-center gap-2 mb-0.5 md:mb-1">
               <Badge 
                 variant="outline" 
-                className="border-amber-500/50 text-amber-400 text-xs px-2 py-0"
+                className="border-amber-500/50 text-amber-500 text-xs px-2 py-0"
               >
                 Starter insights (3)
               </Badge>
             </div>
-            <p className="text-xs md:text-sm text-white/80">
-              <span className="font-medium text-white">Add sources</span> to unlock full insights
+            <p className="text-xs md:text-sm text-foreground/80">
+              <span className="font-medium text-foreground">Add sources</span> to unlock full insights
             </p>
           </div>
         </div>

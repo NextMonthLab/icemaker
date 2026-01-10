@@ -221,10 +221,10 @@ export function NewIceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-black border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-background border-border max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Create a new ICE</DialogTitle>
-          <DialogDescription className="text-white/60">
+          <DialogDescription className="text-muted-foreground">
             Choose how you want to create your Interactive Cinematic Experience
           </DialogDescription>
         </DialogHeader>
@@ -246,18 +246,18 @@ export function NewIceModal({
                     p-3 rounded-xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50
                     ${isSelected
                       ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/50 ring-1 ring-blue-500/30'
-                      : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'
+                      : 'bg-muted/30 border-border hover:border-border/80 hover:bg-muted/50'
                     }
                   `}
                   data-testid={`button-mode-${option.id}`}
                 >
                   <div className="flex items-start gap-2">
-                    <Icon className={`w-4 h-4 mt-0.5 ${isSelected ? 'text-blue-400' : 'text-white/50'}`} />
+                    <Icon className={`w-4 h-4 mt-0.5 ${isSelected ? 'text-blue-500' : 'text-muted-foreground'}`} />
                     <div className="flex-1 min-w-0">
-                      <span className={`text-sm font-medium block ${isSelected ? 'text-white' : 'text-white/80'}`}>
+                      <span className={`text-sm font-medium block ${isSelected ? 'text-foreground' : 'text-foreground/80'}`}>
                         {option.title}
                       </span>
-                      <span className="text-xs text-white/40 line-clamp-1">{option.description}</span>
+                      <span className="text-xs text-muted-foreground line-clamp-1">{option.description}</span>
                     </div>
                     {isSelected && (
                       <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
@@ -274,12 +274,12 @@ export function NewIceModal({
           <div className="min-h-[150px] pt-2">
             {mode === 'insight' && (
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Select an insight from your Orbit</label>
+                <label className="text-sm text-muted-foreground">Select an insight from your Orbit</label>
                 {insights.length === 0 ? (
-                  <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5 text-center">
-                    <Sparkles className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                    <p className="text-sm text-white/50">No insights available yet</p>
-                    <p className="text-xs text-white/30 mt-1">Add sources to your Orbit to generate insights</p>
+                  <div className="p-4 rounded-lg bg-muted/20 border border-border text-center">
+                    <Sparkles className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No insights available yet</p>
+                    <p className="text-xs text-muted-foreground/50 mt-1">Add sources to your Orbit to generate insights</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
@@ -291,18 +291,18 @@ export function NewIceModal({
                           w-full p-3 rounded-lg border text-left transition-all
                           ${selectedInsightId === insight.id
                             ? 'bg-blue-500/10 border-blue-500/50'
-                            : 'bg-white/[0.02] border-white/10 hover:border-white/20'
+                            : 'bg-muted/20 border-border hover:border-border/80'
                           }
                         `}
                         data-testid={`insight-${insight.id}`}
                       >
                         <div className="flex items-start gap-2">
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-white line-clamp-1">{insight.title}</span>
-                            <span className="text-xs text-white/50 line-clamp-1 mt-0.5">{insight.meaning}</span>
+                            <span className="text-sm font-medium text-foreground line-clamp-1">{insight.title}</span>
+                            <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{insight.meaning}</span>
                           </div>
                           {selectedInsightId === insight.id && (
-                            <Check className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                            <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />
                           )}
                         </div>
                       </button>
@@ -314,7 +314,7 @@ export function NewIceModal({
 
             {mode === 'url' && (
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Enter a webpage URL to import</label>
+                <label className="text-sm text-muted-foreground">Enter a webpage URL to import</label>
                 <Input
                   placeholder="https://example.com/article"
                   value={urlInput}
@@ -322,16 +322,16 @@ export function NewIceModal({
                     setUrlInput(e.target.value);
                     setError("");
                   }}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/50 border-border"
                   data-testid="input-url"
                 />
-                <p className="text-xs text-white/30">We'll extract the content and generate your ICE</p>
+                <p className="text-xs text-muted-foreground/50">We'll extract the content and generate your ICE</p>
               </div>
             )}
 
             {mode === 'paste' && (
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Paste your content</label>
+                <label className="text-sm text-muted-foreground">Paste your content</label>
                 <textarea
                   placeholder="Paste your article, script, or story here..."
                   value={pasteInput}
@@ -339,10 +339,10 @@ export function NewIceModal({
                     setPasteInput(e.target.value);
                     setError("");
                   }}
-                  className="w-full h-32 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="w-full h-32 px-3 py-2 rounded-lg bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   data-testid="textarea-paste"
                 />
-                <p className="text-xs text-white/30">
+                <p className="text-xs text-muted-foreground/50">
                   {pasteInput.length} characters {pasteInput.length < 50 && pasteInput.length > 0 && "(minimum 50)"}
                 </p>
               </div>
@@ -350,7 +350,7 @@ export function NewIceModal({
 
             {mode === 'upload' && (
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Upload a document</label>
+                <label className="text-sm text-muted-foreground">Upload a document</label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -359,31 +359,31 @@ export function NewIceModal({
                   className="hidden"
                 />
                 {uploadedFile ? (
-                  <div className="p-4 rounded-lg bg-white/[0.03] border border-white/10 flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-blue-400" />
+                  <div className="p-4 rounded-lg bg-muted/30 border border-border flex items-center gap-3">
+                    <FileText className="w-8 h-8 text-blue-500" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{uploadedFile.name}</p>
-                      <p className="text-xs text-white/40">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
+                      <p className="text-sm font-medium text-foreground truncate">{uploadedFile.name}</p>
+                      <p className="text-xs text-muted-foreground/60">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
                     </div>
                     <button
                       onClick={() => {
                         setUploadedFile(null);
                         if (fileInputRef.current) fileInputRef.current.value = '';
                       }}
-                      className="p-1 rounded hover:bg-white/10"
+                      className="p-1 rounded hover:bg-muted"
                     >
-                      <X className="w-4 h-4 text-white/50" />
+                      <X className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full p-6 rounded-lg border-2 border-dashed border-white/10 hover:border-white/20 text-center transition-colors"
+                    className="w-full p-6 rounded-lg border-2 border-dashed border-border hover:border-border/80 text-center transition-colors"
                     data-testid="button-upload-file"
                   >
-                    <Upload className="w-8 h-8 text-white/30 mx-auto mb-2" />
-                    <p className="text-sm text-white/60">Click to upload</p>
-                    <p className="text-xs text-white/30 mt-1">Plain text file (.txt, max 10MB)</p>
+                    <Upload className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Click to upload</p>
+                    <p className="text-xs text-muted-foreground/50 mt-1">Plain text file (.txt, max 10MB)</p>
                   </button>
                 )}
               </div>
@@ -392,8 +392,8 @@ export function NewIceModal({
 
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400">{error}</p>
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-500">{error}</p>
             </div>
           )}
 
@@ -402,7 +402,7 @@ export function NewIceModal({
             <Button
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-white/60 hover:text-white hover:bg-white/10"
+              className="text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>

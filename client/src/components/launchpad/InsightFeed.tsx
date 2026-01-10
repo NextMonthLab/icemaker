@@ -65,14 +65,14 @@ export function InsightFeed({
   const headerContent = (
     <div className="space-y-3 mb-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-white">Insights</h3>
+        <h3 className="font-semibold text-foreground">Insights</h3>
         <div className="flex items-center gap-2">
-          {isLoading && <RefreshCw className="w-4 h-4 text-white/40 animate-spin" />}
+          {isLoading && <RefreshCw className="w-4 h-4 text-muted-foreground animate-spin" />}
         </div>
       </div>
       
       {/* Insight kind tabs */}
-      <div className="flex gap-1 p-1 bg-white/[0.02] rounded-lg border border-white/10">
+      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg border border-border">
         {(["all", "content_ready", "signals", "ops"] as InsightTab[]).map((tab) => {
           const config = tabConfig[tab];
           const TabIcon = config.icon;
@@ -89,9 +89,9 @@ export function InsightFeed({
               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                 isActive
                   ? tab === "content_ready"
-                    ? "bg-gradient-to-r from-purple-600/30 to-pink-600/30 text-purple-300 border border-purple-500/30"
-                    : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                  : "text-white/50 hover:text-white/70 hover:bg-white/[0.03] border border-transparent"
+                    ? "bg-gradient-to-r from-purple-600/30 to-pink-600/30 text-purple-400 border border-purple-500/30"
+                    : "bg-blue-500/20 text-blue-500 border border-blue-500/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               }`}
               data-testid={`tab-${tab}`}
             >
@@ -101,7 +101,7 @@ export function InsightFeed({
                 <span className={`text-[10px] px-1.5 rounded-full ${
                   isActive 
                     ? tab === "content_ready" ? "bg-purple-500/30" : "bg-blue-500/30" 
-                    : "bg-white/10"
+                    : "bg-muted"
                 }`}>
                   {count}
                 </span>
@@ -112,12 +112,12 @@ export function InsightFeed({
       </div>
       
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search insights..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 bg-white/[0.03] border-white/10 text-white placeholder:text-white/30 h-9 text-sm"
+          className="pl-9 bg-muted/30 border-border h-9 text-sm"
           data-testid="insight-search"
         />
       </div>
@@ -132,10 +132,10 @@ export function InsightFeed({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-lg bg-white/[0.02] border border-white/10 animate-pulse"
+              className="p-4 rounded-lg bg-muted/30 border border-border animate-pulse"
             >
-              <div className="h-4 bg-white/10 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-white/10 rounded w-1/2" />
+              <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+              <div className="h-3 bg-muted rounded w-1/2" />
             </div>
           ))}
         </div>
@@ -147,8 +147,8 @@ export function InsightFeed({
     return (
       <div className="flex flex-col h-full">
         {headerContent}
-        <div className="p-6 rounded-lg bg-white/[0.02] border border-white/10 text-center">
-          <p className="text-white/60 text-sm">
+        <div className="p-6 rounded-lg bg-muted/30 border border-border text-center">
+          <p className="text-muted-foreground text-sm">
             No insights yet. Insights will appear as your Orbit gathers data
             from conversations and interactions.
           </p>
@@ -171,7 +171,7 @@ export function InsightFeed({
           />
         ))}
         {filteredInsights.length === 0 && (
-          <p className="text-white/40 text-sm text-center py-4">
+          <p className="text-muted-foreground text-sm text-center py-4">
             No insights match your filter
           </p>
         )}
@@ -180,12 +180,12 @@ export function InsightFeed({
         {locked && upgradeMessage && remainingInsights && remainingInsights > 0 && (
           <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 mt-2">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-medium text-white">
+              <Sparkles className="w-4 h-4 text-blue-500" />
+              <span className="text-sm font-medium text-foreground">
                 Unlock {remainingInsights} more insights
               </span>
             </div>
-            <p className="text-xs text-white/60 mb-2">
+            <p className="text-xs text-muted-foreground mb-2">
               Most users unlock this by adding About + Services pages
             </p>
             {orbitSlug && (
@@ -203,7 +203,7 @@ export function InsightFeed({
           </div>
         )}
         
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
       </div>
     </div>
   );

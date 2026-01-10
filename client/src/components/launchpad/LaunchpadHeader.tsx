@@ -36,16 +36,16 @@ export function LaunchpadHeader({
   const [showShareModal, setShowShareModal] = useState(false);
 
   return (
-    <div className="flex items-center justify-between py-3 md:py-4 px-4 md:px-6 border-b border-white/10" data-testid="launchpad-header">
+    <div className="flex items-center justify-between py-3 md:py-4 px-4 md:px-6 border-b border-border" data-testid="launchpad-header">
       <div className="flex items-center gap-2 md:gap-4 min-w-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-1 md:gap-2 text-white hover:bg-white/10 px-2 md:px-3"
+              className="flex items-center gap-1 md:gap-2 text-foreground hover:bg-muted px-2 md:px-3"
               data-testid="dropdown-orbit-selector"
             >
-              <span className="text-yellow-400">★</span>
+              <span className="text-yellow-500">★</span>
               <span className="font-medium truncate max-w-[120px] md:max-w-none">
                 {selectedOrbit?.name || "Select Orbit"}
               </span>
@@ -54,16 +54,16 @@ export function LaunchpadHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="bg-slate-900 border-white/10"
+            className="bg-popover border-border"
           >
             {orbits.map((orbit) => (
               <DropdownMenuItem
                 key={orbit.slug}
                 onClick={() => onOrbitSelect(orbit)}
-                className="text-white hover:bg-white/10 cursor-pointer"
+                className="cursor-pointer"
                 data-testid={`orbit-option-${orbit.slug}`}
               >
-                <span className="text-yellow-400 mr-2">★</span>
+                <span className="text-yellow-500 mr-2">★</span>
                 {orbit.name}
               </DropdownMenuItem>
             ))}
@@ -100,7 +100,7 @@ export function LaunchpadHeader({
             <Link href={`/orbit/${selectedOrbit.slug}/hub`}>
               <Button
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10 flex-shrink-0"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
                 data-testid="button-orbit-hub"
               >
                 <LayoutDashboard className="w-4 h-4 md:mr-2" />
@@ -110,7 +110,7 @@ export function LaunchpadHeader({
             <Link href={`/orbit/${selectedOrbit.slug}/settings`}>
               <Button
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10 flex-shrink-0"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
                 data-testid="button-orbit-settings"
               >
                 <Settings className="w-4 h-4 md:mr-2" />
@@ -119,7 +119,7 @@ export function LaunchpadHeader({
             </Link>
             <Button
               variant="ghost"
-              className="text-white/60 hover:text-white hover:bg-white/10"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={() => setShowShareModal(true)}
               data-testid="button-share-orbit-header"
             >
@@ -129,7 +129,7 @@ export function LaunchpadHeader({
             <Link href={`/orbit/${selectedOrbit.slug}?preview=true`}>
               <Button
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 data-testid="link-view-public"
               >
                 <ExternalLink className="w-4 h-4 md:mr-2" />
@@ -141,7 +141,7 @@ export function LaunchpadHeader({
         <Link href="/icemaker/projects" className="hidden md:block">
           <Button
             variant="ghost"
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted"
             data-testid="link-library"
           >
             <Library className="w-4 h-4 mr-2" />
