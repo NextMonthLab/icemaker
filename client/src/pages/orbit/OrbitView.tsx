@@ -648,9 +648,14 @@ export default function OrbitView() {
     }
   }, [slug, orbitData?.status]);
 
+  // Reset brand preferences when slug changes (navigating between orbits)
+  useEffect(() => {
+    setBrandPreferences(null);
+  }, [slug]);
+
   // Hydrate brand preferences from saved orbit data
   useEffect(() => {
-    if (orbitData && !brandPreferences) {
+    if (orbitData && orbitData.businessSlug === slug && !brandPreferences) {
       const savedPrefs: BrandPreferences = {
         accentColor: orbitData.customAccent || '#3b82f6',
         selectedLogo: orbitData.customLogo || null,
@@ -674,7 +679,7 @@ export default function OrbitView() {
         setBrandPreferences(savedPrefs);
       }
     }
-  }, [orbitData, brandPreferences]);
+  }, [orbitData, slug, brandPreferences]);
 
   const handleClaimRequest = () => {
     if (!claimEmail) return;
