@@ -529,25 +529,25 @@ export default function OrbitSettings() {
     <OrbitLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-2xl mx-auto w-full">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white" data-testid="text-settings-title">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground" data-testid="text-settings-title">
             Strengthen Your Orbit
           </h1>
-          <p className="text-white/60 text-sm">
+          <p className="text-muted-foreground text-sm">
             Add sources to make your Orbit smarter and more helpful
           </p>
         </div>
 
         <div className="space-y-6">
           {/* Knowledge Sources Section */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-sources">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-sources">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-blue-400" />
+                  <Zap className="w-4 h-4 text-blue-500" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Knowledge Sources</h2>
-                  <p className="text-xs text-white/50">Pages and links that power your Orbit</p>
+                  <h2 className="text-lg font-semibold text-foreground">Knowledge Sources</h2>
+                  <p className="text-xs text-muted-foreground">Pages and links that power your Orbit</p>
                 </div>
               </div>
               <Badge
@@ -569,15 +569,15 @@ export default function OrbitSettings() {
             </div>
             
             {/* Strength Progress */}
-            <div className="mb-4 p-3 rounded-lg bg-white/[0.03] border border-white/5">
+            <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-white/60">Orbit Strength</span>
+                <span className="text-xs text-muted-foreground">Orbit Strength</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">{strengthScore}/100</span>
+                  <span className="text-sm font-semibold text-foreground">{strengthScore}/100</span>
                   <button
                     onClick={() => recalculateStrengthMutation.mutate()}
                     disabled={recalculateStrengthMutation.isPending}
-                    className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white/60 transition-colors disabled:opacity-50"
+                    className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                     title="Recalculate strength"
                     data-testid="button-recalculate-strength"
                   >
@@ -586,7 +586,7 @@ export default function OrbitSettings() {
                 </div>
               </div>
               <Progress value={strengthScore} className="h-1.5" />
-              <p className="text-xs text-white/40 mt-2">
+              <p className="text-xs text-muted-foreground/70 mt-2">
                 {strengthScore === 0 
                   ? "Add sources below to power up your Orbit"
                   : strengthScore < 50 
@@ -606,15 +606,15 @@ export default function OrbitSettings() {
                   return (
                     <div
                       key={source.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/5"
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-emerald-400" />
+                          <Icon className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div>
-                          <span className="text-sm text-white/80 block">{getSourceLabel(source.label)}</span>
-                          <span className="text-xs text-white/40 truncate max-w-[200px] block">{source.value}</span>
+                          <span className="text-sm text-foreground/80 block">{getSourceLabel(source.label)}</span>
+                          <span className="text-xs text-muted-foreground truncate max-w-[200px] block">{source.value}</span>
                         </div>
                       </div>
                       {(source.sourceType === 'page_url' || source.sourceType === 'social_link') && (
@@ -622,7 +622,7 @@ export default function OrbitSettings() {
                           href={source.value}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                          className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
                         </a>
@@ -632,12 +632,12 @@ export default function OrbitSettings() {
                 })}
               </div>
             ) : (
-              <div className="p-6 rounded-lg bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-dashed border-white/10 text-center mb-4">
+              <div className="p-6 rounded-lg bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-dashed border-border text-center mb-4">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-blue-400" />
+                  <Zap className="w-6 h-6 text-blue-500" />
                 </div>
-                <p className="text-sm text-white/70 mb-1">No sources added yet</p>
-                <p className="text-xs text-white/40">Add your website, social channels, and pages to power up your Orbit</p>
+                <p className="text-sm text-foreground/70 mb-1">No sources added yet</p>
+                <p className="text-xs text-muted-foreground">Add your website, social channels, and pages to power up your Orbit</p>
               </div>
             )}
             
@@ -671,11 +671,11 @@ export default function OrbitSettings() {
 
           {/* Document List - Only show if documents exist */}
           {documents.length > 0 && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-documents">
+            <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-documents">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm font-medium text-white/80">Uploaded Documents</span>
+                  <span className="text-sm font-medium text-foreground/80">Uploaded Documents</span>
                 </div>
                 <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-400">
                   {documents.length}
@@ -685,11 +685,11 @@ export default function OrbitSettings() {
                 {documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/5"
+                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border"
                     data-testid={`document-${doc.id}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm text-white/70 truncate">{doc.title || doc.fileName}</span>
+                      <span className="text-sm text-foreground/70 truncate">{doc.title || doc.fileName}</span>
                       {doc.status === 'processing' && (
                         <Loader2 className="w-3 h-3 text-purple-400 animate-spin flex-shrink-0" />
                       )}
@@ -703,7 +703,7 @@ export default function OrbitSettings() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-white/30 hover:text-red-400 flex-shrink-0"
+                      className="h-6 w-6 text-muted-foreground/50 hover:text-red-400 flex-shrink-0"
                       onClick={() => {
                         if (confirm('Delete this document?')) {
                           deleteDocumentMutation.mutate(doc.id);
@@ -721,11 +721,11 @@ export default function OrbitSettings() {
 
           {/* Video Library - Only show if videos exist */}
           {videos.length > 0 && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-videos">
+            <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-videos">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Play className="w-4 h-4 text-red-400" />
-                  <span className="text-sm font-medium text-white/80">Video Library</span>
+                  <span className="text-sm font-medium text-foreground/80">Video Library</span>
                 </div>
                 <Badge variant="outline" className="text-xs border-red-500/50 text-red-400">
                   {videos.length}
@@ -735,7 +735,7 @@ export default function OrbitSettings() {
                 {videos.map((video) => (
                   <div
                     key={video.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/5"
+                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border"
                     data-testid={`video-${video.id}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -746,12 +746,12 @@ export default function OrbitSettings() {
                           className="w-10 h-6 object-cover rounded flex-shrink-0"
                         />
                       )}
-                      <span className="text-sm text-white/70 truncate">{video.title}</span>
+                      <span className="text-sm text-foreground/70 truncate">{video.title}</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-white/30 hover:text-red-400 flex-shrink-0"
+                      className="h-6 w-6 text-muted-foreground/50 hover:text-red-400 flex-shrink-0"
                       onClick={() => {
                         if (confirm('Remove this video?')) {
                           deleteVideoMutation.mutate(video.id);
@@ -768,15 +768,15 @@ export default function OrbitSettings() {
           )}
 
           {/* Tone of Voice Section */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-tone-of-voice">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-tone-of-voice">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-purple-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Tone of Voice</h2>
-                  <p className="text-xs text-white/50">How Orbit speaks for your brand</p>
+                  <h2 className="text-lg font-semibold text-foreground">Tone of Voice</h2>
+                  <p className="text-xs text-muted-foreground">How Orbit speaks for your brand</p>
                 </div>
               </div>
               {(brandVoiceData?.heroPosts?.length ?? 0) > 0 && (
@@ -801,7 +801,7 @@ export default function OrbitSettings() {
             {(brandVoiceData?.heroPosts?.length ?? 0) > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-white/60">Hero Posts</span>
+                  <span className="text-xs text-muted-foreground">Hero Posts</span>
                   <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-400">
                     {brandVoiceData?.heroPosts.length}
                   </Badge>
@@ -810,12 +810,12 @@ export default function OrbitSettings() {
                   {brandVoiceData?.heroPosts.map((post) => (
                     <div
                       key={post.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/5"
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border"
                       data-testid={`hero-post-${post.id}`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-xs text-purple-400 uppercase">{post.platform}</span>
-                        <span className="text-sm text-white/70 truncate">{post.title || post.url}</span>
+                        <span className="text-sm text-foreground/70 truncate">{post.title || post.url}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {post.status === 'pending' || post.status === 'enriching' ? (
@@ -832,8 +832,8 @@ export default function OrbitSettings() {
 
                 {/* Brand Voice Analysis */}
                 {brandVoiceData?.brandVoiceSummary ? (
-                  <div className="space-y-3 pt-3 border-t border-white/10">
-                    <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+                  <div className="space-y-3 pt-3 border-t border-border">
+                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                       {brandVoiceData.brandVoiceSummary}
                     </p>
                     
@@ -848,13 +848,13 @@ export default function OrbitSettings() {
                     )}
                     
                     {brandVoiceData.brandVoiceUpdatedAt && (
-                      <p className="text-xs text-white/30">
+                      <p className="text-xs text-muted-foreground/50">
                         Last analyzed: {new Date(brandVoiceData.brandVoiceUpdatedAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
                 ) : (brandVoiceData?.readyPostCount ?? 0) > 0 ? (
-                  <div className="pt-3 border-t border-white/10">
+                  <div className="pt-3 border-t border-border">
                     <Button
                       onClick={() => rebuildBrandVoiceMutation.mutate()}
                       disabled={rebuildBrandVoiceMutation.isPending}
@@ -875,14 +875,14 @@ export default function OrbitSettings() {
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-xs text-white/40 pt-3 border-t border-white/10">
+                  <p className="text-xs text-muted-foreground/70 pt-3 border-t border-border">
                     Waiting for hero posts to be processed...
                   </p>
                 )}
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-white/50 mb-3">
+                <p className="text-sm text-muted-foreground mb-3">
                   Add hero posts to train your brand voice
                 </p>
                 <Button
@@ -907,8 +907,8 @@ export default function OrbitSettings() {
                   <Zap className="w-4 h-4 text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Why add sources?</h3>
-                  <ul className="text-xs text-white/60 space-y-1">
+                  <h3 className="text-sm font-semibold text-foreground mb-1">Why add sources?</h3>
+                  <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• Smarter AI responses about your business</li>
                     <li>• Visitors get accurate, helpful information</li>
                     <li>• Build trust with comprehensive knowledge</li>
@@ -919,49 +919,49 @@ export default function OrbitSettings() {
             </div>
           )}
 
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-business">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-business">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <Building2 className="w-4 h-4 text-blue-400" />
               </div>
-              <h2 className="text-lg font-semibold text-white">Business Information</h2>
+              <h2 className="text-lg font-semibold text-foreground">Business Information</h2>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-white/60 block mb-1">Business Name</label>
+                <label className="text-sm text-muted-foreground block mb-1">Business Name</label>
                 <Input
                   placeholder="Your Business Name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-business-name"
                 />
               </div>
               <div>
-                <label className="text-sm text-white/60 block mb-1">Website</label>
+                <label className="text-sm text-muted-foreground block mb-1">Website</label>
                 <Input
                   placeholder="https://example.com"
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-website"
                 />
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-ai">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-ai">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <Globe className="w-4 h-4 text-blue-400" />
               </div>
-              <h2 className="text-lg font-semibold text-white">AI Discovery Settings</h2>
+              <h2 className="text-lg font-semibold text-foreground">AI Discovery Settings</h2>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-white">Allow AI Indexing</p>
-                  <p className="text-xs text-white/50">Let AI systems discover your business</p>
+                  <p className="text-sm text-foreground">Allow AI Indexing</p>
+                  <p className="text-xs text-muted-foreground">Let AI systems discover your business</p>
                 </div>
                 <Switch 
                   checked={aiIndexingEnabled} 
@@ -971,8 +971,8 @@ export default function OrbitSettings() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-white">Auto-Update Knowledge</p>
-                  <p className="text-xs text-white/50">Automatically sync changes to AI systems</p>
+                  <p className="text-sm text-foreground">Auto-Update Knowledge</p>
+                  <p className="text-xs text-muted-foreground">Automatically sync changes to AI systems</p>
                 </div>
                 <Switch 
                   checked={autoUpdateKnowledge} 
@@ -983,16 +983,16 @@ export default function OrbitSettings() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10" data-testid="section-notifications">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border" data-testid="section-notifications">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <Bell className="w-4 h-4 text-blue-400" />
               </div>
-              <h2 className="text-lg font-semibold text-white">Notifications</h2>
+              <h2 className="text-lg font-semibold text-foreground">Notifications</h2>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/70">AI Accuracy Alerts</span>
+                <span className="text-sm text-foreground/70">AI Accuracy Alerts</span>
                 <Switch 
                   checked={aiAccuracyAlertsEnabled} 
                   onCheckedChange={setAiAccuracyAlertsEnabled}
@@ -1000,7 +1000,7 @@ export default function OrbitSettings() {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/70">Weekly Reports</span>
+                <span className="text-sm text-foreground/70">Weekly Reports</span>
                 <Switch 
                   checked={weeklyReportsEnabled} 
                   onCheckedChange={setWeeklyReportsEnabled}
@@ -1038,10 +1038,10 @@ export default function OrbitSettings() {
           setModalTab('links');
         }
       }}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+        <DialogContent className="bg-background border-border max-w-md">
           <DialogHeader>
             <DialogTitle>Power Up Your Orbit</DialogTitle>
-            <DialogDescription className="text-zinc-400">
+            <DialogDescription className="text-muted-foreground">
               Add knowledge sources to make your Orbit smarter
             </DialogDescription>
           </DialogHeader>
@@ -1069,19 +1069,19 @@ export default function OrbitSettings() {
             {/* Links Tab */}
             <TabsContent value="links" className="space-y-4 mt-4">
               <div>
-                <Label className="text-zinc-300 mb-2 block">Source Type</Label>
+                <Label className="text-muted-foreground mb-2 block">Source Type</Label>
                 <Select value={selectedSourceType} onValueChange={(v) => setSelectedSourceType(v as SourceLabel)}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectTrigger className="bg-muted/50 border-border">
                     <SelectValue placeholder="Select a source type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectContent className="bg-popover border-border">
                     {availableOptions.map((option) => {
                       const Icon = option.icon;
                       return (
                         <SelectItem 
                           key={option.value} 
                           value={option.value}
-                          className="text-white focus:bg-zinc-700 focus:text-white"
+                          className="focus:bg-muted"
                         >
                           <div className="flex items-center gap-2">
                             <Icon className="w-4 h-4" />
@@ -1099,12 +1099,12 @@ export default function OrbitSettings() {
                 )}
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">URL</Label>
+                <Label className="text-muted-foreground mb-2 block">URL</Label>
                 <Input
                   value={sourceUrl}
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="https://..."
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-source-url"
                 />
               </div>
@@ -1122,27 +1122,27 @@ export default function OrbitSettings() {
             <TabsContent value="hero" className="space-y-4 mt-4">
               <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-300 mb-1 font-medium">Brand Voice Training</p>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-muted-foreground">
                   Hero Posts teach Orbit your brand voice and content style. They don't add to your strength score - that comes from factual sources like documents and links.
                 </p>
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">Post URL</Label>
+                <Label className="text-muted-foreground mb-2 block">Post URL</Label>
                 <Input
                   value={heroPostUrl}
                   onChange={(e) => setHeroPostUrl(e.target.value)}
                   placeholder="https://linkedin.com/posts/... or https://x.com/..."
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-hero-url"
                 />
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">Post Text (optional)</Label>
+                <Label className="text-muted-foreground mb-2 block">Post Text (optional)</Label>
                 <Textarea
                   value={heroPostText}
                   onChange={(e) => setHeroPostText(e.target.value)}
                   placeholder="Paste the post content here if the URL doesn't work..."
-                  className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]"
+                  className="bg-muted/50 border-border min-h-[80px]"
                   data-testid="input-hero-text"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
@@ -1161,22 +1161,22 @@ export default function OrbitSettings() {
 
             {/* Documents Tab */}
             <TabsContent value="docs" className="space-y-4 mt-4">
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 Upload documents to enhance your Orbit's knowledge. Choose a category so the AI knows when to use it.
               </p>
               
               <div>
-                <Label className="text-zinc-300 mb-2 block">Document Category</Label>
+                <Label className="text-muted-foreground mb-2 block">Document Category</Label>
                 <Select value={docCategory} onValueChange={setDocCategory}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="select-doc-category">
+                  <SelectTrigger className="bg-muted/50 border-border" data-testid="select-doc-category">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectContent className="bg-popover border-border">
                     {DOCUMENT_CATEGORIES.map((cat) => (
                       <SelectItem 
                         key={cat.value} 
                         value={cat.value}
-                        className="text-white focus:bg-zinc-700 focus:text-white"
+                        className="focus:bg-muted"
                       >
                         <div className="flex flex-col">
                           <span>{cat.label}</span>
@@ -1197,8 +1197,8 @@ export default function OrbitSettings() {
                 <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-pink-500/10 flex items-center justify-center">
                   <Upload className="w-6 h-6 text-pink-400" />
                 </div>
-                <p className="text-sm text-white/70 mb-1">Click to upload</p>
-                <p className="text-xs text-white/40">PDF, PPT, PPTX, DOC, DOCX, TXT, MD (max 25MB)</p>
+                <p className="text-sm text-foreground/70 mb-1">Click to upload</p>
+                <p className="text-xs text-muted-foreground/70">PDF, PPT, PPTX, DOC, DOCX, TXT, MD (max 25MB)</p>
               </div>
               {isUploading && (
                 <div className="flex items-center justify-center gap-2 text-pink-400">
@@ -1217,37 +1217,37 @@ export default function OrbitSettings() {
             <TabsContent value="videos" className="space-y-4 mt-4">
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                 <p className="text-xs text-red-300 mb-1 font-medium">Video Library</p>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-muted-foreground">
                   Add YouTube videos that your Orbit can suggest to visitors when relevant.
                 </p>
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">YouTube URL</Label>
+                <Label className="text-muted-foreground mb-2 block">YouTube URL</Label>
                 <Input
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-video-url"
                 />
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">Title (optional)</Label>
+                <Label className="text-muted-foreground mb-2 block">Title (optional)</Label>
                 <Input
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
                   placeholder="Leave blank to auto-detect from YouTube"
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-video-title"
                 />
               </div>
               <div>
-                <Label className="text-zinc-300 mb-2 block">Tags (optional)</Label>
+                <Label className="text-muted-foreground mb-2 block">Tags (optional)</Label>
                 <Input
                   value={videoTags}
                   onChange={(e) => setVideoTags(e.target.value)}
                   placeholder="pricing, demo, tutorial (comma separated)"
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-muted/50 border-border"
                   data-testid="input-video-tags"
                 />
                 <p className="text-xs text-zinc-500 mt-1">

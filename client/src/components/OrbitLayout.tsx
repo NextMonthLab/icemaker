@@ -69,14 +69,14 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <GlobalNav context="orbit" />
       
       <div className="flex-1 flex flex-col lg:flex-row">
-        <aside className="hidden lg:flex w-56 flex-col border-r border-white/10 p-4 shrink-0 bg-black/95">
+        <aside className="hidden lg:flex w-56 flex-col border-r border-border p-4 shrink-0 bg-background/95">
           <div className="flex items-center gap-2 px-3 py-2 mb-4">
-            <Orbit className="w-5 h-5 text-blue-400" />
-            <span className="font-semibold text-white">Orbit</span>
+            <Orbit className="w-5 h-5 text-blue-500" />
+            <span className="font-semibold text-foreground">Orbit</span>
           </div>
           
           <nav className="space-y-1 flex-1">
@@ -86,8 +86,8 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm",
                     isActive(item)
-                      ? "bg-blue-500/20 text-blue-400 font-medium"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                      ? "bg-blue-500/20 text-blue-500 font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                   data-testid={`orbit-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -99,11 +99,11 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
           </nav>
 
           {isLoggedIn && hasOrbits && (
-            <div className="pt-4 border-t border-white/10 mt-4">
-              <p className="text-xs text-white/40 px-3 mb-2">Quick Access</p>
+            <div className="pt-4 border-t border-border mt-4">
+              <p className="text-xs text-muted-foreground px-3 mb-2">Quick Access</p>
               {orbitsData.orbits.slice(0, 3).map((orbit) => (
                 <Link key={orbit.businessSlug} href={`/orbit/${orbit.businessSlug}/hub`}>
-                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded cursor-pointer truncate">
+                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded cursor-pointer truncate">
                     <Globe className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">{orbit.businessSlug}</span>
                   </div>
@@ -113,15 +113,15 @@ export default function OrbitLayout({ children }: { children: React.ReactNode })
           )}
         </aside>
 
-        <nav className="lg:hidden bg-black/95 border-b border-white/10 px-2 py-2 flex gap-1 overflow-x-auto">
+        <nav className="lg:hidden bg-background/95 border-b border-border px-2 py-2 flex gap-1 overflow-x-auto">
           {navItems.slice(0, 4).map((item) => (
             <Link key={item.href} href={item.href}>
               <div
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-md transition-colors cursor-pointer text-xs whitespace-nowrap",
                   isActive(item)
-                    ? "bg-blue-500/20 text-blue-400"
-                    : "text-white/60 hover:bg-white/5"
+                    ? "bg-blue-500/20 text-blue-500"
+                    : "text-muted-foreground hover:bg-muted"
                 )}
                 data-testid={`orbit-mobile-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >

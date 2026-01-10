@@ -31,7 +31,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const LOGO_URL = "/logo.png";
+const LOGO_URL_LIGHT = "/logo.png";
+const LOGO_URL_DARK = "https://res.cloudinary.com/drl0fxrkq/image/upload/h_250,fl_preserve_transparency/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
 
 type NavContext = 'marketing' | 'app' | 'orbit' | 'ice';
 
@@ -106,7 +107,7 @@ export default function GlobalNav({
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer" data-testid="link-global-logo">
               <img 
-                src={LOGO_URL} 
+                src={theme === 'light' ? LOGO_URL_DARK : LOGO_URL_LIGHT} 
                 alt="NextMonth" 
                 className="h-24 w-auto"
                 style={{ clipPath: 'inset(35% 0 35% 0)' }}
@@ -281,7 +282,7 @@ export default function GlobalNav({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-white/70 hover:text-white hover:bg-white/10 gap-1.5 h-8 px-3 text-xs" 
+                    className="text-foreground/70 hover:text-foreground hover:bg-muted gap-1.5 h-8 px-3 text-xs" 
                     data-testid="global-signin"
                   >
                     <LogIn className="w-3.5 h-3.5" />
@@ -291,7 +292,7 @@ export default function GlobalNav({
               )}
 
               <button 
-                className="md:hidden p-1.5 text-white/70 hover:text-white"
+                className="md:hidden p-1.5 text-foreground/70 hover:text-foreground"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 data-testid="global-mobile-menu"
               >
