@@ -147,7 +147,7 @@ function renderMessageContent(
             </a>
           );
         } catch {
-          result.push(<span key={`${lineIdx}-url-${segIdx}`}>{...parseMarkdown(segment)}</span>);
+          result.push(<React.Fragment key={`${lineIdx}-url-${segIdx}`}>{parseMarkdown(segment)}</React.Fragment>);
         }
       } else {
         result.push(...renderEmailsAndPhonesWithMarkdown(segment, lineIdx, segIdx, color));
