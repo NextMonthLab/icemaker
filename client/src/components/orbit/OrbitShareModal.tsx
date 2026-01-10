@@ -102,33 +102,33 @@ export function OrbitShareModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-lg bg-black border border-white/10" data-testid="orbit-share-modal">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg bg-black border border-white/10 mx-2" data-testid="orbit-share-modal">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">
-            Share & Embed Orbit
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-white">
+            Share & Embed
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="pt-2">
           <TabsList className="grid w-full grid-cols-3 bg-zinc-900 border border-zinc-800">
-            <TabsTrigger value="link" data-testid="tab-share-link">
-              <Link2 className="w-4 h-4 mr-1.5" />
+            <TabsTrigger value="link" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="tab-share-link">
+              <Link2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
               Link
             </TabsTrigger>
-            <TabsTrigger value="embed" data-testid="tab-share-embed">
-              <Code className="w-4 h-4 mr-1.5" />
+            <TabsTrigger value="embed" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="tab-share-embed">
+              <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
               Embed
             </TabsTrigger>
-            <TabsTrigger value="qr" data-testid="tab-share-qr">
-              <QrCode className="w-4 h-4 mr-1.5" />
-              QR Code
+            <TabsTrigger value="qr" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="tab-share-qr">
+              <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+              QR
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="link" className="space-y-4 pt-4">
             <div className="space-y-3">
-              <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 overflow-x-auto">
-                <div className="text-sm text-zinc-300 font-mono whitespace-nowrap min-w-0">
+              <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 overflow-hidden">
+                <div className="text-xs sm:text-sm text-zinc-300 font-mono break-all">
                   {shareUrl}
                 </div>
               </div>
