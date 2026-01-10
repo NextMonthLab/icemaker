@@ -16,6 +16,7 @@ import {
   Compass,
   Sun,
   Moon,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -338,6 +339,42 @@ export default function GlobalNav({
                 </Link>
               ))}
             </>
+          )}
+          
+          {user?.isAdmin && (
+            <>
+              <div className="border-t border-white/10 my-2" />
+              <Link href="/admin">
+                <div 
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid="global-mobile-admin"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </div>
+              </Link>
+            </>
+          )}
+          
+          {user && (
+            <div 
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+              onClick={toggleTheme}
+              data-testid="global-mobile-theme"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  Light Mode
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  Dark Mode
+                </>
+              )}
+            </div>
           )}
         </div>
       )}
