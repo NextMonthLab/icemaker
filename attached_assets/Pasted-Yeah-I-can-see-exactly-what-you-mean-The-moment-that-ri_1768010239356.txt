@@ -1,0 +1,72 @@
+Yeah, I can see exactly what you mean. The moment that right “windscreen” pane shows up, it reintroduces strong accent blocks (gold “Top Pick”, purple CTA button, coloured table cells), and it tips the whole thing back into “too much going on”.
+
+Your instinct is right: the side pane should be almost colourless. It’s the “reading surface”. The map can have a bit of personality, but the pane needs to be calm and brutally legible.
+
+What I think you should do
+
+1) Make the windscreen a “monochrome workspace”
+
+In the right pane:
+	•	Background: neutral dark
+	•	Text: white and greys only
+	•	Borders: subtle separators
+	•	Tables: no coloured cells, no coloured headers
+
+Allowed colour in the pane:
+	•	thumbnails (product images, logos, video thumbnails)
+	•	one single accent colour for interactive states (hover, selected row, active tab)
+	•	optional tiny confidence dot or badge, but muted
+
+Everything else goes neutral.
+
+2) Remove “badge blocks”
+
+That gold “Top Pick” panel is the main offender. It’s visually loud and it’s stacked above everything, so it dominates.
+
+Replace it with something like:
+	•	A small “Top pick” label as plain text
+	•	Or a small icon + “Top pick” in muted grey
+	•	Or a tiny accent dot next to the product name
+
+Same meaning, 10% of the noise.
+
+3) Calm CTAs, not neon buttons
+
+That purple “Help me decide” button is doing the same thing, shouting.
+
+Make CTAs:
+	•	outline button, not filled
+	•	grey by default, accent only on hover
+	•	or text link style with a small icon
+
+If you want a filled button, fine, but then it needs to be the only saturated colour in the entire pane, and even then, slightly desaturated.
+
+4) Tables need to read like a premium dashboard
+
+Right now the table looks like it’s trying to be colourful data viz.
+
+Make it:
+	•	Neutral header row
+	•	Subtle row dividers
+	•	Highlight only the active row on hover
+	•	Use icons and spacing for hierarchy, not colour
+
+If you want “Design”, “Battery Life”, etc. to pop, use:
+	•	font weight
+	•	alignment
+	•	whitespace
+	•	small icons
+
+Not coloured blocks.
+
+A simple rule that will keep you sane
+
+Colour budget per pane: 1 accent.
+Everything else must be neutral, unless it’s real media.
+
+This makes the windscreen feel like Apple, not like a plugin marketplace.
+
+Quick instruction you can paste to RAPTOR/REPLAYER
+	•	“Make the right windscreen pane monochrome: remove saturated category colours, no coloured table headers or cells, replace ‘Top Pick’ gold block with a subtle label, and restyle CTAs as outline or muted buttons. Allow colour only from thumbnails and one consistent accent for hover/selection.”
+
+If you want, I can write a tiny “design token” spec for the pane (surface, text, divider, hover, accent) so they implement it once and it stays clean everywhere.
