@@ -144,58 +144,41 @@ export function mergeShortGroups(
 export function addDisplayPadding(
   groups: PhraseGroupResult[],
   paddingMs: number = 100,
-  minDurationMs: number = 200,
   safetyMarginMs: number = 30
 ): PhraseGroupResult[] {
   return groups.map((group, index) => {
     const nextGroup = groups[index + 1];
     const prevGroup = groups[index - 1];
     
-    const originalDuration = group.endMs - group.startMs;
-    const naturalDuration = Math.max(originalDuration, minDurationMs);
+    const originalStart = group.startMs;
+    const originalEnd = group.endMs;
     
-    let startMs = group.startMs;
-    let endMs = group.endMs;
+    let startMs = originalStart;
+    let endMs = originalEnd;
     
-    const maxEndMs = nextGroup 
+    const absoluteMaxEnd = nextGroup 
       ? nextGroup.startMs - safetyMarginMs 
       : Infinity;
     
-    const minStartMs = prevGroup
-      ? prevGroup.endMs + safetyMarginMs
-      : 0;
-    
-    if (!prevGroup && originalDuration >= minDurationMs) {
-      startMs = group.startMs;
-    } else if (!prevGroup) {
-      const leadPad = Math.min(paddingMs, group.startMs);
-      startMs = Math.max(0, group.startMs - leadPad);
+    if (!prevGroup) {
+      const availableLead = Math.min(paddingMs, originalStart);
+      startMs = originalStart - availableLead;
     } else {
-      const gapBefore = group.startMs - prevGroup.endMs;
-      if (gapBefore > paddingMs * 2) {
-        startMs = Math.max(minStartMs, group.startMs - Math.min(paddingMs, gapBefore / 3));
+      const gapBefore = originalStart - prevGroup.endMs;
+      if (gapBefore > paddingMs + safetyMarginMs) {
+        startMs = originalStart - Math.min(paddingMs, gapBefore / 3);
       }
     }
     
-    if (nextGroup) {
-      const gapAfter = nextGroup.startMs - group.endMs;
-      const availablePad = Math.max(0, gapAfter - safetyMarginMs);
-      endMs = group.endMs + Math.min(paddingMs, availablePad);
-    } else {
-      endMs = group.endMs + paddingMs;
+    if (absoluteMaxEnd > originalEnd) {
+      const availableTrail = absoluteMaxEnd - originalEnd;
+      endMs = originalEnd + Math.min(paddingMs, availableTrail);
     }
     
-    if (endMs - startMs < minDurationMs) {
-      const targetEnd = startMs + minDurationMs;
-      endMs = Math.min(targetEnd, maxEndMs);
-    }
-    
-    if (endMs <= startMs) {
-      endMs = startMs + Math.min(minDurationMs, maxEndMs - startMs);
-    }
-    
-    if (endMs <= startMs) {
-      endMs = startMs + 50;
+    if (startMs < 0) startMs = 0;
+    if (endMs < originalEnd) endMs = originalEnd;
+    if (endMs > absoluteMaxEnd && absoluteMaxEnd >= originalEnd) {
+      endMs = absoluteMaxEnd;
     }
     
     return { ...group, startMs, endMs };
