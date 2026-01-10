@@ -1,6 +1,6 @@
 import { useRoute, useLocation, useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Loader2, Globe, ExternalLink, AlertCircle, CheckCircle, Mail, MessageCircle, LayoutDashboard, Share2 } from "lucide-react";
+import { Loader2, Globe, ExternalLink, AlertCircle, CheckCircle, Mail, MessageCircle, LayoutDashboard, Share2, FileText } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -1612,7 +1612,42 @@ export default function OrbitView() {
     );
   }
   
+  const generationStatus = viewerContext?.generationStatus;
+  const isBlocked = generationStatus === 'blocked';
+  
   if (!preview?.siteIdentity) {
+    // If the site was blocked (bot protection), show helpful options
+    if (isBlocked) {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center px-4">
+          <div className="text-center space-y-6 max-w-md">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Globe className="h-8 w-8 text-amber-400" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-xl font-semibold text-zinc-100">Website Uses Bot Protection</h1>
+              <p className="text-zinc-400">
+                This website blocks automated access. You can still create your Orbit by adding content manually.
+              </p>
+            </div>
+            <div className="space-y-3 pt-4">
+              <Button 
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={() => window.location.href = `/orbit/${slug}/import`}
+                data-testid="button-manual-import"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Add Content Manually
+              </Button>
+              <p className="text-xs text-zinc-500">
+                Copy and paste your business info, upload a CSV, or connect your accounts
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
