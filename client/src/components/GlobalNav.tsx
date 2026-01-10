@@ -98,7 +98,7 @@ export default function GlobalNav({
         "sticky top-0 z-50 border-b",
         transparent 
           ? "bg-transparent border-transparent" 
-          : "bg-gradient-to-r from-black via-neutral-950 to-black border-white/5 backdrop-blur-md"
+          : "bg-background/95 dark:bg-gradient-to-r dark:from-black dark:via-neutral-950 dark:to-black border-border backdrop-blur-md"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -215,21 +215,21 @@ export default function GlobalNav({
                       <ChevronDown className="w-3.5 h-3.5 text-white/50 hidden sm:block" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-neutral-900 border-white/10">
-                    <div className="px-2 py-1.5 border-b border-white/10">
-                      <p className="text-sm font-medium text-white">{user.username}</p>
+                  <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
+                    <div className="px-2 py-1.5 border-b border-border">
+                      <p className="text-sm font-medium text-foreground">{user.username}</p>
                       {user.isAdmin && (
-                        <p className="text-[10px] text-white/50">Admin</p>
+                        <p className="text-[10px] text-muted-foreground">Admin</p>
                       )}
                     </div>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="cursor-pointer text-white/80 hover:text-white" data-testid="global-menu-profile">
+                      <Link href="/profile" className="cursor-pointer" data-testid="global-menu-profile">
                         <User className="w-4 h-4 mr-2" />
                         My Account
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orbit/my" className="cursor-pointer text-white/80 hover:text-white" data-testid="global-menu-orbits">
+                      <Link href="/orbit/my" className="cursor-pointer" data-testid="global-menu-orbits">
                         <Orbit className="w-4 h-4 mr-2" />
                         My Orbits
                       </Link>
@@ -237,7 +237,7 @@ export default function GlobalNav({
                     {onStartTour && (
                       <DropdownMenuItem 
                         onClick={onStartTour} 
-                        className="cursor-pointer text-white/80 hover:text-white" 
+                        className="cursor-pointer" 
                         data-testid="global-menu-tour"
                       >
                         <Compass className="w-4 h-4 mr-2" />
@@ -246,16 +246,16 @@ export default function GlobalNav({
                     )}
                     {user.isAdmin && (
                       <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer text-white/80 hover:text-white" data-testid="global-menu-admin">
+                        <Link href="/admin" className="cursor-pointer" data-testid="global-menu-admin">
                           <Sparkles className="w-4 h-4 mr-2" />
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={toggleTheme} 
-                      className="cursor-pointer text-white/80 hover:text-white"
+                      className="cursor-pointer"
                       data-testid="global-menu-theme"
                     >
                       {theme === 'dark' ? (
@@ -303,15 +303,15 @@ export default function GlobalNav({
       </div>
 
       {mobileMenuOpen && !minimal && (
-        <div className="md:hidden bg-black/95 border-t border-white/10 px-4 py-3 space-y-1">
+        <div className="md:hidden bg-background/95 dark:bg-black/95 border-t border-border px-4 py-3 space-y-1">
           {quickLinks.map((link) => {
             const isActive = context === link.context;
             return (
               <Link key={link.href} href={link.href}>
                 <div 
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer",
-                    isActive && "text-white bg-white/10"
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer",
+                    isActive && "text-foreground bg-muted"
                   )}
                   onClick={() => setMobileMenuOpen(false)}
                   data-testid={`global-mobile-${link.context}`}
@@ -325,11 +325,11 @@ export default function GlobalNav({
           
           {context === 'marketing' && (
             <>
-              <div className="border-t border-white/10 my-2" />
+              <div className="border-t border-border my-2" />
               {audienceLinks.map((link) => (
                 <Link key={link.href} href={link.href}>
                   <div 
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                     onClick={() => setMobileMenuOpen(false)}
                     data-testid={`global-mobile-${link.href.split('/').pop()}`}
                   >
@@ -343,10 +343,10 @@ export default function GlobalNav({
           
           {user?.isAdmin && (
             <>
-              <div className="border-t border-white/10 my-2" />
+              <div className="border-t border-border my-2" />
               <Link href="/admin">
                 <div 
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                   onClick={() => setMobileMenuOpen(false)}
                   data-testid="global-mobile-admin"
                 >
@@ -359,7 +359,7 @@ export default function GlobalNav({
           
           {user && (
             <div 
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
               onClick={toggleTheme}
               data-testid="global-mobile-theme"
             >

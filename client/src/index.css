@@ -67,6 +67,41 @@
   --radius: 0.5rem;
 }
 
+/* Light Mode */
+.light {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 10%;
+
+  --primary: 263 50% 45%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 10% 10%;
+
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 5% 40%;
+
+  --accent: 263 50% 45%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 240 5% 90%;
+  --input: 240 5% 90%;
+  --ring: 263 50% 45%;
+}
+
+.light body {
+  background-image: none;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
