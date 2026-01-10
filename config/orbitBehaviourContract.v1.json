@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "version": "1.0.0",
+  "title": "NextMonth Orbit Behaviour Contract",
+  "description": "30-item contract defining expected Orbit system behaviours with evidence-based verification",
+  "lastUpdated": "2026-01-10",
+  "categories": {
+    "chat_core": "Core chat functionality",
+    "view_engine": "View Engine structured responses",
+    "tile_system": "Topic tile generation and display",
+    "orbit_navigation": "Navigation and routing",
+    "theme_system": "Theme and visual consistency",
+    "data_persistence": "Data storage and caching",
+    "security": "Access control and validation",
+    "performance": "Response times and limits"
+  },
+  "items": [
+    {
+      "id": "CHAT_001",
+      "category": "chat_core",
+      "title": "Chat bubble renders on public orbit page",
+      "description": "Central chat bubble component appears on /orbit/:slug public pages",
+      "severity": "critical",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_chat_bubble_rendered",
+      "endpoint": null,
+      "component": "OrbitChatBubble"
+    },
+    {
+      "id": "CHAT_002",
+      "category": "chat_core",
+      "title": "Chat accepts user message input",
+      "description": "User can type and submit messages to the Orbit chat",
+      "severity": "critical",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_chat_message_sent",
+      "endpoint": "POST /api/orbit/:slug/chat",
+      "component": "OrbitChatInput"
+    },
+    {
+      "id": "CHAT_003",
+      "category": "chat_core",
+      "title": "Chat returns AI response",
+      "description": "AI generates contextual response based on Orbit knowledge",
+      "severity": "critical",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_chat_response_received",
+      "endpoint": "POST /api/orbit/:slug/chat",
+      "component": null
+    },
+    {
+      "id": "CHAT_004",
+      "category": "chat_core",
+      "title": "Business-type-aware prompting",
+      "description": "Chat system prompt adapts based on Orbit business type",
+      "severity": "high",
+      "evidenceType": "api_metadata",
+      "evidenceKey": "nm_business_type_detected",
+      "endpoint": "POST /api/orbit/:slug/chat",
+      "component": null
+    },
+    {
+      "id": "CHAT_005",
+      "category": "chat_core",
+      "title": "Echo mode for testimonial capture",
+      "description": "Positive sentiment triggers echo response for testimonial collection",
+      "severity": "medium",
+      "evidenceType": "api_metadata",
+      "evidenceKey": "nm_echo_triggered",
+      "endpoint": "POST /api/orbit/:slug/chat",
+      "component": null
+    },
+    {
+      "id": "VIEW_001",
+      "category": "view_engine",
+      "title": "Compare view renders structured comparison",
+      "description": "View Engine renders compare template with product/service comparison",
+      "severity": "high",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_view_compare_rendered",
+      "endpoint": null,
+      "component": "ViewCompare"
+    },
+    {
+      "id": "VIEW_002",
+      "category": "view_engine",
+      "title": "Shortlist view renders item collection",
+      "description": "View Engine renders shortlist template with filtered items",
+      "severity": "high",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_view_shortlist_rendered",
+      "endpoint": null,
+      "component": "ViewShortlist"
+    },
+    {
+      "id": "VIEW_003",
+      "category": "view_engine",
+      "title": "Checklist view renders actionable items",
+      "description": "View Engine renders checklist template with checkable items",
+      "severity": "high",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_view_checklist_rendered",
+      "endpoint": null,
+      "component": "ViewChecklist"
+    },
+    {
+      "id": "VIEW_004",
+      "category": "view_engine",
+      "title": "Pulse view renders trend/insight data",
+      "description": "View Engine renders pulse template with trend information",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_view_pulse_rendered",
+      "endpoint": null,
+      "component": "ViewPulse"
+    },
+    {
+      "id": "VIEW_005",
+      "category": "view_engine",
+      "title": "Turn into ICE button for privileged users",
+      "description": "Admin/influencer users see 'Turn into ICE' button on View Engine outputs",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_ice_draft_button_rendered",
+      "endpoint": null,
+      "component": "IceDraftButton"
+    },
+    {
+      "id": "TILE_001",
+      "category": "tile_system",
+      "title": "Website ingestion generates minimum 12 tiles",
+      "description": "URL ingestion produces at least 12 topic tiles per Orbit",
+      "severity": "high",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_tile_count",
+      "endpoint": "POST /api/orbit/:slug/ingest-url",
+      "component": null,
+      "validation": {
+        "minValue": 12
+      }
+    },
+    {
+      "id": "TILE_002",
+      "category": "tile_system",
+      "title": "Tiles display with confidence levels",
+      "description": "Each tile shows confidence indicator (high/medium/low)",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_tile_confidence_rendered",
+      "endpoint": null,
+      "component": "TileCard"
+    },
+    {
+      "id": "TILE_003",
+      "category": "tile_system",
+      "title": "Tiles categorized into groups",
+      "description": "Tiles organized by category (Insights, Services, FAQs, Proof, Recommendations)",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_tile_categories_rendered",
+      "endpoint": null,
+      "component": "TileGrid"
+    },
+    {
+      "id": "TILE_004",
+      "category": "tile_system",
+      "title": "Tile drawer shows detailed content",
+      "description": "Clicking tile opens drawer with full content and sources",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_tile_drawer_opened",
+      "endpoint": null,
+      "component": "TileDrawer"
+    },
+    {
+      "id": "TILE_005",
+      "category": "tile_system",
+      "title": "Tiles scoped to specific Orbit",
+      "description": "Each Orbit has isolated tile storage, no cross-contamination",
+      "severity": "critical",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_tile_isolation",
+      "endpoint": "GET /api/orbit/:slug/tiles",
+      "component": null
+    },
+    {
+      "id": "NAV_001",
+      "category": "orbit_navigation",
+      "title": "Public Orbit page loads at /orbit/:slug",
+      "description": "Public-facing Orbit pages accessible without authentication",
+      "severity": "critical",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_route_orbit_public",
+      "endpoint": "/orbit/:slug",
+      "component": "OrbitPublicPage"
+    },
+    {
+      "id": "NAV_002",
+      "category": "orbit_navigation",
+      "title": "Import page at /orbit/:slug/import",
+      "description": "Catalogue import accessible for Orbit owners",
+      "severity": "high",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_route_orbit_import",
+      "endpoint": "/orbit/:slug/import",
+      "component": "CatalogueImport"
+    },
+    {
+      "id": "NAV_003",
+      "category": "orbit_navigation",
+      "title": "Settings page at /orbit/:slug/settings",
+      "description": "Orbit settings accessible for owners",
+      "severity": "high",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_route_orbit_settings",
+      "endpoint": "/orbit/:slug/settings",
+      "component": "OrbitSettings"
+    },
+    {
+      "id": "NAV_004",
+      "category": "orbit_navigation",
+      "title": "DataHub page at /orbit/:slug/datahub",
+      "description": "DataHub accessible for Orbit data management",
+      "severity": "high",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_route_orbit_datahub",
+      "endpoint": "/orbit/:slug/datahub",
+      "component": "OrbitDataHub"
+    },
+    {
+      "id": "NAV_005",
+      "category": "orbit_navigation",
+      "title": "Launchpad accessible at /launchpad",
+      "description": "Launchpad hub renders Orbit metrics and IceMaker access",
+      "severity": "high",
+      "evidenceType": "route_exists",
+      "evidenceKey": "nm_route_launchpad",
+      "endpoint": "/launchpad",
+      "component": "Launchpad"
+    },
+    {
+      "id": "THEME_001",
+      "category": "theme_system",
+      "title": "Global theme toggle works",
+      "description": "App-wide light/dark mode switching persists across sessions",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_theme_toggle_rendered",
+      "endpoint": null,
+      "component": "ThemeToggle"
+    },
+    {
+      "id": "THEME_002",
+      "category": "theme_system",
+      "title": "Orbit pages use calm neutral baseline",
+      "description": "Public Orbit pages follow 90/9/1 color rule with monochrome surfaces",
+      "severity": "medium",
+      "evidenceType": "visual_audit",
+      "evidenceKey": "nm_theme_baseline",
+      "endpoint": null,
+      "component": null
+    },
+    {
+      "id": "THEME_003",
+      "category": "theme_system",
+      "title": "Orbit isolated theme controls",
+      "description": "Public Orbit pages have independent theme from app pages",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_orbit_theme_isolated",
+      "endpoint": null,
+      "component": "OrbitThemeProvider"
+    },
+    {
+      "id": "DATA_001",
+      "category": "data_persistence",
+      "title": "Tiles cached for 24 hours",
+      "description": "Ingestion results cached per Orbit with 24hr freshness window",
+      "severity": "medium",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_cache_check",
+      "endpoint": "POST /api/orbit/:slug/ingest-url",
+      "component": null
+    },
+    {
+      "id": "DATA_002",
+      "category": "data_persistence",
+      "title": "Orbit settings persist",
+      "description": "Orbit settings saved to database and retrieved correctly",
+      "severity": "high",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_settings_saved",
+      "endpoint": "PUT /api/orbit/:slug/settings",
+      "component": null
+    },
+    {
+      "id": "DATA_003",
+      "category": "data_persistence",
+      "title": "Chat history preserved",
+      "description": "Conversation history maintained within session",
+      "severity": "medium",
+      "evidenceType": "render_event",
+      "evidenceKey": "nm_chat_history_rendered",
+      "endpoint": null,
+      "component": "ChatHistory"
+    },
+    {
+      "id": "SEC_001",
+      "category": "security",
+      "title": "Orbit existence validated",
+      "description": "API endpoints verify Orbit exists before processing",
+      "severity": "critical",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_orbit_validated",
+      "endpoint": "POST /api/orbit/:slug/ingest-url",
+      "component": null
+    },
+    {
+      "id": "SEC_002",
+      "category": "security",
+      "title": "Rate limiting applied",
+      "description": "API endpoints enforce rate limits per IP",
+      "severity": "high",
+      "evidenceType": "deterministic",
+      "evidenceKey": "nm_rate_limit_check",
+      "endpoint": null,
+      "component": null
+    },
+    {
+      "id": "PERF_001",
+      "category": "performance",
+      "title": "Chat response under 5 seconds",
+      "description": "AI chat responses return within acceptable latency",
+      "severity": "medium",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_response_time_ms",
+      "endpoint": "POST /api/orbit/:slug/chat",
+      "component": null,
+      "validation": {
+        "maxValue": 5000
+      }
+    },
+    {
+      "id": "PERF_002",
+      "category": "performance",
+      "title": "Tile ingestion under 30 seconds",
+      "description": "Website crawl and tile generation completes within limit",
+      "severity": "medium",
+      "evidenceType": "api_response",
+      "evidenceKey": "nm_ingestion_time_ms",
+      "endpoint": "POST /api/orbit/:slug/ingest-url",
+      "component": null,
+      "validation": {
+        "maxValue": 30000
+      }
+    }
+  ],
+  "severityLevels": {
+    "critical": {
+      "description": "System unusable if failing",
+      "slaHours": 1,
+      "color": "red"
+    },
+    "high": {
+      "description": "Major feature degradation",
+      "slaHours": 4,
+      "color": "orange"
+    },
+    "medium": {
+      "description": "Feature works but impaired",
+      "slaHours": 24,
+      "color": "yellow"
+    },
+    "low": {
+      "description": "Minor inconvenience",
+      "slaHours": 72,
+      "color": "gray"
+    }
+  },
+  "evidenceTypes": {
+    "render_event": "Client-side component render confirmation via nm_render_event",
+    "api_response": "Server response includes nm_* metadata with evidence",
+    "api_metadata": "Server response metadata contains specific field",
+    "deterministic": "Automated check verifies behaviour programmatically",
+    "route_exists": "Route registered in router and accessible",
+    "visual_audit": "Manual/automated visual verification required"
+  }
+}
