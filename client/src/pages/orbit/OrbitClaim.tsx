@@ -1,5 +1,5 @@
 import { type ComponentType, Fragment } from "react";
-import { Building2, Globe, Loader2, AlertCircle, ClipboardPaste, FileSpreadsheet, Link2, Shield, UtensilsCrossed, ShoppingCart, Briefcase, BookOpen, FileText, MapPin, Sparkles, ArrowLeft, Check, ArrowRight, X, Clock, Zap, Upload, ExternalLink, Code, FileCode, ChevronRight } from "lucide-react";
+import { Building2, Globe, Loader2, AlertCircle, ClipboardPaste, FileSpreadsheet, Link2, Shield, UtensilsCrossed, ShoppingCart, Briefcase, BookOpen, FileText, MapPin, Sparkles, ArrowLeft, Check, ArrowRight, X, Clock, Zap, Upload, ExternalLink, Code, FileCode, ChevronRight, Mail, CheckCircle, Headphones } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +110,11 @@ export default function OrbitClaim() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [powerUpResult, setPowerUpResult] = useState<{ planTier: string; strengthScore: number } | null>(null);
   const [powerUpError, setPowerUpError] = useState("");
+  
+  // Priority Setup (white glove service) state
+  const [showPrioritySetup, setShowPrioritySetup] = useState(false);
+  const [priorityForm, setPriorityForm] = useState({ name: '', email: '', phone: '', notes: '' });
+  const [priorityStatus, setPriorityStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   const MAX_SELECTIONS = 3;
 
@@ -182,6 +187,23 @@ export default function OrbitClaim() {
     onError: (err: Error) => {
       setError(err.message);
     },
+  });
+
+  // Priority Setup (white glove service) mutation
+  const submitPrioritySetup = useMutation({
+    mutationFn: async (data: { name: string; email: string; phone: string; notes: string }) => {
+      const businessSlug = blockedData?.businessSlug;
+      if (!businessSlug) throw new Error('No business slug');
+      const response = await fetch(`/api/orbit/${businessSlug}/priority-setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to submit');
+      return response.json();
+    },
+    onSuccess: () => setPriorityStatus('sent'),
+    onError: () => setPriorityStatus('error'),
   });
 
   const handleContinue = () => {
@@ -686,6 +708,117 @@ export default function OrbitClaim() {
                 <ChevronRight className="w-5 h-5 text-white/40" />
               </div>
             </button>
+
+            {/* Priority Setup Service - White glove option */}
+            {!showPrioritySetup ? (
+              <button
+                onClick={() => setShowPrioritySetup(true)}
+                className="w-full p-4 rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/5 to-purple-500/5 hover:from-pink-500/10 hover:to-purple-500/10 text-left transition-all focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                data-testid="button-priority-setup"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0 ring-1 ring-pink-500/50">
+                      <Headphones className="w-5 h-5 text-pink-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">Let us do it for you</span>
+                        <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 text-xs font-medium ring-1 ring-pink-500/30">
+                          Free
+                        </span>
+                      </div>
+                      <span className="text-white/50 text-sm">We'll set up your Orbit within 24 hours</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-pink-400" />
+                </div>
+              </button>
+            ) : priorityStatus === 'sent' ? (
+              <div className="p-6 rounded-xl border border-green-500/30 bg-gradient-to-r from-green-500/5 to-emerald-500/5 text-center space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-full bg-green-500/10 flex items-center justify-center ring-1 ring-green-500/30">
+                  <CheckCircle className="h-6 w-6 text-green-400" />
+                </div>
+                <h2 className="text-lg font-medium text-white">Request Received!</h2>
+                <p className="text-white/60 text-sm">
+                  We'll be in touch within 24 hours to set up your Orbit.
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/5 to-purple-500/5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0 ring-1 ring-pink-500/50">
+                    <Headphones className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h2 className="font-medium text-white">Priority Setup Request</h2>
+                    <p className="text-sm text-white/50">Share your details and we'll build your Orbit for you.</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Your name"
+                    value={priorityForm.name}
+                    onChange={(e) => setPriorityForm(f => ({ ...f, name: e.target.value }))}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    data-testid="input-priority-name"
+                  />
+                  <Input
+                    placeholder="Email address"
+                    type="email"
+                    value={priorityForm.email}
+                    onChange={(e) => setPriorityForm(f => ({ ...f, email: e.target.value }))}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    data-testid="input-priority-email"
+                  />
+                  <Input
+                    placeholder="Phone (optional)"
+                    type="tel"
+                    value={priorityForm.phone}
+                    onChange={(e) => setPriorityForm(f => ({ ...f, phone: e.target.value }))}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    data-testid="input-priority-phone"
+                  />
+                  <textarea
+                    placeholder="Tell us about your business..."
+                    value={priorityForm.notes}
+                    onChange={(e) => setPriorityForm(f => ({ ...f, notes: e.target.value }))}
+                    className="w-full h-20 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                    data-testid="input-priority-notes"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 text-white/60 hover:text-white hover:bg-white/10"
+                    onClick={() => setShowPrioritySetup(false)}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+                    onClick={() => {
+                      setPriorityStatus('sending');
+                      submitPrioritySetup.mutate(priorityForm);
+                    }}
+                    disabled={!priorityForm.name || !priorityForm.email || priorityStatus === 'sending'}
+                    data-testid="button-submit-priority"
+                  >
+                    {priorityStatus === 'sending' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Request Setup'
+                    )}
+                  </Button>
+                </div>
+                {priorityStatus === 'error' && (
+                  <p className="text-sm text-red-400 text-center">Something went wrong. Please try again.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Try another page */}
