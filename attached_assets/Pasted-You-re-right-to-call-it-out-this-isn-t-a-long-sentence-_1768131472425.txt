@@ -1,0 +1,107 @@
+You’re right to call it out: this isn’t a “long sentence” problem. It’s a layout contract problem.
+
+Right now the engine is doing this:
+	•	Keeping the panel width relatively narrow (maxWidth)
+	•	Keeping the font size relatively large
+	•	Clamping to 2–3 lines
+	•	Centring everything
+
+So even a short phrase can end up with ugly breaks if the available line width is too small for the chosen font size.
+
+We fix it by giving the caption system a clear hierarchy of constraints, instead of letting the browser improvise.
+
+The correct hierarchy (CapCut-style)
+	1.	Never break inside words (unless it’s a monster word)
+	2.	Prefer 2 lines for headline
+	3.	If it doesn’t fit, widen the panel a bit
+	4.	If it still doesn’t fit, reduce font size slightly
+	5.	Only then allow 3 lines
+	6.	Last resort: clamp (ellipsis), but not for normal headlines
+
+That’s the behaviour you want.
+
+⸻
+
+What we’re going to do (concrete)
+
+1) Make the panel wider for headlines
+
+Your panel maxWidth is probably ~82–92%. For big text, that can still be too tight because padding + border radius eats width.
+
+Set headline panel to something like:
+	•	maxWidth: '94%' (or even 96%)
+	•	and reduce padding slightly when text is short
+
+Example logic in resolveStyles():
+	•	short headline (<= 20 chars): comfy padding
+	•	medium (21–45): normal padding
+	•	long (>45): slightly reduced padding + slightly smaller font
+
+2) Introduce “fit to box” font scaling (simple heuristic)
+
+Instead of scaling based on total string length (which is crude), scale based on:
+	•	word count
+	•	longest word length
+	•	target lines
+
+Because “generative” is 10 chars and should never break, you treat it differently than a string with lots of short words.
+
+Heuristic that works well:
+	•	If longest word > 12, scale down a notch
+	•	If wordCount <= 4, prefer larger font and wider panel
+	•	If wordCount <= 6, cap at 2 lines and adjust font
+	•	If > 6, allow 3 lines
+
+3) Ensure wrapping rules are sane
+
+For headlines:
+	•	hyphens: none
+	•	wordBreak: normal
+	•	overflowWrap: break-word (not anywhere)
+
+This guarantees “generative” stays intact unless it literally cannot fit.
+
+⸻
+
+The actual change you should implement (drop-in plan)
+
+A) Add these measurements
+
+In resolveStyles():
+	•	const words = headline.trim().split(/\s+/)
+	•	const wordCount = words.length
+	•	const longestWord = Math.max(...words.map(w => w.length))
+
+B) Decide line clamp + scale
+	•	Default: 2 lines
+	•	If wordCount > 6, allow 3 lines
+	•	If longestWord >= 12, reduce fontScale 0.9
+	•	If longestWord >= 16, reduce fontScale 0.82
+
+C) Widen panel when you need room
+	•	If wordCount <= 6, set panel maxWidth: '96%'
+	•	Otherwise maxWidth: '92%'
+
+This alone will stop “generati / ve”.
+
+⸻
+
+Why this works
+
+Because the browser is currently being forced into a corner: it’s trying to satisfy a narrow container, big font, and clamp. So it breaks words.
+
+We stop the word breaking by giving it more room first (panel width), and only then adjusting font size and line count.
+
+⸻
+
+The punchline
+
+Short phrases should look heroic. If “As generative AI too…” can’t fit, then the system is currently optimised for the wrong constraint.
+
+So we’ll:
+	•	widen the box
+	•	scale intelligently
+	•	clamp by lines
+	•	never split ordinary words
+
+If you want, paste the current panelStyle values your resolver outputs (maxWidth + padding) and the headline font size it’s choosing on these examples, and I’ll give you the exact thresholds to use so it looks right across iPhone sizes.

@@ -13,6 +13,7 @@ export interface ResolveStylesInput {
   karaokeEnabled?: boolean;
   karaokeStyle?: KaraokeStyleId;
   textLength?: number;
+  headlineText?: string;
 }
 
 export interface ResolvedCaptionStyles {
@@ -31,6 +32,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     karaokeEnabled = false,
     karaokeStyle = "weight",
     textLength = 50,
+    headlineText = "",
   } = input;
 
   const preset = captionPresets[presetId] || captionPresets.clean_white;
@@ -41,9 +43,25 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
 
   const colorsAny = colors as any;
 
+  // Intelligent layout: analyze headline structure
+  const words = headlineText.trim().split(/\s+/).filter(w => w.length > 0);
+  const wordCount = words.length || Math.ceil(textLength / 6); // fallback estimate
+  const longestWord = words.length > 0 ? Math.max(...words.map(w => w.length)) : 10;
+
+  // Font scaling based on content structure (not just total length)
   const baseFontSize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
-  const fontScale = textLength > 110 ? 0.75 : textLength > 80 ? 0.85 : 1;
+  let fontScale = 1;
+  if (longestWord >= 16) fontScale = 0.82;
+  else if (longestWord >= 12) fontScale = 0.9;
+  else if (textLength > 110) fontScale = 0.75;
+  else if (textLength > 80) fontScale = 0.85;
   const adjustedFontSize = baseFontSize * fontScale;
+
+  // Line clamp based on word count
+  const lineClamp = wordCount > 6 ? 3 : 2;
+
+  // Panel width: wider for shorter headlines to prevent word breaks
+  const panelMaxWidth = wordCount <= 6 ? "96%" : "92%";
 
   const professionalTextShadow = colorsAny.shadow || "0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)";
   const glowShadow = "0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8)";
@@ -64,6 +82,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
 
   const panel: CSSProperties = {
     ...panelStyles,
+    maxWidth: panelMaxWidth,
   };
 
   const headline: CSSProperties = {
@@ -79,7 +98,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     margin: 0,
     display: "-webkit-box",
     WebkitBoxOrient: "vertical" as any,
-    WebkitLineClamp: 3,
+    WebkitLineClamp: lineClamp,
     overflow: "hidden",
     whiteSpace: "normal",
     wordBreak: "normal",
