@@ -42,9 +42,9 @@ export const colorTokens = {
   },
   neonBlue: {
     text: "#00FFFF",
-    stroke: "#00FFFF",
-    strokeWidth: 2,
-    shadow: "0 0 20px #00FFFF, 0 0 40px #00FFFF",
+    stroke: "#FFFFFF",
+    strokeWidth: 1,
+    shadow: "0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 40px rgba(0,255,255,0.5)",
   },
   gradientPurple: {
     text: "#FFFFFF",
