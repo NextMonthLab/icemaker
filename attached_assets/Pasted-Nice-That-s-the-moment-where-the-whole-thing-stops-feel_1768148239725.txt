@@ -1,0 +1,71 @@
+Nice. That’s the moment where the whole thing stops feeling “prototypey” and starts feeling like a real product. 👌🏻
+
+Now that the bubble geometry is correct, the remaining job is to make sure the text always fits inside it, even for absolute monster sentences. Here’s what I’d do next (in order), so this never regresses.
+
+1) Lock the contract in code (so nobody breaks it later)
+
+Add a tiny helper so both the fit engine and renderer literally share the same numbers:
+	•	panelWidthPx
+	•	paddingPx
+	•	safetyMargin = 0.92
+	•	availableTextWidth = (panelWidthPx - 2*paddingPx) * safetyMargin
+
+Then the renderer should always use:
+	•	bubble width = panelWidthPx (border-box)
+	•	bubble padding = paddingPx
+	•	text wrapper width = availableTextWidth (or 100% with an inner wrapper that applies the 0.92)
+
+If you do it as one shared function, nobody can “helpfully” tweak one side and not the other.
+
+2) Add hard “never clip” CSS (cheap insurance)
+
+Even with perfect widths, clipping can still happen from line-height, descenders, or a parent overflow.
+
+Make sure the bubble never clips its child text:
+	•	bubble: overflow: visible
+	•	text: whiteSpace: normal
+	•	text: overflowWrap: anywhere
+	•	text: wordBreak: break-word
+
+And give the text wrapper a touch of vertical breathing room:
+	•	lineHeight: 1.15 to 1.25 (pick one and keep it consistent)
+	•	paddingTop/paddingBottom if needed (a few px can stop the “g/j/y descender” crop)
+
+3) Decide your “long caption” policy (so it looks intentional)
+
+When captions get too long, you have 3 pro options. Pick one and enforce it:
+
+A) Auto-shrink font (what you’re doing now)
+Best for “always show everything”, but can get small.
+
+B) Max 2–3 lines, then split into two cards
+This looks most premium for social. It’s what CapCut vibes like.
+
+C) Max lines + ellipsis
+Only if the content is optional (usually not ideal for insights).
+
+For ICE cards, I’d go B: if it would need 4+ lines, split across cards automatically.
+
+4) Add a debug toggle for future you
+
+Add a dev flag like ?debugCaption=1 that draws:
+	•	bubble outline
+	•	available text area outline
+	•	shows the computed widths as text
+
+This saves hours later.
+
+5) Quick QA checklist (2 minutes, catches 90% of bugs)
+
+Test these captions:
+	•	One very long word (no spaces)
+	•	Lots of punctuation and brackets
+	•	Numbers + % + currency
+	•	Mixed case and “g/j/y” letters
+	•	1 line, 2 lines, 4+ lines
+
+If those pass, you’re basically done.
+
+⸻
+
+If you want, paste the current ScaleToFitCaption styles (bubble + text wrapper) and I’ll tell you the exact “final polish” settings (padding/line-height/safety margin) that will make it look consistently CapCut-level across all backgrounds.

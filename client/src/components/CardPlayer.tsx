@@ -96,7 +96,12 @@ export default function CardPlayer({
     if (!el) return;
 
     const updateWidth = () => {
-      setContainerWidthPx(el.offsetWidth);
+      // Use clientWidth and subtract padding to get actual content area
+      const style = getComputedStyle(el);
+      const paddingLeft = parseFloat(style.paddingLeft) || 0;
+      const paddingRight = parseFloat(style.paddingRight) || 0;
+      const contentWidth = el.clientWidth - paddingLeft - paddingRight;
+      setContainerWidthPx(contentWidth);
     };
 
     updateWidth();
