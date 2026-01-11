@@ -47,7 +47,6 @@ interface BrandPreferences {
   selectedImages: string[];
 }
 
-import { splitTextIntoHeadlineAndSupporting } from "@shared/titlePacks";
 
 interface CardPlayerProps {
   card: Card;
@@ -532,14 +531,13 @@ export default function CardPlayer({
                     {captionIndex < card.captions.length ? (
                       (() => {
                         const captionText = card.captions[captionIndex];
-                        const { headline, supporting } = splitTextIntoHeadlineAndSupporting(captionText);
                         
                         const styles = resolveStyles({
                           presetId: captionState?.presetId || 'clean_white',
                           fullScreen,
                           karaokeEnabled: captionState?.karaokeEnabled,
                           karaokeStyle: captionState?.karaokeStyle,
-                          headlineText: headline,
+                          headlineText: captionText,
                           layout: { containerWidthPx },
                         });
                         
@@ -557,16 +555,6 @@ export default function CardPlayer({
                               didFit={styles.headlineDidFit}
                               showDebug={showCaptionDebug}
                             />
-                            
-                            {supporting && (
-                              <p 
-                                className="max-w-[85%] text-center mx-auto"
-                                style={styles.supporting}
-                                data-testid="text-supporting"
-                              >
-                                {supporting}
-                              </p>
-                            )}
                           </div>
                         );
                       })()
