@@ -79,16 +79,28 @@ export function ScaleToFitCaption({
           justifyContent: "center",
           overflow: "hidden",
           minHeight: "60px",
+          padding: `${paddingPx}px`,
         }}
         data-testid="caption-panel"
       >
-        <p ref={textRef} className="m-0" style={baseTextStyle} data-testid="text-headline">
-          {lines.map((line, i) => (
-            <span key={i} style={{ display: 'block', whiteSpace: 'nowrap' }}>
-              {line}
-            </span>
-          ))}
-        </p>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            maxWidth: "90%",
+          }}
+        >
+          <p ref={textRef} className="m-0" style={baseTextStyle} data-testid="text-headline">
+            {lines.map((line, i) => (
+              <span key={i} style={{ display: 'block', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                {line}
+              </span>
+            ))}
+          </p>
+        </div>
       </div>
       {showDebug && (
         <div

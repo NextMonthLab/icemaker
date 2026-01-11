@@ -1,0 +1,162 @@
+Short answer: the engine is doing what it promised, but the presentation contract isn’t finished yet. What you’re seeing now isn’t a logic failure – it’s a layout finishing issue. Totally normal at this stage, and very fixable.
+
+Let me break this down plainly and then tell you exactly what to do next.
+
+⸻
+
+What’s actually happening (in plain English)
+
+1. The hard problem is solved
+
+Milestones 6 and 7 solved the hard, CapCut-level problems:
+	•	Text never breaks mid-word
+	•	Nothing overflows the box
+	•	No ellipses
+	•	Long captions scale down safely
+	•	Editorial line decisions are deterministic
+
+That’s the stuff most systems never get right. You’ve nailed that.
+
+⸻
+
+2. What’s wrong now is not the engine, it’s the box choreography
+
+From your screenshots, two things stand out:
+
+A. The text block is top-biased, not centred
+You’re seeing “unused space” in the panel because:
+	•	The text container is anchored from the top
+	•	The engine fits width + height, but doesn’t vertically centre the result
+
+CapCut always centres the caption block vertically inside the panel, even when the text is small.
+
+Right now, your system is saying:
+
+“The text fits, job done.”
+
+CapCut says:
+
+“The text fits — now centre it like a hero.”
+
+⸻
+
+B. Paragraph mode is doing its job, but it’s visually honest (maybe too honest)
+Paragraph mode is correctly showing all the content.
+
+But visually:
+	•	Smaller font
+	•	Tighter leading
+	•	More lines
+
+That makes the empty space feel more obvious unless the block is centred.
+
+So again: layout polish, not engine failure.
+
+⸻
+
+Are the rules being broken?
+
+No. And this is important.
+
+Let’s check against the locked contract:
+
+Rule	Status
+Words never split	✅
+No truncation	✅
+All text inside box	✅
+Aggressive shrink	✅
+Max lines respected	✅
+
+Nothing is violating Milestone 6 or 7.
+
+What’s missing is Milestone 7.5 (not a new engine, just layout intent).
+
+⸻
+
+The missing piece: Vertical Composition
+
+CapCut has an implicit rule you haven’t encoded yet:
+
+The caption block is vertically centred inside the panel, not top-flowed.
+
+Right now your structure is effectively:
+
+Panel
+ └─ Text block (natural height, top aligned)
+
+What you want is:
+
+Panel (flex)
+ └─ Text block (centred vertically + horizontally)
+
+
+⸻
+
+The fix (conceptually, not code-dumpy)
+
+You do not touch:
+	•	fitTextToBox
+	•	TitleComposer
+	•	measurement logic
+	•	scoring
+
+You only change the rendering container.
+
+Rendering intent should be:
+	•	Panel = fixed size
+	•	Inner caption wrapper = flex container
+	•	Text block = centred both axes
+
+In plain terms:
+
+“Whatever size the text ends up being, centre it in the box like a title card.”
+
+That alone will remove the “empty space at the bottom” feeling immediately.
+
+⸻
+
+One more subtle improvement (optional but very CapCut)
+
+CapCut also applies a max readable width, even when the panel is wide.
+
+That’s why captions feel chunky and balanced.
+
+So add:
+	•	A maxWidth on the text block (e.g. 85–90% of panel width)
+	•	Centre that block horizontally
+
+This prevents long paragraph lines from feeling stretched.
+
+⸻
+
+What I would do next (clear recommendation)
+
+✅ Do this next (small, high-impact)
+
+Call it Milestone 7.1 – Visual Composition
+	1.	Vertically centre the caption block inside the panel
+	2.	Horizontally centre the text block
+	3.	Add a max readable width for paragraph mode
+
+That’s it. No new engines. No new logic.
+
+⸻
+
+Reassurance (important)
+
+You are not going in circles.
+You are not failing to implement the research.
+You are past the hardest part.
+
+What you’re doing now is the same stage every pro motion tool hits:
+
+“It works… now make it feel right.”
+
+CapCut didn’t get this right in one pass either.
+
+If you want, next we can:
+	•	Define the exact “CapCut visual contract” (spacing, centring, max width)
+	•	Lock it as Milestone 7.1
+	•	Then move on to effects (typewriter, reveal, emphasis) without fear of regressions
+
+You’re closer than it feels.
