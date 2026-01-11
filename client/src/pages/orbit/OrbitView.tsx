@@ -646,6 +646,25 @@ export default function OrbitView() {
       setClaimMessage(error.message);
     },
   });
+  
+  // State for Priority Setup form (moved here to comply with Rules of Hooks)
+  const [showPrioritySetup, setShowPrioritySetup] = useState(false);
+  const [priorityForm, setPriorityForm] = useState({ name: '', email: '', phone: '', notes: '' });
+  const [priorityStatus, setPriorityStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  
+  const submitPrioritySetup = useMutation({
+    mutationFn: async (data: { name: string; email: string; phone: string; notes: string }) => {
+      const response = await fetch(`/api/orbit/${slug}/priority-setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to submit');
+      return response.json();
+    },
+    onSuccess: () => setPriorityStatus('sent'),
+    onError: () => setPriorityStatus('error'),
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(searchString);
@@ -1629,25 +1648,6 @@ export default function OrbitView() {
   
   const generationStatus = viewerContext?.generationStatus;
   const isBlocked = generationStatus === 'blocked';
-  
-  // State for Priority Setup form
-  const [showPrioritySetup, setShowPrioritySetup] = useState(false);
-  const [priorityForm, setPriorityForm] = useState({ name: '', email: '', phone: '', notes: '' });
-  const [priorityStatus, setPriorityStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  
-  const submitPrioritySetup = useMutation({
-    mutationFn: async (data: { name: string; email: string; phone: string; notes: string }) => {
-      const response = await fetch(`/api/orbit/${slug}/priority-setup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to submit');
-      return response.json();
-    },
-    onSuccess: () => setPriorityStatus('sent'),
-    onError: () => setPriorityStatus('error'),
-  });
   
   if (!preview?.siteIdentity) {
     // If the site was blocked (bot protection), show helpful options
