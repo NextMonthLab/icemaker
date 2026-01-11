@@ -1,0 +1,37 @@
+You are Claude Code. Do NOT make any code changes yet.
+
+Goal
+We keep seeing left-side caption clipping in ICE preview (“ing 58%…”). There was a PR/refactor for a unified caption geometry contract (geometry.ts etc.), but the bug persists. We suspect either:
+1) The unified geometry code is not actually in effect (merge/conflict resolution reverted call sites), or
+2) The preview is running a different branch/commit than expected, or
+3) There is still a second layout constraint path (nested padding/overflow/positioning) causing clipping.
+
+Task: Repo Verification (read-only)
+1) Identify whether the unified geometry contract exists in the repo:
+   - Find geometry.ts (or equivalent) path and list its exports.
+   - Confirm which files import it.
+
+2) Identify the ACTIVE caption sizing + rendering path:
+   - Find where caption font size is computed (likely titlePacks.ts calculateFontSize/getLayerStylesWithText).
+   - Find where captions are rendered in preview (CardPlayer.tsx + ScaleToFitCaption).
+   - For each, answer: does it use unified geometry, hardcoded 1080, preview scale factors, or DOM measurements?
+
+3) Identify layout constraints that can still clip:
+   - Find the DOM wrappers around ScaleToFitCaption in CardPlayer.
+   - List any nested horizontal padding (p-* plus px-*) and any overflow hidden ancestors.
+   - Confirm positioning approach (flex-centre in full-width wrapper vs left:50% translate).
+
+4) Output a “YES/NO” verdict:
+   - Is unified geometry currently being used end-to-end for both font sizing AND rendering?
+   - If NO, list exactly which file(s) are still using old logic and the line numbers.
+
+5) Output a minimal fix plan (no edits yet):
+   - The smallest set of file changes to ensure the preview path uses the unified geometry contract.
+   - Include file paths + line ranges.
+
+Important constraints
+- Do not propose “maxWidth: 100%” safety clamps as the main fix.
+- Do not rely on DOM measurement unless unavoidable.
+- Do not commit anything; just report.
+
+Start now by searching for the geometry contract file and listing all import references.

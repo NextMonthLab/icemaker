@@ -556,8 +556,6 @@ export default function CardPlayer({
             <div
               className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none"
               style={{
-                paddingLeft: `${captionGeometry.viewportPadding}px`,
-                paddingRight: `${captionGeometry.viewportPadding}px`,
                 paddingBottom: `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px`,
               }}
             >
