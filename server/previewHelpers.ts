@@ -2,6 +2,7 @@ import dns from "dns/promises";
 import { randomUUID } from "crypto";
 import type { SiteIdentity } from "@shared/schema";
 import { isBadImageUrl } from "./utils/mediaFilter";
+import { siteIngestionCache, siteIdentityCache, generateCacheKey } from "./services/scrapeCache";
 
 // SSRF protection: validate URL safety
 export async function validateUrlSafety(url: string): Promise<{ safe: boolean; error?: string; domain?: string }> {
@@ -48,27 +49,47 @@ export async function validateUrlSafety(url: string): Promise<{ safe: boolean; e
     return { safe: false, error: "IPv6 addresses are not allowed" };
   }
 
-  // DNS resolution check
-  try {
-    const addresses = await dns.lookup(hostname, { all: true });
-    for (const addr of addresses) {
-      const ip = addr.address;
-      if (addr.family === 4) {
-        if (
-          ip.startsWith('127.') ||
-          ip.startsWith('10.') ||
-          ip.startsWith('192.168.') ||
-          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) ||
-          ip.startsWith('169.254.') ||
-          ip.startsWith('0.')
-        ) {
-          return { safe: false, error: "URL resolves to a private network address" };
-        }
+  // DNS resolution check with exponential backoff retry
+  let addresses;
+  let lastError;
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      addresses = await dns.lookup(hostname, { all: true });
+      break; // Success, exit retry loop
+    } catch (dnsError: any) {
+      lastError = dnsError;
+      console.warn(`DNS lookup attempt ${attempt + 1}/${maxRetries} failed for ${hostname}:`, dnsError.code);
+
+      if (attempt < maxRetries - 1) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delayMs = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
-  } catch (dnsError) {
-    console.error("DNS lookup error:", dnsError);
+  }
+
+  if (!addresses) {
+    console.error("DNS lookup failed after retries:", lastError);
     return { safe: false, error: "Could not resolve URL hostname" };
+  }
+
+  // Check for private network addresses
+  for (const addr of addresses) {
+    const ip = addr.address;
+    if (addr.family === 4) {
+      if (
+        ip.startsWith('127.') ||
+        ip.startsWith('10.') ||
+        ip.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) ||
+        ip.startsWith('169.254.') ||
+        ip.startsWith('0.')
+      ) {
+        return { safe: false, error: "URL resolves to a private network address" };
+      }
+    }
   }
 
   // Extract domain (remove www. if present)
@@ -410,38 +431,73 @@ function extractServiceBullets(html: string): string[] {
   return bullets;
 }
 
+// Validate if a text is suitable for an FAQ question
+function isValidFaqQuestion(text: string): boolean {
+  const trimmed = text.trim();
+
+  // Invalid patterns
+  const invalidPatterns = [
+    /^(home|about|contact|menu|services?|products?|cart|checkout|login|sign.?up|register)$/i,
+    /^\d+$/,  // Pure numbers
+    /^[^a-z]+$/i,  // No letters
+    /<.*>/,  // HTML tags
+    /^(more|learn more|read more|click here|get started)$/i,  // Generic CTAs
+    /^(search|submit|send|subscribe)$/i,  // Form actions
+  ];
+
+  if (invalidPatterns.some(pattern => pattern.test(trimmed))) {
+    return false;
+  }
+
+  // Must have reasonable length
+  if (trimmed.length < 10 || trimmed.length > 150) {
+    return false;
+  }
+
+  // Must contain actual words (not just symbols/numbers)
+  const wordCount = trimmed.split(/\s+/).filter(word => /[a-z]{2,}/i.test(word)).length;
+  if (wordCount < 2) {
+    return false;
+  }
+
+  return true;
+}
+
 // Extract FAQ candidates (headings with ? or FAQ patterns)
 function extractFaqCandidates(html: string): string[] {
   const faqs: string[] = [];
-  
+
   // Remove nav, header, footer
   const mainContent = html
     .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
     .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
     .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "");
-  
+
   // Find headings with question marks
   const headingMatches = mainContent.match(/<h[1-6][^>]*>[^<]*\?[^<]*<\/h[1-6]>/gi) || [];
-  
+
   for (const h of headingMatches) {
     const textMatch = h.match(/>([^<]+)</);
     if (textMatch) {
       const text = cleanText(textMatch[1]);
-      if (text.length > 10 && text.length < 150 && !faqs.includes(text)) {
+      if (isValidFaqQuestion(text) && !faqs.includes(text)) {
         faqs.push(text);
         if (faqs.length >= 6) break;
       }
     }
   }
-  
-  // If no questions found, generate from service headings
+
+  // If no questions found, generate from service headings (with validation)
   if (faqs.length === 0) {
     const serviceHeadings = extractServiceHeadings(html);
     for (const heading of serviceHeadings.slice(0, 3)) {
-      faqs.push(`What is ${heading}?`);
+      if (isValidFaqQuestion(heading)) {
+        const question = `What is ${heading}?`;
+        faqs.push(question);
+      }
     }
   }
-  
+
   return faqs;
 }
 
@@ -965,6 +1021,7 @@ export interface IngestionStatusCallback {
 export interface IngestionOptions {
   onStatus?: IngestionStatusCallback;
   forceDeep?: boolean;
+  useCache?: boolean; // Default: true. Set false to bypass cache
 }
 
 // Lightweight site ingestion (max 4 pages, 80k chars total)
@@ -992,6 +1049,20 @@ export async function ingestSitePreview(
   
   const notify = options.onStatus || (() => {});
   const forceDeep = options.forceDeep || false;
+  const useCache = options.useCache !== false; // Default to true
+
+  // Check cache first (unless forceDeep or cache disabled)
+  if (useCache && !forceDeep) {
+    const cacheKey = generateCacheKey(url);
+    const cached = siteIngestionCache.get(cacheKey);
+
+    if (cached) {
+      console.log(`[Ingestion] Using cached result for ${url}`);
+      const stats = siteIngestionCache.getStats();
+      console.log(`[ScrapeCache] Stats: ${stats.hitRate} hit rate, ${stats.size}/${stats.maxSize} entries`);
+      return cached;
+    }
+  }
 
   let totalChars = 0;
   let pagesIngested = 0;
@@ -1083,11 +1154,18 @@ export async function ingestSitePreview(
     if (!usedDeepScraping) {
       console.log('[Ingestion] Enhancing with deep extraction...');
       notify('deep_scraping', 'Rendering page content for best results...');
-      
+
       try {
         const { deepScrapeUrl } = await import('./services/deepScraper');
-        const deepResult = await deepScrapeUrl(url);
-        
+
+        // Add timeout handling for enhancement pass (30 seconds)
+        const enhancementPromise = deepScrapeUrl(url);
+        const timeoutPromise = new Promise<any>((_, reject) =>
+          setTimeout(() => reject(new Error('Enhancement timeout after 30s')), 30000)
+        );
+
+        const deepResult = await Promise.race([enhancementPromise, timeoutPromise]);
+
         // Skip enhancement if deep scrape returned an error
         if (deepResult.error) {
           console.log(`[Ingestion] Deep scrape enhancement skipped due to error: ${deepResult.error}`);
@@ -1163,7 +1241,7 @@ export async function ingestSitePreview(
 
     notify('complete', 'Ready!');
 
-    return {
+    const result = {
       title: title || new URL(url).hostname,
       summary: summary || "Business website",
       keyServices: keyServices.slice(0, 5),
@@ -1172,6 +1250,15 @@ export async function ingestSitePreview(
       siteIdentity,
       usedDeepScraping,
     };
+
+    // Cache the result for future requests
+    if (useCache) {
+      const cacheKey = generateCacheKey(url);
+      siteIngestionCache.set(cacheKey, result);
+      console.log(`[Ingestion] Cached result for ${url} (TTL: 24h)`);
+    }
+
+    return result;
   } catch (error: any) {
     console.error("Site ingestion error:", error);
     throw new Error(`Failed to ingest site: ${error.message}`);
