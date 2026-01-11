@@ -66,9 +66,26 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const professionalTextShadow = colorsAny.shadow || "0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)";
   const glowShadow = "0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8)";
   
-  // Only apply text shadow when there's no solid background
-  // Solid backgrounds don't need shadow - it makes text blurry
-  const hasBackground = preset.background !== 'none';
+  // Determine if text color is light or dark using luminance
+  // Dark shadow only makes sense on light text - dark shadow on dark text is unreadable
+  const isLightText = (() => {
+    const textColor = colors.text;
+    if (!textColor || typeof textColor !== 'string') return true;
+    
+    // Parse hex color
+    let hex = textColor.replace('#', '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    
+    // Calculate relative luminance (simplified)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5; // Light text if luminance > 50%
+  })();
 
   const panelStyles = getBackgroundCSS(preset.background, {
     pillColor: colorsAny.background,
@@ -139,7 +156,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     color: colors.text,
     textShadow: karaokeEnabled && karaokeStyle === "glow" 
       ? glowShadow 
-      : (hasBackground ? "none" : professionalTextShadow),
+      : (isLightText ? professionalTextShadow : "none"),
     WebkitTextStroke: colorsAny.stroke ? `${colorsAny.strokeWidth || 1}px ${colorsAny.stroke}` : undefined,
     margin: 0,
     textAlign: "center",
