@@ -1,12 +1,12 @@
 export type TitleComposeOptions = {
-  maxLines?: 1 | 2 | 3;
+  maxLines?: 1 | 2 | 3 | 4 | 5;
   targetWordsPerLine?: [number, number];
   allowSingleWordLineForNumbers?: boolean;
 };
 
 const DEFAULT_OPTIONS: Required<TitleComposeOptions> = {
-  maxLines: 3,
-  targetWordsPerLine: [2, 4],
+  maxLines: 5,
+  targetWordsPerLine: [2, 5],
   allowSingleWordLineForNumbers: true,
 };
 
@@ -68,24 +68,60 @@ function scoreSplit(lines: string[], opts: Required<TitleComposeOptions>): numbe
 
 function generateCandidateSplits(words: string[], maxLines: number): string[][] {
   const results: string[][] = [];
+  const n = words.length;
 
   results.push([words.join(' ')]);
 
-  if (maxLines >= 2 && words.length >= 2) {
-    for (let i = 1; i < words.length; i++) {
-      const line1 = words.slice(0, i).join(' ');
-      const line2 = words.slice(i).join(' ');
-      results.push([line1, line2]);
+  if (maxLines >= 2 && n >= 2) {
+    for (let i = 1; i < n; i++) {
+      results.push([
+        words.slice(0, i).join(' '),
+        words.slice(i).join(' ')
+      ]);
     }
   }
 
-  if (maxLines >= 3 && words.length >= 3) {
-    for (let i = 1; i < words.length - 1; i++) {
-      for (let j = i + 1; j < words.length; j++) {
-        const line1 = words.slice(0, i).join(' ');
-        const line2 = words.slice(i, j).join(' ');
-        const line3 = words.slice(j).join(' ');
-        results.push([line1, line2, line3]);
+  if (maxLines >= 3 && n >= 3) {
+    for (let i = 1; i < n - 1; i++) {
+      for (let j = i + 1; j < n; j++) {
+        results.push([
+          words.slice(0, i).join(' '),
+          words.slice(i, j).join(' '),
+          words.slice(j).join(' ')
+        ]);
+      }
+    }
+  }
+
+  if (maxLines >= 4 && n >= 4) {
+    for (let i = 1; i < n - 2; i++) {
+      for (let j = i + 1; j < n - 1; j++) {
+        for (let k = j + 1; k < n; k++) {
+          results.push([
+            words.slice(0, i).join(' '),
+            words.slice(i, j).join(' '),
+            words.slice(j, k).join(' '),
+            words.slice(k).join(' ')
+          ]);
+        }
+      }
+    }
+  }
+
+  if (maxLines >= 5 && n >= 5) {
+    for (let i = 1; i < n - 3; i++) {
+      for (let j = i + 1; j < n - 2; j++) {
+        for (let k = j + 1; k < n - 1; k++) {
+          for (let l = k + 1; l < n; l++) {
+            results.push([
+              words.slice(0, i).join(' '),
+              words.slice(i, j).join(' '),
+              words.slice(j, k).join(' '),
+              words.slice(k, l).join(' '),
+              words.slice(l).join(' ')
+            ]);
+          }
+        }
       }
     }
   }

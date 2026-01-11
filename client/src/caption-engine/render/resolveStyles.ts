@@ -68,7 +68,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const containerWidth = layout?.containerWidthPx || 375;
 
   const fitSettings: FitSettings = {
-    maxLines: 3,
+    maxLines: 5,
     panelMaxWidthPercent: 92,
     baseFontSize: baseFontSize,
     minFontSize: minFontSize,
@@ -80,7 +80,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
 
   let fitResult: FitResult;
   if (headlineText && headlineText.trim()) {
-    const composedLines = composeTitleLines(headlineText, { maxLines: 3 });
+    const composedLines = composeTitleLines(headlineText, { maxLines: 5 });
     const composedText = composedLines.join('\n');
     fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
     fitResult.lines = composedLines;
