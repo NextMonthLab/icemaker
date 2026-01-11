@@ -5,6 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import {
   Type,
   Sparkles,
@@ -259,9 +261,21 @@ export function CaptionStylePicker({
                   <Sparkles className="w-4 h-4 text-pink-400" />
                 </div>
                 <div>
-                  <Label htmlFor="karaoke-toggle" className="text-sm font-medium">
-                    Karaoke Mode
-                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="karaoke-toggle" className="text-sm font-medium">
+                      Karaoke Mode
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3.5 h-3.5 text-zinc-500 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[200px]">
+                          <p className="text-xs">Karaoke highlighting appears in exported videos only, not in the live preview.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <p className="text-xs text-zinc-500">Highlight words as they're spoken</p>
                 </div>
               </div>
