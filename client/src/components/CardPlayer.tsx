@@ -577,32 +577,22 @@ export default function CardPlayer({
             ═══════════════════════════════════════════════════════════════════════ */}
             {(() => {
               // Position settings: top/middle/bottom third of screen
+              // Using flexbox for reliable vertical positioning without transform conflicts
               const position = captionState?.position || 'bottom';
-              const positionStyles: Record<string, React.CSSProperties> = {
-                top: {
-                  top: 0,
-                  bottom: 'auto',
-                  paddingTop: `${captionGeometry.safeAreaTop * captionGeometry.viewportScale}px`,
-                },
-                middle: {
-                  top: '50%',
-                  bottom: 'auto',
-                  transform: 'translateY(-50%)',
-                },
-                bottom: {
-                  bottom: 0,
-                  paddingBottom: `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px`,
-                },
-              };
-              const alignItems = position === 'top' ? 'flex-start' : position === 'middle' ? 'center' : 'flex-end';
+              const justifyContent = position === 'top' ? 'flex-start' : position === 'middle' ? 'center' : 'flex-end';
               const transformOrigin = position === 'top' ? 'top center' : position === 'middle' ? 'center center' : 'bottom center';
+              
+              // Safe area padding based on position
+              const paddingTop = position === 'top' ? `${captionGeometry.safeAreaTop * captionGeometry.viewportScale}px` : 0;
+              const paddingBottom = position === 'bottom' ? `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px` : 0;
               
               return (
             <div
-              className="absolute left-0 right-0 flex justify-center pointer-events-none"
+              className="absolute inset-0 flex flex-col items-center pointer-events-none"
               style={{
-                ...positionStyles[position],
-                alignItems,
+                justifyContent,
+                paddingTop,
+                paddingBottom,
               }}
             >
               {/* Scale wrapper - scales the composition stage to viewport size */}
