@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -167,9 +167,29 @@ export default function GuestIceBuilderPage() {
     outputUrl?: string;
   } | null>(null);
   const exportPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const [activePreviewNodeIndex, setActivePreviewNodeIndex] = useState<number | null>(null);
   
   const handleManualNav = (newIndex: number) => {
+    setActivePreviewNodeIndex(null);
     setPreviewCardIndex(newIndex);
+  };
+  
+  const handleCardPhaseComplete = () => {
+    if (previewCardIndex >= cards.length - 1) return;
+    
+    const nodeAtCurrentCard = interactivityNodes.find(n => n.afterCardIndex === previewCardIndex);
+    if (nodeAtCurrentCard) {
+      setActivePreviewNodeIndex(previewCardIndex);
+    } else {
+      setPreviewCardIndex(prev => prev + 1);
+    }
+  };
+  
+  const handleContinueFromInteractivity = () => {
+    setActivePreviewNodeIndex(null);
+    if (previewCardIndex < cards.length - 1) {
+      setPreviewCardIndex(prev => prev + 1);
+    }
   };
   
   // Create/destroy audio element only when modal opens/closes
@@ -1675,13 +1695,87 @@ export default function GuestIceBuilderPage() {
                   narrationVolume={narrationVolume}
                   narrationMuted={narrationMuted}
                   onPhaseChange={(phase) => {
-                    if (phase === 'context' && previewCardIndex < cards.length - 1) {
-                      setPreviewCardIndex(prev => prev + 1);
+                    if (phase === 'context') {
+                      handleCardPhaseComplete();
                     }
                   }}
                 />
               </motion.div>
             )}
+          </AnimatePresence>
+          
+          {/* Interactivity Chat Overlay - appears when AI character interaction is active */}
+          <AnimatePresence>
+            {activePreviewNodeIndex !== null && (() => {
+              const activeNode = interactivityNodes.find(n => n.afterCardIndex === activePreviewNodeIndex);
+              const character = preview?.characters?.find(c => c.id === activeNode?.selectedCharacterId) || preview?.characters?.[0];
+              
+              return (
+                <motion.div
+                  key="interactivity-overlay"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-[65] bg-black/90 backdrop-blur-sm flex flex-col"
+                >
+                  <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 pt-16">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mx-auto mb-3 flex items-center justify-center">
+                        <MessageCircle className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white">
+                        {character?.name || "Story Character"}
+                      </h3>
+                      {character?.role && (
+                        <p className="text-sm text-white/60">{character.role}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 bg-white/5 rounded-xl border border-white/10 p-4 mb-4 overflow-y-auto">
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-500/30 flex-shrink-0 flex items-center justify-center">
+                          <MessageCircle className="w-4 h-4 text-purple-300" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-white/80">
+                            {character?.openingMessage || `Hello! I'm ${character?.name || "here"}. What would you like to know?`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mb-4">
+                      <Input
+                        placeholder="Type a message..."
+                        className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
+                        disabled
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="border-white/20"
+                        disabled
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <p className="text-xs text-white/40 text-center mb-4">
+                      AI chat is available in the full experience. Tap Continue to proceed.
+                    </p>
+                    
+                    <Button
+                      onClick={handleContinueFromInteractivity}
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      data-testid="button-continue-from-interactivity"
+                    >
+                      Continue
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </motion.div>
+              );
+            })()}
           </AnimatePresence>
           
           {/* Top controls bar - mobile optimized (volume only during preview) */}
