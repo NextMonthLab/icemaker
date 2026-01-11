@@ -206,6 +206,7 @@ export interface IStorage {
   getPreviewChatMessages(previewId: string, limit?: number): Promise<schema.PreviewChatMessage[]>;
   addPreviewChatMessage(message: schema.InsertPreviewChatMessage): Promise<schema.PreviewChatMessage>;
   incrementPreviewMessageCount(previewId: string): Promise<void>;
+  incrementPreviewMessageCountIfUnderLimit(previewId: string, maxMessages: number): Promise<number | null>;
 
   // Orbit Meta
   getOrbitMeta(businessSlug: string): Promise<schema.OrbitMeta | undefined>;
@@ -1754,6 +1755,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.previewInstances.id, previewId));
   }
 
+  /**
+   * Atomically increment message count only if under limit
+   * Prevents race condition where multiple concurrent requests bypass the cap
+   * @returns The new message count if successful, null if at/over limit
+   */
+  async incrementPreviewMessageCountIfUnderLimit(previewId: string, maxMessages: number): Promise<number | null> {
+    const result = await db.update(schema.previewInstances)
+      .set({ messageCount: sql`${schema.previewInstances.messageCount} + 1` })
+      .where(
+        and(
+          eq(schema.previewInstances.id, previewId),
+          sql`${schema.previewInstances.messageCount} < ${maxMessages}`
+        )
+      )
+      .returning({ messageCount: schema.previewInstances.messageCount });
+
+    // If no rows updated, we hit the limit
+    return result.length > 0 ? result[0].messageCount : null;
+  }
+
   // Orbit Meta
   async getOrbitMeta(businessSlug: string): Promise<schema.OrbitMeta | undefined> {
     const result = await db.query.orbitMeta.findFirst({
@@ -2221,17 +2242,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMonthlyConversationCount(businessSlug: string): Promise<number> {
+    // Use UTC to ensure consistent month boundaries regardless of server timezone
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+
     const results = await db.query.orbitAnalytics.findMany({
       where: and(
         eq(schema.orbitAnalytics.businessSlug, businessSlug),
         gte(schema.orbitAnalytics.date, startOfMonth)
       ),
     });
-    
+
     return results.reduce((sum, day) => sum + day.conversations, 0);
   }
 
@@ -2285,6 +2306,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrbitBox(data: schema.InsertOrbitBox): Promise<schema.OrbitBox> {
+    // Auto-assign sortOrder if not provided to prevent NULL sort order issues
+    if (data.sortOrder === undefined || data.sortOrder === null) {
+      const maxOrderResult = await db.query.orbitBoxes.findMany({
+        where: eq(schema.orbitBoxes.businessSlug, data.businessSlug),
+        orderBy: [desc(schema.orbitBoxes.sortOrder)],
+        limit: 1,
+      });
+
+      const maxOrder = maxOrderResult.length > 0 && maxOrderResult[0].sortOrder !== null
+        ? maxOrderResult[0].sortOrder
+        : 0;
+
+      data.sortOrder = maxOrder + 1;
+    }
+
     const [box] = await db.insert(schema.orbitBoxes).values(data).returning();
     return box;
   }

@@ -8311,13 +8311,17 @@ Return a JSON object with:
         }
       }
 
-      // Check message cap (per-preview limit)
-      if (preview.messageCount >= preview.maxMessages) {
+      // Atomically increment message count and check cap (prevents race condition)
+      // This must happen BEFORE processing to prevent concurrent requests from bypassing the limit
+      const newMessageCount = await storage.incrementPreviewMessageCountIfUnderLimit(preview.id, preview.maxMessages);
+
+      if (newMessageCount === null) {
+        // Hit the limit
         return res.json({
           capped: true,
           reason: "message_limit",
           message: "You've reached the message limit for this preview. Claim it to continue.",
-          messageCount: preview.messageCount,
+          messageCount: preview.maxMessages,
         });
       }
 
@@ -8396,11 +8400,8 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         content: reply,
       });
 
-      // Increment message count
-      await storage.incrementPreviewMessageCount(preview.id);
-
+      // Note: Message count already incremented atomically at the start of request
       // Update cost estimate (rough: ~0.01p per message for mini model)
-      const newMessageCount = preview.messageCount + 1;
       await storage.updatePreviewInstance(preview.id, {
         costEstimatePence: (preview.costEstimatePence || 0) + 1,
         llmCallCount: (preview.llmCallCount || 0) + 1,
@@ -9920,7 +9921,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
 
   // Orbit Chat - Unified AI chat endpoint for both owners and public viewers
   // Supports: authenticated owners OR public access via accessToken
-  app.post("/api/orbit/:slug/chat", async (req, res) => {
+  app.post("/api/orbit/:slug/chat", chatRateLimiter, async (req, res) => {
     try {
       const { slug } = req.params;
       const { message, menuContext, history, proofCaptureTriggeredAt, accessToken } = req.body;
@@ -9987,14 +9988,16 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
                   viewerType: 'public',
                 });
               }
-              
-              // Check message cap for unclaimed previews
-              if (preview.messageCount >= preview.maxMessages) {
+
+              // Atomically increment and check message cap for unclaimed previews (prevents race condition)
+              const newPreviewMessageCount = await storage.incrementPreviewMessageCountIfUnderLimit(preview.id, preview.maxMessages);
+
+              if (newPreviewMessageCount === null) {
                 return res.json({
                   capped: true,
                   reason: "message_limit",
                   response: "You've reached the message limit for this preview. Claim it to continue.",
-                  messageCount: preview.messageCount,
+                  messageCount: preview.maxMessages,
                   viewerType: 'public',
                 });
               }
@@ -10036,13 +10039,14 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       } = await import('./services/proofCapture');
       
       // Check if this message is testimonial-worthy
+      // Validate history structure to prevent undefined errors
       const recentUserMessages = (history || [])
-        .filter((h: any) => h.role === 'user')
+        .filter((h: any) => h && typeof h === 'object' && h.role === 'user' && typeof h.content === 'string')
         .slice(-5)
         .map((h: any) => h.content);
-      
+
       const recentAssistantMessages = (history || [])
-        .filter((h: any) => h.role === 'assistant')
+        .filter((h: any) => h && typeof h === 'object' && h.role === 'assistant' && typeof h.content === 'string')
         .slice(-3)
         .map((h: any) => h.content);
       
@@ -10213,10 +10217,10 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         await storage.incrementOrbitMetric(slug, 'conversations');
       }
       
-      // For public access with existing preview, track message count
+      // For public access with existing preview, update cost estimates
+      // Note: Message count already incremented atomically at the start of request
       if (isPublicAccess && preview && !orbitMeta.verifiedAt) {
         try {
-          await storage.incrementPreviewMessageCount(preview.id);
           await storage.updatePreviewInstance(preview.id, {
             costEstimatePence: (preview.costEstimatePence || 0) + 1,
             llmCallCount: (preview.llmCallCount || 0) + 1,
@@ -15313,7 +15317,7 @@ GUIDELINES:
   // ============ INDUSTRY ORBIT VIEW ENGINE CHAT ============
   
   // POST /api/industry-orbits/:slug/chat - View-enhanced chat for industry orbits
-  app.post("/api/industry-orbits/:slug/chat", async (req, res) => {
+  app.post("/api/industry-orbits/:slug/chat", chatRateLimiter, async (req, res) => {
     try {
       const { slug } = req.params;
       const { message, history = [], category } = req.body;

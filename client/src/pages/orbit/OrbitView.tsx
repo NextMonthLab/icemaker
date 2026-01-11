@@ -208,11 +208,26 @@ export default function OrbitView() {
   // Industry Orbit: Launch directly into map view (instant launch)
   // Mobile shows a brief intro overlay that auto-dismisses
   const [showMobileIntro, setShowMobileIntro] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
-  
+
   // View Engine state for industry orbits
   const [activeView, setActiveView] = useState<ViewPayload | null>(null);
   const [viewFollowups, setViewFollowups] = useState<string[]>([]);
-  const [isMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  // Mobile detection - reactive to window resize
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setShowMobileIntro(mobile);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Conversation history for AI chat
   const chatHistoryRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
