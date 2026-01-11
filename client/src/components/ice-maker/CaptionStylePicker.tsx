@@ -16,6 +16,10 @@ import {
   Palette,
   ZoomIn,
   Lightbulb,
+  AlignVerticalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  ALargeSmall,
 } from "lucide-react";
 import type {
   CaptionState,
@@ -23,6 +27,8 @@ import type {
   AnimationId,
   SafeAreaProfile,
   KaraokeStyleId,
+  CaptionPosition,
+  CaptionFontSize,
 } from "@/caption-engine/schemas";
 import { captionPresets } from "@/caption-engine/presets/captionPresets";
 
@@ -45,6 +51,18 @@ const safeAreaOptions: { id: SafeAreaProfile; name: string; description: string 
   { id: "tiktok", name: "TikTok", description: "Avoids TikTok UI elements" },
   { id: "instagram_reels", name: "Instagram", description: "Avoids Reels overlays" },
   { id: "youtube_shorts", name: "YouTube", description: "Avoids Shorts UI" },
+];
+
+const positionOptions: { id: CaptionPosition; name: string; icon: React.ReactNode }[] = [
+  { id: "top", name: "Top", icon: <AlignVerticalJustifyStart className="w-4 h-4" /> },
+  { id: "middle", name: "Middle", icon: <AlignVerticalJustifyCenter className="w-4 h-4" /> },
+  { id: "bottom", name: "Bottom", icon: <AlignVerticalJustifyEnd className="w-4 h-4" /> },
+];
+
+const fontSizeOptions: { id: CaptionFontSize; name: string; scale: string }[] = [
+  { id: "small", name: "Small", scale: "0.75x" },
+  { id: "medium", name: "Medium", scale: "1x" },
+  { id: "large", name: "Large", scale: "1.25x" },
 ];
 
 const karaokeStyleOptions: { id: KaraokeStyleId; name: string; icon: React.ReactNode; description: string }[] = [
@@ -311,7 +329,63 @@ export function CaptionStylePicker({
         </TabsContent>
         
         <TabsContent value="layout" className="mt-3">
-          <div className="space-y-4">
+          <div className="space-y-5">
+            <div>
+              <h4 className="text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">
+                Position
+              </h4>
+              <div className="grid grid-cols-3 gap-2">
+                {positionOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => updateState({ position: option.id })}
+                    data-testid={`position-${option.id}`}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
+                      "bg-zinc-900/50 hover:bg-zinc-800/50",
+                      (captionState.position || 'bottom') === option.id
+                        ? "border-pink-500 ring-1 ring-pink-500/50"
+                        : "border-zinc-700 hover:border-zinc-600"
+                    )}
+                  >
+                    {option.icon}
+                    <span className="text-xs font-medium">{option.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">
+                Font Size
+              </h4>
+              <div className="grid grid-cols-3 gap-2">
+                {fontSizeOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => updateState({ fontSize: option.id })}
+                    data-testid={`font-size-${option.id}`}
+                    className={cn(
+                      "flex flex-col items-center gap-1 p-3 rounded-lg border transition-all",
+                      "bg-zinc-900/50 hover:bg-zinc-800/50",
+                      (captionState.fontSize || 'medium') === option.id
+                        ? "border-pink-500 ring-1 ring-pink-500/50"
+                        : "border-zinc-700 hover:border-zinc-600"
+                    )}
+                  >
+                    <ALargeSmall className={cn(
+                      "transition-transform",
+                      option.id === 'small' && "w-4 h-4",
+                      option.id === 'medium' && "w-5 h-5",
+                      option.id === 'large' && "w-6 h-6"
+                    )} />
+                    <span className="text-xs font-medium">{option.name}</span>
+                    <span className="text-[10px] text-zinc-500">{option.scale}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <h4 className="text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">
                 Platform Safe Area
