@@ -499,7 +499,7 @@ export default function CardPlayer({
             )}
             
 
-            <div className={`absolute inset-x-0 bottom-0 top-16 flex flex-col justify-end ${fullScreen ? 'p-8 pb-24' : 'p-6 pb-16'}`}>
+            <div className={`absolute inset-x-0 bottom-0 top-16 flex flex-col justify-end ${fullScreen ? 'p-8 pb-32' : 'p-4 pb-24'}`}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={captionIndex}
@@ -591,10 +591,10 @@ export default function CardPlayer({
                       };
                       
                       return (
-                        <div className="flex flex-col items-center gap-4 px-6 w-full">
+                        <div className="flex flex-col items-center gap-4 w-full">
                           {/* Headline - Caption Engine styling with background */}
                           <div 
-                            className="max-w-full"
+                            className="inline-flex flex-col items-center mx-auto max-w-[90%]"
                             style={bgStyles}
                           >
                             <p 
@@ -609,7 +609,7 @@ export default function CardPlayer({
                           {/* Supporting text */}
                           {supporting && (
                             <p 
-                              className="leading-relaxed max-w-full text-center"
+                              className="leading-relaxed max-w-[85%] text-center mx-auto"
                               style={supportingStyles}
                               data-testid="text-supporting"
                             >

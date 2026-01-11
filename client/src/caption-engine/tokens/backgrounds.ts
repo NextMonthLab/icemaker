@@ -23,16 +23,16 @@ export const backgroundTokens = {
   },
   panel: {
     treatment: "panel" as const,
-    paddingX: 20,
-    paddingY: 10,
-    borderRadius: 8,
+    paddingX: 32,
+    paddingY: 20,
+    borderRadius: 12,
   },
   blur: {
     treatment: "blur" as const,
-    paddingX: 16,
-    paddingY: 8,
-    borderRadius: 12,
-    blurAmount: 10,
+    paddingX: 28,
+    paddingY: 16,
+    borderRadius: 16,
+    blurAmount: 12,
   },
   gradient: {
     treatment: "gradient" as const,
