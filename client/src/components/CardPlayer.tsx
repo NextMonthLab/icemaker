@@ -576,69 +576,32 @@ export default function CardPlayer({
                   {captionIndex < card.captions.length ? (
                     (() => {
                       const captionText = card.captions[captionIndex];
-                      const { headline, supporting } = splitTextIntoHeadlineAndSupporting(captionText);
-                      const headlineStyles = getLayerStylesWithText(headline, titlePack.headline, titlePack, fullScreen, captionGeometry);
-                      const supportingStyles = titlePack.supporting && supporting
-                        ? getLayerStylesWithText(supporting, titlePack.supporting, titlePack, fullScreen, captionGeometry)
-                        : null;
-
+                      
+                      // Use Caption Engine for fit-to-box rendering
+                      const styles = resolveStyles({
+                        presetId: captionState?.presetId || 'clean_white',
+                        fullScreen,
+                        karaokeEnabled: captionState?.karaokeEnabled,
+                        karaokeStyle: captionState?.karaokeStyle,
+                        headlineText: captionText,
+                        layoutMode: 'title',
+                        layout: { containerWidthPx: captionGeometry.viewportCaptionWidth },
+                      });
+                      
+                      const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
+                      
                       return (
-                        <div className="flex flex-col items-center gap-3 w-full" style={{ position: 'relative' }}>
-                          {/* Accent shape background for grunge-tape pack */}
-                          {titlePack.accentShape?.type === 'tape' && (
-                            <div 
-                              className="absolute inset-x-8 rounded-sm -skew-y-1"
-                              style={{
-                                backgroundColor: titlePack.accentShape.color,
-                                opacity: titlePack.accentShape.opacity,
-                                top: '50%',
-                                transform: 'translateY(-50%) skewY(-1deg)',
-                                padding: '1rem 2rem',
-                                zIndex: -1,
-                              }}
-                            />
-                          )}
-                          
-                          {/* Headline */}
-                          <p
-                            className="font-bold leading-snug w-full"
-                            style={{
-                              ...headlineStyles,
-                              boxSizing: 'border-box',
-                              wordWrap: 'break-word',
-                              overflowWrap: 'break-word',
-                            }}
-                            data-testid="text-headline"
-                          >
-                            {headline}
-                          </p>
-
-                          {/* Supporting text */}
-                          {supporting && supportingStyles && (
-                            <p
-                              className="leading-relaxed w-full"
-                              style={{
-                                ...supportingStyles,
-                                boxSizing: 'border-box',
-                                wordWrap: 'break-word',
-                                overflowWrap: 'break-word',
-                              }}
-                              data-testid="text-supporting"
-                            >
-                              {supporting}
-                            </p>
-                          )}
-                          
-                          {/* Underline accent for editorial-minimal pack */}
-                          {titlePack.accentShape?.type === 'underline' && (
-                            <div 
-                              className="w-16 h-0.5 mt-1"
-                              style={{
-                                backgroundColor: titlePack.accentShape.color,
-                                opacity: titlePack.accentShape.opacity,
-                              }}
-                            />
-                          )}
+                        <div className="flex flex-col items-center w-full">
+                          <ScaleToFitCaption
+                            lines={styles.headlineLines}
+                            panelStyle={styles.panel}
+                            textStyle={styles.headline}
+                            containerWidthPx={captionGeometry.viewportCaptionWidth}
+                            fittedFontSizePx={styles.headlineFontSizePx}
+                            didFit={styles.headlineDidFit}
+                            showDebug={showCaptionDebug}
+                            fitGeometry={styles.fitGeometry}
+                          />
                         </div>
                       );
                     })()
