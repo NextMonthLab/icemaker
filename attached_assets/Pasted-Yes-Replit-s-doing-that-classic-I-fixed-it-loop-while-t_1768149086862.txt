@@ -1,0 +1,118 @@
+Yes. Replit’s doing that classic “I fixed it” loop while the same bug keeps showing up. Time to stop guessing and inspect the code directly like an adult.
+
+Here’s how to do it fast, without turning it into a week-long archaeology dig.
+
+The root cause (based on your screenshots)
+
+That “ing 58%…” clip is not a font sizing issue anymore. It’s a layout boundary issue:
+	•	The caption bubble is sometimes rendering wider than the visible frame OR
+	•	It’s being centred inside a narrower parent, then clipped by an overflow: hidden ancestor.
+
+So we need to find:
+	1.	Which element defines the visible frame bounds
+	2.	Which element is being measured
+	3.	Which element is clipping
+	4.	Whether the caption is being positioned relative to the wrong parent
+
+No more “maxWidth: 100%” duct tape. We need the real geometry.
+
+⸻
+
+What to inspect first (90 seconds)
+
+Search the repo for these in order:
+
+1) overflow: hidden
+
+This is usually the real villain. Find the closest overflow-hidden ancestor above the caption.
+
+Search:
+	•	overflow: 'hidden'
+	•	overflow-hidden
+	•	className.*overflow
+
+When you find it, note:
+	•	what element it’s on (frame wrapper? page wrapper? player container?)
+	•	its width rules (fixed px? %? max-width?)
+
+2) Where container width is measured
+
+Search:
+	•	setContainerWidthPx(
+	•	offsetWidth
+	•	clientWidth
+	•	getBoundingClientRect
+	•	ResizeObserver
+
+Then check:
+	•	which ref is being measured
+	•	is it the actual video frame or some outer wrapper?
+
+3) Caption positioning
+
+Search:
+	•	ScaleToFitCaption
+	•	position: 'absolute'
+	•	left: '50%'
+	•	transform: 'translateX(-50%)'
+	•	margin: '0 auto'
+
+If it’s absolute, it must be absolute relative to the frame, not the page.
+
+⸻
+
+The surgical fix (what it usually ends up being)
+
+✅ Make the caption layer fill the frame, and centre inside that
+
+The caption wrapper should be:
+
+position: "absolute",
+left: 0,
+right: 0,
+bottom: somePx,
+display: "flex",
+justifyContent: "center",
+pointerEvents: "none",
+
+Then the bubble can just be width: panelWidthPx and it will never drift.
+
+If you centre with left: 50% + translate, you’re more likely to get clipping when widths wobble.
+
+✅ Measure the frame, not a parent
+
+The measurement ref must be attached to the element that actually corresponds to the preview’s 9:16 visible area.
+
+The gold standard here is:
+	•	use getBoundingClientRect().width on the frame element
+	•	and feed that into the fit engine
+
+If you measure a padded wrapper then render inside an inner clipped wrapper, you get exactly what you’re seeing.
+
+⸻
+
+What I’d do right now (direct, no fluff)
+	1.	Open DevTools on the preview
+	2.	Inspect the clipped caption text node
+	3.	In the Elements panel, move up the DOM until you find:
+	•	the element that is clipping (look for overflow hidden)
+	4.	Copy the className/component name
+	5.	Go to the codebase and fix it at the source
+
+You’ll find it in minutes.
+
+⸻
+
+If you want me to be properly useful here
+
+Paste just these 3 snippets (no whole repo needed):
+	1.	The JSX + styles for ScaleToFitCaption (bubble + wrapper)
+	2.	The JSX for the preview “frame” component (whatever renders the 9:16 area)
+	3.	The code where containerWidthPx is computed (the ref + measurement logic)
+
+With that, I can tell you exactly:
+	•	what element you should measure,
+	•	what element you should position against,
+	•	and what single style rule is causing the clip.
+
+And yeah: at this point, inspecting code directly is the right move. Replit’s in “confidence theatre” mode.

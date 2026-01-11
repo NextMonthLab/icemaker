@@ -529,7 +529,7 @@ export default function CardPlayer({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="flex flex-col items-center justify-end px-4 pb-6"
+                  className="flex flex-col items-center justify-end pb-6"
                   style={{ transformOrigin: 'center center' }}
                 >
                   <div style={{ maxHeight: '30vh', overflow: 'visible', width: '100%' }}>
