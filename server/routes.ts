@@ -6543,6 +6543,8 @@ Stay engaging, reference story details, and help the audience understand the nar
         musicEnabled: preview.musicEnabled,
         titlePackId: preview.titlePackId,
         narrationVolume: preview.narrationVolume,
+        // Caption Engine settings
+        captionSettings: preview.captionSettings,
         // Additional settings
         projectBible: preview.projectBible,
         previewAccessToken: preview.previewAccessToken,
