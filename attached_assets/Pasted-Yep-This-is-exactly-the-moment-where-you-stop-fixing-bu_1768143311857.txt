@@ -1,0 +1,78 @@
+Yep. This is exactly the moment where you stop “fixing bugs” and start locking the contract.
+
+Right now, Milestone 6 is doing what you asked for: every assigned word stays inside the panel, no truncation, no mid-word breaks. Good. Now we need to turn that into a clear, non-arguable “definition of done” for NextMonth 2.0, and line up Milestone 7 as the “make it CapCut-pretty” phase.
+
+Below is what I’d send to Replit: one message that (1) confirms the win, (2) sets the non-negotiable contract, (3) asks for a tiny bit of validation instrumentation so you can prove it never regresses, and (4) defines the next milestone (TitleComposer) without derailing the current work.
+
+⸻
+
+Message to Replit (copy/paste)
+
+Subject: Caption Engine – Milestone 6 complete (fit-to-box contract), request final validation + Milestone 7 plan
+
+Team,
+
+We’ve now reached the core outcome we needed for Caption Engine Milestone 6.
+
+Milestone 6 outcome (confirmed)
+
+The Fit-to-Box system is now behaving correctly:
+	•	✅ All text stays inside the panel (no overflow)
+	•	✅ No truncation (no ellipsis)
+	•	✅ No mid-word breaks (keep-all behaviour)
+	•	✅ Readable output with deterministic sizing and line composition
+	•	✅ Scale-to-fit safety net is in place for edge cases
+
+This is the core “CapCut-style always fits” contract.
+
+Contract (non-negotiable rules)
+
+Please treat these as invariant requirements going forward:
+	1.	Words must never split mid-word (except truly unbreakable tokens like URLs/hashtags, where we can fall back safely).
+	2.	No ellipsis truncation for headlines.
+	3.	All headline text must remain inside the caption panel at all times (desktop + mobile).
+	4.	If needed, font size can shrink aggressively (even to very small sizes) to preserve rule #3.
+
+Final validation request (so we stop looping)
+
+To ensure this does not regress, please add a lightweight validation mode:
+	•	Add a CAPTION_DEBUG=1 flag (or similar) that overlays:
+	•	the computed panel bounds (w/h)
+	•	final font size + applied scale
+	•	headlineDidFit boolean
+	•	number of lines + the selected line breaks
+
+And please run a quick stress test set:
+	•	1–3 word titles
+	•	6–12 word titles
+	•	long single-word edge case (18+ chars)
+	•	numbers + percent (“58%”)
+	•	punctuation-heavy
+	•	mobile Safari width scenario
+
+Deliverable: screenshots (or a short screen recording) showing the debug overlay on 5–10 representative cases.
+
+Milestone 7 (next enhancement, not required for Milestone 6)
+
+Now that fitting is solved, the next “CapCut polish” layer is editorial composition:
+
+rawText → TitleComposer (max 3 lines + rhythm rules) → fitTextToBox → render
+
+Milestone 7 goals would be:
+	•	Max 3 headline lines
+	•	Avoid orphan last lines (single-word line)
+	•	Prefer balanced line lengths + “hero line” emphasis
+	•	Stats/percentages can be prioritised for impact
+
+But to be clear: Milestone 6 is complete once the debug validation confirms the contract above across stress cases.
+
+Thanks.
+
+⸻
+
+What this does for you
+	•	Stops the “are we done?” ambiguity.
+	•	Forces Replit to prove it with debug overlays.
+	•	Separates engineering correctness (Milestone 6) from art direction (Milestone 7).
+
+If you want, I can also write the Milestone 7 prompt in the same style, but I’d genuinely get the debug proof first so you’ve got a rock-solid baseline to build from.

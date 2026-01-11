@@ -8,6 +8,8 @@ interface ScaleToFitCaptionProps {
   containerWidthPx: number;
   maxHeightPx?: number;
   fittedFontSizePx: number;
+  didFit?: boolean;
+  showDebug?: boolean;
 }
 
 export function ScaleToFitCaption({
@@ -17,6 +19,8 @@ export function ScaleToFitCaption({
   containerWidthPx,
   maxHeightPx = 200,
   fittedFontSizePx,
+  didFit = true,
+  showDebug = false,
 }: ScaleToFitCaptionProps) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const [scale, setScale] = useState(1);
@@ -65,26 +69,47 @@ export function ScaleToFitCaption({
   };
 
   return (
-    <div
-      style={{
-        ...panelStyle,
-        maxWidth: `${panelMaxWidthPercent}%`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-        minHeight: "60px",
-      }}
-      data-testid="caption-panel"
-    >
-      <p ref={textRef} className="m-0" style={baseTextStyle} data-testid="text-headline">
-        {lines.map((line, i) => (
-          <React.Fragment key={i}>
-            {line}
-            {i < lines.length - 1 && <br />}
-          </React.Fragment>
-        ))}
-      </p>
+    <div style={{ position: "relative" }}>
+      <div
+        style={{
+          ...panelStyle,
+          maxWidth: `${panelMaxWidthPercent}%`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          minHeight: "60px",
+        }}
+        data-testid="caption-panel"
+      >
+        <p ref={textRef} className="m-0" style={baseTextStyle} data-testid="text-headline">
+          {lines.map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < lines.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </p>
+      </div>
+      {showDebug && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-24px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: didFit ? "rgba(0,200,0,0.9)" : "rgba(255,100,0,0.9)",
+            color: "white",
+            fontSize: "10px",
+            fontFamily: "monospace",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {didFit ? "✓" : "✗"} {fittedFontSizePx}px × {(scale * 100).toFixed(0)}% | {lines.length}L | {Math.round(panelWidthPx)}w
+        </div>
+      )}
     </div>
   );
 }

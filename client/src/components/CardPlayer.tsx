@@ -543,6 +543,8 @@ export default function CardPlayer({
                           layout: { containerWidthPx },
                         });
                         
+                        const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
+                        
                         return (
                           <div className="flex flex-col items-center w-full gap-2">
                             <ScaleToFitCaption
@@ -552,6 +554,8 @@ export default function CardPlayer({
                               containerWidthPx={containerWidthPx}
                               maxHeightPx={fullScreen ? 200 : 150}
                               fittedFontSizePx={styles.headlineFontSizePx}
+                              didFit={styles.headlineDidFit}
+                              showDebug={showCaptionDebug}
                             />
                             
                             {supporting && (
