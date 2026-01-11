@@ -101,6 +101,152 @@ interface Entitlements {
   tier: string;
 }
 
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+function PreviewChatPanel({
+  previewId,
+  previewAccessToken,
+  character,
+  onContinue,
+}: {
+  previewId: string;
+  previewAccessToken?: string;
+  character?: StoryCharacter;
+  onContinue: () => void;
+}) {
+  const characterName = character?.name || "Story Character";
+  const openingMessage = character?.openingMessage || `Hello! I'm ${characterName}. What would you like to know?`;
+  
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: "assistant", content: openingMessage },
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const isReady = !!previewId;
+  
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+  
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading || !isReady) return;
+    
+    const userMessage = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch(`/api/ice/preview/${previewId}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: userMessage,
+          characterId: character?.id,
+          previewAccessToken,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.capped) {
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: data.message || "This preview has reached its chat limit." },
+        ]);
+      } else if (data.reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      } else if (data.error) {
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: data.error || "Sorry, something went wrong." },
+        ]);
+      }
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "Sorry, I couldn't process that. Please try again." },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return (
+    <>
+      <div ref={scrollRef} className="flex-1 bg-white/5 rounded-xl border border-white/10 p-4 mb-4 overflow-y-auto space-y-4">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
+              msg.role === "user" ? "bg-blue-500/30" : "bg-purple-500/30"
+            }`}>
+              {msg.role === "user" ? (
+                <span className="text-xs text-blue-300">You</span>
+              ) : (
+                <MessageCircle className="w-4 h-4 text-purple-300" />
+              )}
+            </div>
+            <div className={`flex-1 ${msg.role === "user" ? "text-right" : ""}`}>
+              <p className={`text-sm inline-block px-3 py-2 rounded-lg ${
+                msg.role === "user" ? "bg-blue-500/20 text-blue-100" : "text-white/80"
+              }`}>
+                {msg.content}
+              </p>
+            </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-500/30 flex-shrink-0 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-purple-300 animate-spin" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-white/50">Thinking...</p>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex gap-2 mb-4">
+        <Input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
+          placeholder={isReady ? "Type a message..." : "Loading..."}
+          className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
+          disabled={isLoading || !isReady}
+        />
+        <Button
+          onClick={sendMessage}
+          disabled={isLoading || !input.trim() || !isReady}
+          variant="outline"
+          size="icon"
+          className="border-white/20"
+        >
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </Button>
+      </div>
+      
+      <Button
+        onClick={onContinue}
+        className="w-full bg-purple-600 hover:bg-purple-700"
+        data-testid="button-continue-from-interactivity"
+      >
+        Continue
+        <ChevronRight className="w-4 h-4 ml-2" />
+      </Button>
+    </>
+  );
+}
+
 export default function GuestIceBuilderPage() {
   const [, navigate] = useLocation();
   const params = useParams<{ id?: string }>();
@@ -175,12 +321,10 @@ export default function GuestIceBuilderPage() {
   };
   
   const handleCardPhaseComplete = () => {
-    if (previewCardIndex >= cards.length - 1) return;
-    
     const nodeAtCurrentCard = interactivityNodes.find(n => n.afterCardIndex === previewCardIndex);
     if (nodeAtCurrentCard) {
       setActivePreviewNodeIndex(previewCardIndex);
-    } else {
+    } else if (previewCardIndex < cards.length - 1) {
       setPreviewCardIndex(prev => prev + 1);
     }
   };
@@ -1731,47 +1875,12 @@ export default function GuestIceBuilderPage() {
                       )}
                     </div>
                     
-                    <div className="flex-1 bg-white/5 rounded-xl border border-white/10 p-4 mb-4 overflow-y-auto">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-500/30 flex-shrink-0 flex items-center justify-center">
-                          <MessageCircle className="w-4 h-4 text-purple-300" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-white/80">
-                            {character?.openingMessage || `Hello! I'm ${character?.name || "here"}. What would you like to know?`}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 mb-4">
-                      <Input
-                        placeholder="Type a message..."
-                        className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
-                        disabled
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="border-white/20"
-                        disabled
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <p className="text-xs text-white/40 text-center mb-4">
-                      AI chat is available in the full experience. Tap Continue to proceed.
-                    </p>
-                    
-                    <Button
-                      onClick={handleContinueFromInteractivity}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      data-testid="button-continue-from-interactivity"
-                    >
-                      Continue
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <PreviewChatPanel
+                      previewId={preview?.id || ""}
+                      previewAccessToken={previewAccessToken}
+                      character={character}
+                      onContinue={handleContinueFromInteractivity}
+                    />
                   </div>
                 </motion.div>
               );
