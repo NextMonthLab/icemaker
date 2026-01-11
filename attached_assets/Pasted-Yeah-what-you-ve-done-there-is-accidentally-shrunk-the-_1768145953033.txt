@@ -1,0 +1,98 @@
+Yeah – what you’ve done there is accidentally shrunk the box itself (or you’ve moved the background styling onto the element that’s being scaled), so when the fitter decides “this needs to be smaller”, it scales the whole thing down into that little pill.
+
+CapCut’s trick is simple:
+	•	The panel (the rounded rectangle) is a fixed-size container (relative, with padding, radius, background).
+	•	Only the text block scales, centred within that fixed panel.
+	•	The panel never “collapses” to the text.
+
+Right now your DOM/CSS is effectively doing:
+scale(wrapper that contains background + text) → so the background shrinks too.
+
+What should happen (CapCut structure)
+
+Golden rule
+
+Background box styling goes on the outer panel.
+Scale transform goes on an inner wrapper that contains ONLY the text.
+
+Correct structure
+
+Panel (fixed size, background)
+  └─ Anchor (absolute 50/50)
+      └─ ScaleWrap (translate(-50,-50) scale(s))
+          └─ TextBlock (max-width: 100%, centred)
+              ├─ Line
+              ├─ Line
+              └─ Line
+
+The fix (tell Replit to do exactly this)
+	1.	Move ALL panel visuals to the outer panel
+
+	•	background / blur / border / shadow / radius
+	•	width / height (or minHeight)
+	•	padding
+
+	2.	Ensure the outer panel has a real size
+
+	•	Either explicit width/height from your preset (recommended), or at least:
+	•	width: <your configured panel width>
+	•	min-height: <your configured panel height>
+	•	never “auto shrink to content”
+
+	3.	Only scale the text
+
+	•	ScaleWrap must not have the panel background styles.
+
+	4.	Stop any element in the chain using inline sizing
+
+	•	Make sure wrappers are display: block; width: 100%;
+
+Concrete CSS/JSX pattern
+
+Tell Replit to implement this pattern inside ScaleToFitCaption (or wherever the panel is rendered):
+	•	Panel: fixed size + background
+	•	Anchor: absolute centre
+	•	ScaleWrap: translate + scale
+	•	TextBlock: width constrained, centred
+
+Key CSS properties to enforce:
+	•	Panel:
+	•	position: relative;
+	•	overflow: hidden;
+	•	padding: 18px 20px; (whatever your style token says)
+	•	borderRadius: ...;
+	•	background: rgba(0,0,0,0.45); (example)
+	•	width and minHeight must be set from the preset panel dimensions
+	•	Anchor:
+	•	position: absolute; left: 50%; top: 50%;
+	•	ScaleWrap:
+	•	transformOrigin: 'center center';
+	•	transform: translate(-50%, -50%) scale(SCALE);
+	•	no background, no border radius
+	•	TextBlock:
+	•	width: min(92%, <some max px if you want>)
+	•	textAlign: center
+	•	display: inline-block (or block) but don’t let it drive panel size
+	•	For title lines: render each line as whiteSpace: 'nowrap'
+
+Why your box is “closed so far”
+
+Because the element with the background is being measured/scaled like it’s just the text itself. Once you detach the background box from the scaling, the text can shrink/grow inside a consistent box, which is what you want.
+
+Quick sanity checks (you can do these in 30 seconds)
+	•	Temporarily set the panel background to bright red. If the red area shrinks when text shrinks, you’re still scaling the panel. It should stay the same size.
+	•	Temporarily set ScaleWrap background to green. That green area should shrink/grow (fine).
+	•	Ensure panel has minHeight – if it’s missing, it will collapse.
+
+What I’d do next (so we stop burning days on this)
+
+Lock these invariants:
+	1.	Panel size is controlled ONLY by caption style tokens (width/height/padding).
+	2.	Text scaling never touches panel background.
+	3.	Title mode = max 3 lines, no CSS wrapping; Paragraph mode = allow wrapping rules, different fitter constraints.
+
+If you paste Replit one instruction, paste this:
+
+“Move the rounded rectangle background styling onto the outer panel and make the panel’s width + minHeight explicit. The scale transform must apply only to the inner text wrapper (translate(-50%,-50%) scale(s)). Do not scale any element that has the panel background.”
+
+If you want, send me the current ScaleToFitCaption.tsx render tree (just that component) and I’ll tell you exactly which wrapper currently owns the background and where to move it.

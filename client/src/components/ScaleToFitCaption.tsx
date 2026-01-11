@@ -28,8 +28,9 @@ export function ScaleToFitCaption({
   const panelMaxWidthPercent = 92;
   const panelWidthPx = containerWidthPx * (panelMaxWidthPercent / 100);
   const paddingPx = 20;
+  const panelMinHeight = 100;
   const availableWidth = panelWidthPx - paddingPx * 2;
-  const availableHeight = maxHeightPx - paddingPx * 2;
+  const availableHeight = panelMinHeight - paddingPx * 2;
 
   useEffect(() => {
     const el = textRef.current;
@@ -48,7 +49,7 @@ export function ScaleToFitCaption({
       const scaleY = availableHeight / scrollH;
       const newScale = Math.min(scaleX, scaleY, 1);
 
-      setScale(Math.max(newScale, 0.2));
+      setScale(Math.max(newScale, 0.3));
     };
 
     requestAnimationFrame(measure);
@@ -63,55 +64,49 @@ export function ScaleToFitCaption({
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      {/* Panel: relative container with padding */}
+    <div style={{ position: "relative", width: "100%" }}>
+      {/* Panel: FIXED SIZE container with background - NEVER SCALED */}
       <div
         style={{
           ...panelStyle,
           position: "relative",
-          width: "100%",
-          maxWidth: `${panelMaxWidthPercent}%`,
-          minHeight: "80px",
+          width: `${panelMaxWidthPercent}%`,
+          minHeight: `${panelMinHeight}px`,
           padding: `${paddingPx}px`,
           boxSizing: "border-box",
           overflow: "hidden",
-          display: "block",
+          margin: "0 auto",
         }}
         data-testid="caption-panel"
       >
-        {/* Absolute anchor: dead center */}
+        {/* Anchor: absolute center point */}
         <div
           style={{
             position: "absolute",
             left: "50%",
             top: "50%",
-            width: "100%",
-            pointerEvents: "none",
+            width: `calc(100% - ${paddingPx * 2}px)`,
           }}
         >
-          {/* Scale wrapper: translate + scale from center */}
+          {/* ScaleWrap: ONLY this scales - no background here */}
           <div
             style={{
               transform: `translate(-50%, -50%) scale(${scale})`,
               transformOrigin: "center center",
-              display: "inline-block",
               width: "100%",
-              maxWidth: `calc(100% - ${paddingPx * 2}px)`,
             }}
           >
-            {/* Text block: centered, constrained */}
+            {/* TextBlock: centered text content */}
             <div
               ref={textRef}
               style={{
                 width: "100%",
-                maxWidth: "92%",
-                margin: "0 auto",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                lineHeight: 1.12,
+                lineHeight: 1.15,
               }}
               data-testid="text-headline"
             >
