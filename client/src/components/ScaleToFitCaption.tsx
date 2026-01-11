@@ -84,10 +84,9 @@ export function ScaleToFitCaption({
       >
         <p ref={textRef} className="m-0" style={baseTextStyle} data-testid="text-headline">
           {lines.map((line, i) => (
-            <React.Fragment key={i}>
+            <span key={i} style={{ display: 'block', whiteSpace: 'nowrap' }}>
               {line}
-              {i < lines.length - 1 && <br />}
-            </React.Fragment>
+            </span>
           ))}
         </p>
       </div>

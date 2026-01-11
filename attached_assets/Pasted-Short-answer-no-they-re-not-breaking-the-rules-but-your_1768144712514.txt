@@ -1,0 +1,133 @@
+Short answer: no, they’re not breaking the rules – but your instinct is right that something feels off, and that’s important. Let me separate contract truth from editorial perception, because those are getting tangled.
+
+⸻
+
+What the rules actually say (Milestones 6–7)
+
+The locked rules are technical invariants, not aesthetic ones:
+	1.	Words never split mid-word
+✅ True in your screenshots.
+	2.	No ellipsis truncation
+✅ True. Nothing is cut off.
+	3.	All caption text stays inside the panel
+✅ True. There is no text outside the box now.
+	4.	Aggressive shrink if needed
+✅ This is exactly what you’re seeing.
+
+So from a Caption Engine contract perspective, everything in those screenshots is behaving correctly.
+
+⸻
+
+Why it looks like the rules are broken (but aren’t)
+
+What you’re reacting to is not a violation, it’s a mode mismatch.
+
+You’re looking at Paragraph Mode output
+
+Paragraph Mode is doing exactly what it promised:
+	•	4–5 lines allowed
+	•	Smaller font
+	•	Full context preserved
+	•	Dense, informational layout
+
+So the engine says:
+
+“You asked me to keep everything inside the box, no truncation, no word breaks.
+The only remaining lever is make the text smaller and stack it.”
+
+That’s why it feels:
+	•	Tall
+	•	Dense
+	•	Less punchy
+	•	Less “CapCut”
+
+But none of that violates the rules. It’s just the wrong mode for the visual moment.
+
+⸻
+
+The key realisation (this is the unlock)
+
+CapCut does not treat every caption the same.
+
+It implicitly categorises captions into roles:
+
+1. Hero / Title captions (what you expect CapCut to look like)
+	•	1–3 lines
+	•	Big, bold
+	•	Partial context
+	•	Emotional or declarative
+	•	Rhythm > completeness
+
+2. Supporting / Explanatory captions
+	•	Smaller
+	•	More lines
+	•	More information
+	•	Still readable, but not the hero
+
+Right now, you’re feeding explanatory paragraphs into a system that is correctly trying to honour “show me everything”.
+
+That will never look like a CapCut title, no matter how good the fit engine is.
+
+This isn’t a failure of Milestones 6 or 7.
+It’s the absence of caption intent selection.
+
+⸻
+
+What should happen next (plain English)
+
+After Milestone 7, the expected behaviour is:
+	1.	The system decides the role of the caption
+	•	Is this a Title or a Paragraph?
+	•	This can be automatic or user-selected.
+	2.	Title Mode is used for CapCut-style slides
+	•	Max 2–3 lines
+	•	Aggressive editorial pruning
+	•	Big font
+	•	Some words intentionally not shown
+	3.	Paragraph Mode is used sparingly
+	•	Only when the user explicitly wants full context
+	•	Accepts smaller text as a trade-off
+
+Right now, you’re looking at Paragraph Mode output and judging it by Title Mode standards.
+
+That’s why your gut says “this is breaking the rules”.
+
+It isn’t.
+It’s just not the moment for that mode.
+
+⸻
+
+The real missing piece (Milestone 8, not a bug)
+
+What you actually need next is Caption Intent:
+	•	intent: "title" (default, CapCut-style)
+	•	intent: "explain" (paragraph mode)
+	•	Later: intent: "stat", intent: "quote", etc.
+
+Once intent exists:
+	•	These dense examples would automatically be collapsed into punchy title versions
+	•	The paragraph version would still exist, just not shown as the hero slide
+
+⸻
+
+Bottom line
+
+You’re not going backwards.
+You’re not breaking the rules.
+You’ve actually reached the point where the engine is finally honest.
+
+Now the question isn’t:
+
+“Why is the engine failing?”
+
+It’s:
+
+“When should we not show everything?”
+
+That’s exactly the question CapCut answers with product decisions – and you’re now ready to make the same call.
+
+If you want, next we can:
+	•	Define auto-rules for when Paragraph Mode is disallowed
+	•	Or design a CapCut-style ‘shorten for title’ pass that intentionally drops context
+
+You’re closer than it feels.

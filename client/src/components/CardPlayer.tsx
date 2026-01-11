@@ -538,6 +538,7 @@ export default function CardPlayer({
                           karaokeEnabled: captionState?.karaokeEnabled,
                           karaokeStyle: captionState?.karaokeStyle,
                           headlineText: captionText,
+                          layoutMode: 'title',
                           layout: { containerWidthPx },
                         });
                         
