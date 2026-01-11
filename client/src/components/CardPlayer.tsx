@@ -507,7 +507,7 @@ export default function CardPlayer({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="flex flex-col items-center justify-center max-h-[60%] overflow-hidden gap-2"
+                  className="flex flex-col items-center justify-center px-4 pb-8"
                 >
                   {captionIndex < card.captions.length ? (
                     (() => {
@@ -584,9 +584,9 @@ export default function CardPlayer({
                       const headlineStyles: React.CSSProperties = {
                         fontFamily: typography.fontFamily,
                         fontSize: `${baseFontSize}px`,
-                        fontWeight: typography.fontWeight,
-                        lineHeight: typography.lineHeight,
-                        letterSpacing: `${typography.letterSpacing}px`,
+                        fontWeight: 800,
+                        lineHeight: 1.1,
+                        letterSpacing: '-0.02em',
                         textTransform: typographyAny.textTransform || 'none',
                         color: colors.text,
                         textShadow: karaokeEnabled && karaokeStyle === 'glow' ? glowShadow : professionalTextShadow,
@@ -595,13 +595,12 @@ export default function CardPlayer({
                       
                       const supportingStyles: React.CSSProperties = {
                         fontFamily: typography.fontFamily,
-                        fontSize: `${baseFontSize * 0.55}px`,
+                        fontSize: `${baseFontSize * 0.45}px`,
                         fontWeight: 400,
-                        lineHeight: 1.5,
-                        color: colorsAny.textSecondary || 'rgba(255,255,255,0.85)',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-                        opacity: 0.9,
-                        marginTop: '8px',
+                        lineHeight: 1.4,
+                        color: 'rgba(255,255,255,0.7)',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        letterSpacing: '0.02em',
                       };
                       
                       return (
