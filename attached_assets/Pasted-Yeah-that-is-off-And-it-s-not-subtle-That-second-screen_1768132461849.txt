@@ -1,0 +1,117 @@
+Yeah – that is off. And it’s not subtle. That second screenshot is doing a “primary school syllable exercise”:
+	•	As
+	•	generativ
+	•	AI too…
+
+That means the browser is still being allowed (or forced) to break inside a normal English word. With only a few words on screen, that should basically never happen.
+
+There are only a handful of ways this can occur:
+
+What’s causing it (most likely)
+
+1) You still have a “break anywhere / break all” rule applied somewhere
+
+Even if you set hyphens: none, the browser will still split words if any of these are active on the text or a parent:
+	•	word-break: break-all  ✅ will split generative into generativ / e
+	•	overflow-wrap: anywhere ✅ allows splits literally anywhere
+	•	line-break: anywhere ✅ similar
+	•	Tailwind classes: break-all, break-words (break-words is usually OK, break-all is not)
+
+Action: search the codebase for:
+	•	break-all
+	•	overflowWrap: 'anywhere'
+	•	lineBreak: 'anywhere'
+	•	wordBreak: 'break-all'
+
+If any of those exist in the caption tree, that’s your culprit.
+
+⸻
+
+What we’re going to do about words not fitting
+
+We do not fix “doesn’t fit” by letting words break mid-word. That’s a last resort for URLs.
+
+We fix it with a predictable rule set:
+	1.	Never break normal words
+	2.	Prefer 2 lines
+	3.	If it doesn’t fit: widen the panel
+	4.	If it still doesn’t fit: reduce font size slightly
+	5.	Only for extreme long tokens (URLs/hashtags): allow break-word
+
+That’s the CapCut contract.
+
+⸻
+
+The exact CSS contract to apply (copy/paste)
+
+Apply this directly on the <p> that is clamped (headline):
+
+const headlineStyle: React.CSSProperties = {
+  // your existing font, size, weight, shadows etc
+
+  whiteSpace: 'normal',
+
+  // 🔒 DO NOT allow mid-word breaking
+  wordBreak: 'keep-all',      // key change
+  overflowWrap: 'normal',     // key change
+
+  // 🔒 No hyphenation
+  hyphens: 'none',
+};
+
+Then add a safety override only for “unbreakable” tokens (URLs etc).
+You can do this without fancy measurement:
+
+const longestWord = Math.max(...headline.split(/\s+/).map(w => w.length));
+
+if (longestWord >= 18) {
+  headlineStyle.wordBreak = 'normal';
+  headlineStyle.overflowWrap = 'break-word';
+}
+
+This gives you:
+	•	normal phrases never split (“generative” stays intact)
+	•	genuinely long tokens still won’t overflow the box
+
+Do the same for supporting text.
+
+⸻
+
+Then fix “it doesn’t fit” the right way
+
+If you apply keep-all, short phrases will wrap at spaces only. If your panel is too narrow, you’ll get ugly single-word lines (“As” on its own).
+
+So you widen + scale.
+
+Panel width rule (simple and effective)
+
+In panelStyle:
+	•	default: maxWidth: '92%'
+	•	if wordCount <= 6: maxWidth: '96%'
+
+Font scale rule
+	•	if wordCount <= 6 and you’re getting 3 lines: reduce font size by 8–12%
+
+You don’t even need measuring to get 90% there.
+
+⸻
+
+One quick diagnostic to prove it
+
+In dev tools (or by logging resolved styles), check the computed style for the headline <p>.
+
+If you see either:
+	•	word-break: break-all
+	•	overflow-wrap: anywhere
+
+…that explains the screenshot immediately.
+
+⸻
+
+Why I’m confident this is the right next step
+
+Because “generativ” isn’t a natural wrap result. It’s an explicit mid-word break policy being applied.
+
+Once we lock wordBreak: keep-all + widen panel slightly + small font scale, those captions will look instantly more premium.
+
+If you paste your current resolved headlineStyle + panelStyle objects (just the final outputs), I’ll point to the exact property that’s still poisoning the layout.

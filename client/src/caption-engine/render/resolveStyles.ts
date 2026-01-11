@@ -63,6 +63,11 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   // Panel width: wider for shorter headlines to prevent word breaks
   const panelMaxWidth = wordCount <= 6 ? "96%" : "92%";
 
+  // Word break policy: only allow break-word for genuinely long tokens (URLs, hashtags)
+  const allowWordBreak = longestWord >= 18;
+  const wordBreakPolicy = allowWordBreak ? "normal" : "keep-all";
+  const overflowWrapPolicy = allowWordBreak ? "break-word" : "normal";
+
   const professionalTextShadow = colorsAny.shadow || "0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)";
   const glowShadow = "0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8)";
 
@@ -101,8 +106,8 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     WebkitLineClamp: lineClamp,
     overflow: "hidden",
     whiteSpace: "normal",
-    wordBreak: "normal",
-    overflowWrap: "normal",
+    wordBreak: wordBreakPolicy as any,
+    overflowWrap: overflowWrapPolicy as any,
     hyphens: "none",
   };
 
@@ -120,8 +125,8 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     WebkitLineClamp: 2,
     overflow: "hidden",
     whiteSpace: "normal",
-    wordBreak: "normal",
-    overflowWrap: "normal",
+    wordBreak: wordBreakPolicy as any,
+    overflowWrap: overflowWrapPolicy as any,
     hyphens: "none",
   };
 
