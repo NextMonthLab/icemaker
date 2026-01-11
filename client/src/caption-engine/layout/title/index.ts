@@ -1,2 +1,2 @@
 export { composeTitleLines } from './TitleComposer';
-export type { TitleComposeOptions } from './TitleComposer';
+export type { TitleComposeOptions, CaptionLayoutMode } from './TitleComposer';

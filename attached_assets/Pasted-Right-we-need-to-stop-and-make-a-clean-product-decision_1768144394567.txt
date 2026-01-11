@@ -1,0 +1,138 @@
+Right, we need to stop and make a clean product decision here, because you’re about to undo the whole “CapCut feel” you’ve just earned.
+
+What just happened
+	•	Milestone 6 + 7 gave you title behaviour: designed line breaks + fitting.
+	•	The “supporting text” was a separate “paragraph underneath” pattern, which broke your all-text-in-box rule. Removing it was correct if your contract is “everything must be inside the box”.
+
+Now you’re proposing:
+
+“Let’s allow 4–5 line splits so titles feel more like paragraphs with all context required.”
+
+That is valid for some captions, but if you do it globally you’ll drift back to “subtitle paragraph blocks” instead of CapCut titles.
+
+The right approach
+
+Don’t make every caption a 5-line paragraph.
+
+Instead, introduce two modes:
+	1.	Title Mode (CapCut)
+
+	•	Max 3 lines
+	•	Editorial cadence rules (hero line, no orphans)
+	•	Looks like a title
+
+	2.	Paragraph Mode (Context / explainer)
+
+	•	Max 5 lines (or even more if absolutely needed)
+	•	Smaller font, tighter line-height, different padding
+	•	Still inside one box
+	•	Looks like a caption paragraph on purpose
+
+This way:
+	•	you preserve CapCut quality for punchy captions
+	•	you still support “all context inside the box” when needed
+
+If you don’t do this split, you’ll end up with everything looking like a blocky paragraph and you’ll hate it again.
+
+⸻
+
+What to do next (concrete)
+
+Step 1: Add a layoutMode switch
+
+In captionState (or per preset), add:
+	•	layoutMode: 'title' | 'paragraph'
+
+Default should be title.
+
+Step 2: Make TitleComposer accept maxLines
+
+Right now you’ve got max 3 lines. Keep that.
+
+Update the signature:
+
+composeTitleLines(text, { maxLines: 3 | 4 | 5, ... })
+
+But only pass 4/5 when layoutMode === 'paragraph'.
+
+Step 3: Update the fitter settings based on mode
+
+Title mode
+	•	maxLines: 3
+	•	targetWordsPerLine: 2–4
+	•	baseFontSize: normal
+	•	minFontSize: normal
+	•	padding: more generous (looks premium)
+
+Paragraph mode
+	•	maxLines: 5
+	•	targetWordsPerLine: 3–6
+	•	baseFontSize: smaller
+	•	minFontSize: smaller allowed
+	•	lineHeight: slightly tighter (eg 1.05–1.15)
+	•	padding: slightly reduced so you don’t waste space
+
+This keeps it looking intentional.
+
+⸻
+
+Strong recommendation: avoid 5 lines unless you must
+
+CapCut’s trick when text is long is not “5 lines”.
+It’s usually “split into two caption cards”.
+
+So I’d set this rule:
+	•	Title mode: max 3 lines
+	•	Paragraph mode: max 4 lines by default
+	•	5 lines only if it still doesn’t fit at a reasonable scale
+
+That preserves readability.
+
+⸻
+
+What to tell Replit (copy/paste)
+
+We need to keep Milestone 6/7 quality while ensuring ALL caption text stays inside the box.
+
+Do NOT globally move TitleComposer to 4–5 lines.
+
+Implement two layout modes:
+
+1) Title mode (default)
+- maxLines = 3
+- current cadence rules remain (no orphan last line, balanced lengths)
+- designed to look like CapCut titles
+
+2) Paragraph mode (opt-in via captionState or preset)
+- maxLines = 5 (prefer 4 first, allow 5 only if needed)
+- adjust style defaults: smaller baseFontSize, slightly tighter lineHeight, slightly reduced padding
+- still uses TitleComposer scoring but with maxLines=4/5 and looser words-per-line target
+- ALL text remains inside the same panel, no separate supporting text below
+
+Pipeline:
+rawText -> composeTitleLines({maxLines based on mode}) -> fitTextToBox -> ScaleToFitCaption
+
+Also ensure:
+- supporting text element remains removed (no text outside the box)
+- no truncation/ellipsis anywhere
+
+Deliver:
+- layoutMode switch wired through resolveStyles
+- composer supports maxLines 3/4/5
+- paragraph mode style adjustments
+- update composer-lab to toggle modes for comparison
+
+
+⸻
+
+My opinion, bluntly
+
+Yes, you can allow 4–5 lines, but only as a separate mode.
+If you apply it to everything, you’ll end up with captions that feel like “paragraphs in a box”, which is not what people expect from a CapCut-style title system.
+
+If you want, tell me what you actually want the default to be in IceMaker:
+	•	“Always show full context, even if it becomes paragraph-y”
+or
+	•	“CapCut punchiness first, and split long captions across multiple cards”
+
+Either is viable, but they lead to different product behaviour.

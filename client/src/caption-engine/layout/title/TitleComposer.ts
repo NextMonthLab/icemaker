@@ -1,14 +1,27 @@
+export type CaptionLayoutMode = 'title' | 'paragraph';
+
 export type TitleComposeOptions = {
   maxLines?: 1 | 2 | 3 | 4 | 5;
   targetWordsPerLine?: [number, number];
   allowSingleWordLineForNumbers?: boolean;
+  layoutMode?: CaptionLayoutMode;
 };
 
-const DEFAULT_OPTIONS: Required<TitleComposeOptions> = {
-  maxLines: 5,
-  targetWordsPerLine: [2, 5],
+const TITLE_MODE_OPTIONS: Required<Omit<TitleComposeOptions, 'layoutMode'>> = {
+  maxLines: 3,
+  targetWordsPerLine: [2, 4],
   allowSingleWordLineForNumbers: true,
 };
+
+const PARAGRAPH_MODE_OPTIONS: Required<Omit<TitleComposeOptions, 'layoutMode'>> = {
+  maxLines: 5,
+  targetWordsPerLine: [3, 6],
+  allowSingleWordLineForNumbers: true,
+};
+
+function getDefaultOptions(mode: CaptionLayoutMode): Required<Omit<TitleComposeOptions, 'layoutMode'>> {
+  return mode === 'paragraph' ? PARAGRAPH_MODE_OPTIONS : TITLE_MODE_OPTIONS;
+}
 
 function isNumericToken(word: string): boolean {
   return /^\d+%?$/.test(word) || /^\$[\d,.]+$/.test(word);
@@ -133,7 +146,9 @@ export function composeTitleLines(
   text: string,
   opts?: TitleComposeOptions
 ): string[] {
-  const options: Required<TitleComposeOptions> = { ...DEFAULT_OPTIONS, ...opts };
+  const mode = opts?.layoutMode || 'title';
+  const defaults = getDefaultOptions(mode);
+  const options = { ...defaults, ...opts };
   const trimmedText = text.trim();
 
   if (!trimmedText) {

@@ -6,7 +6,7 @@ import { colorTokens } from "../tokens/colors";
 import { backgroundTokens, getBackgroundCSS } from "../tokens/backgrounds";
 import { getSafeAreaConfig } from "../safe-area";
 import { fitTextToBox, type FitResult, type FitSettings } from "../layout/fit";
-import { composeTitleLines } from "../layout/title";
+import { composeTitleLines, type CaptionLayoutMode } from "../layout/title";
 
 export interface ResolveStylesInput {
   presetId: CaptionPresetId;
@@ -16,6 +16,7 @@ export interface ResolveStylesInput {
   karaokeStyle?: KaraokeStyleId;
   textLength?: number;
   headlineText?: string;
+  layoutMode?: CaptionLayoutMode;
   layout?: {
     containerWidthPx: number;
   };
@@ -45,6 +46,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     karaokeEnabled = false,
     karaokeStyle = "weight",
     headlineText = "",
+    layoutMode = "title",
     layout,
   } = input;
 
@@ -63,24 +65,30 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     pillColor: colorsAny.background,
   });
 
-  const baseFontSize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
-  const minFontSize = fullScreen ? 24 : 16;
+  const isParagraphMode = layoutMode === 'paragraph';
+  const baseTypographySize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
+  const baseFontSize = isParagraphMode ? baseTypographySize * 0.85 : baseTypographySize;
+  const minFontSize = isParagraphMode 
+    ? (fullScreen ? 18 : 12) 
+    : (fullScreen ? 24 : 16);
   const containerWidth = layout?.containerWidthPx || 375;
+  const lineHeight = isParagraphMode ? 1.15 : 1.1;
+  const maxLines = isParagraphMode ? 5 : 3;
 
   const fitSettings: FitSettings = {
-    maxLines: 5,
+    maxLines,
     panelMaxWidthPercent: 92,
     baseFontSize: baseFontSize,
     minFontSize: minFontSize,
-    padding: 16,
-    lineHeight: 1.1,
+    padding: isParagraphMode ? 12 : 16,
+    lineHeight,
     fontFamily: typography.fontFamily,
     fontWeight: 700,
   };
 
   let fitResult: FitResult;
   if (headlineText && headlineText.trim()) {
-    const composedLines = composeTitleLines(headlineText, { maxLines: 5 });
+    const composedLines = composeTitleLines(headlineText, { layoutMode });
     const composedText = composedLines.join('\n');
     fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
     fitResult.lines = composedLines;
