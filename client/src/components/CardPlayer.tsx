@@ -532,34 +532,47 @@ export default function CardPlayer({
                       const professionalTextShadow = colorsAny.shadow || '0 2px 4px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4)';
                       const glowShadow = '0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8)';
                       
-                      // Background styles based on treatment
+                      // Background styles based on treatment - using inline-block for single cohesive box
                       const getBackgroundStyles = (): React.CSSProperties => {
+                        const baseContainerStyles: React.CSSProperties = {
+                          display: 'inline-block',
+                          maxWidth: '85%',
+                          textAlign: 'center',
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'anywhere',
+                        };
+                        
                         switch (background.treatment) {
                           case 'panel':
                             return {
-                              backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                              padding: `${background.paddingY}px ${background.paddingX}px`,
-                              borderRadius: `${background.borderRadius}px`,
+                              ...baseContainerStyles,
+                              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                              padding: '20px 28px',
+                              borderRadius: '16px',
                             };
                           case 'pill':
                             return {
+                              ...baseContainerStyles,
                               backgroundColor: colorsAny.background || 'rgba(255, 220, 0, 0.9)',
-                              padding: `${background.paddingY}px ${background.paddingX}px`,
-                              borderRadius: `${background.borderRadius}px`,
+                              padding: '14px 24px',
+                              borderRadius: '999px',
                             };
                           case 'blur':
                             return {
-                              backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                              backdropFilter: `blur(${background.blurAmount || 10}px)`,
-                              WebkitBackdropFilter: `blur(${background.blurAmount || 10}px)`,
-                              padding: `${background.paddingY}px ${background.paddingX}px`,
-                              borderRadius: `${background.borderRadius}px`,
+                              ...baseContainerStyles,
+                              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                              backdropFilter: 'blur(12px)',
+                              WebkitBackdropFilter: 'blur(12px)',
+                              padding: '18px 26px',
+                              borderRadius: '16px',
                             };
                           case 'gradient':
                             return {
-                              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(59, 130, 246, 0.8))',
-                              padding: `${background.paddingY}px ${background.paddingX}px`,
-                              borderRadius: `${background.borderRadius}px`,
+                              ...baseContainerStyles,
+                              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(59, 130, 246, 0.85))',
+                              padding: '18px 26px',
+                              borderRadius: '16px',
                             };
                           default:
                             return {};
@@ -592,25 +605,41 @@ export default function CardPlayer({
                       };
                       
                       return (
-                        <div className="flex flex-col items-center gap-4 w-full">
-                          {/* Headline - Caption Engine styling with background */}
+                        <div className="flex flex-col items-center w-full">
+                          {/* Caption panel - single cohesive box wrapper */}
                           <div 
-                            className="inline-flex flex-col items-center mx-auto max-w-[90%]"
                             style={bgStyles}
+                            data-testid="caption-panel"
                           >
                             <p 
-                              className="leading-tight text-center"
-                              style={headlineStyles}
+                              className="m-0"
+                              style={{
+                                ...headlineStyles,
+                                lineHeight: 1.15,
+                              }}
                               data-testid="text-headline"
                             >
                               {headline}
                             </p>
+                            {/* Supporting text inside panel if boxed */}
+                            {supporting && background.treatment !== 'none' && (
+                              <p 
+                                className="m-0 mt-3"
+                                style={{
+                                  ...supportingStyles,
+                                  marginTop: '12px',
+                                }}
+                                data-testid="text-supporting"
+                              >
+                                {supporting}
+                              </p>
+                            )}
                           </div>
                           
-                          {/* Supporting text */}
-                          {supporting && (
+                          {/* Supporting text outside panel if no background */}
+                          {supporting && background.treatment === 'none' && (
                             <p 
-                              className="leading-relaxed max-w-[85%] text-center mx-auto"
+                              className="max-w-[85%] text-center mx-auto mt-4"
                               style={supportingStyles}
                               data-testid="text-supporting"
                             >

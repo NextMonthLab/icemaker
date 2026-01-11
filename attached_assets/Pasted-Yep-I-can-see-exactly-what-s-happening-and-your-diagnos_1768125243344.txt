@@ -1,0 +1,109 @@
+Yep – I can see exactly what’s happening, and your diagnosis is basically right: you’ve currently got the “background” living on something that behaves like an inline/line-fragmented box, so when the browser wraps text it’s painting “per line fragment” instead of “one panel”.
+
+That’s why it looks like a Minecraft speech bubble.
+
+The fix that gives you ONE cohesive box (not stepped)
+
+What you want
+	•	One wrapper element that is treated as a single inline-block (or block) box
+	•	The text wraps inside it
+	•	The background/padding/border-radius is on the wrapper, not on the fragments
+
+CSS (drop-in pattern)
+
+Apply this to the element that is your “panel/box background” wrapper:
+
+.captionPanel {
+  display: inline-block;          /* key: one box */
+  max-width: 82%;                 /* control wrapping */
+  padding: 18px 22px;
+  border-radius: 18px;
+  text-align: center;
+  white-space: normal;            /* allow wrapping */
+  word-break: break-word;         /* safety for long words */
+  overflow-wrap: anywhere;        /* modern wrapping */
+}
+
+.captionPanelText {
+  display: block;
+  margin: 0;
+  line-height: 1.1;
+}
+
+React structure (also key)
+
+Make sure you have one panel wrapper and one text node inside it:
+
+<div className="captionPanel">
+  <p className="captionPanelText">{captionText}</p>
+</div>
+
+What to avoid: applying the background to a per-word span, per-line span, or any element that ends up being “fragmented” across lines.
+
+If you must keep per-line spans somewhere
+
+Sometimes caption engines render “chunks” (word groups) as spans for timing/animation. If that’s your setup, do this:
+	•	Put all spans inside a single panel wrapper
+	•	Background on wrapper only
+	•	Spans just handle animation/opacity/transform
+
+<div className="captionPanel">
+  <p className="captionPanelText">
+    {chunks.map((c) => (
+      <span key={c.id} className="captionChunk">{c.text}</span>
+    ))}
+  </p>
+</div>
+
+…and make sure .captionChunk does not have its own background.
+
+Do NOT use box-decoration-break: clone for this goal
+
+That property is useful when you want a background on each wrapped line. Your requirement is the opposite: one unified box. So we don’t “fix” stepping by cloning the stepping.
+
+Token system change (so it’s consistent across presets)
+
+In backgrounds.ts, make your “panel” token explicitly set:
+	•	display: inline-block
+	•	maxWidth
+	•	padding + radius
+	•	any blur/tint
+
+Example token shape:
+
+panel: {
+  containerStyle: {
+    display: "inline-block",
+    maxWidth: "82%",
+    padding: "18px 22px",
+    borderRadius: 18,
+    textAlign: "center",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  }
+}
+
+Then in CardPlayer.tsx ensure you apply that only to the outer wrapper (not the text spans).
+
+Quick QA checklist (takes 2 minutes)
+
+Test these strings:
+	1.	Short: “AI search wins”
+	2.	Medium: “users now prefer using generative AI”
+	3.	Long: “favoured over traditional search engines for complex queries”
+	4.	One monster word: “supercalifragilisticexpialidocious”
+
+If #4 doesn’t break layout, you’re safe.
+
+Why it’s “seriously underperforming” right now (and how we stop that)
+
+Because this is a first-impression polish bug. Captions are the product. If they look janky, people assume the whole engine is janky, even if the tech underneath is solid.
+
+This one fix is a perceived-quality multiplier.
+
+Next step (no faff)
+
+If you paste (or screenshot) the actual bit of CardPlayer.tsx where the caption wrapper + background is applied (just that component section), I’ll tell you exactly what to move where (wrapper vs spans), and the minimum change to make it perfect without breaking animations.
+
+And yes: implement the “single panel wrapper” approach. It’s the correct architecture for the look you’re aiming for.
