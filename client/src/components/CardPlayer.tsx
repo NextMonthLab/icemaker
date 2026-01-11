@@ -542,11 +542,12 @@ export default function CardPlayer({
                       const getBackgroundStyles = (): React.CSSProperties => {
                         const baseContainerStyles: React.CSSProperties = {
                           display: 'inline-block',
-                          maxWidth: '90%',
+                          maxWidth: '92%',
                           textAlign: 'center',
                           whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'anywhere',
+                          wordBreak: 'keep-all',
+                          overflowWrap: 'normal',
+                          hyphens: 'none',
                         };
                         
                         switch (background.treatment) {
