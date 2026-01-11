@@ -582,12 +582,13 @@ export default function CardPlayer({
                       
                       const supportingStyles: React.CSSProperties = {
                         fontFamily: typography.fontFamily,
-                        fontSize: `${baseFontSize * 0.65}px`,
-                        fontWeight: 500,
-                        lineHeight: 1.4,
-                        color: colorsAny.textSecondary || colors.text,
-                        textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.4)',
+                        fontSize: `${baseFontSize * 0.55}px`,
+                        fontWeight: 400,
+                        lineHeight: 1.5,
+                        color: colorsAny.textSecondary || 'rgba(255,255,255,0.85)',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.6)',
                         opacity: 0.9,
+                        marginTop: '8px',
                       };
                       
                       return (
