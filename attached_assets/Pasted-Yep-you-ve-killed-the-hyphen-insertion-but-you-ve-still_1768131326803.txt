@@ -1,0 +1,82 @@
+Yep – you’ve killed the hyphen insertion, but you’ve still got “break anywhere” behaviour switched on somewhere, so the browser is now splitting words without hyphens:
+	•	generati / ve
+	•	astonish / ing
+
+That doesn’t happen with normal wrapping. It happens when either:
+	•	overflow-wrap: anywhere (most common)
+	•	word-break: break-all
+	•	line-break: anywhere
+	•	(sometimes) text-wrap: balance combined with aggressive wrap rules
+
+The fix: stop “anywhere” wrapping on the text element
+
+In your resolveStyles() make the headline <p> (and supporting) explicitly use word wrapping, not character wrapping.
+
+Use this exact combo:
+
+const headlineStyle: React.CSSProperties = {
+  ...headlineBase,
+
+  whiteSpace: 'normal',
+
+  // ✅ wraps at spaces, does NOT split normal words
+  wordBreak: 'normal',
+  overflowWrap: 'break-word',
+
+  // ✅ no hyphenation
+  hyphens: 'none',
+
+  // ✅ make sure nothing is trying to be clever
+  textWrap: 'initial' as any,   // safe no-op if unsupported
+};
+
+And do the same for supporting.
+
+Important
+
+If any parent/container has overflowWrap: 'anywhere', it can still influence the child depending on how you apply styles. So also make sure your panel/container styles do not include anywhere.
+
+✅ Good container defaults:
+
+const panelStyle: React.CSSProperties = {
+  ...panelBase,
+  whiteSpace: 'normal',
+  wordBreak: 'normal',
+  overflowWrap: 'normal',  // or omit
+  hyphens: 'none',
+};
+
+What to search for (quick grep)
+
+Search the project for any of these and remove/override them in the caption tree:
+	•	overflowWrap: 'anywhere'
+	•	wordBreak: 'break-all'
+	•	lineBreak: 'anywhere'
+	•	hyphens: 'auto'
+	•	textWrap: 'balance' (or balance anywhere)
+
+One of those is still active, guaranteed.
+
+Why it’s choosing to split “generative”
+
+Because your line clamp + font size is tight, and “anywhere” tells the browser:
+
+“Feel free to break inside words to make it fit nicely.”
+
+We want the opposite:
+
+“Break at spaces. Only break a word if it’s so long it can’t fit at all.”
+
+That’s exactly what overflow-wrap: break-word does.
+
+Edge case: long URLs / hashtags
+
+If you’re worried about super-long tokens, do this (optional but pro):
+	•	keep the safe defaults above
+	•	detect long words (e.g. > 18 chars) and only then set overflowWrap: 'anywhere'
+
+But don’t turn “anywhere” on globally, or you’ll keep getting this CapCut-from-Temu vibe.
+
+⸻
+
+If you paste just the final resolved headlineStyle + panelStyle objects that resolveStyles() returns (literally the output values), I can tell you exactly which property is still forcing character-level breaks.

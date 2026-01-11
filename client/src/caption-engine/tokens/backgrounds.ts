@@ -53,7 +53,7 @@ export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillCol
     textAlign: "center",
     whiteSpace: "normal",
     wordBreak: "normal",
-    overflowWrap: "break-word",
+    overflowWrap: "normal",
     hyphens: "none",
   };
 

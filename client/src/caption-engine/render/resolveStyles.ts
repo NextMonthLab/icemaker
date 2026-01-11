@@ -83,7 +83,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     overflow: "hidden",
     whiteSpace: "normal",
     wordBreak: "normal",
-    overflowWrap: "break-word",
+    overflowWrap: "normal",
     hyphens: "none",
   };
 
@@ -102,7 +102,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     overflow: "hidden",
     whiteSpace: "normal",
     wordBreak: "normal",
-    overflowWrap: "break-word",
+    overflowWrap: "normal",
     hyphens: "none",
   };
 
