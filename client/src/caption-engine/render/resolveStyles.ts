@@ -107,8 +107,9 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const minFontSizeRaw = isParagraphMode 
     ? (fullScreen ? 18 : 12) 
     : (fullScreen ? 24 : 16);
-  // Min font also scales with both multipliers to maintain proportional relationship
-  const minFontSize = minFontSizeRaw * fontSizeMultiplier * globalScaleFactor;
+  // Min font only scales with user's fontSize choice, NOT global factor
+  // This allows long captions to shrink as needed while short ones stay at base size
+  const minFontSize = minFontSizeRaw * fontSizeMultiplier;
   const containerWidth = layout?.containerWidthPx || 375;
   const lineHeight = isParagraphMode ? 1.15 : 1.1;
   const maxLines = isParagraphMode ? 5 : 3;

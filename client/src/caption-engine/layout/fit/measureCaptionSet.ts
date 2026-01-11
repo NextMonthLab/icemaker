@@ -84,7 +84,14 @@ export function measureCaptionSet(input: MeasureCaptionSetInput): CaptionSetMeas
     }
   }
 
-  const globalScaleFactor = smallestFontSize / baseFontSize;
+  // Calculate raw scale factor
+  const rawScaleFactor = smallestFontSize / baseFontSize;
+  
+  // Clamp the global scale factor to prevent extreme shrinking
+  // If one caption needs to shrink below 85%, let it shrink individually
+  // rather than dragging all captions down
+  const SCALE_THRESHOLD = 0.85;
+  const globalScaleFactor = rawScaleFactor >= SCALE_THRESHOLD ? rawScaleFactor : 1;
 
   return {
     globalScaleFactor,
