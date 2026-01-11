@@ -886,28 +886,17 @@ export default function GuestIceBuilderPage() {
     <div className="min-h-screen bg-black flex flex-col">
       <GlobalNav context="ice" showBreadcrumb breadcrumbLabel="ICE Maker" />
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
-        <div className="text-center mb-8">
-          {isProfessionalMode ? (
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-full px-4 py-1.5 mb-4" data-testid="badge-professional">
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm text-emerald-300">Professional Editor</span>
-              <span className="text-xs text-emerald-400/70 ml-1">• {entitlements?.planName}</span>
-            </div>
-          ) : (
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full px-4 py-1.5 mb-4" data-testid="badge-preview">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-sm text-blue-300">Preview Mode</span>
-            </div>
-          )}
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            {isProfessionalMode ? "Professional ICE Editor" : "Create Your Interactive Cinematic Experience"}
-          </h1>
-          <p className="text-white/50 max-w-2xl mx-auto">
-            {isProfessionalMode 
-              ? "Full access unlocked. Generate media, add AI characters, and publish your interactive experience."
-              : "Transform any content into an interactive story. Paste a URL or your script, and we'll generate story cards you can edit and reorder."}
-          </p>
-        </div>
+        {/* Compact header - only show for creation mode */}
+        {!preview && (
+          <div className="text-center mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Create Interactive Experience
+            </h1>
+            <p className="text-white/50 text-sm max-w-xl mx-auto">
+              Transform content into an interactive story. Paste a URL or your script.
+            </p>
+          </div>
+        )}
 
         {!preview ? (
           <UiCard className="bg-white/[0.03] border-white/10">
@@ -1114,11 +1103,11 @@ export default function GuestIceBuilderPage() {
                     setPreviewCardIndex(0);
                     setShowPreviewModal(true);
                   }}
-                  className="flex-1 sm:flex-none gap-1.5 border-blue-500/50 text-blue-300 hover:bg-blue-500/10"
+                  className="flex-1 sm:flex-none gap-1.5 bg-purple-600 hover:bg-purple-700 border-purple-500 text-white"
                   data-testid="button-preview-experience"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span className="hidden xs:inline">Preview</span>
+                  <Play className="w-4 h-4" />
+                  <span className="hidden xs:inline">Play</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -1247,17 +1236,17 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
-            {/* Bulk AI Generation Panel - only for professional users */}
+            {/* Bulk AI Generation Panel - neutral surface, only for professional users */}
             {isProfessionalMode && entitlements && (cardsNeedingImages.length > 0 || cardsNeedingVideos.length > 0) && (
-              <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 rounded-lg p-4">
+              <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-white flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-white flex items-center gap-2">
                       <Wand2 className="w-4 h-4 text-purple-400" />
-                      Generate All AI Media
+                      Generate AI Media
                     </h3>
-                    <p className="text-xs text-white/50 mt-1">
-                      Review prompts before generating images or videos for all cards at once.
+                    <p className="text-xs text-white/40 mt-0.5">
+                      Review prompts before generating.
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -1267,7 +1256,7 @@ export default function GuestIceBuilderPage() {
                         disabled={bulkGeneratingImages || bulkGeneratingVideos}
                         variant="outline"
                         size="sm"
-                        className="gap-1.5 border-purple-500/50 text-purple-300 hover:bg-purple-500/20"
+                        className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
                         data-testid="button-bulk-generate-images"
                       >
                         {bulkGeneratingImages ? (
@@ -1289,7 +1278,7 @@ export default function GuestIceBuilderPage() {
                         disabled={bulkGeneratingVideos || bulkGeneratingImages}
                         variant="outline"
                         size="sm"
-                        className="gap-1.5 border-blue-500/50 text-blue-300 hover:bg-blue-500/20"
+                        className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
                         data-testid="button-bulk-generate-videos"
                       >
                         {bulkGeneratingVideos ? (

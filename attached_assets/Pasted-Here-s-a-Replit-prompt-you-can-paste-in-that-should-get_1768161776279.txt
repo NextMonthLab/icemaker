@@ -1,0 +1,198 @@
+Here’s a Replit prompt you can paste in that should get you a properly modern “pro” UI, without the neon sweetshop vibes. 👊🏻
+(Assumes React + Tailwind-ish styling, but it’s written so Replit can adapt to your actual stack.)
+
+⸻
+
+Replit Prompt: Modernise the ICE Maker Edit Screen UI (Professional, Clean, Mobile-First)
+
+Context
+
+We have an “ICE Maker” edit screen that currently feels busy and a bit “prototypey”. There are too many competing colours, a redundant “Professional Editor” pill, and some interaction patterns that hide important info (titles behind toggles). We want the edit screen to look like a modern paid product.
+
+You must update the UI to feel closer to Linear, Notion, Stripe, Superhuman, CapCut level polish, but still aligned to NextMonth’s dark theme and purple accent.
+
+Key UI problems to fix
+	1.	Remove the “Professional Editor” pill entirely. It’s redundant and adds visual noise.
+	2.	The eye icon should be a Play button (it currently reads as “view” rather than “preview/play”).
+	3.	Card titles must never be hidden behind an expansion toggle. The title is the primary anchor and must always be visible. Expanding should reveal secondary details only.
+	4.	Reduce competing colours. Keep a single accent system (purple) and neutral surfaces. No random green pills competing with purple.
+	5.	Improve hierarchy, spacing, and consistency so the screen looks intentional, not assembled.
+
+Desired outcome
+
+A cleaner, more professional edit screen with:
+	•	A compact, confident header
+	•	Clear project title and status
+	•	A strong, consistent primary action layout
+	•	A scrollable card list where titles are always visible
+	•	Collapsible panels for advanced controls
+	•	Consistent buttons, badges, and icon styling
+
+⸻
+
+Design Rules (Non-negotiable)
+
+Colour and style system
+	•	Use one primary accent: NextMonth purple (and optional subtle gradient only on primary CTA).
+	•	Everything else should be neutral: dark background, subtle surface panels, grey borders, restrained highlights.
+	•	No bright green “success” styling except tiny confirmations or subtle icons. Do not use green pills.
+	•	Borders should be subtle and consistent (one border colour token).
+	•	Shadows should be minimal and soft, not heavy glow.
+
+Type and hierarchy
+	•	Screen title should not repeat itself.
+	•	Use a single H1 (project title), then a short supporting line, then controls.
+	•	Keep line lengths sensible on mobile.
+
+Buttons
+	•	One clear primary CTA per section.
+	•	Secondary actions look secondary (ghost / outline).
+	•	Icon buttons should be consistent size, padding, and hover states.
+
+⸻
+
+Layout Changes
+
+1) Replace the top “hero” block with a compact header
+
+Current: giant “Professional ICE Editor” hero and a pill.
+New: compact header that feels like a real editor.
+
+Header structure (sticky)
+	•	Left: NextMonth logo (small)
+	•	Centre: Project title (editable inline or read-only)
+	•	Right: Publish button, overflow menu, avatar
+
+Under header (still near top, not huge):
+	•	A small status row: “Unlisted” badge (neutral), “5 cards”, last saved time
+	•	Keep status subtle. No chunky pills.
+
+Acceptance criteria:
+	•	“Professional ICE Editor” hero heading removed.
+	•	“Professional Editor” pill removed.
+	•	Project title becomes the main heading.
+
+2) Project controls row: Preview and Start Over
+
+Replace the current row with a clean control bar:
+	•	Primary: Preview / Play (icon + label). This is where the Play icon belongs.
+	•	Secondary: Start Over
+	•	Optional: Export Video and Project Bible can sit as secondary actions, but not competing.
+
+Acceptance criteria:
+	•	Eye icon replaced with a Play icon.
+	•	The Play button reads as “Preview” or “Play Preview”.
+	•	Buttons are aligned and consistent.
+
+3) “Generate All AI Media” becomes a clean panel
+
+Current panel is loud (purple heavy) and competes with everything.
+
+New:
+	•	A neutral surface card with a clear title and short helper text.
+	•	Inside: two segmented buttons or tabs: Images (4), Videos (1)
+	•	Primary CTA: “Review and generate” or “Generate all” depending on flow.
+
+Acceptance criteria:
+	•	Panel looks neutral, not glowing.
+	•	Tabs look modern (segmented control).
+	•	The copy is short and clear.
+
+4) Background music + narration panel
+
+This should feel like editor settings, not another hero block.
+	•	Neutral surface
+	•	Clear labels
+	•	Slider styling consistent with theme
+
+Acceptance criteria:
+	•	Clean spacing, not visually heavy.
+
+5) Advanced Caption Settings
+
+This is important, but should not dominate.
+	•	Collapsible panel with a clear title
+	•	Show current selection as a small subtitle (eg “Karaoke: On”)
+	•	Tabs: Styles, Effects, Layout should be proper segmented tabs
+	•	Preset tiles should have consistent sizes and spacing, with clear selected state
+
+Acceptance criteria:
+	•	Panel collapse/expand icon is clear.
+	•	Tabs don’t look disabled unless genuinely disabled.
+	•	Preset tiles are readable on mobile.
+
+6) Card list redesign (this is the biggest win)
+
+Current list hides too much behind toggles and feels flat.
+
+New card row design:
+Each row shows:
+	•	Left: card number in a subtle pill
+	•	Main: Title always visible, then one-line excerpt under it (always visible)
+	•	Right: icons for media state (image/video present), and a chevron for expand details
+	•	Expand reveals ONLY secondary fields (script body, prompt details, advanced settings), not the title.
+
+Also:
+	•	Replace the floating plus buttons between cards with a cleaner “Add card” row at the bottom, or a small inline add control that doesn’t interrupt scanning.
+	•	Make each card row feel tappable with clear hover/pressed states.
+
+Acceptance criteria:
+	•	Titles are always visible without expanding anything.
+	•	Expand toggle exists but only controls secondary details.
+	•	Tapping a card opens edit, but the UI communicates what is tappable vs expandable.
+
+7) Remove or rethink “Unlock Premium Features” panel (if in Pro mode)
+
+If the user is in Professional Editor mode, premium lock UI should not appear. If it’s needed for non-pro:
+	•	Keep it minimal and consistent with the rest of the editor
+	•	No big dashed outlines
+	•	It should not feel like a random landing page section inside the editor
+
+Acceptance criteria:
+	•	In Pro mode: no premium unlock panel.
+	•	In non-pro mode: premium panel looks consistent and restrained.
+
+⸻
+
+Implementation Guidance (Engineer-facing)
+	1.	Create a small design token map for:
+	•	surfaces (bg, panel, elevated)
+	•	border colour
+	•	text colours (primary, secondary, muted)
+	•	accent (purple)
+	2.	Refactor the edit screen into clear components:
+	•	EditorHeader
+	•	ProjectMetaBar
+	•	ActionBar
+	•	MediaBatchPanel
+	•	AudioPanel
+	•	CaptionSettingsPanel
+	•	CardList
+	•	CardListItem
+	3.	Ensure mobile-first spacing and sticky header works on iOS Safari.
+	4.	Remove any duplicate headings and reduce vertical padding above the fold.
+	5.	Add subtle motion: hover/press states, panel expand transitions (fast, understated).
+
+⸻
+
+Deliverables
+	•	Update the ICE Maker edit screen to match the new layout and rules.
+	•	Provide before/after screenshots (or at least a short summary of what changed).
+	•	Ensure no functionality is removed, only reorganised and restyled.
+	•	Ensure the design remains consistent in both Preview and Professional Editor modes.
+
+⸻
+
+Definition of Done Checklist
+	•	“Professional Editor” pill removed
+	•	Eye icon replaced with Play icon and reads as Preview/Play
+	•	Card titles always visible without expansion
+	•	Fewer competing colours, purple used as single accent
+	•	Cleaner header, no repeated screen title
+	•	Panels are neutral surfaces, consistent borders
+	•	Pro mode does not show premium unlock UI
+	•	Mobile layout feels intentional and polished
+
+⸻
+
+If you want, send me the component/file names for this page (even just the route path and top-level component), and I’ll tailor the prompt to your actual repo structure so Replit doesn’t “guess” and go wandering like a drunk extra in the background of a Marvel film.
