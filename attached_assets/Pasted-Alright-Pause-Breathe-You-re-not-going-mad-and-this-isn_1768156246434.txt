@@ -1,0 +1,174 @@
+Alright. Pause. Breathe. You’re not going mad – and this isn’t “one more tiny padding bug”. There’s a fundamental reason you’re still seeing clipping even after Claude’s “correct architecture” message.
+
+I’m going to be very direct now, because you’re at the point where clarity matters more than optimism.
+
+⸻
+
+The uncomfortable truth (why it’s STILL clipping)
+
+The preview you are looking at is NOT actually using the code Claude just fixed.
+
+Not fully. Not end-to-end.
+
+What you’re seeing is one of these three things (and almost certainly a combination of them):
+
+⸻
+
+1️⃣ The ICE preview is NOT a pure composition renderer
+
+Even though Claude conceptually locked geometry to composition space, your screenshots prove this:
+	•	The bubble is being clipped by the viewport, not the composition
+	•	The left edge is disappearing, which should be impossible if:
+	•	The caption is rendered at 1080px
+	•	And the whole thing is scaled with transform: scale()
+
+That means:
+
+👉 Something upstream is still constraining width in DOM space before the scale is applied
+
+Common culprits:
+	•	A wrapper with overflow-hidden
+	•	A parent with max-width or width: 100%
+	•	A Framer Motion wrapper calculating layout before transform
+	•	A Tailwind class like w-full, max-w-full, inset-x-*
+
+Claude fixed the math, but the DOM containment is still wrong.
+
+⸻
+
+2️⃣ You now have TWO competing geometry systems alive at once
+
+From your screenshots and Claude’s own admissions:
+	•	calculateCaptionGeometry() exists ✅
+	•	viewportScale logic still exists ❌
+	•	CardPlayer / ICE preview still makes layout decisions ❌
+
+So what’s happening is this:
+
+FIT ENGINE:  "I have 972px, text fits"
+RENDER:      "Cool, but I'm inside a narrower DOM box"
+BROWSER:     "Left side gets clipped"
+
+This is why you’ve had 25 fixes that all felt “almost right”.
+
+They were fixing symptoms, not ownership.
+
+⸻
+
+3️⃣ The preview is reflowing text before scale is applied
+
+This is the killer detail most people miss:
+
+CSS transform: scale() does NOT affect layout, only paint.
+
+So if the caption bubble is:
+	•	Measured
+	•	Wrapped
+	•	Clipped
+
+before the transform is applied, scaling later will NOT save you.
+
+That means the only safe options are:
+
+Option A (recommended, simple, robust)
+
+Render captions inside a fixed 1080px absolutely-positioned stage, then scale the entire stage.
+
+Option B (harder)
+
+Rebuild the preview so that no DOM width ever affects caption layout.
+
+Right now, you’re in a broken hybrid of both.
+
+⸻
+
+Why Claude keeps “finding the issue” but it never ends
+
+Claude isn’t lying – it is finding real problems each time.
+
+But it’s doing this:
+	•	Fix padding
+	•	Fix geometry
+	•	Fix scale
+	•	Fix container width
+
+…without ever being forced to answer one binary question:
+
+❓ Who owns the width: the composition or the DOM?
+
+Until that is answered in code, not comments, you will loop forever.
+
+⸻
+
+The only fix that will ACTUALLY end this
+
+This is the “nuclear but correct” move. No more tweaks.
+
+🔒 Lock the preview to a composition stage
+
+Tell Claude this exactly (do not soften it):
+
+We are done tweaking.
+
+Implement a fixed 1080x1920 composition stage for ICE preview.
+
+Rules:
+1) Create a <CompositionStage> div that is exactly 1080px wide.
+2) ALL captions render inside this stage using absolute positioning.
+3) The stage is the ONLY thing that gets transform: scale().
+4) No caption component may read viewport size or DOM width.
+5) overflow-hidden may ONLY exist on the stage wrapper, never inside it.
+6) Delete or bypass any code that sizes captions based on viewport.
+
+If any caption element uses w-full, max-w-*, clientWidth, or offsetWidth, remove it.
+
+If Claude pushes back, that’s your proof the architecture is still wrong.
+
+⸻
+
+How you can sanity-check this yourself (no code reading)
+
+Do this in DevTools:
+	1.	Inspect the caption bubble
+	2.	Look at its computed width in pixels
+	3.	Ask:
+	•	Is this ~972px before scaling?
+	•	Or is it something like 340–380px?
+
+If it’s the latter, the preview is still lying to the fit engine.
+
+⸻
+
+One final thing (important)
+
+Your instinct earlier was correct.
+
+When GitHub said:
+	•	Accept current
+	•	Accept incoming
+
+Claude’s fix would almost certainly have been incoming, not current.
+
+That alone could mean:
+	•	Geometry contract exists
+	•	But never actually reached the preview path you’re testing
+
+⸻
+
+Bottom line
+
+You are not failing.
+The system is in an unstable architectural superposition.
+
+Once you:
+	•	Pick composition-space only
+	•	Enforce it with a real stage
+	•	Scale only the stage
+
+This problem disappears forever.
+
+If you want, next message I can:
+	•	Write the exact JSX structure the preview must have
+	•	Or help you audit one file to find the last DOM-width offender
+
+You’re absolutely right to be frustrated. You’re also absolutely right about the direction.

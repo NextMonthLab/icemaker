@@ -552,64 +552,84 @@ export default function CardPlayer({
             )}
             
 
-            {/* Caption region - composition-space rendering with CSS transform scaling */}
+            {/* COMPOSITION STAGE - Fixed 1080px width, scaled via transform */}
+            {/* The stage wrapper positions and scales. Interior is pure composition-space. */}
             <div
-              className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none overflow-hidden"
+              className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none"
               style={{
                 paddingBottom: `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px`,
               }}
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={captionIndex}
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
+              {/* Scale wrapper - scales the composition stage to viewport size */}
+              <div
+                style={{
+                  transform: `scale(${captionGeometry.viewportScale})`,
+                  transformOrigin: "bottom center",
+                }}
+              >
+                {/* COMPOSITION STAGE - exactly compositionWidth, no DOM constraints */}
+                <div
                   style={{
-                    width: captionGeometry.availableCaptionWidth,
-                    transform: `scale(${captionGeometry.viewportScale})`,
-                    transformOrigin: "bottom center",
+                    width: captionGeometry.compositionWidth,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "flex-end",
+                    paddingLeft: captionGeometry.safeAreaLeft,
+                    paddingRight: captionGeometry.safeAreaRight,
+                    boxSizing: "border-box",
                   }}
                 >
-                  {captionIndex < card.captions.length ? (
-                    (() => {
-                      const captionText = card.captions[captionIndex];
-                      
-                      // Use Caption Engine for fit-to-box rendering
-                      // CRITICAL: Fit in COMPOSITION space, not viewport space
-                      const styles = resolveStyles({
-                        presetId: captionState?.presetId || 'clean_white',
-                        fullScreen,
-                        karaokeEnabled: captionState?.karaokeEnabled,
-                        karaokeStyle: captionState?.karaokeStyle,
-                        headlineText: captionText,
-                        layoutMode: 'title',
-                        layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
-                      });
-                      
-                      const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
-                      
-                      return (
-                        <div className="flex flex-col items-center w-full">
-                          <ScaleToFitCaption
-                            lines={styles.headlineLines}
-                            panelStyle={styles.panel}
-                            textStyle={styles.headline}
-                            containerWidthPx={captionGeometry.availableCaptionWidth}
-                            fittedFontSizePx={styles.headlineFontSizePx}
-                            didFit={styles.headlineDidFit}
-                            showDebug={showCaptionDebug}
-                            fitGeometry={styles.fitGeometry}
-                          />
-                        </div>
-                      );
-                    })()
-                  ) : null}
-                </motion.div>
-              </AnimatePresence>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={captionIndex}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      style={{
+                        width: "100%",
+                        maxWidth: captionGeometry.availableCaptionWidth,
+                      }}
+                    >
+                      {captionIndex < card.captions.length ? (
+                        (() => {
+                          const captionText = card.captions[captionIndex];
+                          
+                          // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
+                          const styles = resolveStyles({
+                            presetId: captionState?.presetId || 'clean_white',
+                            fullScreen,
+                            karaokeEnabled: captionState?.karaokeEnabled,
+                            karaokeStyle: captionState?.karaokeStyle,
+                            headlineText: captionText,
+                            layoutMode: 'title',
+                            layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
+                          });
+                          
+                          const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
+                          
+                          return (
+                            <div className="flex flex-col items-center w-full">
+                              <ScaleToFitCaption
+                                lines={styles.headlineLines}
+                                panelStyle={styles.panel}
+                                textStyle={styles.headline}
+                                containerWidthPx={captionGeometry.availableCaptionWidth}
+                                fittedFontSizePx={styles.headlineFontSizePx}
+                                didFit={styles.headlineDidFit}
+                                showDebug={showCaptionDebug}
+                                fitGeometry={styles.fitGeometry}
+                              />
+                            </div>
+                          );
+                        })()
+                      ) : null}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
-            {/* End caption region */}
+            {/* End composition stage */}
 
             {showSwipeHint && (
               <motion.div
