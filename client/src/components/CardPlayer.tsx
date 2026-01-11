@@ -552,9 +552,9 @@ export default function CardPlayer({
             )}
             
 
-            {/* Caption region - 5% padding each side ensures bubble never touches edges */}
+            {/* Caption region - composition-space rendering with CSS transform scaling */}
             <div
-              className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none px-[5%]"
+              className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none overflow-hidden"
               style={{
                 paddingBottom: `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px`,
               }}
@@ -566,9 +566,10 @@ export default function CardPlayer({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="w-full"
                   style={{
-                    maxWidth: "90%",
+                    width: captionGeometry.availableCaptionWidth,
+                    transform: `scale(${captionGeometry.viewportScale})`,
+                    transformOrigin: "bottom center",
                   }}
                 >
                   {captionIndex < card.captions.length ? (
@@ -576,6 +577,7 @@ export default function CardPlayer({
                       const captionText = card.captions[captionIndex];
                       
                       // Use Caption Engine for fit-to-box rendering
+                      // CRITICAL: Fit in COMPOSITION space, not viewport space
                       const styles = resolveStyles({
                         presetId: captionState?.presetId || 'clean_white',
                         fullScreen,
@@ -583,7 +585,7 @@ export default function CardPlayer({
                         karaokeStyle: captionState?.karaokeStyle,
                         headlineText: captionText,
                         layoutMode: 'title',
-                        layout: { containerWidthPx: captionGeometry.viewportCaptionWidth },
+                        layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
                       });
                       
                       const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
@@ -594,7 +596,7 @@ export default function CardPlayer({
                             lines={styles.headlineLines}
                             panelStyle={styles.panel}
                             textStyle={styles.headline}
-                            containerWidthPx={captionGeometry.viewportCaptionWidth}
+                            containerWidthPx={captionGeometry.availableCaptionWidth}
                             fittedFontSizePx={styles.headlineFontSizePx}
                             didFit={styles.headlineDidFit}
                             showDebug={showCaptionDebug}

@@ -1,0 +1,150 @@
+I’m going to be very blunt now, because this is the moment where you either end the loop or let it drag on another day.
+
+Why you are still seeing clipping (the real answer)
+
+Claude’s latest diagnosis is actually wrong for your architecture, and if you let it keep going down this path it will re-introduce the same bug forever.
+
+Here’s the key sentence from the screenshot that tells me that:
+
+“The simple fix: Use the actual container width for text fitting, not a theoretical scaled width.”
+
+That sounds reasonable… but it directly contradicts the unified geometry contract you just put in place.
+
+⸻
+
+The fundamental mistake that keeps reappearing
+
+You now have two mutually exclusive strategies fighting each other:
+
+Strategy A (the correct one – what you agreed earlier)
+	•	Geometry lives in composition space (eg 1080px wide)
+	•	Preview scales the entire composition
+	•	Fit engine + renderer use the same canonical width
+	•	DOM container size is irrelevant
+
+This is how Remotion, CapCut, After Effects previews work.
+
+Strategy B (what Claude just drifted back into)
+	•	Geometry is calculated in composition space
+	•	BUT then tries to “correct” using actual DOM container width
+	•	Adds caps like “90% of container”
+	•	Reintroduces device-specific behaviour
+
+This recreates the original bug in a new form.
+
+You cannot mix these strategies. One must die.
+
+⸻
+
+Why the clipping still happens (exactly)
+
+From your screenshots:
+	•	Text is still being fitted against a width that is larger than the rendered bubble
+	•	The left edge is clipped → meaning the bubble is being centred but is wider than its actual parent
+	•	That only happens when fit width ≠ render width
+
+And now we know why:
+	•	viewportScale is hardcoded (0.4 / 0.5)
+	•	The actual preview container on mobile Safari is not exactly that scale
+	•	So any logic that says “fit to 90% of container” will always be wrong on some devices
+
+This is why you see:
+	•	works sometimes
+	•	fails on mobile
+	•	fails on long lines
+	•	never fully dies
+
+⸻
+
+The hard truth (and this is the turning point)
+
+Claude should not be allowed to touch geometry logic anymore.
+
+Not because it’s dumb — but because it keeps trying to be “helpful” by adapting to DOM size, which is architecturally incompatible with what you are building.
+
+⸻
+
+The one correct fix (no negotiation)
+
+🔒 Lock geometry to composition space. Period.
+
+That means:
+	1.	Delete or ignore viewportScale for fitting
+	•	Scaling is a render concern, not a geometry concern
+	2.	Fit text against a fixed width
+
+const COMP_WIDTH = 1080;
+const SAFE_WIDTH = COMP_WIDTH * 0.92; // or whatever you choose
+
+
+	3.	Render bubble at COMP_WIDTH
+	•	Then let the preview container scale the whole thing via CSS transform
+	4.	DO NOT
+	•	use clientWidth
+	•	use container width
+	•	cap at 90% of DOM
+	•	adapt per device
+
+If you do, this bug cannot physically occur.
+
+⸻
+
+Why this feels insane (but isn’t)
+
+You’re fighting:
+	•	mobile Safari rounding
+	•	nested transforms
+	•	flex centring
+	•	overflow hidden
+	•	dynamic scaling
+
+The DOM will never give you a stable width to fit typography against.
+
+That’s why every professional video system ignores it.
+
+⸻
+
+What I recommend you do right now (step-by-step)
+
+Step 1: Freeze Claude Code
+
+Do not accept the “actual container width” fix.
+
+That path is a dead end.
+
+Step 2: Manually enforce this rule
+
+Search the repo for:
+	•	clientWidth
+	•	containerWidth
+	•	viewportScale
+	•	0.4
+	•	0.5
+	•	90%
+
+None of these should be involved in font fitting.
+
+Step 3: Force a visual proof
+
+Temporarily render a vertical guide at:
+	•	x = 1080 * 0.92 / 2
+
+If text ever crosses it → your fit engine is wrong.
+If it doesn’t → clipping cannot occur.
+
+⸻
+
+One sentence to anchor yourself
+
+If fit width and render width are identical in the same coordinate system, clipping is impossible.
+
+Right now Claude keeps breaking that rule again after you fix it.
+
+⸻
+
+If you want, next I can:
+	•	give you a “geometry lockdown checklist” (10 lines to verify and this dies)
+	•	or help you write a comment in the code that explicitly forbids DOM-based fitting so nobody (including Claude) reintroduces it
+
+But the important thing is this:
+You’re not crazy. The system is oscillating between two incompatible models. Kill one, and the problem ends.
