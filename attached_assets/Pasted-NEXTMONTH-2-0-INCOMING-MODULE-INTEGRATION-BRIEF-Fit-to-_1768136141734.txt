@@ -1,0 +1,138 @@
+NEXTMONTH 2.0 — INCOMING MODULE INTEGRATION BRIEF (Fit-to-Box Captions)
+
+We are about to paste in a small “fit-to-box” caption layout engine from an isolated spike project.
+
+What to expect (incoming)
+You will receive 5–7 TypeScript files that implement a CapCut-style Fit-to-Box engine:
+
+- types.ts
+- measurer.ts (DOM offscreen measurement)
+- composeLines.ts (deterministic line breaking, no mid-word splits)
+- fitTextToBox.ts (shrinks font until all words fit inside panel, up to max 3 lines)
+- index.ts (exports)
+(+ optional helpers)
+
+This engine DOES NOT:
+- know about presets
+- know about tokens
+- know about karaoke/effects
+- render anything itself
+
+It ONLY outputs:
+- lines: string[] (deterministic)
+- fontSizePx: number (shrunk to fit)
+- usedLines: number
+- didFit: boolean
+
+Where it will live
+Create folder:
+client/src/caption-engine/layout/fit/
+
+Paste the incoming files into that folder and export from:
+client/src/caption-engine/layout/fit/index.ts
+
+Integration goal
+Replace “browser decides wrapping” and “truncate/ellipsis” with:
+- deterministic line breaks from engine
+- font size chosen by engine so ALL words fit inside the panel
+
+Non-negotiable contract
+1) Never break normal words mid-word.
+2) All words assigned to headline must remain inside the rounded panel.
+3) If needed, font shrinks until it fits (even tiny is acceptable).
+4) Panel remains ONE cohesive box (not stepped backgrounds).
+5) Headline rendering must use the returned lines with <br/>, not browser wrapping.
+
+Required changes in NextMonth (do not refactor anything else)
+
+A) CardPlayer.tsx: measure available panel width/height in pixels
+- Add a ref to the caption region container (the area over the video where captions sit)
+- Use ResizeObserver to store:
+  - regionWidthPx
+  - regionHeightPx
+- Calculate:
+  - panelWidthPx = Math.floor(regionWidthPx * 0.92)  // or whichever percent matches our design
+  - panelMaxHeightPx = Math.floor(regionHeightPx * 0.30) // aligns with current “30vh” idea
+
+B) resolveStyles.ts: call fitTextToBox()
+Update resolveStyles signature to accept:
+layout?: { panelWidthPx: number; panelMaxHeightPx: number }
+
+In resolveStyles:
+- Determine panel padding in px (based on preset/background)
+- Determine baseFontSizePx (from typography token + fullscreen scaling)
+- Determine minFontSizePx (can be low; user prefers always fitting)
+- Call:
+fitTextToBox({
+  text: headline,
+  maxLines: 3,
+  widthPx: panelWidthPx,
+  maxHeightPx: panelMaxHeightPx,
+  paddingPx: panelPaddingPx,
+  fontFamily,
+  fontWeight,
+  letterSpacing,
+  lineHeight,
+  baseFontSizePx,
+  minFontSizePx,
+  wordPolicy: 'keep-all'
+})
+
+Return additional fields:
+- headlineLines: string[]
+- headlineFontSizePx: number
+- headlineDidFit: boolean
+
+Also set headlineStyle.fontSize from headlineFontSizePx.
+
+Important:
+- Do NOT line-clamp the headline once using deterministic lines.
+- Supporting text can remain as is for now (optional later).
+
+C) CardPlayer.tsx: render headline deterministically
+Instead of {headline} inside <p>, do:
+
+<p style={headlineStyle}>
+  {headlineLines.map((line, i) => (
+    <React.Fragment key={i}>
+      {line}
+      {i < headlineLines.length - 1 ? <br/> : null}
+    </React.Fragment>
+  ))}
+</p>
+
+D) Dev-only debug (optional but recommended)
+Add:
+?fitDebug=1
+If enabled, show a tiny badge below the caption panel:
+- didFit
+- fontSizePx
+- usedLines
+
+Acceptance criteria (must verify)
+Test headlines:
+1) “AI search is…”
+2) “As generative AI tools…”
+3) “Understanding this shift is vital for businesses”
+4) A long stress headline (20+ words)
+5) “Supercalifragilisticexpialidocious” (should not split; can return didFit=false)
+
+Pass conditions:
+- No “gen-erative” splitting
+- No ellipsis truncation caused by our code (unless we explicitly choose to shorten copy)
+- Panel always contains full headline text
+- Looks stable on mobile widths
+
+Important constraint
+Keep diffs tight:
+- Only touch: CardPlayer.tsx, resolveStyles.ts (or wherever styles resolved), and add the new fit module folder.
+- Do not rewrite the caption engine architecture.
+
+When the files arrive
+1) Paste them into client/src/caption-engine/layout/fit/
+2) Wire imports in resolveStyles.ts
+3) Add ResizeObserver measurement in CardPlayer.tsx
+4) Render headlineLines with <br/>
+5) Verify with test headlines + mobile width
+
+Do not start implementing until the code files are pasted in.
