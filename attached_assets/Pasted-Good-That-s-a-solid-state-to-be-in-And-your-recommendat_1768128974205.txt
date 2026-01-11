@@ -1,0 +1,203 @@
+Good. That’s a solid state to be in. And your recommendation (Path A) is the right call given what’s live in CardPlayer.
+
+Here’s the refactor plan that will stop the “two directors on set” problem without turning this into a rewrite.
+
+⸻
+
+The real goal
+
+Make Caption Engine the single authority for:
+	•	preset selection
+	•	token resolution
+	•	background/typography/colour application
+	•	karaoke integration
+	•	safe-area compliance
+
+…and reposition Title Packs as a curated marketing layer that maps cleanly onto Caption Engine presets (and optionally adds “extra spice” like accent shapes later).
+
+Right now the biggest remaining smell is:
+
+CardPlayer uses captionPresets but also hardcodes background logic in getBackgroundStyles()
+which means tokens are not truly authoritative.
+
+So we fix that next.
+
+⸻
+
+Phase 1 (fast, safe): Make tokens actually drive rendering
+
+1) Move getBackgroundStyles() out of CardPlayer
+
+Create:
+
+client/src/caption-engine/render/resolveStyles.ts
+
+Responsibility:
+	•	input: { presetId, captionState, fullScreen, safeAreaProfile }
+	•	output: { containerStyle, panelStyle, headlineStyle, supportingStyle, karaokeStyle }
+
+CardPlayer should become dumb:
+	•	“Ask caption engine for styles”
+	•	“Render them”
+
+This prevents style logic drifting across the app.
+
+2) Stop hardcoding background values in CardPlayer
+
+Right now you’re doing:
+	•	token says panel
+	•	CardPlayer decides rgba(0,0,0,0.8) and padding itself
+
+Instead, push those “what does panel mean?” rules into:
+
+caption-engine/tokens/backgrounds.ts
+
+Each background token should produce a structured object like:
+
+type BackgroundResolved = {
+  treatment: 'none' | 'panel' | 'pill' | 'blur' | 'gradient';
+  containerStyle?: CSSProperties;
+  panelStyle?: CSSProperties;
+}
+
+Then the resolver uses it directly, no local overrides.
+
+3) Typography + colour tokens should return full CSS-ready intent
+
+Right now tokens are “names” and CardPlayer decides a bunch of defaults (shadow, glow etc).
+
+Instead:
+	•	colour token should return:
+	•	text colour
+	•	shadow preset
+	•	stroke preset (if any)
+	•	glow preset (if any)
+	•	typography token should return:
+	•	family
+	•	weight strategy
+	•	transform strategy (uppercase etc)
+	•	letterSpacing defaults
+
+This stops “style intent” living in Title Packs and “render decisions” living in CardPlayer.
+
+⸻
+
+Phase 2 (clarity): Decide what Title Packs are for (and enforce it)
+
+The rule
+
+Title Packs are not a second renderer.
+They are a collection.
+
+So:
+
+Option A (recommended)
+
+Title Packs become a marketing-friendly grouping of presets:
+
+export const TITLE_PACKS = {
+  neonImpact: {
+    label: 'Neon Impact',
+    presets: ['bold_impact', 'neon_blue', 'highlight_pink'],
+    defaultPreset: 'highlight_pink',
+    preview: { /* metadata only */ }
+  },
+  cinematicSubtitles: {
+    presets: ['elegant_serif', 'boxed_black', 'minimal_shadow'],
+    defaultPreset: 'boxed_black',
+  }
+}
+
+This keeps your “5 cinematic packs” concept without duplicating styling logic.
+
+Option B (if you want packs to feel genuinely unique)
+
+Title Packs can define non-token extras, but only in a controlled extension layer:
+	•	accent shapes
+	•	letterbox overlay
+	•	tape texture overlay
+	•	diagonal blocks
+	•	underlines
+
+These would become optional overlay components in the caption engine:
+
+caption-engine/overlays/
+
+So a title pack is:
+	•	base preset (token-driven)
+	•	optional overlay (visual garnish)
+
+But still: rendering comes from caption engine.
+
+⸻
+
+Phase 3 (polish): One unified selection model in state/UI
+
+Right now you have:
+	•	presetId in captionState
+	•	title packs concept elsewhere
+
+Unify by expanding captionState slightly:
+
+type CaptionState = {
+  presetId: string;
+  packId?: string; // optional, for UI grouping/analytics
+  karaokeEnabled?: boolean;
+  karaokeStyle?: ...
+  safeAreaProfile?: ...
+}
+
+UI can show:
+	•	“Packs” (5 groups)
+	•	clicking a pack sets packId and default presetId
+	•	advanced users can still pick any preset directly
+
+This makes both audiences happy:
+	•	beginners get “Neon Impact”
+	•	power users get “boxed_black”
+
+⸻
+
+Phase 4 (guardrails): Make it hard to regress
+
+Add a single “caption style contract” test/validator
+
+You already have a /validate folder. Use it.
+
+Create validation rules like:
+	•	no character truncation anywhere
+	•	headline must wrap (whiteSpace normal)
+	•	panel backgrounds must use background token values (no hardcoded rgba in render)
+	•	resolver must be the only place that computes styles
+
+This doesn’t have to be a full unit test suite. Even a runtime dev validator is enough.
+
+⸻
+
+Concrete deliverable: what Replit should implement next
+
+Send Replit this as a clear instruction set:
+	1.	Create caption-engine/render/resolveStyles.ts
+	2.	Move all style computation from CardPlayer into resolver
+	3.	Make backgroundTokens return actual CSS for each treatment (panel/pill/blur/gradient)
+	4.	Update CardPlayer to render using resolver outputs only
+	5.	Update shared/titlePacks.ts so packs map to presets (no styling authority)
+	6.	Add a simple validator in caption-engine/validate/ to ensure no regression
+
+⸻
+
+What this unlocks immediately
+
+Once styles are resolved centrally:
+	•	Preview and export can look identical (critical for ICE Maker credibility)
+	•	Adding 50 new presets becomes safe and fast
+	•	Title packs can be marketed without creating a second styling system
+	•	Bugs become “fix it once in resolver”, not “hunt it across components”
+
+⸻
+
+One direct note
+
+If you keep any hardcoded styling in CardPlayer after this, you’ll be back in the same mess within a month. CardPlayer should be a renderer, not a stylist.
+
+If you want, I can now write the exact Replit prompt you should send to implement Phase 1 + Phase 2 in one clean PR (with file paths, acceptance criteria, and “do not touch” warnings).
