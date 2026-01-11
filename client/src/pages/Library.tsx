@@ -285,7 +285,7 @@ function PreviewCard({ preview, isPublished, onDelete }: { preview: IcePreview; 
             Edit
           </Button>
         </Link>
-        <Link href={`/ice/live/${preview.id}`}>
+        <Link href={`/ice/preview/${preview.id}`}>
           <Button 
             variant="outline" 
             size="sm" 
