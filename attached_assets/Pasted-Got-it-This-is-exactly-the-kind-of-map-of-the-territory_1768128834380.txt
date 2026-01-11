@@ -1,0 +1,136 @@
+Got it. This is exactly the kind of “map of the territory” that stops us chasing ghosts.
+
+And based on what you’ve shared, I’m going to be blunt: the underperformance isn’t a “CSS bug”. It’s an architecture conflict.
+
+You’ve got two competing caption systems living side-by-side, and CardPlayer is sat in the middle using bits of both. That’s why the behaviour feels unpredictable.
+
+Here’s how I’d frame it, and what to do next.
+
+⸻
+
+What’s actually happening (the real root cause)
+
+1) Two parallel style authorities
+
+You have:
+	•	shared/titlePacks.ts
+A complete “title pack” system (5 packs) that likely includes layout rules, typography, colour, background, maybe animation intent, plus a splitTextIntoHeadlineAndSupporting() function.
+	•	caption-engine/presets/ + tokens
+A second, simpler system (12 presets) that resolves typography/colour/background from tokens.
+
+These systems will inevitably diverge on:
+	•	how headlines are split
+	•	how long they can be
+	•	where truncation happens
+	•	how background panels wrap
+	•	what “cinematic subtitles” even means
+
+So you’re not debugging one engine. You’re debugging which engine is winning in which moment.
+
+⸻
+
+2) CardPlayer is not using Title Packs
+
+You’ve confirmed:
+
+CardPlayer uses captionPresets, not TITLE_PACKS.
+
+So Title Packs currently act like a “nice idea in another drawer”, except…
+
+⸻
+
+3) splitTextIntoHeadlineAndSupporting exists in two places
+
+This is massive.
+
+If the split logic differs even slightly between the two versions, you get:
+	•	inconsistent headline/supporting segmentation
+	•	length calculations that don’t match
+	•	font scaling that doesn’t match
+	•	truncation decisions that feel random
+
+Even if only one function is called, the existence of two versions guarantees confusion and regressions, because someone will update one and forget the other.
+
+⸻
+
+The decision you need to make (no circles)
+
+You need one authoritative caption styling system.
+
+Pick one of these two paths:
+
+Path A (recommended): Caption Engine is the authority
+	•	Keep caption-engine/ as the canonical system
+	•	Title Packs become aliases that map to presets/tokens
+	•	Remove duplicate split logic from shared/titlePacks.ts (or make it re-export from one place)
+
+This is best if you want:
+	•	CapCut-style consistent presets
+	•	token-driven growth (add 100 styles later)
+	•	a predictable editor UI (preset dropdowns)
+
+Path B: Title Packs are the authority
+	•	CardPlayer switches to Title Packs
+	•	Presets become “internal implementation” or are retired
+
+This is best if you want:
+	•	cinematic “pack” identity (Neon Impact etc)
+	•	fewer but more curated styles
+
+Right now you’ve got a hybrid, and that’s why it feels underwhelming and fragile.
+
+⸻
+
+The minimum fixes to stop the current headline bug today
+
+Even before the big decision, you can stop the visible failure:
+
+Fix 1: Single source of truth for splitTextIntoHeadlineAndSupporting
+
+Create one canonical function (suggested location):
+
+caption-engine/grouping/ or caption-engine/lib/
+
+Then:
+	•	shared/titlePacks.ts imports it
+	•	CardPlayer.tsx imports it
+	•	delete the duplicate implementation
+
+This alone prevents future “why is headline splitting different?” nonsense.
+
+Fix 2: Kill character-based truncation in CardPlayer
+
+Replace “60 chars” truncation with line clamp (2–3 lines).
+Character truncation is what’s causing your “favored over traditional se…” screenshot.
+
+Fix 3: Stop text wrap being prevented
+
+Remove wordBreak: keep-all and overflowWrap: normal from the panel container. Those are sabotaging your ability to wrap naturally.
+
+⸻
+
+What I need next to validate properly (one concrete request)
+
+Right now you’ve given me the architecture summary, which is great.
+
+To validate for real, I need the actual contents of two files:
+	1.	shared/titlePacks.ts
+	2.	caption-engine/presets/captionPresets.ts
+
+Because the “choice of authority” depends on what those actually contain.
+
+If you paste those two files, I’ll give you:
+	•	which system should be canonical (based on what’s already stronger)
+	•	the exact refactor plan (minimal and safe)
+	•	the specific changes to CardPlayer to stop the underperformance immediately
+
+⸻
+
+Quick “coach” note
+
+You’re not far off at all. You’ve built the right building blocks.
+But you’ve currently got two directors shouting instructions on set.
+
+Pick one director. The film gets better overnight.
+
+Paste shared/titlePacks.ts and captionPresets.ts and we’ll lock this down.
