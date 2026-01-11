@@ -6601,7 +6601,7 @@ Stay engaging, reference story details, and help the audience understand the nar
   app.post("/api/ice/preview/:id/characters", async (req, res) => {
     try {
       const previewId = req.params.id;
-      const { name, role, openingMessage } = req.body;
+      const { name, role, openingMessage, systemPrompt, knowledgeContext } = req.body;
       
       if (!name || typeof name !== "string") {
         return res.status(400).json({ message: "Character name is required" });
@@ -6617,13 +6617,27 @@ Stay engaging, reference story details, and help the audience understand the nar
         return res.status(410).json({ message: "Preview has expired" });
       }
       
+      // Build the system prompt - combine user-provided persona with knowledge context
+      let finalSystemPrompt = "";
+      
+      if (systemPrompt && typeof systemPrompt === "string" && systemPrompt.trim()) {
+        finalSystemPrompt = systemPrompt.trim();
+      } else {
+        finalSystemPrompt = `You are ${name}, ${role || "an AI assistant"}. You are helpful, friendly, and knowledgeable about the content in this experience. Answer questions naturally and stay in character.`;
+      }
+      
+      // Append knowledge context if provided
+      if (knowledgeContext && typeof knowledgeContext === "string" && knowledgeContext.trim()) {
+        finalSystemPrompt += `\n\n## KNOWLEDGE BASE\nUse the following information to inform your responses:\n\n${knowledgeContext.trim()}`;
+      }
+      
       // Create new character
       const newCharacter: schema.IcePreviewCharacter = {
         id: `custom-${Date.now()}`,
         name: name.trim(),
         role: (role || "AI Assistant").trim(),
         description: `Custom character: ${name}`,
-        systemPrompt: `You are ${name}, ${role || "an AI assistant"}. You are helpful, friendly, and knowledgeable about the content in this experience. Answer questions naturally and stay in character.`,
+        systemPrompt: finalSystemPrompt,
         openingMessage: openingMessage || `Hello! I'm ${name}. How can I help you today?`,
       };
       

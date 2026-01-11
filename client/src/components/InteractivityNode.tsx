@@ -30,6 +30,8 @@ export interface StoryCharacter {
   role: string;
   description?: string;
   openingMessage?: string;
+  systemPrompt?: string;
+  knowledgeContext?: string;
 }
 
 interface InteractivityNodeProps {
@@ -345,6 +347,8 @@ export function AddInteractivityButton({
   const [customName, setCustomName] = useState("");
   const [customRole, setCustomRole] = useState("");
   const [customGreeting, setCustomGreeting] = useState("");
+  const [customPersona, setCustomPersona] = useState("");
+  const [customKnowledge, setCustomKnowledge] = useState("");
 
   const handleClick = () => {
     setShowCharacterMenu(true);
@@ -372,6 +376,8 @@ export function AddInteractivityButton({
         name: customName.trim(),
         role: customRole.trim() || "AI Assistant",
         openingMessage: customGreeting.trim() || `Hello! I'm ${customName.trim()}. How can I help you today?`,
+        systemPrompt: customPersona.trim() || undefined,
+        knowledgeContext: customKnowledge.trim() || undefined,
       };
 
       if (previewId) {
@@ -395,6 +401,8 @@ export function AddInteractivityButton({
       setCustomName("");
       setCustomRole("");
       setCustomGreeting("");
+      setCustomPersona("");
+      setCustomKnowledge("");
     } catch (error) {
       console.error("Failed to create character:", error);
     } finally {
@@ -486,7 +494,7 @@ export function AddInteractivityButton({
       </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-slate-900 border-purple-500/30 max-w-md">
+        <DialogContent className="bg-slate-900 border-purple-500/30 max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <PenLine className="w-5 h-5 text-purple-400" />
@@ -523,13 +531,49 @@ export function AddInteractivityButton({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="char-persona" className="text-sm text-slate-300">
+                Persona & Instructions
+                <span className="text-purple-400 ml-1">(Recommended)</span>
+              </Label>
+              <Textarea
+                id="char-persona"
+                value={customPersona}
+                onChange={(e) => setCustomPersona(e.target.value)}
+                placeholder="How should this character behave? What's their personality, expertise, and communication style?
+
+Example: You are a friendly AI search expert who explains complex topics in simple terms. Be helpful, conversational, and provide actionable insights."
+                className="bg-slate-800 border-slate-700 text-white min-h-[100px] text-sm"
+                data-testid="input-custom-char-persona"
+              />
+              <p className="text-[10px] text-slate-500">This tells the AI how to act and respond</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="char-knowledge" className="text-sm text-slate-300">
+                Knowledge Base
+                <span className="text-purple-400 ml-1">(Recommended)</span>
+              </Label>
+              <Textarea
+                id="char-knowledge"
+                value={customKnowledge}
+                onChange={(e) => setCustomKnowledge(e.target.value)}
+                placeholder="What specific information should this character know about? Paste key facts, product details, FAQs, or expertise areas.
+
+Example: Our company specializes in AI search optimization. Key services include website audits, citation analysis, and AI visibility strategies..."
+                className="bg-slate-800 border-slate-700 text-white min-h-[120px] text-sm"
+                data-testid="input-custom-char-knowledge"
+              />
+              <p className="text-[10px] text-slate-500">The AI will use this information to answer questions accurately</p>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="char-greeting" className="text-sm text-slate-300">Opening Message</Label>
               <Textarea
                 id="char-greeting"
                 value={customGreeting}
                 onChange={(e) => setCustomGreeting(e.target.value)}
                 placeholder="What should this character say when someone starts chatting?"
-                className="bg-slate-800 border-slate-700 text-white min-h-[80px]"
+                className="bg-slate-800 border-slate-700 text-white min-h-[60px] text-sm"
                 data-testid="input-custom-char-greeting"
               />
             </div>
