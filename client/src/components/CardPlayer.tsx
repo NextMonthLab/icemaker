@@ -551,10 +551,10 @@ export default function CardPlayer({
                               panelStyle={styles.panel}
                               textStyle={styles.headline}
                               containerWidthPx={containerWidthPx}
-                              maxHeightPx={fullScreen ? 200 : 150}
                               fittedFontSizePx={styles.headlineFontSizePx}
                               didFit={styles.headlineDidFit}
                               showDebug={showCaptionDebug}
+                              fitGeometry={styles.fitGeometry}
                             />
                           </div>
                         );

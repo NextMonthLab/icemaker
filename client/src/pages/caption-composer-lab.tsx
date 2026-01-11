@@ -115,10 +115,10 @@ export default function CaptionComposerLab() {
                       panelStyle={styles.panel}
                       textStyle={styles.headline}
                       containerWidthPx={containerWidth}
-                      maxHeightPx={140}
                       fittedFontSizePx={styles.headlineFontSizePx}
                       didFit={styles.headlineDidFit}
                       showDebug={true}
+                      fitGeometry={styles.fitGeometry}
                     />
                   </div>
                 </div>

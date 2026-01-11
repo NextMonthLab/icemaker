@@ -1,15 +1,21 @@
 import React from "react";
 import type { CSSProperties } from "react";
 
+interface FitGeometry {
+  panelWidthPx: number;
+  paddingPx: number;
+  panelMaxWidthPercent: number;
+}
+
 interface ScaleToFitCaptionProps {
   lines: string[];
   panelStyle: CSSProperties;
   textStyle: CSSProperties;
   containerWidthPx: number;
-  maxHeightPx?: number;
   fittedFontSizePx: number;
   didFit?: boolean;
   showDebug?: boolean;
+  fitGeometry?: FitGeometry;
 }
 
 export function ScaleToFitCaption({
@@ -20,13 +26,16 @@ export function ScaleToFitCaption({
   fittedFontSizePx,
   didFit = true,
   showDebug = false,
+  fitGeometry,
 }: ScaleToFitCaptionProps) {
-  // Use exact values from fit engine - NO transforms, just font-size
-  const padX = 20;
-  const padY = 16;
-  const panelMaxWidthPercent = 92;
-  const panelWidthPx = containerWidthPx * (panelMaxWidthPercent / 100);
-  const innerWidth = panelWidthPx - (padX * 2);
+  // Use EXACT values from fit engine if provided, otherwise use matching defaults
+  const padding = fitGeometry?.paddingPx ?? 16;
+  const panelMaxWidthPercent = fitGeometry?.panelMaxWidthPercent ?? 92;
+  const panelWidthPx = fitGeometry?.panelWidthPx ?? (containerWidthPx * panelMaxWidthPercent / 100);
+  
+  // Apply same 8% safety margin as fit engine
+  const safetyMargin = 0.08;
+  const innerWidth = (panelWidthPx - (padding * 2)) * (1 - safetyMargin);
 
   const lineStyle: CSSProperties = {
     ...textStyle,
@@ -39,12 +48,12 @@ export function ScaleToFitCaption({
 
   return (
     <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
-      {/* Panel: fixed width, auto height, centered */}
+      {/* Panel: exact width from fit engine, centered */}
       <div
         style={{
           ...panelStyle,
           width: `${panelWidthPx}px`,
-          padding: `${padY}px ${padX}px`,
+          padding: `${padding}px`,
           boxSizing: "border-box",
           display: "flex",
           alignItems: "center",
@@ -52,7 +61,7 @@ export function ScaleToFitCaption({
         }}
         data-testid="caption-panel"
       >
-        {/* Text container: exact inner width, no overflow */}
+        {/* Text container: exact inner width matching fit engine */}
         <div
           style={{
             width: `${innerWidth}px`,
@@ -61,7 +70,6 @@ export function ScaleToFitCaption({
             alignItems: "center",
             justifyContent: "center",
             lineHeight: 1.15,
-            overflow: "hidden",
           }}
           data-testid="text-headline"
         >
@@ -88,7 +96,7 @@ export function ScaleToFitCaption({
             whiteSpace: "nowrap",
           }}
         >
-          {didFit ? "✓" : "✗"} {fittedFontSizePx}px | {lines.length}L | {Math.round(innerWidth)}w
+          {didFit ? "✓" : "✗"} {fittedFontSizePx}px | {lines.length}L | p{padding} inner:{Math.round(innerWidth)}w
         </div>
       )}
     </div>

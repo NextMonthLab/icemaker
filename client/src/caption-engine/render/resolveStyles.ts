@@ -36,6 +36,11 @@ export interface ResolvedCaptionStyles {
     panelWidth: number;
     lineCount: number;
   };
+  fitGeometry: {
+    panelWidthPx: number;
+    paddingPx: number;
+    panelMaxWidthPercent: number;
+  };
 }
 
 export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles {
@@ -173,6 +178,11 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
       overflowLog: fitResult.overflowLog,
       panelWidth: fitResult.panelWidth,
       lineCount: fitResult.lineCount,
+    },
+    fitGeometry: {
+      panelWidthPx: fitResult.panelWidth,
+      paddingPx: fitSettings.padding,
+      panelMaxWidthPercent: fitSettings.panelMaxWidthPercent,
     },
   };
 }
