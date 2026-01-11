@@ -127,7 +127,7 @@ export default function CardPlayer({
   const textColor = theme === 'dark' ? 'white' : '#1a1a1a';
   const mutedTextColor = theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
   
-  const titlePack = getTitlePackById(titlePackId) || getTitlePackById(DEFAULT_TITLE_PACK_ID)!;
+  const titlePack = getTitlePackById(captionState?.presetId || DEFAULT_TITLE_PACK_ID) || getTitlePackById(DEFAULT_TITLE_PACK_ID)!;
 
   // Calculate unified caption geometry contract
   const captionGeometry = calculateCaptionGeometry({
