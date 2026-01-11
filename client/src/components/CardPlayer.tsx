@@ -44,13 +44,15 @@ interface BrandPreferences {
   selectedImages: string[];
 }
 
-import { 
-  getTitlePackById, 
-  splitTextIntoHeadlineAndSupporting, 
+import {
+  getTitlePackById,
+  splitTextIntoHeadlineAndSupporting,
   getLayerStylesWithText,
-  DEFAULT_TITLE_PACK_ID, 
-  type TitlePack 
+  DEFAULT_TITLE_PACK_ID,
+  type TitlePack
 } from "@shared/titlePacks";
+import { calculateCaptionGeometry } from "@/caption-engine/geometry";
+import { CaptionDebugOverlay } from "./CaptionDebugOverlay";
 
 interface CardPlayerProps {
   card: Card;
@@ -89,6 +91,7 @@ export default function CardPlayer({
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [debugOverlay, setDebugOverlay] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isTabletLandscape = useIsTabletLandscape();
@@ -100,7 +103,18 @@ export default function CardPlayer({
   const mutedTextColor = theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
   
   const titlePack = getTitlePackById(titlePackId) || getTitlePackById(DEFAULT_TITLE_PACK_ID)!;
-  
+
+  // Calculate unified caption geometry contract
+  const captionGeometry = calculateCaptionGeometry({
+    compositionWidth: titlePack.canvas.width,
+    compositionHeight: titlePack.canvas.height,
+    safeZoneLeftPercent: titlePack.safeZone.left,
+    safeZoneRightPercent: titlePack.safeZone.right,
+    safeZoneTopPercent: titlePack.safeZone.top,
+    safeZoneBottomPercent: titlePack.safeZone.bottom,
+    viewportScale: fullScreen ? 0.5 : 0.4,
+  });
+
   const getActiveMedia = () => {
     if (card.mediaAssets?.length && card.selectedMediaAssetId) {
       const selected = card.mediaAssets.find(a => a.id === card.selectedMediaAssetId);
@@ -261,6 +275,17 @@ export default function CardPlayer({
         audioRef.current = null;
       }
     };
+  }, []);
+
+  // Debug overlay toggle (press 'D' key)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'd' || e.key === 'D') {
+        setDebugOverlay(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
   // Smart duration calculation: max(narration, text read time, minimum)
@@ -502,7 +527,15 @@ export default function CardPlayer({
             )}
             
 
-            <div className={`absolute inset-x-0 bottom-0 top-16 flex flex-col justify-end ${fullScreen ? 'p-8 pb-24' : 'p-6 pb-16'}`}>
+            {/* Caption region - uses geometry contract for consistent positioning */}
+            <div
+              className="absolute left-0 right-0 bottom-0 flex items-end justify-center pointer-events-none"
+              style={{
+                paddingLeft: `${captionGeometry.viewportPadding}px`,
+                paddingRight: `${captionGeometry.viewportPadding}px`,
+                paddingBottom: `${captionGeometry.safeAreaBottom * captionGeometry.viewportScale}px`,
+              }}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={captionIndex}
@@ -510,19 +543,22 @@ export default function CardPlayer({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="flex flex-col items-center justify-center max-h-[60%] overflow-hidden gap-2"
+                  className="w-full"
+                  style={{
+                    maxWidth: `${captionGeometry.viewportCaptionWidth}px`,
+                  }}
                 >
                   {captionIndex < card.captions.length ? (
                     (() => {
                       const captionText = card.captions[captionIndex];
                       const { headline, supporting } = splitTextIntoHeadlineAndSupporting(captionText);
-                      const headlineStyles = getLayerStylesWithText(headline, titlePack.headline, titlePack, fullScreen);
+                      const headlineStyles = getLayerStylesWithText(headline, titlePack.headline, titlePack, fullScreen, captionGeometry);
                       const supportingStyles = titlePack.supporting && supporting
-                        ? getLayerStylesWithText(supporting, titlePack.supporting, titlePack, fullScreen) 
+                        ? getLayerStylesWithText(supporting, titlePack.supporting, titlePack, fullScreen, captionGeometry)
                         : null;
-                      
+
                       return (
-                        <div className="flex flex-col items-center gap-3 px-4">
+                        <div className="flex flex-col items-center gap-3 w-full" style={{ position: 'relative' }}>
                           {/* Accent shape background for grunge-tape pack */}
                           {titlePack.accentShape?.type === 'tape' && (
                             <div 
@@ -539,19 +575,29 @@ export default function CardPlayer({
                           )}
                           
                           {/* Headline */}
-                          <p 
-                            className="font-bold leading-snug max-w-full"
-                            style={headlineStyles}
+                          <p
+                            className="font-bold leading-snug w-full"
+                            style={{
+                              ...headlineStyles,
+                              boxSizing: 'border-box',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                            }}
                             data-testid="text-headline"
                           >
                             {headline}
                           </p>
-                          
+
                           {/* Supporting text */}
                           {supporting && supportingStyles && (
-                            <p 
-                              className="leading-relaxed max-w-full"
-                              style={supportingStyles}
+                            <p
+                              className="leading-relaxed w-full"
+                              style={{
+                                ...supportingStyles,
+                                boxSizing: 'border-box',
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                              }}
                               data-testid="text-supporting"
                             >
                               {supporting}
@@ -575,6 +621,7 @@ export default function CardPlayer({
                 </motion.div>
               </AnimatePresence>
             </div>
+            {/* End caption region */}
 
             {showSwipeHint && (
               <motion.div
@@ -692,6 +739,11 @@ export default function CardPlayer({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Debug overlay (toggle with 'D' key) */}
+      {phase === "cinematic" && (
+        <CaptionDebugOverlay geometry={captionGeometry} enabled={debugOverlay} />
+      )}
     </div>
   );
 }

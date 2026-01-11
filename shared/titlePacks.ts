@@ -1,6 +1,22 @@
 import { z } from "zod";
 import type { CSSProperties } from "react";
 
+// Type-only import - CaptionGeometry is defined in client but used here as optional parameter
+// This creates a soft dependency that allows titlePacks to work standalone
+export interface CaptionGeometry {
+  compositionWidth: number;
+  compositionHeight: number;
+  safeAreaLeft: number;
+  safeAreaRight: number;
+  safeAreaTop: number;
+  safeAreaBottom: number;
+  availableCaptionWidth: number;
+  captionBottomY: number;
+  viewportScale: number;
+  viewportCaptionWidth: number;
+  viewportPadding: number;
+}
+
 export const titlePackLayerSchema = z.object({
   fontFamily: z.string(),
   fontWeight: z.number().default(400),
@@ -496,17 +512,24 @@ export function getLayerStylesWithText(
   text: string,
   layer: TitlePackLayer,
   pack: TitlePack,
-  fullScreen: boolean
+  fullScreen: boolean,
+  geometry?: CaptionGeometry
 ): CSSProperties {
-  // Calculate safe zone width
-  const containerWidth = pack.canvas.width;
-  const safeWidth = containerWidth * (1 - (pack.safeZone.left + pack.safeZone.right) / 100);
-  
-  // Calculate appropriate font size for text length
-  const calculatedSize = calculateFontSize(text, layer, safeWidth);
-  const viewportScale = fullScreen ? 0.5 : 0.4;
-  const scaledFontSize = Math.round(calculatedSize * viewportScale);
-  
+  let scaledFontSize: number;
+
+  if (geometry) {
+    // Use geometry contract for consistent font sizing
+    const calculatedSize = calculateFontSize(text, layer, geometry.availableCaptionWidth);
+    scaledFontSize = Math.round(calculatedSize * geometry.viewportScale);
+  } else {
+    // Fallback to old method (for backward compatibility)
+    const containerWidth = pack.canvas.width;
+    const safeWidth = containerWidth * (1 - (pack.safeZone.left + pack.safeZone.right) / 100);
+    const calculatedSize = calculateFontSize(text, layer, safeWidth);
+    const viewportScale = fullScreen ? 0.5 : 0.4;
+    scaledFontSize = Math.round(calculatedSize * viewportScale);
+  }
+
   // Build text shadow string
   let textShadow = '';
   if (layer.shadow) {
@@ -516,13 +539,13 @@ export function getLayerStylesWithText(
     const glowShadow = `0 0 ${layer.glow.blur}px ${layer.glow.color}`;
     textShadow = textShadow ? `${textShadow}, ${glowShadow}` : glowShadow;
   }
-  
+
   // Build stroke string
   let webkitTextStroke: string | undefined;
   if (layer.stroke) {
     webkitTextStroke = `${layer.stroke.width}px ${layer.stroke.color}`;
   }
-  
+
   return {
     fontFamily: layer.fontFamily,
     fontWeight: layer.fontWeight,
