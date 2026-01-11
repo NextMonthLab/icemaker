@@ -148,7 +148,7 @@ export function HubOverviewPanel({ businessSlug, planTier }: HubOverviewPanelPro
           <CardContent>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-white" data-testid="text-leads-count">
-                {hubData?.leads.count || 0}
+                {hubData?.leads?.count || 0}
               </span>
               <span className="text-sm text-zinc-400">leads collected</span>
             </div>
