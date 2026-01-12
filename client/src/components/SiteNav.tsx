@@ -124,7 +124,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
                 <Link href="/try">
                   <Button 
                     size="sm"
-                    className="hidden sm:flex bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 text-white gap-1.5 h-8 px-3 text-xs"
+                    className="hidden sm:flex bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-700 hover:to-cyan-600 text-white gap-1.5 h-8 px-3 text-xs"
                     data-testid="nav-cta-ice"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -218,7 +218,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
               <Link href="/try">
                 <Button 
                   size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 text-white gap-1.5 h-8 px-3 text-xs"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-700 hover:to-cyan-600 text-white gap-1.5 h-8 px-3 text-xs"
                   data-testid="nav-cta-ice"
                 >
                   <Sparkles className="w-3.5 h-3.5" />

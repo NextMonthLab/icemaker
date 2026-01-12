@@ -58,7 +58,7 @@ export default function BlogPost() {
             transition={{ duration: 0.6 }}
             className="mb-12"
           >
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 mb-4">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-300 mb-4">
               {post.category}
             </span>
             <h1 className="text-3xl md:text-4xl font-bold mb-6 leading-tight" data-testid="text-post-title">
@@ -103,7 +103,7 @@ export default function BlogPost() {
                 if (match) {
                   return (
                     <div key={i} className="flex items-start gap-3 my-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2.5 shrink-0" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2.5 shrink-0" />
                       <p className="text-white/70">
                         <strong className="text-white">{match[1]}</strong> — {match[2]}
                       </p>
@@ -115,7 +115,7 @@ export default function BlogPost() {
               if (trimmed.startsWith("- ")) {
                 return (
                   <div key={i} className="flex items-start gap-3 my-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2.5 shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2.5 shrink-0" />
                     <p className="text-white/70">{trimmed.replace("- ", "")}</p>
                   </div>
                 );
@@ -125,7 +125,7 @@ export default function BlogPost() {
                 const num = trimmed.charAt(0);
                 return (
                   <div key={i} className="flex items-start gap-3 my-3">
-                    <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-sm flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-sm flex items-center justify-center shrink-0">
                       {num}
                     </span>
                     <p className="text-white/70">{trimmed.substring(3)}</p>
@@ -146,7 +146,7 @@ export default function BlogPost() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-16 p-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center"
+            className="mt-16 p-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-center"
           >
             <h3 className="text-xl font-bold mb-4">
               Want to see it on your own material?

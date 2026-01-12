@@ -17,8 +17,8 @@ export default function BookDemo() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-500/20 mb-6">
-              <Calendar className="w-8 h-8 text-purple-400" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-500/20 mb-6">
+              <Calendar className="w-8 h-8 text-cyan-400" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6" data-testid="text-demo-title">
               Book a demo

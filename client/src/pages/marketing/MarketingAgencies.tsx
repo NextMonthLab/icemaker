@@ -53,7 +53,7 @@ export default function MarketingAgencies() {
         {/* Hero */}
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
             <motion.div
@@ -61,14 +61,14 @@ export default function MarketingAgencies() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-purple-500/10 border border-purple-500/20 rounded-full">
-                <Megaphone className="w-4 h-4 text-purple-400" />
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium bg-cyan-500/10 border border-cyan-500/20 rounded-full">
+                <Megaphone className="w-4 h-4 text-cyan-400" />
                 <span className="text-white/80">Marketing & Agencies</span>
               </div>
               
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-8 leading-[1.1]" data-testid="text-hero-title">
                 Stop shipping flat content.{' '}
-                <span className="bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent">Ship experiences.</span>
+                <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">Ship experiences.</span>
               </h1>
               
               <p className="text-xl text-white/70 max-w-3xl mx-auto mb-10 leading-relaxed">
@@ -124,7 +124,7 @@ export default function MarketingAgencies() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {useCases.map((useCase, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 rounded-lg bg-neutral-900/30 border border-white/5">
-                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
                   <p className="text-white/80">{useCase}</p>
                 </div>
               ))}
@@ -141,7 +141,7 @@ export default function MarketingAgencies() {
             <div className="space-y-4">
               {agencyValue.map((point, i) => (
                 <div key={i} className="flex items-center gap-4 p-5 rounded-lg bg-neutral-900/50 border border-white/5">
-                  <Sparkles className="w-6 h-6 text-purple-400 shrink-0" />
+                  <Sparkles className="w-6 h-6 text-cyan-400 shrink-0" />
                   <p className="text-white/80">{point}</p>
                 </div>
               ))}
@@ -158,7 +158,7 @@ export default function MarketingAgencies() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {differentiators.map((diff, i) => (
                 <div key={i} className="flex items-start gap-4 p-6 rounded-lg bg-neutral-900/30 border border-white/5 hover-lift">
-                  <diff.icon className="w-6 h-6 text-purple-400 shrink-0 mt-0.5" />
+                  <diff.icon className="w-6 h-6 text-cyan-400 shrink-0 mt-0.5" />
                   <p className="text-white/80">{diff.text}</p>
                 </div>
               ))}
@@ -167,7 +167,7 @@ export default function MarketingAgencies() {
         </section>
 
         {/* CTA Strip */}
-        <section className="py-16 bg-purple-500/10 border-y border-purple-500/20">
+        <section className="py-16 bg-cyan-500/10 border-y border-cyan-500/20">
           <div className="max-w-3xl mx-auto px-6 text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-8">
               Want to replace your next deck with something unignorable?

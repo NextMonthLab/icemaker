@@ -89,7 +89,7 @@ export default function MarketingHome() {
         {/* Hero Section */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/20 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
             <motion.div
@@ -99,7 +99,7 @@ export default function MarketingHome() {
             >
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 leading-[1.1]" data-testid="text-hero-title">
                 Turn training and enablement content into{' '}
-                <span className="bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">interactive experiences</span>{' '}
+                <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">interactive experiences</span>{' '}
                 people actually finish.
               </h1>
               
@@ -136,15 +136,15 @@ export default function MarketingHome() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
               <div className="flex flex-col items-center gap-2">
-                <Shield className="w-6 h-6 text-purple-400" />
+                <Shield className="w-6 h-6 text-cyan-400" />
                 <p className="text-white/80">Source-grounded answers (no random internet facts)</p>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Brain className="w-6 h-6 text-purple-400" />
+                <Brain className="w-6 h-6 text-cyan-400" />
                 <p className="text-white/80">Memory across scenes and sessions</p>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Lock className="w-6 h-6 text-purple-400" />
+                <Lock className="w-6 h-6 text-cyan-400" />
                 <p className="text-white/80">Knowledge boundaries and progressive reveal</p>
               </div>
             </div>
@@ -187,10 +187,10 @@ export default function MarketingHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {pipelineSteps.map((step) => (
                 <div key={step.step} className="relative p-6 rounded-lg bg-neutral-900/50 border border-white/5 hover-lift">
-                  <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-sm font-bold">
+                  <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-sm font-bold">
                     {step.step}
                   </div>
-                  <step.icon className="w-8 h-8 text-purple-400 mb-4" />
+                  <step.icon className="w-8 h-8 text-cyan-400 mb-4" />
                   <h3 className="font-semibold text-white mb-2">{step.title}</h3>
                   <p className="text-white/50 text-sm">{step.description}</p>
                 </div>
@@ -208,7 +208,7 @@ export default function MarketingHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {differentiators.map((diff) => (
                 <div key={diff.title} className="p-8 rounded-lg bg-neutral-900/30 border border-white/5 hover-lift">
-                  <diff.icon className="w-10 h-10 text-purple-400 mb-4" />
+                  <diff.icon className="w-10 h-10 text-cyan-400 mb-4" />
                   <h3 className="text-xl font-semibold text-white mb-3">{diff.title}</h3>
                   <p className="text-white/60">{diff.description}</p>
                 </div>
@@ -226,7 +226,7 @@ export default function MarketingHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {useCases.map((useCase, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 rounded-lg bg-neutral-900/30 border border-white/5">
-                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
                   <p className="text-white/80">{useCase}</p>
                 </div>
               ))}
@@ -243,7 +243,7 @@ export default function MarketingHome() {
             <div className="space-y-4">
               {trustFeatures.map((feature, i) => (
                 <div key={i} className="flex items-center gap-4 p-5 rounded-lg bg-neutral-900/50 border border-white/5">
-                  <feature.icon className="w-6 h-6 text-purple-400 shrink-0" />
+                  <feature.icon className="w-6 h-6 text-cyan-400 shrink-0" />
                   <p className="text-white/80">{feature.text}</p>
                 </div>
               ))}

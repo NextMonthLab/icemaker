@@ -49,7 +49,7 @@ export default function Blog() {
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors",
                   activeCategory === category
-                    ? "bg-purple-500 text-white"
+                    ? "bg-cyan-500 text-white"
                     : "bg-neutral-900 text-white/60 hover:text-white hover:bg-neutral-800"
                 )}
                 data-testid={`filter-${category.toLowerCase().replace(/\s+/g, "-")}`}
@@ -63,13 +63,13 @@ export default function Blog() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
               <Link key={post.slug} href={`/blog/${post.slug}`}>
-                <article className="group h-full p-6 rounded-lg bg-neutral-900/50 border border-white/5 hover:border-purple-500/30 transition-colors cursor-pointer hover-lift">
+                <article className="group h-full p-6 rounded-lg bg-neutral-900/50 border border-white/5 hover:border-cyan-500/30 transition-colors cursor-pointer hover-lift">
                   <div className="mb-4">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-300">
                       {post.category}
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-white mb-3 group-hover:text-purple-300 transition-colors" data-testid={`post-title-${post.slug}`}>
+                  <h2 className="text-lg font-semibold text-white mb-3 group-hover:text-cyan-300 transition-colors" data-testid={`post-title-${post.slug}`}>
                     {post.title}
                   </h2>
                   <p className="text-white/50 text-sm mb-4 line-clamp-3">
