@@ -1,0 +1,67 @@
+ROLE
+You are a senior full-stack engineer doing a careful product split. You must delete Orbit from this codebase while preserving IceMaker 100% (including build, auth, DB, shared UI, and deployment readiness).
+
+CONTEXT
+This repository is now the dedicated IceMaker repo and will be imported into a dedicated Replit project.
+The codebase previously contained multiple products (Orbit + IceMaker). We must remove Orbit completely from this repo.
+
+PRIMARY GOAL
+Remove all Orbit-specific code, routes, pages, APIs, UI, prompts, assets, docs, config, and menu items — without breaking IceMaker.
+
+CRITICAL RULES (DO NOT VIOLATE)
+1) Do NOT remove any shared dependencies, utilities, or infrastructure unless you can prove they are only used by Orbit and not used by IceMaker.
+2) Do NOT break builds. After changes: Typecheck, lint, build, and start must pass.
+3) Do NOT change IceMaker behaviour except to remove Orbit links/entry points.
+4) If something is shared (auth, db, common UI kit, API client, telemetry, env loader), keep it.
+5) Remove Orbit by boundaries (routes/modules/features), not by random file deletions.
+
+SCOPE: WHAT MUST GO
+- Orbit pages/routes (e.g. /orbit, /orbits, /rooms, /industry, /town etc.)
+- Orbit UI components, feature modules, hooks, state slices
+- Orbit API endpoints, controllers, services, “insights/rooms” logic
+- Orbit navigation items, CTAs, homepage tiles, marketing copy, docs
+- Orbit assets (logos, orbit graphics) only used for Orbit
+- Orbit env vars ONLY if not used elsewhere
+- Any “product switcher” code that references Orbit
+
+SCOPE: WHAT MUST STAY
+- IceMaker pages/routes and all IceMaker functionality (ingestion, scene builder, interactive moments, media generation, preview/export)
+- Shared layout, shared design system, shared API layer
+- Authentication, billing (if used), analytics (if used by IceMaker), core middleware
+- DB schema used by IceMaker
+- Deployment/build scripts and runtime start scripts
+
+PROCESS (FOLLOW IN THIS ORDER)
+1) Map current product boundaries:
+   - List all Orbit entry points: routes, nav links, API endpoints, feature folders.
+   - Identify any shared modules referenced by both products.
+2) Remove Orbit from UI surface:
+   - Remove nav links, homepage tiles, product cards, CTAs.
+   - Ensure no dead links remain.
+3) Remove Orbit routes/pages:
+   - Delete pages/components specific to Orbit.
+   - Remove route registrations and imports.
+4) Remove Orbit backend/API:
+   - Delete endpoints/services only used by Orbit.
+   - Remove them from router/index registration.
+5) Clean up shared code:
+   - Remove unused exports, dead imports, unused env vars.
+   - If uncertain, keep it.
+6) Run correctness checks:
+   - `npm run typecheck` (or equivalent)
+   - `npm run lint`
+   - `npm run build`
+   - `npm run start` / `npm run dev`
+   - Fix any failures properly (no hacks).
+
+DELIVERABLES
+A) A concise “What I removed” list (grouped: routes/pages, api, components, assets, env).
+B) A concise “What I kept as shared” list (and why).
+C) Confirmation of commands run + results.
+D) No references to Orbit remain in IceMaker UI or routing.
+
+ACCEPTANCE CRITERIA
+- IceMaker runs locally in Replit without errors.
+- All tests/build checks pass (or if no tests exist, build+start passes).
+- Searching the repo for “Orbit”, “orbits”, “rooms”, “industry orbit” returns no product references except historical changelog if explicitly kept.
+- No broken imports, no dead routes.
