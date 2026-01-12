@@ -1,0 +1,119 @@
+Nice work — that audit is exactly the kind of “we don’t accidentally build a charity” discipline you need.
+
+Based on what’s in the doc (build costs from ~$0.30 for a short ICE up to $10–$12 for a full cinematic ICE, and runtime at roughly **$0.01 per Q&A question / ~$0.05 per viewer session**) plus the risk flags (unbounded chat context + no quotas + no rate limits), here’s where we should land.
+
+1) What pricing has to protect you from
+
+Your real profit killers are not “narration vs music vs images”.
+
+They’re:
+	1.	Unbounded chat context → token usage explodes as history grows.
+	2.	No per-tenant quotas / credits → one power user can bankrupt a plan.
+	3.	No Q&A rate limits → someone can hammer the endpoint all day.
+	4.	Video generation defaults → your own config gives away expensive output.
+
+So the pricing model must be paired with hard guardrails. Without them, no pricing page in the world saves you.
+
+2) Don’t itemise features — meter the two cost buckets
+
+You were right to avoid a shopping list of “TTS: £x, music: £y…”.
+
+Instead, you need two allowances:
+	•	Build allowance (covers ingestion + structuring + narration + music + images + optional video)
+	•	Audience allowance (covers viewer Q&A)
+
+That keeps the pricing page clean, and it matches how your costs actually behave.
+
+3) Short / Medium / Long is a good UX preset — not a hard cage
+
+Use Short / Medium / Long as:
+	•	a creator preset in the UI (6 / 10 / 15 cards as defaults)
+	•	a pricing explainer (“this plan typically covers X short ICEs/month”)
+
+…but don’t hard-limit customers to “exactly 10 cards”. Credit/budget enforcement is more flexible and less annoying.
+
+4) MVP pricing I’d ship (profit-safe)
+
+This assumes: video is not “included by default” on lower tiers. Video is either a Pro add-on pack or credit top-up.
+
+Starter — £29/mo
+
+For solo creators and small pilots.
+	•	Build allowance: enough for ~2 Short or 1 Medium ICE/month
+	•	Audience allowance: ~500 questions/month
+	•	Video generation: off (or 1 clip/month max)
+	•	Storage cap (small)
+
+Pro — £59/mo (your main plan)
+
+For real use.
+	•	Build allowance: ~4 Medium or 1 Long ICE/month
+	•	Audience allowance: ~1,500 questions/month
+	•	Video add-on pack: optional (so you never get killed by cinematic users)
+
+Team — £149/mo (includes 3 seats) + £25/extra seat
+
+For L&D + agencies.
+	•	Build allowance: ~10 Medium or 3 Long ICE/month
+	•	Audience allowance: ~5,000 questions/month
+	•	Includes collaboration/roles
+	•	Video pack included or discounted (team buyers actually use it)
+
+Enterprise — custom
+	•	High Q&A volumes, SSO, security, SLAs
+
+Top-ups (critical for margin)
+	•	Audience pack: +1,000 questions
+	•	Build pack: enough for another 2–4 ICEs depending on size
+	•	Video pack: priced separately (because it’s the spikiest cost)
+
+This setup ensures your worst-case heavy usage becomes upsell revenue, not a margin hole.
+
+5) Guardrails you should implement before launch
+
+These come straight from your audit risks:
+
+Chat/Q&A
+	•	Hard cap: max 20 messages of context retained
+	•	Hard cap: max 25 questions per session
+	•	Per-user rate limit (e.g. 10 Q/min, burst-safe)
+	•	Per-tenant monthly allowance enforced (questions counter)
+
+Pipeline
+	•	Input truncation rules (you already cap some chars; formalise it)
+	•	Default model tiering: move cheap steps to gpt-4o-mini where acceptable (the doc calls out 70–80% savings)
+
+Caching
+	•	Cache TTS by content hash (don’t regenerate narration for the same card)
+	•	Cache images by prompt hash where appropriate (or at least allow “reuse”)
+
+Video
+	•	Remove any “free bundled videos by default” behaviour on Starter/Pro
+	•	Make video an explicit toggle + “this will use X allowance” message
+
+If you do nothing else: cap chat context + rate limit Q&A + enforce quotas. That’s your non-negotiable triple lock.
+
+6) What I want from RatBlood next (so we can finalise numbers)
+
+Your doc includes estimated vendor prices for GPT-5.1, images, etc. That’s fine for modelling, but we now need empirical measurements (your section C already outlines it).
+
+Have RatBlood run:
+	•	Short: 6 cards + 3 images
+	•	Medium: 10 cards + narration
+	•	Long: 15 cards + 4 videos
+
+…and return:
+	•	average tokens per build stage
+	•	average tokens per Q&A question with the real chat route
+	•	real asset sizes produced (storage impact)
+
+Once you paste those measured outputs, I’ll convert the above into:
+	•	a clean pricing table for the site
+	•	exact monthly allowances
+	•	top-up pricing that locks in a target gross margin (e.g. 70%+)
+
+If you want the fastest path: tell me which you prefer as the “default buyer” for MVP:
+	•	Corporate L&D (demo-led, fewer but higher value accounts), or
+	•	Self-serve creators/marketers (higher volume, tighter cost control needed)
+
+I’ll bias the allowances and plan naming accordingly.
