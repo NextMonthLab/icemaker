@@ -81,13 +81,15 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href={logoHref}>
-          <div className="flex items-center gap-2 cursor-pointer" data-testid="link-site-logo">
-            <img 
-              src={icemakerLogo} 
-              alt="IceMaker" 
-              className="h-20 w-auto"
-              style={{ clipPath: 'inset(30% 0 30% 0)' }}
-            />
+          <div className="flex items-center cursor-pointer" data-testid="link-site-logo">
+            <div className="h-10 overflow-hidden flex items-center">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[70px] w-auto object-contain"
+                style={{ marginTop: '-10px', marginBottom: '-10px' }}
+              />
+            </div>
           </div>
         </Link>
 
