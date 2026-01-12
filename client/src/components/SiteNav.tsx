@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
-  Orbit,
   Sparkles,
   Home,
   LogIn,
@@ -48,8 +47,6 @@ const marketingLinks = [
 ];
 
 const appLinks = [
-  { href: '/launchpad', label: 'Launchpad', icon: Home },
-  { href: '/orbit', label: 'Orbits', icon: Orbit },
   { href: '/library', label: 'Library', icon: Sparkles },
 ];
 
@@ -65,7 +62,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
   
-  const logoHref = variant === 'marketing' ? '/' : '/launchpad';
+  const logoHref = variant === 'marketing' ? '/' : '/library';
   const centerLinks = variant === 'marketing' ? marketingLinks : appLinks;
 
   const handleLogout = async () => {
@@ -160,12 +157,6 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
                     <Link href="/profile" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-profile">
                       <User className="w-4 h-4 mr-2" />
                       My Account
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orbit/my" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-orbits">
-                      <Orbit className="w-4 h-4 mr-2" />
-                      My Orbits
                     </Link>
                   </DropdownMenuItem>
                   {onStartTour && (

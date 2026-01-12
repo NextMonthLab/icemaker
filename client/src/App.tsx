@@ -22,42 +22,12 @@ import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
 import Security from "@/pages/legal/Security";
 import PreviewRedirect from "@/pages/PreviewRedirect";
-import OrbitView from "@/pages/orbit/OrbitView";
-import KioskOrbitView from "@/pages/orbit/KioskOrbitView";
-import DataHub from "@/pages/orbit/DataHub";
-import HeroPosts from "@/pages/orbit/HeroPosts";
-import OrbitHome from "@/pages/orbit/OrbitHome";
-import MyOrbits from "@/pages/orbit/MyOrbits";
-import OrbitMap from "@/pages/orbit/OrbitMap";
-import OrbitIntelligence from "@/pages/orbit/OrbitIntelligence";
-import OrbitActions from "@/pages/orbit/OrbitActions";
-import OrbitSettings from "@/pages/orbit/OrbitSettings";
-import OrbitClaim from "@/pages/orbit/OrbitClaim";
-import CatalogueImport from "@/pages/orbit/CatalogueImport";
-import SocialProofLibrary from "@/pages/orbit/SocialProofLibrary";
-import IceMakerHome from "@/pages/icemaker/IceMakerHome";
 import IceMakerCreate from "@/pages/icemaker/IceMakerCreate";
-import IceMakerProjects from "@/pages/icemaker/IceMakerProjects";
 import IceMakerTemplates from "@/pages/icemaker/IceMakerTemplates";
 import IceMakerSettings from "@/pages/icemaker/IceMakerSettings";
 import Library from "@/pages/Library";
-import { useSearch } from "wouter";
-
-function OrbitRouter() {
-  const search = useSearch();
-  const params = new URLSearchParams(search);
-  const isKiosk = params.get('kiosk') === '1';
-  const isVoice = params.get('voice') === '1';
-  
-  if (isKiosk || isVoice) {
-    return <KioskOrbitView />;
-  }
-  
-  return <OrbitView />;
-}
 
 import Home from "@/pages/Home";
-import Launchpad from "@/pages/Launchpad";
 import Today from "@/pages/Today";
 import CatchUp from "@/pages/CatchUp";
 import Chat from "@/pages/Chat";
@@ -73,8 +43,6 @@ import TransformationsPage from "@/pages/admin/TransformationsPage";
 import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
 import BlogPublisherPage from "@/pages/admin/BlogPublisherPage";
-import IndustryOrbitAssets from "@/pages/admin/IndustryOrbitAssets";
-import OrbitHealthDashboard from "@/pages/admin/OrbitHealthDashboard";
 import GuestIceBuilderPage from "@/pages/GuestIceBuilderPage";
 import CaptionDemo from "@/pages/CaptionDemo";
 import CaptionComposerLab from "@/pages/caption-composer-lab";
@@ -104,7 +72,7 @@ function withAuth<P extends object>(Component: React.ComponentType<P>) {
 }
 
 const ProtectedHome = withAuth(Home);
-const ProtectedLaunchpad = withAuth(Launchpad);
+const ProtectedLibrary = withAuth(Library);
 const ProtectedToday = withAuth(Today);
 const ProtectedCatchUp = withAuth(CatchUp);
 const ProtectedChat = withAuth(Chat);
@@ -123,8 +91,6 @@ const ProtectedTransformationsPage = withAuth(TransformationsPage);
 const ProtectedTransformationDetailPage = withAuth(TransformationDetailPage);
 const ProtectedCharacterCreatorPage = withAuth(CharacterCreatorPage);
 const ProtectedBlogPublisherPage = withAuth(BlogPublisherPage);
-const ProtectedIndustryOrbitAssets = withAuth(IndustryOrbitAssets);
-const ProtectedOrbitHealthDashboard = withAuth(OrbitHealthDashboard);
 const ProtectedAdminUniverseDetail = withAuth(AdminUniverseDetail);
 const ProtectedVisualBible = withAuth(VisualBible);
 const ProtectedExportPage = withAuth(ExportPage);
@@ -154,9 +120,6 @@ function Router() {
       <Route path="/ai-discovery-control" component={AIDiscoveryControl} />
       <Route path="/ai-discovery" component={AIDiscoveryControl} />
       
-      <Route path="/smartglasses">{() => { window.location.href = "/orbit/smart-glasses"; return null; }}</Route>
-      <Route path="/smartglasses/partners">{() => { window.location.href = "/orbit/smart-glasses"; return null; }}</Route>
-      
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />
@@ -171,33 +134,15 @@ function Router() {
       <Route path="/icemaker/settings" component={IceMakerSettings} />
       <Route path="/icemaker/captions" component={CaptionDemo} />
       <Route path="/icemaker/composer-lab" component={CaptionComposerLab} />
-      
-      <Route path="/orbit" component={OrbitHome} />
-      <Route path="/orbit/my" component={MyOrbits} />
-      <Route path="/orbit/map" component={OrbitMap} />
-      <Route path="/orbit/intelligence" component={OrbitIntelligence} />
-      <Route path="/orbit/actions" component={OrbitActions} />
-      <Route path="/orbit/settings" component={OrbitSettings} />
-      <Route path="/orbit/claim" component={OrbitClaim} />
-      
-      <Route path="/o/:slug" component={OrbitRouter} />
-      <Route path="/orbit/:slug" component={OrbitRouter} />
-      <Route path="/orbit/:slug/claim" component={OrbitView} />
-      <Route path="/orbit/:slug/hub" component={DataHub} />
-      <Route path="/orbit/:slug/datahub" component={DataHub} />
-      <Route path="/orbit/:slug/hero-posts" component={HeroPosts} />
-      <Route path="/orbit/:slug/sources" component={OrbitSettings} />
-      <Route path="/orbit/:slug/settings" component={OrbitSettings} />
-      <Route path="/orbit/:slug/import" component={CatalogueImport} />
-      <Route path="/orbit/:slug/proof" component={SocialProofLibrary} />
+
       <Route path="/ice/new" component={TransformationsPage} />
       <Route path="/try" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id/checkout" component={IceCheckoutPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
-      <Route path="/app" component={ProtectedLaunchpad} />
-      <Route path="/launchpad" component={ProtectedLaunchpad} />
+      <Route path="/app" component={ProtectedLibrary} />
+      <Route path="/launchpad" component={ProtectedLibrary} />
       <Route path="/stories" component={ProtectedHome} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />
@@ -222,8 +167,6 @@ function Router() {
       <Route path="/admin/transformations/:id" component={ProtectedTransformationDetailPage} />
       <Route path="/admin/characters/new" component={ProtectedCharacterCreatorPage} />
       <Route path="/admin/blog" component={ProtectedBlogPublisherPage} />
-      <Route path="/admin/industry-assets" component={ProtectedIndustryOrbitAssets} />
-      <Route path="/admin/orbits/health" component={ProtectedOrbitHealthDashboard} />
       <Route path="/admin/universes/:id" component={ProtectedAdminUniverseDetail} />
       <Route path="/admin/universes/:id/visual-bible" component={ProtectedVisualBible} />
       <Route path="/admin/universes/:id/export" component={ProtectedExportPage} />

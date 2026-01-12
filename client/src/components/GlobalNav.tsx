@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
-  Orbit,
   Sparkles,
   Home,
   LogIn,
@@ -34,7 +33,7 @@ import { cn } from "@/lib/utils";
 const LOGO_URL_LIGHT = "/logo.png";
 const LOGO_URL_DARK = "https://res.cloudinary.com/drl0fxrkq/image/upload/h_250,fl_preserve_transparency/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
 
-type NavContext = 'marketing' | 'app' | 'orbit' | 'ice';
+type NavContext = 'marketing' | 'app' | 'ice';
 
 interface GlobalNavProps {
   context?: NavContext;
@@ -49,7 +48,6 @@ interface GlobalNavProps {
 const contextLabels: Record<NavContext, { label: string; icon: React.ComponentType<any>; href: string }> = {
   marketing: { label: 'Home', icon: Home, href: '/' },
   app: { label: 'Stories', icon: Home, href: '/app' },
-  orbit: { label: 'Orbit', icon: Orbit, href: '/orbit' },
   ice: { label: 'IceMaker', icon: Sparkles, href: '/icemaker' },
 };
 
@@ -80,8 +78,6 @@ export default function GlobalNav({
   };
 
   const quickLinks = [
-    { href: '/launchpad', label: 'Launchpad', icon: Home, context: 'app' as NavContext },
-    { href: '/orbit', label: 'Orbits', icon: Orbit, context: 'orbit' as NavContext },
     { href: '/library', label: 'Library', icon: Sparkles, context: 'ice' as NavContext },
   ];
 
@@ -176,29 +172,16 @@ export default function GlobalNav({
 
             <div className="flex items-center gap-2">
               {showCTAs && (
-                <>
-                  <Link href="/try">
-                    <Button 
-                      size="sm"
-                      className="bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 text-white gap-1.5 h-8 px-3 text-xs"
-                      data-testid="global-cta-ice"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Try IceMaker
-                    </Button>
-                  </Link>
-                  <Link href="/orbit/claim">
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 gap-1.5 h-8 px-3 text-xs"
-                      data-testid="global-cta-orbit"
-                    >
-                      <Orbit className="w-3.5 h-3.5" />
-                      Claim Orbit
-                    </Button>
-                  </Link>
-                </>
+                <Link href="/try">
+                  <Button 
+                    size="sm"
+                    className="bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 text-white gap-1.5 h-8 px-3 text-xs"
+                    data-testid="global-cta-ice"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Try IceMaker
+                  </Button>
+                </Link>
               )}
               
               {user ? (
@@ -227,12 +210,6 @@ export default function GlobalNav({
                       <Link href="/profile" className="cursor-pointer" data-testid="global-menu-profile">
                         <User className="w-4 h-4 mr-2" />
                         My Account
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/orbit/my" className="cursor-pointer" data-testid="global-menu-orbits">
-                        <Orbit className="w-4 h-4 mr-2" />
-                        My Orbits
                       </Link>
                     </DropdownMenuItem>
                     {onStartTour && (

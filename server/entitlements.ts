@@ -1,6 +1,6 @@
 import { storage } from './storage';
 import type { Request, Response, NextFunction } from 'express';
-import type { User, UserRole, OrbitTier } from '@shared/schema';
+import type { User, UserRole } from '@shared/schema';
 
 export type EntitlementKey = 
   | 'canUseCloudLlm'
@@ -36,7 +36,6 @@ export interface FullEntitlements {
   activeIceLimit: number; // -1 means unlimited
   analyticsEnabled: boolean;
   chatEnabled: boolean;
-  orbitAccess: boolean;
 }
 
 function detectTierFromSlug(slug: string | null | undefined): string {
@@ -71,7 +70,6 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     activeIceLimit: 0, // Free tier: preview only, no active Ices
     analyticsEnabled: false,
     chatEnabled: false,
-    orbitAccess: false,
   },
   pro: {
     canCreateStory: true,
@@ -91,7 +89,6 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     activeIceLimit: 3, // Pro tier: 3 active Ices
     analyticsEnabled: true,
     chatEnabled: true,
-    orbitAccess: false,
   },
   business: {
     canCreateStory: true,
@@ -111,7 +108,6 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     activeIceLimit: 10, // Business tier: 10 active Ices
     analyticsEnabled: true,
     chatEnabled: true,
-    orbitAccess: true,
   },
 };
 
@@ -155,7 +151,6 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
           activeIceLimit: features.activeIceLimit ?? tierDefaults.activeIceLimit ?? 0,
           analyticsEnabled: features.analyticsEnabled ?? tierDefaults.analyticsEnabled ?? false,
           chatEnabled: features.chatEnabled ?? tierDefaults.chatEnabled ?? false,
-          orbitAccess: features.orbitAccess ?? tierDefaults.orbitAccess ?? false,
         };
       }
     }
@@ -187,7 +182,6 @@ function getAdminEntitlements(): FullEntitlements {
     activeIceLimit: -1,
     analyticsEnabled: true,
     chatEnabled: true,
-    orbitAccess: true,
   };
 }
 
@@ -213,7 +207,6 @@ function getCreatorFreeEntitlements(): FullEntitlements {
     activeIceLimit: 0,
     analyticsEnabled: false,
     chatEnabled: false,
-    orbitAccess: false,
   };
 }
 
@@ -239,7 +232,6 @@ function getDefaultEntitlements(): FullEntitlements {
     activeIceLimit: 0,
     analyticsEnabled: false,
     chatEnabled: false,
-    orbitAccess: false,
   };
 }
 
@@ -374,99 +366,4 @@ export function requireRole(...allowedRoles: UserRole[]) {
       message: `Access denied. Required role: ${allowedRoles.join(' or ')}`
     });
   };
-}
-
-// ============ ORBIT ENTITLEMENTS ============
-// Orbit-specific tier entitlements for the Business Hub
-
-export interface OrbitEntitlements {
-  tier: OrbitTier;
-  tierDisplayName: string;
-  priceMonthly: number;
-  
-  // Free tier - everyone
-  canViewGrid: boolean;
-  canViewPublicICE: boolean;
-  canViewBasicAnalytics: boolean;
-  canManageBoxes: boolean;
-  
-  // Grow tier (£19.99/mo)
-  canViewSignalAccessMetrics: boolean;
-  canViewVisitorPatterns: boolean;
-  canCustomizeBranding: boolean;
-  monthlyICECredits: number;
-  
-  // Insight tier (£49.99/mo)
-  canViewConversationTranscripts: boolean;
-  canViewPatternIntelligence: boolean;
-  canExportAnalytics: boolean;
-  canViewLeadEnrichment: boolean;
-  
-  // Intelligence tier (£99.99/mo)
-  canUseAIAdvisor: boolean;
-  canAutoGenerateICE: boolean;
-  unlimitedICE: boolean;
-  prioritySupport: boolean;
-}
-
-const ORBIT_TIER_PRICING: Record<OrbitTier, number> = {
-  free: 0,
-  grow: 19.99,
-  insight: 49.99,
-  intelligence: 99.99,
-};
-
-const ORBIT_TIER_DISPLAY_NAMES: Record<OrbitTier, string> = {
-  free: 'Free',
-  grow: 'Grow',
-  insight: 'Insight',
-  intelligence: 'Intelligence',
-};
-
-const ORBIT_TIER_ICE_CREDITS: Record<OrbitTier, number> = {
-  free: 0,
-  grow: 3,
-  insight: 10,
-  intelligence: -1, // Unlimited
-};
-
-export function getOrbitEntitlements(tier: OrbitTier): OrbitEntitlements {
-  const tierLevel = ['free', 'grow', 'insight', 'intelligence'].indexOf(tier);
-  
-  return {
-    tier,
-    tierDisplayName: ORBIT_TIER_DISPLAY_NAMES[tier],
-    priceMonthly: ORBIT_TIER_PRICING[tier],
-    
-    // Free tier - everyone
-    canViewGrid: true,
-    canViewPublicICE: true,
-    canViewBasicAnalytics: true,
-    canManageBoxes: true,
-    
-    // Grow tier (£19.99/mo) - requires tier >= 1
-    canViewSignalAccessMetrics: tierLevel >= 1,
-    canViewVisitorPatterns: tierLevel >= 1,
-    canCustomizeBranding: tierLevel >= 1,
-    monthlyICECredits: ORBIT_TIER_ICE_CREDITS[tier],
-    
-    // Insight tier (£49.99/mo) - requires tier >= 2
-    canViewConversationTranscripts: tierLevel >= 2,
-    canViewPatternIntelligence: tierLevel >= 2,
-    canExportAnalytics: tierLevel >= 2,
-    canViewLeadEnrichment: tierLevel >= 2,
-    
-    // Intelligence tier (£99.99/mo) - requires tier >= 3
-    canUseAIAdvisor: tierLevel >= 3,
-    canAutoGenerateICE: tierLevel >= 3,
-    unlimitedICE: tierLevel >= 3,
-    prioritySupport: tierLevel >= 3,
-  };
-}
-
-export async function getOrbitEntitlementsBySlug(orbitSlug: string): Promise<OrbitEntitlements | null> {
-  const orbitMeta = await storage.getOrbitMeta(orbitSlug);
-  if (!orbitMeta) return null;
-  
-  return getOrbitEntitlements(orbitMeta.planTier as OrbitTier);
 }
