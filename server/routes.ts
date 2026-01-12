@@ -10357,9 +10357,28 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       
       // Use shared chat service for context building
       const { buildOrbitContext, buildSystemPrompt, generateChatResponse, parseVideoSuggestion } = await import('./services/orbitChatService');
-      
+
+      // Use chat enhancer for intelligent query analysis and response optimization
+      const {
+        analyzeQuery,
+        filterDocumentsByRelevance,
+        detectHallucination,
+        scoreResponseConfidence,
+        summarizeConversation,
+        buildEnhancedDocumentContext
+      } = await import('./services/chatResponseEnhancer');
+
+      // Analyze query to determine optimal temperature and intent
+      const queryAnalysis = analyzeQuery(message, recentUserMessages);
+      console.log('[ChatEnhancer] Query analysis:', JSON.stringify(queryAnalysis));
+
       const orbitContext = await buildOrbitContext(storage, slug);
-      
+
+      // Filter documents by relevance to query (only include top 3 most relevant)
+      const allDocuments = await storage.getOrbitDocuments(slug);
+      const readyDocs = allDocuments.filter(d => d.status === 'ready' && d.extractedText);
+      const enhancedDocumentContext = buildEnhancedDocumentContext(message, readyDocs, 3);
+
       const brandName = orbitMeta.customTitle || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       const sourceUrl = orbitMeta.sourceUrl || '';
       let sourceDomain = '';
@@ -10370,7 +10389,8 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       } catch {
         sourceDomain = sourceUrl.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] || '';
       }
-      
+
+      // Build system prompt with enhanced document context (only relevant docs)
       const systemPrompt = buildSystemPrompt(
         {
           slug,
@@ -10378,7 +10398,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
           sourceDomain,
         },
         orbitContext.productContext,
-        orbitContext.documentContext,
+        enhancedDocumentContext, // Use filtered relevant docs instead of all docs
         orbitContext.businessType,
         orbitContext.businessTypeLabel,
         orbitContext.offeringsLabel,
@@ -10386,17 +10406,55 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         orbitContext.heroPostContext,
         orbitContext.videoContext
       );
-      
-      const historyForAI = (history || [])
-        .filter((msg: any) => msg.role === 'user' || msg.role === 'assistant')
-        .slice(-6)
-        .map((msg: any) => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
-      
-      const rawResponse = await generateChatResponse(systemPrompt, historyForAI, message, { maxTokens: 300 });
+
+      // Summarize conversation history for better context retention
+      const historyForAI = summarizeConversation(
+        (history || [])
+          .filter((msg: any) => msg.role === 'user' || msg.role === 'assistant')
+          .map((msg: any) => ({ role: msg.role as 'user' | 'assistant', content: msg.content })),
+        6
+      );
+
+      // Generate response with adaptive temperature based on query type
+      const rawResponse = await generateChatResponse(
+        systemPrompt,
+        historyForAI,
+        message,
+        {
+          maxTokens: 300,
+          temperature: queryAnalysis.temperature // Adaptive: 0.3 for facts, 0.8 for creative
+        }
+      );
       
       // Parse video suggestions from response
       const { cleanResponse, suggestedVideo } = parseVideoSuggestion(rawResponse, orbitContext.videos);
-      
+
+      // Detect potential hallucinations in response
+      const hallucinationDetected = detectHallucination(cleanResponse, {
+        productNames: orbitContext.items.map(i => i.name),
+        documentContent: readyDocs.map(d => d.extractedText).join(' ').slice(0, 5000),
+        hasContactInfo: systemPrompt.includes('contact') || systemPrompt.includes('email'),
+        hasLocationInfo: systemPrompt.includes('location') || systemPrompt.includes('address'),
+      });
+
+      // Score response confidence
+      const responseMetadata = scoreResponseConfidence(queryAnalysis, cleanResponse, {
+        documentCount: readyDocs.length,
+        productCount: orbitContext.items.length,
+        hasRelevantDocs: enhancedDocumentContext.includes('RELEVANT DOCUMENTS'),
+      });
+
+      responseMetadata.hallucinationDetected = hallucinationDetected;
+
+      // Log quality metrics for monitoring
+      console.log('[ChatQuality]', JSON.stringify({
+        queryType: queryAnalysis.type,
+        temperature: queryAnalysis.temperature,
+        confidence: responseMetadata.confidence,
+        hallucination: hallucinationDetected,
+        docsFiltered: `${readyDocs.length} → ${enhancedDocumentContext.length > 100 ? '3' : '0'}`,
+      }));
+
       // If video was suggested, track the serve event
       if (suggestedVideo) {
         try {
@@ -10432,12 +10490,18 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         }
       }
       
-      // Build unified response
-      const responsePayload: Record<string, any> = { 
+      // Build unified response with quality metadata
+      const responsePayload: Record<string, any> = {
         response: cleanResponse,
         suggestedVideo: suggestedVideo || null,
         suggestionChip,
         viewerType: isOwner ? 'owner' : 'public',
+        metadata: {
+          confidence: responseMetadata.confidence,
+          queryType: responseMetadata.queryType,
+          temperature: responseMetadata.temperature,
+          intent: queryAnalysis.intent,
+        },
       };
       
       // Add praise detection for testimonial flow
