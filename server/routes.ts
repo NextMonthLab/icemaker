@@ -10414,7 +10414,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
       }
 
       // Build system prompt with enhanced document context and intent-aware guidance
-      const systemPrompt = buildSystemPrompt(
+      const baseSystemPrompt = buildSystemPrompt(
         {
           slug,
           brandName,
@@ -10431,6 +10431,39 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         conversationState.intentChain, // Intent-aware guidance
         conversationState.stage // Stage-aware guidance
       );
+
+      // Enrich with proactive context intelligence (Tier 3)
+      const {
+        enrichSystemPromptWithContext,
+        extractEntities,
+        expandContextProactively,
+        buildConversationCoverage
+      } = await import('./services/proactiveContextEngine');
+
+      const extractedEntities = extractEntities(message, orbitContext.items);
+      const contextExpansion = expandContextProactively(
+        extractedEntities,
+        conversationState.intentChain,
+        orbitContext.items,
+        readyDocs
+      );
+      const conversationCoverage = buildConversationCoverage(conversationHistory);
+
+      const systemPrompt = enrichSystemPromptWithContext(
+        baseSystemPrompt,
+        message,
+        conversationHistory,
+        conversationState.intentChain,
+        orbitContext.items,
+        readyDocs
+      );
+
+      console.log('[ProactiveContext]', JSON.stringify({
+        entitiesFound: extractedEntities.length,
+        relatedProducts: contextExpansion.relatedProducts.length,
+        anticipatedInfo: contextExpansion.anticipatedInfo.length,
+        topicsCovered: conversationCoverage.topicsDiscussed.size,
+      }));
 
       // Summarize conversation history for better context retention
       const historyForAI = summarizeConversation(
@@ -10533,6 +10566,13 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
           userGoal: conversationState.userGoal,
           nextQuestions: conversationState.nextQuestionPredictions,
           followUpSuggestions: conversationState.suggestedFollowUps.map(s => s.question),
+          extractedEntities: extractedEntities.filter(e => e.confidence >= 0.7).map(e => ({
+            type: e.type,
+            value: e.value,
+            confidence: e.confidence,
+          })),
+          relatedProducts: contextExpansion.relatedProducts.slice(0, 5),
+          topicsAlreadyDiscussed: Array.from(conversationCoverage.topicsDiscussed),
         },
       };
       
