@@ -600,9 +600,9 @@ export function RadarGrid({ knowledge, onSendMessage, onVideoEvent, orbitSlug, a
         </span>
       </div>
 
-      {/* Drag hint */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs pointer-events-none" style={{ zIndex: 20 }}>
-        Drag to explore
+      {/* Movement hint */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs pointer-events-none text-center" style={{ zIndex: 20 }}>
+        Tiles move to reflect what we're talking about
       </div>
     </div>
   );

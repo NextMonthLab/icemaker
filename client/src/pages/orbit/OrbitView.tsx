@@ -1208,7 +1208,7 @@ export default function OrbitView() {
                   {subtitle}
                 </p>
                 <p className="text-xs text-white/30 animate-pulse">
-                  Tap anywhere to explore
+                  Tap to start a conversation
                 </p>
               </motion.div>
             </div>

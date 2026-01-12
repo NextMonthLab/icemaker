@@ -235,7 +235,7 @@ export function ChatHub({
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const videoStartTimeRef = useRef<number>(0);
   const getProactiveWelcome = () => {
-    return `${brandName}\n\nTap any tile to learn more, or ask me a question.`;
+    return `This is not a menu.\n\nOrbit is a living intelligence that understands ${brandName}. Each tile represents a knowledge node about products, services, pages, or ideas.\n\nAs you talk to me, I'll bring the most relevant knowledge closer together so I can respond accurately.\n\nYou don't need to find the right page. Just ask.\n\n· · ·\n\nOrbit evolves over time — first understanding the business, then letting owners shape the intelligence, then connecting knowledge to visuals.`;
   };
 
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -502,7 +502,7 @@ export function ChatHub({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything..."
+              placeholder="Ask me anything about this business..."
               className={`flex-1 border-0 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                 lightMode 
                   ? 'bg-gray-100 text-gray-900 placeholder:text-gray-400' 

@@ -87,9 +87,9 @@ export function InfiniteCanvas({ children, gridSize = 60, onPan }: InfiniteCanva
         {children}
       </motion.div>
 
-      {/* Drag hint */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs pointer-events-none">
-        Drag to explore
+      {/* Movement hint */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs pointer-events-none text-center">
+        Tiles move to reflect what we're talking about
       </div>
     </div>
   );
