@@ -1,0 +1,135 @@
+ROLE
+You are a senior backend engineer + FinOps analyst. Your mission is to extract real expected usage costs from THIS codebase and its architecture, then produce a spreadsheet-ready cost model. We cannot be loss-making. We need a healthy profit margin.
+
+CONTEXT
+This is the dedicated IceMaker repository. Orbit has been removed. Do NOT reintroduce Orbit.
+We need to understand costs across: ingestion/structuring, narration, music, image generation, video generation, asset upload/storage, hosting, and interactive Q&A runtime.
+
+NON-NEGOTIABLE RULES
+1) Do NOT refactor product logic. This is an audit + measurement task.
+2) If instrumentation is missing, add the smallest possible instrumentation in a safe, isolated way (logging + metrics) without changing outputs.
+3) Your deliverable must be precise, file-path referenced, and spreadsheet-ready.
+4) Do NOT guess vendor prices from memory. Use only:
+   - what’s present in code/config
+   - what the runtime returns (e.g., token usage)
+   - placeholders for price-per-unit where not present
+5) Identify all unit drivers (tokens, minutes, images, videos, storage GB, bandwidth GB, Q&A count, concurrency).
+6) Produce both “per ICE build cost” and “per viewer run cost”.
+
+OBJECTIVE
+Build a complete cost breakdown that answers:
+- Cost to CREATE an ICE (build-time)
+- Cost to HOST an ICE (storage/bandwidth)
+- Cost to RUN an ICE for viewers (Q&A inference cost per question + session memory cost)
+- Cost multipliers by ICE length (Short/Medium/Long) and by media mix (text-only vs images vs video)
+
+DELIVERABLES (MUST OUTPUT THESE)
+A) Architecture Cost Map (table)
+For each cost centre: what triggers it, where in code, what units drive it, how to measure it.
+Columns:
+- Cost Centre (Ingest/Structure, LLM Q&A, TTS, Music, Image Gen, Video Gen, Storage, Bandwidth, DB, Hosting)
+- Provider/Model/Service (from env + code)
+- Code locations (file paths + functions)
+- Unit driver (tokens, minutes, images, videos, GB-month, GB egress, requests)
+- How to measure (response fields, logs, instrumentation)
+- Notes / assumptions
+
+B) Unit Cost Model (spreadsheet-ready)
+A set of formulas and variables:
+- price_per_1k_input_tokens
+- price_per_1k_output_tokens
+- avg_tokens_ingest_per_page
+- avg_tokens_structuring_per_card
+- avg_tokens_per_question_in/out
+- tts_cost_per_minute
+- music_cost_per_minute_or_track
+- image_cost_each
+- video_cost_each_or_per_second
+- storage_cost_per_gb_month
+- bandwidth_cost_per_gb_egress
+- db_cost_per_1m_reads_writes (if relevant)
+Then compute:
+- cost_per_short_ICE_build (e.g., 6 cards)
+- cost_per_medium_ICE_build (e.g., 10 cards)
+- cost_per_long_ICE_build (e.g., 15 cards)
+AND
+- cost_per_viewer_session (assume X questions)
+- cost_per_100_viewers (with interaction assumptions)
+
+C) Empirical Measurements (if possible)
+Run 2–3 controlled test builds inside Replit using representative inputs:
+- Short ICE (6 cards) with text + 3 images
+- Medium ICE (10 cards) with text + 6 images + narration
+- Long ICE (15 cards) with text + narration + images + 1 video (if supported)
+Capture:
+- tokens in/out per stage (ingest, structure, generation, Q&A)
+- time taken
+- asset sizes created
+- any per-call provider usage fields returned
+Report as a table.
+
+D) Risk Flags
+List anything that could blow margins:
+- unbounded context growth
+- no token limits
+- no caching
+- unlimited viewer Q&A
+- expensive default video generation
+- missing rate limits
+- no per-tenant quotas
+
+E) Recommendations (MVP guardrails)
+Concrete, implementable guardrails to keep margins healthy:
+- credit/usage enforcement points in code
+- caching strategy (where to cache and what)
+- hard caps/default limits
+- model tiering suggestions (cheap model for Q&A vs premium for build)
+- safe “free tier” limitations
+
+PROCESS (FOLLOW EXACTLY)
+1) Identify all external cost-causing integrations
+Search codebase for:
+- openai, anthropic, deepgram, elevenlabs, assemblyai, replicate, runway, kling, luma, stability, midjourney, ffmpeg calls, cloud storage SDKs, s3, r2, supabase storage, uploadthing, cloudinary
+- fetch/axios calls to AI endpoints
+- any “generateImage”, “generateVideo”, “tts”, “transcribe”, “chat”, “embed”, “summarise”, “ingest”
+Output a list of integrations with exact file paths.
+
+2) Build-time pipeline audit
+Trace how an ICE is created:
+- ingestion (pdf/url/doc parsing)
+- chunking/structuring (cards/scenes)
+- generation (text, narration, music, image, video)
+Provide a step-by-step map with functions and where parameters like max_tokens, temperature, model, image size are set.
+
+3) Run-time pipeline audit
+Trace how viewer interaction works:
+- endpoints for chat/Q&A
+- memory storage method (db? vector? in-memory?)
+- retrieval grounding (RAG?) and token expansion risk
+- rate limits / auth
+Provide per-question token/compute drivers.
+
+4) Instrumentation (only if missing)
+If LLM calls do NOT log token usage, add minimal instrumentation:
+- capture model name
+- capture prompt tokens + completion tokens (from API response usage fields)
+- capture latency and errors
+- do NOT log sensitive content; log counts and sizes only
+Write logs to existing logger; if none, create a simple server-side logger utility used only here.
+Add a feature flag env var: COST_AUDIT_LOGGING=true to enable.
+
+5) Run test jobs
+Create a script or admin-only endpoint to run the 2–3 sample builds above and print a cost-relevant summary (tokens in/out, assets count, minutes of audio, etc.).
+
+6) Produce deliverables A–E.
+
+OUTPUT FORMAT
+- Use headings A–E exactly.
+- Every important claim must cite a file path or a measured log output.
+- Provide tables in markdown (spreadsheet-ready).
+- If any vendor pricing is missing, leave the pricing variable blank and note where it should be configured.
+
+FINAL CHECK
+Before finishing, do a repo-wide search for:
+- “Orbit”
+Ensure no Orbit references were introduced.
