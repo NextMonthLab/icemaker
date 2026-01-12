@@ -26,8 +26,6 @@ import IceMakerCreate from "@/pages/icemaker/IceMakerCreate";
 import IceMakerTemplates from "@/pages/icemaker/IceMakerTemplates";
 import IceMakerSettings from "@/pages/icemaker/IceMakerSettings";
 import Library from "@/pages/Library";
-
-import Home from "@/pages/Home";
 import Today from "@/pages/Today";
 import CatchUp from "@/pages/CatchUp";
 import Chat from "@/pages/Chat";
@@ -71,7 +69,6 @@ function withAuth<P extends object>(Component: React.ComponentType<P>) {
   };
 }
 
-const ProtectedHome = withAuth(Home);
 const ProtectedLibrary = withAuth(Library);
 const ProtectedToday = withAuth(Today);
 const ProtectedCatchUp = withAuth(CatchUp);
@@ -143,7 +140,7 @@ function Router() {
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
       <Route path="/app" component={ProtectedLibrary} />
       <Route path="/launchpad" component={ProtectedLibrary} />
-      <Route path="/stories" component={ProtectedHome} />
+      <Route path="/stories" component={ProtectedLibrary} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />
       <Route path="/profile" component={ProtectedProfile} />

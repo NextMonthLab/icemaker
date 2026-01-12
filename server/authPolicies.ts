@@ -1,4 +1,4 @@
-import { User, Universe, IcePreview, OrbitMeta, ContentVisibility, InsertAuditLog } from "@shared/schema";
+import { User, Universe, IcePreview, ContentVisibility, InsertAuditLog } from "@shared/schema";
 import { storage } from "./storage";
 
 type AuthUser = User | undefined;
@@ -112,19 +112,6 @@ export function canWriteIcePreview(
   }
   
   return deny(403, "Not authorized to modify this preview");
-}
-
-export function canReadOrbit(user: AuthUser, orbit: OrbitMeta): PolicyResult {
-  return canReadByVisibility(
-    user,
-    orbit.ownerId,
-    (orbit.visibility as ContentVisibility) || "public",
-    "Orbit"
-  );
-}
-
-export function canWriteOrbit(user: AuthUser, orbit: OrbitMeta): PolicyResult {
-  return canWriteByOwnership(user, orbit.ownerId, "Orbit");
 }
 
 export function canClaimIcePreview(
