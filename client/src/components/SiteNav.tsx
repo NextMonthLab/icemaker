@@ -41,9 +41,9 @@ interface SiteNavProps {
 }
 
 const marketingLinks = [
-  { href: '/for/business', label: 'For Businesses', icon: Building2 },
-  { href: '/for/creators', label: 'For Creators', icon: Film },
-  { href: '/for/educator', label: 'For Educators', icon: GraduationCap },
+  { href: '/corporate-training', label: 'Corporate Training', icon: GraduationCap },
+  { href: '/marketing-agencies', label: 'Marketing & Agencies', icon: Building2 },
+  { href: '/blog', label: 'Blog', icon: Film },
 ];
 
 const appLinks = [

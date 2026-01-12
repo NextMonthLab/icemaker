@@ -1,0 +1,125 @@
+Implement the IceMaker Homepage using the following copy and section structure. Keep it premium, readable, and conversion-led. UK English spelling.
+
+PAGE: /
+TITLE: IceMaker — Interactive experiences from your content
+
+HERO
+Headline:
+Turn training and enablement content into interactive experiences people actually finish.
+
+Subhead:
+IceMaker transforms PDFs, decks, URLs and scripts into scene-based experiences with AI visuals, music, and an on-screen guide that answers questions using only your approved material.
+
+Micro-line (small text):
+Not a slideshow. Not a chatbot. Interactive cinematic experiences — grounded, controlled, and built from what you already have.
+
+Primary CTA button:
+Start building
+
+Secondary CTA:
+Book a demo
+
+TRUST / PROOF STRIP (placeholders allowed)
+Small heading:
+Built for teams who need more than static content
+
+3 bullets:
+- Source-grounded answers (no random internet facts)
+- Memory across scenes and sessions
+- Knowledge boundaries and progressive reveal
+
+PROBLEM SECTION
+Heading:
+Static content gets skimmed. Interactive content gets completed.
+
+Bullets:
+- Compliance and onboarding decks don’t stick — people click through and forget.
+- Sales collateral sits unread — prospects want answers, not pages.
+- Building engaging training is slow and expensive — even before it needs updating.
+
+SOLUTION OVERVIEW
+Heading:
+From source material to a guided experience — in minutes.
+
+Short paragraph:
+Upload your material once. IceMaker structures it into scenes, generates supporting visuals and pacing, and adds interactive moments where a guide can answer questions without going beyond the source.
+
+4-step mini flow:
+1) Ingest your source (PDF, deck, URL, script)
+2) Auto-structure into scenes
+3) Add an interactive guide with boundaries
+4) Publish a link or embed
+
+CORE DIFFERENTIATORS (Cards)
+Card 1 title:
+Source-grounded Q&A
+Card 1 text:
+Your guide answers from your approved material — not the open internet.
+
+Card 2 title:
+Memory and context
+Card 2 text:
+The guide remembers what the viewer has seen and what they asked, so it stays relevant.
+
+Card 3 title:
+Boundaries and control
+Card 3 text:
+Lock knowledge to sections, chapters, or scenes. Perfect for compliance and regulated teams.
+
+Card 4 title:
+Scene-based structure
+Card 4 text:
+Not slides. Not a wall of text. Scenes that guide attention and improve retention.
+
+USE CASES (2 columns)
+Heading:
+What teams build with IceMaker
+
+Use cases:
+- Compliance and policy training people actually complete
+- Onboarding journeys that answer questions in real time
+- Sales enablement experiences that shorten time-to-understanding
+- Product education that adapts to the viewer’s questions
+- Agency deliverables that feel premium and measurable
+
+TRUST & CONTROL SECTION
+Heading:
+Built for trust — not guesswork.
+
+Bullets:
+- Grounded responses only: the guide answers from your source.
+- Clear limits: if the source doesn’t cover it, the guide says so.
+- Progressive reveal: control what can be discussed at each stage.
+- Audit trail: review questions, refine boundaries, improve the experience.
+
+PRICING TEASER
+Heading:
+Pricing that scales from solo to teams.
+
+Text:
+Start from £29/month. Team and Enterprise options available for L&D and agencies.
+
+Buttons:
+View pricing (or anchor)
+Book a demo
+
+FAQ (short)
+Q1: What can I upload?
+A: PDFs, decks, URLs, documents, scripts, notes, and datasheets.
+
+Q2: Will it make things up?
+A: No — IceMaker guides are grounded in your source material and will acknowledge limits.
+
+Q3: Can I embed it?
+A: Yes — publish a link or embed on your site.
+
+FINAL CTA
+Heading:
+Stop losing your audience to static content.
+
+Text:
+Turn what you already have into an experience people engage with — interactive, cinematic, and controlled.
+
+Buttons:
+Start building
+Book a demo

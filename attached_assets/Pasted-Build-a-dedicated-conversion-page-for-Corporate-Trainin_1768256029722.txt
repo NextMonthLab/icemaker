@@ -1,0 +1,89 @@
+Build a dedicated conversion page for Corporate Training / L&D.
+
+PAGE: /corporate-training
+TITLE: Corporate Training — IceMaker for L&D
+
+HERO
+Headline:
+Corporate training that people actually complete.
+
+Subhead:
+Turn policy packs, onboarding docs, compliance decks and internal knowledge into interactive learning experiences — with an on-screen guide that answers questions using only your approved material.
+
+Primary CTA:
+Book a demo
+
+Secondary CTA:
+Start building
+
+PAIN → OUTCOME BLOCK
+Heading:
+The problem isn’t your content. It’s the format.
+
+Bullets:
+- “Click-next” modules and long decks invite skimming, not learning.
+- Learners drop off when they can’t ask questions in context.
+- Updating training becomes a constant rebuild cycle.
+
+Outcome line:
+IceMaker makes training active — so understanding improves, and completion follows.
+
+HOW IT WORKS (L&D framing)
+1) Upload your material (policy, handbook, deck, SOPs)
+2) IceMaker structures it into scenes and learning beats
+3) Add a guide that can answer questions, with strict boundaries
+4) Publish and measure engagement
+
+KEY BENEFITS (Cards)
+Card: Higher engagement by design
+Text: Scenes, pacing, and interactive moments keep learners present.
+
+Card: Fewer repeat questions
+Text: Learners ask the guide instead of emailing managers.
+
+Card: Controlled, source-grounded answers
+Text: No open-internet improvisation — it stays on policy.
+
+Card: Easier updates
+Text: Refresh the source, regenerate scenes, keep training current.
+
+TRUST & CONTROL (Enterprise tone)
+Heading:
+Made for compliance, accuracy, and control.
+
+Bullets:
+- Source-grounded responses only
+- Chapter/scene knowledge boundaries
+- Progressive reveal for sensitive material
+- Reviewable interactions (audit trail)
+- Brand and tone control for your guide
+
+USE CASES (L&D)
+- Compliance training (HR, security, finance)
+- New starter onboarding
+- Internal process training (SOPs)
+- Change communications and rollouts
+- Manager enablement and playbooks
+
+CTA STRIP
+Heading:
+Want to see it with your own training pack?
+Buttons:
+Book a demo
+Start building
+
+FAQ (L&D specific)
+Q: Does this replace our LMS?
+A: No — IceMaker creates the experience. You can share by link/embed and integrate over time.
+
+Q: What if someone asks something outside policy?
+A: The guide acknowledges the limit and stays within the approved source.
+
+Q: Can we control what the guide can discuss?
+A: Yes — you can lock knowledge boundaries by section, chapter, or scene.
+
+FINAL CTA
+Headline:
+Turn your existing training into learning people remember.
+Button:
+Book a demo

@@ -9,14 +9,11 @@ import { AppContextProvider } from "@/lib/app-context";
 import NotFound from "@/pages/not-found";
 
 import MarketingHome from "@/pages/marketing/MarketingHome";
-import ForNews from "@/pages/marketing/ForNews";
-import ForBusiness from "@/pages/marketing/ForBusiness";
-import ForInfluencer from "@/pages/marketing/ForInfluencer";
-import ForEducator from "@/pages/marketing/ForEducator";
-import ForBrands from "@/pages/marketing/ForBrands";
-import ForCreators from "@/pages/marketing/ForCreators";
-import ForKnowledge from "@/pages/marketing/ForKnowledge";
-import AIDiscoveryControl from "@/pages/marketing/AIDiscoveryControl";
+import CorporateTraining from "@/pages/marketing/CorporateTraining";
+import MarketingAgencies from "@/pages/marketing/MarketingAgencies";
+import Blog from "@/pages/marketing/Blog";
+import BlogPost from "@/pages/marketing/BlogPost";
+import BookDemo from "@/pages/marketing/BookDemo";
 import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
@@ -107,15 +104,11 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={MarketingHome} />
-      <Route path="/for/news" component={ForNews} />
-      <Route path="/for/business" component={ForBusiness} />
-      <Route path="/for/influencer" component={ForInfluencer} />
-      <Route path="/for/educator" component={ForEducator} />
-      <Route path="/for/brands" component={ForBrands} />
-      <Route path="/for/creators" component={ForCreators} />
-      <Route path="/for/knowledge" component={ForKnowledge} />
-      <Route path="/ai-discovery-control" component={AIDiscoveryControl} />
-      <Route path="/ai-discovery" component={AIDiscoveryControl} />
+      <Route path="/corporate-training" component={CorporateTraining} />
+      <Route path="/marketing-agencies" component={MarketingAgencies} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/book-demo" component={BookDemo} />
       
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />

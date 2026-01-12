@@ -1,0 +1,76 @@
+Build a dedicated conversion page for Marketing Teams and Agencies.
+
+PAGE: /marketing-agencies
+TITLE: Marketing & Agencies — IceMaker
+
+HERO
+Headline:
+Stop shipping flat content. Ship experiences.
+
+Subhead:
+IceMaker turns decks, pages, case studies and product docs into interactive cinematic experiences — where a brand guide answers questions in real time, grounded in your approved source.
+
+Primary CTA:
+Start building
+
+Secondary CTA:
+Book a demo
+
+PROBLEM
+Heading:
+Templates are everywhere. Attention is not.
+
+Bullets:
+- Prospects don’t read PDFs — they look for answers.
+- Slide tools look polished but stay passive.
+- Video avatars speak at people, not with them.
+
+WHAT YOU CAN BUILD
+Heading:
+Interactive content that engages — and converts.
+
+Use cases:
+- Interactive product explainers
+- Sales enablement “experiences” instead of decks
+- Case studies people actually explore
+- Pitch experiences with a brand persona that answers questions
+- Customer onboarding journeys that reduce friction
+
+AGENCY VALUE (if relevant)
+Heading:
+A premium deliverable clients can’t easily replicate.
+
+Bullets:
+- Higher perceived value than static collateral
+- Faster production from existing materials
+- Measurable engagement and questions asked
+- White-label / client-friendly delivery (as plan feature or “available on Business”)
+
+DIFFERENTIATORS (Marketing framing)
+- Interactive guide grounded in your source (no hallucinated claims)
+- Memory across scenes (keeps the narrative consistent)
+- Scene-based pacing (feels cinematic, not slide-like)
+- Publish by link or embed (share anywhere)
+
+CTA STRIP
+Heading:
+Want to replace your next deck with something unignorable?
+Buttons:
+Start building
+Book a demo
+
+FAQ
+Q: Is this just an AI video tool?
+A: No — IceMaker creates an interactive experience, with a guide that can answer questions within your approved content.
+
+Q: Can we keep it on-brand?
+A: Yes — define voice, tone, and boundaries.
+
+Q: Can we embed it on a landing page?
+A: Yes — link or embed.
+
+FINAL CTA
+Headline:
+Make your content interactive — without rebuilding from scratch.
+Button:
+Start building

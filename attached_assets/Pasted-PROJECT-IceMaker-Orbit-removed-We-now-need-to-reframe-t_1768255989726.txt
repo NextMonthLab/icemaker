@@ -1,0 +1,73 @@
+PROJECT: IceMaker (Orbit removed). We now need to reframe the public marketing pages.
+
+ROLE
+You are a senior frontend engineer + product designer. Your job is to implement a clean marketing site structure for IceMaker with strong conversion copy, segment pages, a blog, and an enterprise-credible theme system.
+
+CONTEXT
+- This repo has been refactored: Orbit code removed. IceMaker remains.
+- Do NOT reintroduce Orbit references anywhere.
+- We need an MVP marketing site that converts Corporate L&D first, then Marketing/Agencies.
+- We want: Homepage + Corporate Training page + Marketing/Agencies page + Blog (+ Blog post template).
+- UK English spelling.
+
+CRITICAL RULES
+1) Do not break existing IceMaker app functionality. Marketing pages must sit alongside the product safely.
+2) If the app has auth/app routes, keep them intact; marketing routes must be public.
+3) Do not delete shared infrastructure; only add/modify marketing pages and styling.
+4) Ensure nav links work. No dead links. No Orbit references.
+5) Keep the site fast, readable, and premium. Avoid gimmicks.
+
+INFORMATION ARCHITECTURE (MVP)
+Routes:
+- /               = Homepage (IceMaker)
+- /corporate-training  = Corporate Training / L&D
+- /marketing-agencies  = Marketing + Agencies
+- /blog            = Blog index
+- /blog/[slug]     = Blog post template (MD or JSON-driven)
+Optional:
+- /pricing         = simple pricing section or reuse existing pricing component if present
+- /book-demo       = simple page or modal trigger (can link to email/calendar placeholder)
+
+DESIGN/THEME TASK (IMPORTANT)
+Create a simple theme token system that supports two “modes”:
+- Default = Enterprise/L&D mode (trust, clarity)
+- Accent = Creative/Agency mode (cinematic, premium)
+
+Colour guidance:
+- Base background: near-black OR deep charcoal (premium) OR clean off-white (enterprise). Choose ONE direction and apply consistently.
+- L&D feel: trustworthy, calm, minimal contrast noise. Use one strong accent colour only.
+- Agency feel: keep same base but allow richer accent gradients/hero treatments.
+
+Recommended direction for IceMaker:
+- Use a dark premium base (charcoal/near-black) with a single “electric” accent.
+- Why: feels cinematic (IceMaker), but still enterprise-grade if typography + spacing is disciplined.
+
+Theme tokens to define (names can vary):
+- --bg, --surface, --text, --muted, --border
+- --accent, --accent-2 (optional), --accent-soft
+- --success, --warning, --danger
+- Typography scale + max-width + spacing scale
+
+Typography:
+- Use a modern, readable sans (Inter / system-ui).
+- Headings strong, minimal.
+- Body text comfortable line-height.
+
+UI patterns:
+- Hero with 1-2 CTAs
+- Proof / logos row (can be “Used by teams in…” as placeholder)
+- Benefit cards
+- Use-case blocks
+- Trust & Control block (source-grounded, boundaries, audit trail)
+- Pricing teaser
+- FAQ
+- Final CTA
+
+DELIVERABLES
+A) Implement the route structure above.
+B) Implement shared MarketingLayout with header + footer.
+C) Implement theme tokens and apply across marketing pages.
+D) Update navigation: Product, Corporate Training, Marketing & Agencies, Pricing (optional), Blog, Book a demo.
+E) Ensure “Search repo for Orbit” shows no public marketing references.
+
+NEXT: After you scaffold the pages and theme, you will paste in the copy from prompts 2–4 exactly and wire the sections accordingly.
