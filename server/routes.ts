@@ -10374,6 +10374,29 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
 
       const orbitContext = await buildOrbitContext(storage, slug);
 
+      // Build conversation intelligence (Tier 2: Intent chains & next-question prediction)
+      const { buildConversationState } = await import('./services/conversationIntelligence');
+
+      const conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = (history || [])
+        .filter((msg: any) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg: any) => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
+
+      const conversationState = buildConversationState(
+        message,
+        conversationHistory,
+        queryAnalysis.type,
+        orbitContext.items.map(i => i.name),
+        orbitContext.businessType
+      );
+
+      console.log('[ConversationIntelligence]', JSON.stringify({
+        stage: conversationState.stage,
+        intentChain: conversationState.intentChain,
+        goal: conversationState.userGoal,
+        mentionedItems: conversationState.mentionedItems,
+        topicsDiscussed: conversationState.topicsDiscussed,
+      }));
+
       // Filter documents by relevance to query (only include top 3 most relevant)
       const allDocuments = await storage.getOrbitDocuments(slug);
       const readyDocs = allDocuments.filter(d => d.status === 'ready' && d.extractedText);
@@ -10390,7 +10413,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         sourceDomain = sourceUrl.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] || '';
       }
 
-      // Build system prompt with enhanced document context (only relevant docs)
+      // Build system prompt with enhanced document context and intent-aware guidance
       const systemPrompt = buildSystemPrompt(
         {
           slug,
@@ -10404,7 +10427,9 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         orbitContext.offeringsLabel,
         orbitContext.items,
         orbitContext.heroPostContext,
-        orbitContext.videoContext
+        orbitContext.videoContext,
+        conversationState.intentChain, // Intent-aware guidance
+        conversationState.stage // Stage-aware guidance
       );
 
       // Summarize conversation history for better context retention
@@ -10490,7 +10515,7 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
         }
       }
       
-      // Build unified response with quality metadata
+      // Build unified response with quality metadata and conversation intelligence
       const responsePayload: Record<string, any> = {
         response: cleanResponse,
         suggestedVideo: suggestedVideo || null,
@@ -10501,6 +10526,13 @@ ${preview.keyServices.map((s: string) => `• ${s}`).join('\n')}` : ''}
           queryType: responseMetadata.queryType,
           temperature: responseMetadata.temperature,
           intent: queryAnalysis.intent,
+        },
+        conversationIntelligence: {
+          stage: conversationState.stage,
+          intentChain: conversationState.intentChain,
+          userGoal: conversationState.userGoal,
+          nextQuestions: conversationState.nextQuestionPredictions,
+          followUpSuggestions: conversationState.suggestedFollowUps.map(s => s.question),
         },
       };
       

@@ -222,6 +222,82 @@ IMPORTANT: When a video is highly relevant to the user's question, include [VIDE
   };
 }
 
+/**
+ * Builds intent-specific guidance for AI responses
+ */
+function buildIntentGuidance(intentChain?: string, conversationStage?: string): string {
+  if (!intentChain) return '';
+
+  let guidance = '\n## Intent-Specific Guidance:\n';
+
+  switch (intentChain) {
+    case 'product_exploration':
+      guidance += `The user is **exploring options**. ${conversationStage === 'initial_contact' ? 'This is their first message.' : 'They are learning about what you offer.'}\n`;
+      guidance += '- Highlight 2-3 specific items that match their interest\n';
+      guidance += '- Mention variety/range if relevant\n';
+      guidance += '- Be enthusiastic but not pushy\n';
+      if (conversationStage === 'deepening') {
+        guidance += '- They\'re getting interested - offer comparisons or recommendations\n';
+      }
+      break;
+
+    case 'purchase_consideration':
+      guidance += `The user is **evaluating and comparing**. They are seriously considering options.\n`;
+      guidance += '- Focus on differentiators and benefits\n';
+      guidance += '- Be specific about features, pricing, value\n';
+      guidance += '- Help them make an informed decision\n';
+      guidance += '- If they seem ready, gently suggest next steps (booking/contact)\n';
+      break;
+
+    case 'transactional_action':
+      guidance += `The user is **ready to take action**. They want to buy, book, or contact.\n`;
+      guidance += '- Provide clear, direct instructions\n';
+      guidance += '- Include contact details, booking links, or purchase steps\n';
+      guidance += '- Remove any friction - make it easy\n';
+      guidance += '- Confirm what they need to do next\n';
+      break;
+
+    case 'support_inquiry':
+      guidance += `The user **needs help** with a problem or question.\n`;
+      guidance += '- Be empathetic and solution-focused\n';
+      guidance += '- Provide actionable steps to resolve their issue\n';
+      guidance += '- Offer contact details for further support if needed\n';
+      guidance += '- Acknowledge their concern before solving\n';
+      break;
+
+    case 'information_gathering':
+      guidance += `The user is **researching and learning**. They want facts and details.\n`;
+      guidance += '- Be informative and specific\n';
+      guidance += '- Cite concrete examples from available data\n';
+      guidance += '- Structure information clearly\n';
+      guidance += '- Avoid marketing language - focus on facts\n';
+      break;
+
+    case 'casual_conversation':
+      guidance += `The user is **casually chatting**. Keep it light and friendly.\n`;
+      guidance += '- Match their conversational tone\n';
+      guidance += '- Offer to help with something specific\n';
+      guidance += '- Don\'t force a sale or specific direction\n';
+      break;
+  }
+
+  // Stage-specific additional guidance
+  if (conversationStage === 'stuck') {
+    guidance += '\n**IMPORTANT**: The user seems stuck or confused. Offer to:\n';
+    guidance += '- Rephrase their question to confirm understanding\n';
+    guidance += '- Show popular options to give them a starting point\n';
+    guidance += '- Ask a clarifying question to understand their need\n';
+  }
+
+  if (conversationStage === 'decision' && intentChain !== 'transactional_action') {
+    guidance += '\n**OPPORTUNITY**: The user is in decision mode. Help them:\n';
+    guidance += '- Make the final choice confidently\n';
+    guidance += '- Understand the next steps clearly\n';
+  }
+
+  return guidance;
+}
+
 export function buildSystemPrompt(
   context: OrbitChatContext,
   productContext: string,
@@ -231,7 +307,9 @@ export function buildSystemPrompt(
   offeringsLabel: string,
   items: any[],
   heroPostContext: string = '',
-  videoContext: string = ''
+  videoContext: string = '',
+  intentChain?: string,
+  conversationStage?: string
 ): string {
   const { brandName, sourceDomain, siteSummary, keyServices } = context;
 
@@ -299,7 +377,9 @@ For greetings, thanks, or unclear messages: Brief, warm response. Offer to help 
 - Lead with value, not filler like "Great question!" or "I'd be happy to..."
 - Never repeat the same information twice in one response
 ${productContext ? '- For product/menu queries: cite specific items with prices when relevant' : ''}
-${videoContext ? '- If a video is highly relevant to the question, suggest watching it for more detail' : ''}`;
+${videoContext ? '- If a video is highly relevant to the question, suggest watching it for more detail' : ''}
+
+${buildIntentGuidance(intentChain, conversationStage)}`;
 }
 
 export async function processProofCapture(
