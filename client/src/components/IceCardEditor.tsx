@@ -995,35 +995,19 @@ export function IceCardEditor({
                     </div>
                   )}
                   
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleGenerateImage}
-                      disabled={imageLoading || imageUploading}
-                      className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
-                      data-testid="button-generate-image"
-                    >
-                      {imageLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Wand2 className="w-4 h-4" />
-                      )}
-                      {imageLoading ? "Generating..." : "Generate AI Image"}
-                    </Button>
-                    <Button
-                      onClick={() => imageInputRef.current?.click()}
-                      disabled={imageLoading || imageUploading}
-                      variant="outline"
-                      className="border-slate-600 hover:bg-slate-800 gap-2"
-                      data-testid="button-upload-image"
-                    >
-                      {imageUploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      {imageUploading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleGenerateImage}
+                    disabled={imageLoading || imageUploading}
+                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
+                    data-testid="button-generate-image"
+                  >
+                    {imageLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4" />
+                    )}
+                    {imageLoading ? "Generating..." : "Generate AI Image"}
+                  </Button>
                 </div>
               )}
               
@@ -1178,35 +1162,19 @@ export function IceCardEditor({
                         </div>
                       )}
                       
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleGenerateVideo}
-                          disabled={videoLoading || videoStatus === "processing" || videoUploading}
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 gap-2"
-                          data-testid="button-generate-video"
-                        >
-                          {videoLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Video className="w-4 h-4" />
-                          )}
-                          {videoLoading ? "Starting..." : "Generate AI Video"}
-                        </Button>
-                        <Button
-                          onClick={() => videoInputRef.current?.click()}
-                          disabled={videoLoading || videoStatus === "processing" || videoUploading}
-                          variant="outline"
-                          className="border-slate-600 hover:bg-slate-800 gap-2"
-                          data-testid="button-upload-video"
-                        >
-                          {videoUploading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4" />
-                          )}
-                          {videoUploading ? "Uploading..." : "Upload"}
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={handleGenerateVideo}
+                        disabled={videoLoading || videoStatus === "processing" || videoUploading}
+                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 gap-2"
+                        data-testid="button-generate-video"
+                      >
+                        {videoLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Video className="w-4 h-4" />
+                        )}
+                        {videoLoading ? "Starting..." : "Generate AI Video"}
+                      </Button>
                     </>
                   )}
                 </div>
