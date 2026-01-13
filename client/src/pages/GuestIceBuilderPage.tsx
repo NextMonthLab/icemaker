@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -21,6 +21,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import previewCardBackground from "@assets/generated_images/icy_mountain_landscape_placeholder.png";
 import { InteractivityNode, AddInteractivityButton, StoryCharacter } from "@/components/InteractivityNode";
 import { GuidedWalkthrough } from "@/components/GuidedWalkthrough";
+import { StoryStructureOverlay } from "@/components/StoryStructureOverlay";
 import { MediaGenerationPanel } from "@/components/MediaGenerationPanel";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { IceCardEditor } from "@/components/IceCardEditor";
@@ -328,6 +329,7 @@ export default function GuestIceBuilderPage() {
   const [interactivityNodes, setInteractivityNodes] = useState<InteractivityNodeData[]>([]);
   const [previewAccessToken, setPreviewAccessToken] = useState<string | undefined>();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [showStoryStructure, setShowStoryStructure] = useState(false);
   const [captionState, setCaptionState] = useState<CaptionState>(() => createDefaultCaptionState());
   const [showCaptionSettings, setShowCaptionSettings] = useState(false);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -1459,6 +1461,17 @@ export default function GuestIceBuilderPage() {
                   {iceVisibility === "public" ? "Public" : iceVisibility === "unlisted" ? "Shared" : "Publish"}
                 </Button>
 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowStoryStructure(true)}
+                  className="gap-1.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                  data-testid="button-story-structure"
+                >
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  Story Tips
+                </Button>
+
                 <Sheet open={showBiblePanel} onOpenChange={setShowBiblePanel}>
                   <SheetTrigger asChild>
                     <Button
@@ -2033,6 +2046,16 @@ export default function GuestIceBuilderPage() {
           <GuidedWalkthrough
             onComplete={markWalkthroughSeen}
             onSkip={markWalkthroughSeen}
+          />
+        )}
+      </AnimatePresence>
+      
+      {/* Story Structure Overlay */}
+      <AnimatePresence>
+        {showStoryStructure && (
+          <StoryStructureOverlay
+            onClose={() => setShowStoryStructure(false)}
+            totalCards={cards.length}
           />
         )}
       </AnimatePresence>
