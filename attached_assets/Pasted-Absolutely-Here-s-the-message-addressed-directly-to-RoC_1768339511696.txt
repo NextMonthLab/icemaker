@@ -1,0 +1,94 @@
+Absolutely. Here’s the message addressed directly to RoClaires, ready to paste into your Replit thread.
+
+⸻
+
+Hi RoClaires, we need to reimagine the IceMaker Library page so it looks launch-ready, but we’re keeping scope very tight (no templates yet).
+
+Goal
+
+Make the Library feel like a polished, dedicated IceMaker command centre:
+	•	Clear what to do first
+	•	No confusing “insight” language
+	•	Clean empty state
+	•	Simple Drafts/Published organisation
+	•	No big feature creep (no tagging/folders/analytics/templates for now)
+
+Key change: remove “Create from Insight”
+
+“Insight” won’t mean anything to users. Replace it everywhere on this page with a plain-English flow.
+
+New primary CTA
+
+Top right: New ICE
+
+Clicking New ICE opens a small modal with just 2 options:
+	1.	Create from source (recommended)
+	•	CTA: Upload file or paste link
+	•	Helper: PDFs, slides, documents, or a web page.
+	2.	Start from scratch
+	•	CTA: Start blank ICE
+	•	Helper: Build your own scenes and interactions.
+
+That’s it. No extra options for v1.
+
+Tabs
+
+Keep only:
+	•	Drafts (count)
+	•	Published (count)
+
+Remove/hide Templates tab for now. It makes the page feel unfinished.
+
+Empty state (Drafts)
+
+Replace “Your Library is empty” with something more intentional:
+
+Create your first ICE
+Turn a document, deck, or web page into an interactive experience in minutes.
+
+Buttons:
+	•	Primary: Create from source
+	•	Secondary: Start from scratch
+
+Small helper line under buttons:
+Popular sources: onboarding packs, SOPs, policy updates, training notes.
+
+Empty state (Published)
+
+Different message so it feels deliberate:
+
+Nothing published yet
+Publish an ICE to share it with your audience.
+
+Button:
+	•	Go to Drafts
+
+When items exist: minimal ICE cards
+
+Each ICE card/list row should show just enough to feel real:
+	•	Title
+	•	Status pill: Draft or Published
+	•	Meta: Last edited X days ago
+	•	Optional if easy: 8 scenes or ~6 min
+
+Actions (3-dot menu):
+	•	Open
+	•	Duplicate
+	•	Delete (Drafts only) / Unpublish (Published optional)
+
+Primary click: Open
+
+Small polish (safe, low effort)
+	•	One subtle empty-state icon (document → spark → ICE)
+	•	Status pills styled cleanly
+	•	Keep UI spacing confident so it doesn’t feel like a placeholder screen
+
+MVP implementation order
+	1.	Remove Templates tab
+	2.	Replace “Create from Insight” with New ICE modal (2 options)
+	3.	New empty state copy + CTAs
+	4.	ICE cards (title/status/last edited)
+
+That should get the page looking production-ready without drifting into bigger features.
+
+⸻
