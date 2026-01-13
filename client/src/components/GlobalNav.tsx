@@ -30,8 +30,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const LOGO_URL_LIGHT = "/logo.png";
-const LOGO_URL_DARK = "https://res.cloudinary.com/drl0fxrkq/image/upload/h_250,fl_preserve_transparency/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
+const LOGO_URL_LIGHT = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
+const LOGO_URL_DARK = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
 
 type NavContext = 'marketing' | 'app' | 'ice';
 
@@ -103,8 +103,8 @@ export default function GlobalNav({
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer" data-testid="link-global-logo">
               <img 
-                src={theme === 'light' ? LOGO_URL_DARK : LOGO_URL_LIGHT} 
-                alt="NextMonth" 
+                src={LOGO_URL_DARK} 
+                alt="IceMaker" 
                 className="h-24 w-auto"
                 style={{ clipPath: 'inset(35% 0 35% 0)' }}
               />

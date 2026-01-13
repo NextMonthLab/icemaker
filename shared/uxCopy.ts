@@ -1,5 +1,5 @@
 /**
- * UX Copy for NextMonth - Upgrade Flows and Limit Messaging
+ * UX Copy for IceMaker - Upgrade Flows and Limit Messaging
  * 
  * PRINCIPLE: Frame limits as success, not restriction.
  * TONE: Calm, supportive, never punitive.
@@ -101,7 +101,7 @@ export const tierUpgrade = {
       "Edit and curate your Orbit",
       "Add pages, testimonials, PDFs",
       "Create ICE experiences",
-      "Reduced NextMonth branding",
+      "Reduced IceMaker branding",
     ],
     price: "£19/month",
     cta: "Upgrade to Grow",

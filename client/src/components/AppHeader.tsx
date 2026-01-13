@@ -24,7 +24,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const LOGO_URL = "/logo.png";
+const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
 
 interface AppHeaderProps {
   showBackToMarketing?: boolean;
@@ -70,7 +70,7 @@ export default function AppHeader({ showBackToMarketing = true }: AppHeaderProps
             <div className="h-12 flex items-center">
               <img 
                 src={LOGO_URL} 
-                alt="NextMonth" 
+                alt="IceMaker" 
                 className="h-16 w-auto cursor-pointer" 
                 style={{ clipPath: 'inset(30% 0 30% 0)' }}
                 data-testid="link-app-logo"
