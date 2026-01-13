@@ -1083,6 +1083,7 @@ export const icePreviews = pgTable("ice_previews", {
   
   // Access control
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted
+  shareSlug: text("share_slug").unique(), // Human-friendly 8-char slug for published ICEs
   
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
@@ -1092,6 +1093,7 @@ export const icePreviews = pgTable("ice_previews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(), // 72 hours from creation
   promotedAt: timestamp("promoted_at"),
+  publishedAt: timestamp("published_at"), // When ICE was first published (unlisted or public)
 });
 
 export const insertIcePreviewSchema = createInsertSchema(icePreviews).omit({ createdAt: true });

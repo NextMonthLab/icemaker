@@ -31,7 +31,9 @@ import type { ProjectBible } from "@shared/schema";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { createDefaultCaptionState, type CaptionState } from "@/caption-engine/schemas";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Share2 } from "lucide-react";
+import { PublishModal } from "@/components/PublishModal";
+import type { ContentVisibility } from "@shared/schema";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -354,6 +356,9 @@ export default function GuestIceBuilderPage() {
   } | null>(null);
   const exportPollingRef = useRef<NodeJS.Timeout | null>(null);
   const [activePreviewNodeIndex, setActivePreviewNodeIndex] = useState<number | null>(null);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
+  const [shareSlug, setShareSlug] = useState<string | null>(null);
   
   const handleManualNav = (newIndex: number) => {
     setActivePreviewNodeIndex(null);
@@ -617,6 +622,13 @@ export default function GuestIceBuilderPage() {
           karaokeEnabled: existingPreview.captionSettings.karaokeEnabled ?? prev.karaokeEnabled,
           karaokeStyle: existingPreview.captionSettings.karaokeStyle || prev.karaokeStyle,
         }));
+      }
+      // Load publish state
+      if (existingPreview.visibility) {
+        setIceVisibility(existingPreview.visibility);
+      }
+      if (existingPreview.shareSlug) {
+        setShareSlug(existingPreview.shareSlug);
       }
       // If in view mode, automatically open the preview modal
       if (isViewMode) {
@@ -1423,6 +1435,30 @@ export default function GuestIceBuilderPage() {
                   </Button>
                 )}
 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPublishModal(true)}
+                  disabled={cards.length === 0}
+                  className={`gap-1.5 ${
+                    iceVisibility === "public" 
+                      ? "border-green-500/40 text-green-400 hover:bg-green-500/10" 
+                      : iceVisibility === "unlisted"
+                      ? "border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
+                      : "border-white/20 text-white/70 hover:bg-white/5"
+                  }`}
+                  data-testid="button-publish"
+                >
+                  {iceVisibility === "public" ? (
+                    <Globe className="w-3.5 h-3.5" />
+                  ) : iceVisibility === "unlisted" ? (
+                    <Share2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <Lock className="w-3.5 h-3.5" />
+                  )}
+                  {iceVisibility === "public" ? "Public" : iceVisibility === "unlisted" ? "Shared" : "Publish"}
+                </Button>
+
                 <Sheet open={showBiblePanel} onOpenChange={setShowBiblePanel}>
                   <SheetTrigger asChild>
                     <Button
@@ -2008,6 +2044,21 @@ export default function GuestIceBuilderPage() {
         feature="AI Media Generation"
         reason="Unlock AI-powered image and video generation, character interactions, voiceover narration, and more."
       />
+      
+      {/* Publish Modal */}
+      {preview && (
+        <PublishModal
+          isOpen={showPublishModal}
+          onClose={() => setShowPublishModal(false)}
+          previewId={preview.id}
+          currentVisibility={iceVisibility}
+          shareSlug={shareSlug}
+          onPublishComplete={(data) => {
+            setIceVisibility(data.visibility);
+            setShareSlug(data.shareSlug);
+          }}
+        />
+      )}
       
       {/* Bulk Image Generation Confirmation Dialog */}
       <Dialog open={showBulkImageConfirm} onOpenChange={setShowBulkImageConfirm}>

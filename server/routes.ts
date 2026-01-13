@@ -7387,6 +7387,154 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
 
+  // ============ ICE PUBLISHING ============
+
+  // Generate a human-friendly 8-character share slug
+  function generateShareSlug(): string {
+    const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; // Avoid confusing chars like 0/O, 1/l/I
+    let slug = '';
+    for (let i = 0; i < 8; i++) {
+      slug += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return slug;
+  }
+
+  // Publish/update visibility for an ICE preview
+  app.put("/api/ice/preview/:previewId/publish", requireAuth, async (req, res) => {
+    try {
+      const { previewId } = req.params;
+      const { visibility } = req.body;
+      const user = req.user as schema.User;
+      
+      // Validate visibility
+      const validVisibilities: schema.ContentVisibility[] = ['private', 'unlisted', 'public'];
+      if (!visibility || !validVisibilities.includes(visibility)) {
+        return res.status(400).json({ message: "Invalid visibility. Must be 'private', 'unlisted', or 'public'" });
+      }
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check ownership
+      if (preview.ownerUserId !== user.id) {
+        return res.status(403).json({ message: "Not authorized to publish this preview" });
+      }
+      
+      const updateData: Partial<schema.InsertIcePreview> = {
+        visibility,
+      };
+      
+      // When reverting to private, invalidate share slug to prevent continued access
+      if (visibility === 'private') {
+        updateData.shareSlug = null;
+      }
+      
+      // First time publishing or re-publishing (moving from private to unlisted/public)
+      const isFirstPublish = preview.visibility === 'private' && visibility !== 'private';
+      if (visibility !== 'private' && !preview.shareSlug) {
+        // Generate a unique share slug if publishing and no slug exists
+        updateData.publishedAt = isFirstPublish ? new Date() : (preview.publishedAt || new Date());
+        
+        let slug = generateShareSlug();
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        // Ensure uniqueness
+        while (attempts < maxAttempts) {
+          const existing = await db.select().from(schema.icePreviews).where(eq(schema.icePreviews.shareSlug, slug)).limit(1);
+          if (existing.length === 0) break;
+          slug = generateShareSlug();
+          attempts++;
+        }
+        
+        updateData.shareSlug = slug;
+      }
+      
+      await storage.updateIcePreview(previewId, updateData);
+      
+      // Log audit event
+      await logAuditEvent(
+        'visibility.changed',
+        'ice_preview',
+        previewId,
+        {
+          userId: user.id,
+          details: { 
+            isFirstPublish, 
+            oldVisibility: preview.visibility, 
+            newVisibility: visibility 
+          },
+          success: true,
+        }
+      );
+      
+      // Fetch updated preview
+      const updatedPreview = await storage.getIcePreview(previewId);
+      
+      res.json({
+        success: true,
+        visibility: updatedPreview?.visibility,
+        shareSlug: updatedPreview?.shareSlug,
+        publishedAt: updatedPreview?.publishedAt,
+        shareUrl: updatedPreview?.shareSlug 
+          ? `${getAppBaseUrl(req)}/ice/${updatedPreview.shareSlug}`
+          : null,
+      });
+    } catch (error) {
+      console.error("Error publishing preview:", error);
+      res.status(500).json({ message: "Error publishing preview" });
+    }
+  });
+
+  // Get ICE by share slug (public access)
+  app.get("/api/ice/s/:shareSlug", async (req, res) => {
+    try {
+      const { shareSlug } = req.params;
+      
+      const [preview] = await db.select()
+        .from(schema.icePreviews)
+        .where(eq(schema.icePreviews.shareSlug, shareSlug))
+        .limit(1);
+      
+      if (!preview) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      // Check visibility - only unlisted and public are accessible via share link
+      if (preview.visibility === 'private') {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      // Return only public-safe fields (no owner details, internal flags, etc.)
+      res.json({
+        id: preview.id,
+        title: preview.title,
+        cards: preview.cards,
+        characters: preview.characters,
+        interactivityNodes: preview.interactivityNodes,
+        visibility: preview.visibility,
+        shareSlug: preview.shareSlug,
+        publishedAt: preview.publishedAt,
+        tier: preview.tier,
+        musicTrackUrl: preview.musicTrackUrl,
+        musicVolume: preview.musicVolume,
+        musicEnabled: preview.musicEnabled,
+        narrationVolume: preview.narrationVolume,
+        captionSettings: preview.captionSettings,
+        projectBible: preview.projectBible ? {
+          characters: preview.projectBible.characters,
+          world: preview.projectBible.world,
+          style: preview.projectBible.style,
+        } : null,
+      });
+    } catch (error) {
+      console.error("Error fetching ICE by slug:", error);
+      res.status(500).json({ message: "Error fetching ICE" });
+    }
+  });
+
   // ============ VIDEO EXPORT ============
 
   // Create a video export job for an ICE preview

@@ -51,6 +51,7 @@ import Experience from "@/pages/Experience";
 import ExportPage from "@/pages/ExportPage";
 import Journal from "@/pages/Journal";
 import BecomeCreator from "@/pages/BecomeCreator";
+import PublishedIcePage from "@/pages/PublishedIcePage";
 import Onboarding from "@/pages/Onboarding";
 import CreatorProfile from "@/pages/CreatorProfile";
 import RequireAuth from "@/components/RequireAuth";
@@ -129,6 +130,7 @@ function Router() {
       <Route path="/try" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id/checkout" component={IceCheckoutPage} />
+      <Route path="/ice/:shareSlug" component={PublishedIcePage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
       <Route path="/app" component={ProtectedLibrary} />
