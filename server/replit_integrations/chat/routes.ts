@@ -70,10 +70,21 @@ export function registerChatRoutes(app: Express): void {
 
       // Get conversation history for context
       const messages = await chatStorage.getMessagesByConversation(conversationId);
-      const chatMessages = messages.map((m) => ({
+      
+      // GUARDRAIL: Truncate context to prevent unbounded token growth
+      const MAX_CONTEXT_MESSAGES = 20;
+      const truncatedMessages = messages.slice(-MAX_CONTEXT_MESSAGES);
+      
+      const chatMessages = truncatedMessages.map((m) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
+
+      // Cost audit logging
+      if (process.env.COST_AUDIT_LOGGING === 'true') {
+        const estimatedInputTokens = chatMessages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+        console.log(`[COST_AUDIT] Chat request: messages=${chatMessages.length}, estimated_input_tokens=${estimatedInputTokens}, truncated=${messages.length > MAX_CONTEXT_MESSAGES}`);
+      }
 
       // Set up SSE
       res.setHeader("Content-Type", "text/event-stream");

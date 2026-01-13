@@ -103,7 +103,26 @@ async function updateJobStage(
   await storage.updateTransformationJob(jobId, updates);
 }
 
-async function callAI(systemPrompt: string, userPrompt: string, jsonMode = true): Promise<string> {
+interface CostAuditMetrics {
+  stage: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  timestamp: number;
+}
+
+const costAuditLog: CostAuditMetrics[] = [];
+
+export function getCostAuditLog(): CostAuditMetrics[] {
+  return costAuditLog;
+}
+
+export function clearCostAuditLog(): void {
+  costAuditLog.length = 0;
+}
+
+async function callAI(systemPrompt: string, userPrompt: string, jsonMode = true, stageName = "unknown"): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -113,6 +132,19 @@ async function callAI(systemPrompt: string, userPrompt: string, jsonMode = true)
     response_format: jsonMode ? { type: "json_object" } : undefined,
     max_tokens: 4096,
   });
+  
+  if (process.env.COST_AUDIT_LOGGING === 'true' && response.usage) {
+    const metrics: CostAuditMetrics = {
+      stage: stageName,
+      model: response.model || "gpt-4o",
+      promptTokens: response.usage.prompt_tokens,
+      completionTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+      timestamp: Date.now(),
+    };
+    costAuditLog.push(metrics);
+    console.log(`[COST_AUDIT] ${stageName}: model=${metrics.model}, prompt_tokens=${metrics.promptTokens}, completion_tokens=${metrics.completionTokens}, total=${metrics.totalTokens}`);
+  }
   
   const content = response.choices[0]?.message?.content || "";
   if (!content) {
@@ -167,7 +199,7 @@ Return a JSON object with these fields:
 
     const userPrompt = `Analyze this story/script:\n\n${text.substring(0, 15000)}`;
     
-    const response = await callAI(systemPrompt, userPrompt);
+    const response = await callAI(systemPrompt, userPrompt, true, "stage1_read");
     const parsed = JSON.parse(response);
 
     ctx.structureSummary = parsed.structure_summary || "Multi-scene narrative";
@@ -206,7 +238,7 @@ Return a JSON object with these fields:
 
     const userPrompt = `Identify the core story in this script. Structure summary: ${ctx.structureSummary}\n\nScript:\n${text.substring(0, 15000)}`;
     
-    const response = await callAI(systemPrompt, userPrompt);
+    const response = await callAI(systemPrompt, userPrompt, true, "stage2_identifyStory");
     const parsed = JSON.parse(response);
 
     ctx.storyTitle = parsed.title || "Untitled Story";
@@ -232,7 +264,7 @@ CRITICAL: Only extract what is EXPLICITLY in the source. Do not infer or imagine
 
     const guardrailsUserPrompt = `Extract grounding guardrails from this ${ctx.genreGuess} material:\n\n${text.substring(0, 15000)}`;
     
-    const guardrailsResponse = await callAI(guardrailsPrompt, guardrailsUserPrompt);
+    const guardrailsResponse = await callAI(guardrailsPrompt, guardrailsUserPrompt, true, "stage2_guardrails");
     const guardrailsParsed = JSON.parse(guardrailsResponse);
 
     ctx.guardrails = {
@@ -292,7 +324,7 @@ Goal: ${ctx.contentGoal || 'Not specified'}
 Content:
 ${text.substring(0, 15000)}`;
 
-      const response = await callAI(systemPrompt, userPrompt);
+      const response = await callAI(systemPrompt, userPrompt, true, "stage3_extractWorld_business");
       const parsed = JSON.parse(response);
 
       // Ensure we have a brand character
@@ -336,7 +368,7 @@ Return a JSON object with these fields:
 
       const userPrompt = `Extract characters and locations from this ${ctx.genreGuess} story:\n\n${text.substring(0, 15000)}`;
 
-      const response = await callAI(systemPrompt, userPrompt);
+      const response = await callAI(systemPrompt, userPrompt, true, "stage3_extractWorld_story");
       const parsed = JSON.parse(response);
 
       ctx.characters = parsed.characters || [];
@@ -457,7 +489,7 @@ Full script:
 ${text.substring(0, 12000)}`;
     }
 
-    const response = await callAI(systemPrompt, userPrompt);
+    const response = await callAI(systemPrompt, userPrompt, true, "stage4_shapeMoments");
     const parsed = JSON.parse(response);
 
     const hookPackCount = parsed.hook_pack_count || 3;
@@ -529,9 +561,7 @@ The character can ONLY speak to what is explicitly in the source material. They 
 4. If interpreting, clearly frame it as their perspective, not established fact
 ${groundingRules}`;
 
-      const chatPromptResponse = await callAI(
-        characterSystemPromptRequest,
-        `Character: ${char.name}
+      const characterUserPrompt = `Character: ${char.name}
 Role: ${char.role || "Character"}
 Description: ${char.description || "A character in this story"}
 Story: ${ctx.storyTitle || "Untitled"} - ${ctx.themeStatement || "A dramatic story"}
@@ -555,8 +585,13 @@ Create a JSON response with:
   "secrets": ["Things this character knows but won't easily reveal based on the source"],
   "goals": ["What this character wants in conversations"],
   "knowledge_limits": ["Topics this character CANNOT speak to because they're not in the source"]
-}`,
-        true
+}`;
+
+      const chatPromptResponse = await callAI(
+        characterSystemPromptRequest,
+        characterUserPrompt,
+        true,
+        "stage5_characterPrompt"
       );
       
       const baseSystemPrompt = `You are ${char.name}, a character in "${ctx.storyTitle || "this story"}". Stay in character at all times.
