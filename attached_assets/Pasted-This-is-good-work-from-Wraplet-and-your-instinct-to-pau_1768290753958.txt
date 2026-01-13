@@ -1,0 +1,185 @@
+This is good work from Wraplet, and your instinct to pause before running the empirical tests is right. The buyer decision changes how you interpret the numbers, not just the numbers themselves.
+
+I’ll answer in three layers:
+	1.	Confirm the default buyer for MVP
+	2.	React to the proposed pricing + guardrails (sanity check)
+	3.	Tell you what to do next, in order
+
+⸻
+
+1. Default buyer for MVP: lock Corporate L&D
+
+Yes. Corporate L&D should be your default MVP buyer.
+Not “one of several”. The anchor.
+
+Here’s why this is the correct call, strategically and economically.
+
+Why Corporate L&D works now (not later)
+
+Commercial reality
+	•	£30–£150/month is normal spend
+	•	Demo-led buying is expected
+	•	Value is framed as capability uplift, not cost saving
+	•	Procurement friction is lower than core IT/BI tools
+
+Behavioural fit
+	•	They already think in:
+	•	modules
+	•	cohorts
+	•	learning journeys
+	•	facilitation
+	•	A conversational intelligence that:
+	•	challenges thinking
+	•	supports reflection
+	•	acts as institutional memory
+maps perfectly to L&D mental models
+
+Risk containment
+	•	Fewer tenants
+	•	Predictable usage
+	•	Controlled onboarding
+	•	You can literally teach people how to use it properly
+
+This matters enormously for an intelligence product.
+
+Who you are not building for in MVP (on purpose)
+	•	SMB self-serve
+	•	Growth hackers
+	•	Individual creators
+	•	Heavy analytics teams
+	•	“Unlimited chat” power users
+
+Those audiences explode variance and destroy margins early.
+
+So: lock Corporate L&D as the default buyer persona for MVP.
+
+⸻
+
+2. Pricing + guardrails: sanity check
+
+Wraplet’s output is directionally sound, with one caveat.
+
+The good news
+
+A) Two-bucket model is exactly right
+Build Allowance + Audience Allowance
+
+This is a strong abstraction.
+
+It maps cleanly to:
+	•	creation cost (ICE building, setup, orchestration)
+	•	runtime cost (chat, interaction, facilitation)
+
+Crucially, it avoids:
+	•	per-token pricing
+	•	AI credit confusion
+	•	feature nickel-and-diming
+
+Keep this.
+
+⸻
+
+B) Triple-lock guardrails are non-negotiable (and correctly prioritised)
+The order is right:
+	1.	Chat context cap ✅ (already implemented)
+	•	This stops silent token creep
+	•	20 messages is sensible for MVP
+	2.	Rate limiting Q&A ⏳
+	•	Prevents “chat hammering”
+	•	Especially important in workshops / cohorts
+	3.	Per-tenant quotas ⏳
+	•	Turns overuse into commercial signal, not loss
+
+This is exactly the right defensive posture.
+
+⸻
+
+The caveat: pricing tiers are slightly low for L&D
+
+The proposed tiers:
+	•	Starter £29
+	•	Pro £59
+	•	Team £149
+
+These are technically safe, but strategically conservative.
+
+For Corporate L&D, you should ask:
+
+“What feels like a rounding error in an L&D budget?”
+
+Often:
+	•	£99/month barely registers
+	•	£149–£249/month feels “serious but acceptable”
+	•	£29 feels consumer
+
+My recommendation (adjust, don’t throw away)
+
+Reframe slightly:
+	•	Pilot: £49–£79
+(single facilitator, limited cohort)
+	•	Team: £149–£199
+(multiple cohorts, shared memory)
+	•	Department: £299+
+(custom onboarding, higher quotas, priority support)
+
+You can still sell the £29 tier later.
+Don’t lead with it.
+
+⸻
+
+3. What to do next (very important order)
+
+Do not run the empirical tests yet.
+
+Do this instead:
+
+Step 1: Lock the buyer narrative
+
+Write (even roughly):
+
+“Business Orbit for Corporate L&D helps facilitators run better thinking conversations, capture learning that compounds, and challenge assumptions constructively — without dashboards or manual synthesis.”
+
+This narrative will tell you:
+	•	what usage is “normal”
+	•	what usage is “abuse”
+	•	what quotas make sense
+
+⸻
+
+Step 2: Define intended usage before measuring actual usage
+
+Before measuring tokens, decide:
+	•	How long is a “session”?
+	•	How many questions per cohort?
+	•	How often does memory refresh?
+	•	What is success, not maximum?
+
+Otherwise you’ll optimise for edge cases.
+
+⸻
+
+Step 3: Then run Short / Medium / Long ICE tests
+
+Once intent is clear:
+	•	Turn on COST_AUDIT_LOGGING=true
+	•	Run:
+	•	Short (pilot module)
+	•	Medium (multi-session programme)
+	•	Long (full learning journey)
+
+Now the numbers will mean something.
+
+⸻
+
+Bottom line
+	•	✅ Corporate L&D is the correct default MVP buyer
+	•	✅ Triple-lock guardrails are the right architecture
+	•	⚠️ Pricing is directionally right but slightly conservative
+	•	⛔ Don’t run cost tests until buyer intent is locked
+
+If you want, next I can:
+	•	Help you write the Corporate L&D positioning page
+	•	Refine pricing tiers to maximise per-tenant margin
+	•	Define what “normal” vs “excessive” usage looks like for L&D
+
+You’re doing this the right way round.
