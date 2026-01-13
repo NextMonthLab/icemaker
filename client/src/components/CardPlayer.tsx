@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Card } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause } from "lucide-react";
+import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
 import type { CaptionState } from "@/caption-engine/schemas";
@@ -483,7 +483,31 @@ export default function CardPlayer({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/40 via-background to-primary/20" />
+                <>
+                  {/* Placeholder gradient background with ADD YOUR... overlay */}
+                  <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 via-blue-900/30 to-slate-900/50" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                    <div className="text-center mb-8">
+                      <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+                        ADD YOUR...
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                        <Image className="w-6 h-6 text-cyan-300" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                        <Play className="w-6 h-6 text-cyan-300" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                        <Music className="w-6 h-6 text-cyan-300" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                        <Mic className="w-6 h-6 text-cyan-300" />
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </motion.div>
 
