@@ -59,7 +59,7 @@ export default function Login() {
     <div className="min-h-screen bg-black text-foreground flex flex-col items-center justify-center p-3 relative overflow-hidden">
         
         {/* Background Ambience */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-black to-black opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/20 via-black to-black opacity-50 pointer-events-none" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
 
         <div className="w-full max-w-md space-y-4 md:space-y-6 relative z-10">
@@ -117,7 +117,7 @@ export default function Login() {
                             />
                         </div>
                         <Button 
-                          className="w-full h-10 font-bold tracking-wide" 
+                          className="w-full h-10 font-bold tracking-wide bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700" 
                           disabled={isLoading}
                           data-testid="button-submit"
                         >
@@ -170,13 +170,13 @@ export default function Login() {
 
             <div className="flex justify-center gap-4 md:gap-8 text-[10px] md:text-xs text-muted-foreground font-mono tracking-widest uppercase opacity-50">
                 <div className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> IceMaker
+                    <Sparkles className="w-3 h-3 text-cyan-400" /> IceMaker
                 </div>
                 <div className="flex items-center gap-1">
-                    <Globe className="w-3 h-3" /> Orbit
+                    <Globe className="w-3 h-3 text-cyan-400" /> Orbit
                 </div>
                 <div className="flex items-center gap-1">
-                    <User className="w-3 h-3" /> One Account
+                    <User className="w-3 h-3 text-cyan-400" /> One Account
                 </div>
             </div>
         </div>
