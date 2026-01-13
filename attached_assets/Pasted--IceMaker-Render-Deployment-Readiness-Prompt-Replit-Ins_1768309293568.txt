@@ -1,0 +1,142 @@
+# IceMaker → Render Deployment Readiness Prompt (Replit Instance)
+
+You are the Replit agent managing the IceMaker repo. Your job is to make IceMaker deploy to Render with the same behaviour and reliability as it has in Replit.
+
+Non-negotiables:
+- Do NOT remove or break any existing product functionality.
+- Do NOT introduce “works locally only” changes.
+- Prefer simple, explicit configuration over magic.
+- Everything must run headlessly on Render with no Replit-specific assumptions.
+- Produce a complete deployment checklist + implement required changes in-repo.
+
+## 0) Confirm Current App Architecture
+First, inspect the repo and report (as facts, not guesses):
+- Frontend framework (Vite/Next/CRA/etc), build output folder, and dev server command
+- Backend server framework (Express/Fastify/Next API/etc) and entrypoint file
+- Whether the app is: (A) single Node server serving API + static build, or (B) separate frontend + backend services
+- Current Node version assumption (from package.json engines, .nvmrc, toolchain config)
+
+## 1) Identify Replit Couplings (Must Remove)
+Search the codebase for any Replit-only dependencies and replace with Render-safe equivalents:
+- Replit env access patterns, Replit-specific hostnames/ports, “0.0.0.0” assumptions
+- Hard-coded ports or localhost-only URLs
+- File paths that rely on Replit filesystem layout
+- Any “always in dev mode” logic or Vite dev proxy assumptions
+Deliverable: a short list of exact files/lines you changed and why.
+
+## 2) Produce a Render Deployment Plan (Choose the Right Render Shape)
+Decide the best Render deployment model and justify it:
+Option A: One Render Web Service (Node) that serves API + serves the built frontend from /dist (or equivalent)
+Option B: Two Render services:
+  - Static Site for frontend
+  - Web Service for API
+Pick the option that requires the least complexity and has the fewest failure points, while preserving IceMaker functionality.
+
+Deliverables:
+- Render Build Command(s)
+- Render Start Command(s)
+- Expected output paths (e.g. dist, build, .next)
+- Health check endpoint and expected response
+
+## 3) Lock Runtime + Scripts (Required)
+Make the repo explicitly deployable:
+- Ensure package.json has correct scripts:
+  - "build"
+  - "start" (must run production server)
+  - "dev" (for Replit)
+- Ensure server binds to process.env.PORT and host 0.0.0.0
+- Ensure production uses NODE_ENV=production
+- Add/confirm Node engine version (package.json "engines" + optionally .nvmrc)
+
+Deliverable: Show final package.json scripts and explain any changes.
+
+## 4) Database + Storage Requirements (Be Explicit)
+Audit IceMaker data needs and categorise by:
+A) Must persist (users, projects/ICEs, cards, media selections, publish states, billing/tenancy, audit logs)
+B) Can be derived/cache (temp generation outputs, intermediate prompts)
+C) Large binaries (uploaded videos/images/audio, generated assets)
+
+Then implement or propose:
+- Database choice (Postgres recommended unless current code already uses something else)
+- ORM/migrations (Prisma/Drizzle/Knex/etc) OR confirm existing
+- Storage approach for large assets:
+  - Prefer object storage (S3-compatible) rather than database blobs or local disk
+  - If current system writes to local disk, refactor to object storage OR ensure Render persistent disk is correctly used (only if unavoidable)
+
+Deliverables:
+- Minimal DB schema outline (tables + key fields)
+- Migration strategy (how to create/update schema)
+- Media storage strategy and required env vars
+
+## 5) Environment Variables (Complete Inventory)
+Create an authoritative list of env vars required to run in production on Render.
+For each env var include:
+- Name
+- Required vs optional
+- Example value format
+- What breaks if missing
+- Where it is used (file/module)
+
+Must include all:
+- App base URLs (PUBLIC_URL / APP_URL)
+- API base URL
+- Auth/session secrets (SESSION_SECRET, JWT_SECRET, etc)
+- Database URL (DATABASE_URL)
+- Any AI provider keys (OpenAI/Replicate/Kling/etc)
+- Webhook secrets (if any)
+- S3 / storage credentials (if any)
+- Analytics keys (if any)
+- Feature flags (if any)
+
+Deliverables:
+- A `.env.example` committed to the repo (no real secrets)
+- A “Render Env Var Setup” section in DEPLOY_RENDER.md
+
+## 6) Build Output + Routing (Frontend Needs To Work)
+If using Vite/SPA routing:
+- Ensure non-root routes work on refresh (Render rewrite rules or server fallback to index.html)
+- Ensure API routes don’t collide with frontend routes
+- Ensure CORS is correct for the chosen deployment model
+
+Deliverable: verify and document expected behaviour for:
+- / (homepage)
+- /maker or core app route(s)
+- deep link refresh (e.g. /ice/123)
+- API route example (e.g. /api/health)
+
+## 7) Production Safety Checks
+Add production-grade basics if missing:
+- /api/health endpoint
+- Structured logging in production (minimal, no secrets)
+- Graceful startup failure with clear errors if required env vars missing
+- Optional: simple rate limiting for public endpoints (only if appropriate and not breaking UX)
+
+Deliverable: list what was added and where.
+
+## 8) Render Files + Docs (Must Commit)
+Add the following files to the repo:
+- `DEPLOY_RENDER.md` with step-by-step instructions:
+  - Create Render service(s)
+  - Configure build/start commands
+  - Set env vars
+  - Provision DB + run migrations
+  - Configure storage (if needed)
+  - Verify health checks
+  - Common failure modes and fixes
+- If useful, add `render.yaml` blueprint for one-click setup (optional but preferred)
+
+## 9) Validation Checklist (No Guessing)
+Before finishing, you must:
+- Run a production build locally in Replit environment (build then start)
+- Confirm the app runs using only env vars (no hidden Replit config)
+- Confirm server binds to PORT and is reachable
+- Confirm any DB migrations run cleanly
+- Confirm at least one core user journey works end-to-end (create ICE → generate cards → attach media → save/publish)
+
+Final Output Format:
+1) “What I changed” (bullets with file paths)
+2) “Render Deployment Plan” (commands + architecture)
+3) “Env Var Inventory” (table)
+4) “DB + Storage Plan” (clear and minimal)
+5) “DEPLOY_RENDER.md summary”
+6) “Open risks / decisions needed” (if any)

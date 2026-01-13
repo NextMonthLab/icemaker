@@ -48,6 +48,7 @@ Key architectural decisions and features include:
 -   **Media Cost Guardrails (LOCKED)**: Strictly enforced economic constraints on video (5-second cap, no HD) and images (1024x1024, ~$0.04/image) to preserve profitability. No silent retries or hidden multi-candidate generation.
 -   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
 -   **Demo ICE Architecture (FUTURE)**: Demo ICEs are real ICEs created via the standard IceMaker UI, not hard-coded. They use the same ingestion, card generation, media generation, and interaction pipeline as user ICEs. The distinction is presentation and surfacing, not creation. Future implementation will include: (1) Demo flagging mechanism (e.g., `isDemo: true` or `visibility: demo`), (2) Dedicated demo listing page at `/demos` or `/case-studies`, (3) Homepage section with CTA routing to demo page. Core principle: Demo ICEs must prove IceMaker by being made with IceMaker—no special rendering, no mocked experiences.
+-   **Render Deployment Architecture**: Single Node.js web service + PostgreSQL database deployment model. Health check endpoint at `/api/health` verifies database connectivity. Build outputs bundled server (`dist/index.cjs`) + static frontend (`dist/public/`). Documented in `docs/DEPLOY_RENDER.md` with `render.yaml` blueprint for one-click deploy.
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

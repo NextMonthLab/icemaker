@@ -1,17 +1,57 @@
 services:
   - type: web
-    name: storyflix
-    env: node
+    name: icemaker
+    runtime: node
+    region: frankfurt
+    plan: starter
     buildCommand: npm install && npm run build
     startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: sqlite:./data/prod.db
+        fromDatabase:
+          name: icemaker-db
+          property: connectionString
       - key: SESSION_SECRET
         generateValue: true
-    disk:
-      name: data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+      - key: PUBLIC_TOKEN_SECRET
+        generateValue: true
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: KLING_ACCESS_KEY
+        sync: false
+      - key: KLING_SECRET_KEY
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false
+
+databases:
+  - name: icemaker-db
+    plan: starter
+    region: frankfurt
+    databaseName: icemaker
+    user: icemaker

@@ -166,6 +166,29 @@ export async function registerRoutes(
     }
   });
   
+  // Health check endpoint for Render and load balancers
+  app.get("/api/health", async (_req, res) => {
+    try {
+      // Quick database connectivity check using raw SQL via Drizzle
+      const result = await db.$client.query('SELECT 1 as ok');
+      if (!result.rows || result.rows.length === 0) {
+        throw new Error("Database query returned no rows");
+      }
+      res.status(200).json({ 
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || "development"
+      });
+    } catch (error: any) {
+      console.error("[health] Database check failed:", error.message);
+      res.status(503).json({ 
+        status: "unhealthy",
+        error: "Database connection failed",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Auth middleware
   const requireAuth = (req: any, res: any, next: any) => {
     if (req.isAuthenticated()) {
