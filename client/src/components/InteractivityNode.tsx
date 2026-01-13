@@ -469,13 +469,19 @@ export function AddInteractivityButton({
             <motion.button
               initial={false}
               animate={{
-                scale: isHovered ? 1.1 : 1,
-                backgroundColor: isHovered ? "rgb(147, 51, 234)" : "rgb(30, 41, 59)",
+                scale: isHovered ? 1.05 : 1,
               }}
               onClick={handleClick}
-              className="relative z-10 w-6 h-6 rounded-full border border-purple-500/50 flex items-center justify-center transition-colors"
+              className={`relative z-10 w-8 h-7 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                isHovered 
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400/60 shadow-lg shadow-purple-500/20" 
+                  : "bg-slate-800/90 border-purple-500/40"
+              } border`}
+              style={{
+                clipPath: "polygon(0% 0%, 100% 0%, 100% 70%, 60% 70%, 50% 100%, 40% 70%, 0% 70%)",
+              }}
             >
-              <Plus className={`w-3 h-3 ${isHovered ? "text-white" : "text-purple-400"}`} />
+              <Plus className={`w-3 h-3 -mt-1 ${isHovered ? "text-white" : "text-purple-400"}`} />
             </motion.button>
             <AnimatePresence>
               {isHovered && (
@@ -483,9 +489,9 @@ export function AddInteractivityButton({
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="absolute left-1/2 translate-x-4 text-xs text-purple-300 whitespace-nowrap bg-slate-900/90 px-2 py-1 rounded"
+                  className="absolute left-1/2 translate-x-6 text-xs text-purple-300 whitespace-nowrap bg-slate-900/90 px-2 py-1 rounded"
                 >
-                  Add Character Chat
+                  Add AI Chat
                 </motion.span>
               )}
             </AnimatePresence>
