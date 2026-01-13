@@ -95,7 +95,7 @@ export default function Library() {
           </div>
           <Link href="/launchpad">
             <Button 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2" 
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2" 
               data-testid="button-new-ice"
             >
               <Plus className="w-4 h-4" />
@@ -111,7 +111,7 @@ export default function Library() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 activeTab === tab.id
-                  ? "bg-blue-500/20 text-blue-400"
+                  ? "bg-cyan-500/20 text-cyan-400"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               }`}
               data-testid={`tab-${tab.id}`}
@@ -128,7 +128,7 @@ export default function Library() {
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             <p className="text-white/50 mt-4">Loading your library...</p>
           </div>
         )}
@@ -147,7 +147,7 @@ export default function Library() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/launchpad">
                 <Button 
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2" 
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2" 
                   data-testid="button-make-ice-from-insight"
                 >
                   <Sparkles className="w-4 h-4" />
@@ -223,7 +223,7 @@ function PreviewCard({ preview, isPublished, onDelete }: { preview: IcePreview; 
   
   return (
     <div 
-      className="bg-black border border-blue-500/30 rounded-xl p-4 hover:border-blue-500/50 transition-all group"
+      className="bg-black border border-cyan-500/30 rounded-xl p-4 hover:border-cyan-500/50 transition-all group"
       data-testid={`card-preview-${preview.id}`}
     >
       <div className="flex items-start justify-between mb-3">
@@ -289,7 +289,7 @@ function PreviewCard({ preview, isPublished, onDelete }: { preview: IcePreview; 
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-blue-500/50 text-blue-300 hover:bg-blue-500/10 gap-1.5"
+            className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 gap-1.5"
             data-testid={`button-view-${preview.id}`}
           >
             <Eye className="w-3.5 h-3.5" />

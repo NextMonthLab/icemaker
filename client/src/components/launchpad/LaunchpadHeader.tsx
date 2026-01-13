@@ -150,7 +150,7 @@ export function LaunchpadHeader({
         </Link>
         <Button
           onClick={onCreateIce}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm md:text-base px-3 md:px-4"
+          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-sm md:text-base px-3 md:px-4"
           data-testid="button-new-ice"
           aria-label="New Ice"
         >
