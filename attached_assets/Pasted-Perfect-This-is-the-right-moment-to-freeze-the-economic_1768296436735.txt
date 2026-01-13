@@ -1,0 +1,175 @@
+Perfect. This is the right moment to freeze the economics in writing so Replit doesn’t accidentally undo all the discipline you’ve just earned.
+
+Below is a clean, authoritative guardrails document you can hand straight to Replit. It confirms the research, locks the assumptions, and makes it explicit what is and is not allowed without a pricing decision.
+
+You can paste this verbatim.
+
+⸻
+
+Business Orbit / IceMaker
+
+Media Cost Guardrails & Economic Assumptions (LOCKED)
+
+Purpose
+This document formalises the validated cost assumptions and non-negotiable guardrails for IceMaker and Orbit. These constraints are required to preserve profitability and must not be altered without an explicit pricing review.
+
+⸻
+
+1. Validated Cost Basis (Confirmed by Empirical + External Research)
+
+1.1 Image Generation
+	•	Provider: OpenAI (via Replit AI Integrations)
+	•	Model: gpt-image-1
+	•	Resolution: 1024×1024 (fixed)
+	•	Cost: ~$0.04 per image
+	•	Generation pattern:
+	•	One image per call
+	•	No retries
+	•	No multi-candidate generation
+	•	No upscaling or post-processing
+
+Note: Replit AI Integrations may be subsidised vs direct OpenAI pricing. Even at 2–3× price increases, margins remain healthy.
+
+⸻
+
+1.2 Video Generation (Short-form only)
+	•	Default duration: 5 seconds (hard cap)
+	•	Aspect ratio: 9:16 (portrait)
+	•	Resolution: ~720p (model-dependent)
+	•	Generation pattern:
+	•	One video per call
+	•	Polling only (no automatic retries)
+	•	Failure returns error; no silent re-generation
+
+Approved Models
+	•	Budget:
+	•	Replicate: haiper-ai/haiper-video-2
+	•	Indicative cost: ~$0.25 per 5s clip
+	•	Premium:
+	•	Replicate: kling-v1.6-standard, kling-v1.6-pro
+	•	Direct: Kling API kling-v1-6, kling-v2-0
+	•	Indicative cost: ~$0.50–$1.40 per 5s clip (model dependent)
+
+Pricing is per second of output, not per GPU-hour.
+Costs scale linearly with duration.
+
+⸻
+
+2. Media Spec Contract (NON-NEGOTIABLE)
+
+The following are hard constraints, not defaults.
+
+2.1 Video Constraints
+	•	ICE_VIDEO_SECONDS = 5
+	•	ICE_VIDEO_MAX_SECONDS = 5
+	•	Any attempt to exceed 5 seconds:
+	•	must be blocked or
+	•	must trigger a pricing-tier or top-up check
+
+10-second or longer videos are NOT permitted without a pricing decision.
+
+⸻
+
+2.2 Image Constraints
+	•	ICE_IMAGE_SIZE = 1024
+	•	No HD, cinematic, or upscaling flags
+	•	No background enhancement passes
+
+⸻
+
+3. Quantity Guardrails (to preserve margins)
+
+3.1 Video Allowance per ICE (by plan)
+
+Suggested defaults (final numbers may be adjusted at product level):
+	•	Pilot: limited number of video clips per ICE
+	•	Team: increased allowance
+	•	Department: full “video on every card” allowed
+
+If allowance is exceeded:
+	•	Offer a paid top-up
+	•	Do NOT silently generate additional media
+
+⸻
+
+3.2 No Hidden Multipliers
+
+The system must not:
+	•	generate multiple candidates and discard
+	•	auto-retry failed media calls
+	•	regenerate media on minor prompt edits without user intent
+
+⸻
+
+4. Required Metrics (must be logged)
+
+4.1 Primary Metric
+
+cost_per_delivered_ICE
+
+This is the authoritative economic metric.
+
+It must include:
+	•	LLM cost
+	•	Image generation cost
+	•	Video generation cost
+	•	Retry cost (if any)
+	•	Exclude failed/incomplete ICE builds
+
+4.2 Supporting Metrics
+	•	image_cost_per_ICE
+	•	video_cost_per_ICE
+	•	media_generation_failures
+	•	provider_used (Replit vs OpenAI direct vs Replicate vs Kling)
+
+⸻
+
+5. Pricing Volatility Assumption (Locked)
+
+All pricing and margin models assume:
+	•	Images may increase up to 3×
+	•	Video may increase up to 3×
+
+Even under these conditions:
+	•	Pilot, Team, and Department tiers remain profitable
+	•	No emergency pricing changes required
+
+⸻
+
+6. Change Control (IMPORTANT)
+
+Any of the following constitutes a pricing-impacting change and must not be merged without review:
+	•	Increasing default video duration beyond 5s
+	•	Increasing image resolution
+	•	Adding retries or multi-candidate generation
+	•	Introducing background upscaling or enhancement passes
+	•	Making premium video the default
+	•	Allowing unlimited video per ICE
+
+These are business decisions, not engineering tweaks.
+
+⸻
+
+7. Final Position
+
+The current architecture and pricing are:
+	•	empirically validated
+	•	externally benchmarked
+	•	margin-safe under stress
+	•	suitable for Corporate L&D and enterprise pilots
+
+Cost risk is not the bottleneck.
+Scope discipline is.
+
+⸻
+
+If you want, next I can:
+	•	turn this into a short internal “Economic Safety Checklist”
+	•	write a commit-level guardrail comment for the relevant code paths
+	•	or help you design the top-up UX so it feels like value, not restriction
+
+But at this point, you can confidently tell Replit:
+
+“The research is done. The economics are locked. Build within these lines.”
+
+And that’s exactly where you want to be.

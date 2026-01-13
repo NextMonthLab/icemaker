@@ -4,8 +4,8 @@ export interface ReplicateVideoRequest {
   prompt: string;
   imageUrl?: string;
   negativePrompt?: string;
-  aspectRatio?: "16:9" | "9:16" | "1:1";
-  duration?: 5 | 10;
+  aspectRatio?: "9:16";
+  duration?: 5;
   model?: string;
 }
 
@@ -60,8 +60,8 @@ export async function generateVideoWithReplicate(
   try {
     let input: Record<string, any> = {
       prompt: request.prompt,
-      duration: request.duration || 5,
-      aspect_ratio: request.aspectRatio || "9:16",
+      duration: 5, // ICE_VIDEO_SECONDS = 5 (hard cap)
+      aspect_ratio: "9:16", // ICE_VIDEO_ASPECT = 9:16
     };
 
     if (request.negativePrompt) {
@@ -167,8 +167,8 @@ export async function startReplicateVideoAsync(
 
   let input: Record<string, any> = {
     prompt: request.prompt,
-    duration: request.duration || 5,
-    aspect_ratio: request.aspectRatio || "9:16",
+    duration: 5, // ICE_VIDEO_SECONDS = 5 (hard cap)
+    aspect_ratio: "9:16", // ICE_VIDEO_ASPECT = 9:16
   };
 
   if (request.negativePrompt) {

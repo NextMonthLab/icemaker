@@ -1,63 +1,58 @@
 # NextMonth – Claude Code Operating Context
 
 ## Overview
-NextMonth is a Meaning-to-Experience Engine for brand storytelling, creative narratives, and knowledge transfer. It transforms diverse content into interactive, cinematic story cards using AI-generated visuals, guardrailed AI character interaction, a Visual Bible system, TTS narration, and a Daily Drop Engine. The platform aims to evolve from basic analytics to strategic advice driven by pattern intelligence and behavioral sequences, supporting role-based access and a tiered subscription model.
+NextMonth is a Meaning-to-Experience Engine designed for brand storytelling, creative narratives, and knowledge transfer. It transforms diverse content into interactive, cinematic story cards using AI-generated visuals, guardrailed AI character interaction, a Visual Bible system, TTS narration, and a Daily Drop Engine. The platform aims to evolve from basic analytics to strategic advice driven by pattern intelligence and behavioral sequences, supporting role-based access and a tiered subscription model. Its core purpose is to deliver immersive and engaging narrative experiences, with a focus on business intelligence and user-centric content creation.
 
 ## User Preferences
 I prefer simple language and clear, concise explanations. I value iterative development and prefer to be asked before major changes are made to the codebase. Please provide detailed explanations when new features or significant modifications are implemented. Do not make changes to the `shared/schema.ts` file without explicit approval, as it is the single source of truth for data models. Ensure that any AI-generated content adheres to the established visual bible system and character profiles for consistency.
 
 ## System Architecture
-NextMonth utilizes a multi-stage content pipeline: Input Normalization, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18, Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is built with Node.js, Express, Drizzle ORM, Neon-backed PostgreSQL, and Passport.js for authentication.
+NextMonth employs a multi-stage content pipeline: Input Normalization, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18, Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is built with Node.js, Express, Drizzle ORM, Neon-backed PostgreSQL, and Passport.js for authentication.
 
 Key architectural decisions and features include:
--   **Schema-First Development**: `shared/schema.ts` defines all data models.
+-   **Schema-First Development**: All data models are defined in `shared/schema.ts`.
 -   **Storage Abstraction**: Database operations are managed via an `IStorage` interface.
--   **Three-Layer Chat Prompt Composition**: AI prompts are constructed from Universe Policy, Character Profile, and Card Overrides.
+-   **Three-Layer Chat Prompt Composition**: AI prompts are dynamically constructed from Universe Policy, Character Profile, and Card Overrides.
 -   **Visual Bible System**: Ensures visual consistency through a Design Guide, Reference Assets, and Prompt Builder.
 -   **Lens-Based User Experience**: Onboarding is customized by user-selected "lens" (Brand, Creative, Knowledge).
 -   **Tiered Capability Model**: Features are gated by "Orbit" subscription tiers (Free, Grow, Understand, Intelligence).
--   **Pattern Intelligence Focus**: Analytics are designed for pattern recognition on session journeys, event ordering, object interaction, and outcome linkage.
--   **UI/UX**: Cinematic dark theme with specific fonts and a pink-purple-blue gradient, utilizing a three-tier navigation system.
+-   **Pattern Intelligence**: Analytics focus on pattern recognition for session journeys, event ordering, object interaction, and outcome linkage.
+-   **UI/UX**: Features a cinematic dark theme with specific fonts and a pink-purple-blue gradient, utilizing a three-tier navigation system.
 -   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection.
--   **Orbit Device System**: Enables Orbit display on thin clients with kiosk mode and voice interaction.
+-   **Orbit Device System**: Enables display on thin clients with kiosk mode and voice interaction.
 -   **Orbit Signal Schema**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems.
 -   **Guest ICE Builder**: Allows anonymous users to create time-limited ICE previews with server-persisted data and rate limiting.
 -   **Experience Analytics System**: Client-side tracking for experience and card views.
 -   **Multi-Tenant Security**: Implemented with HMAC-SHA256 signed access tokens and per-IP rate limiting.
--   **Stripe Subscription System**: Full subscription billing with webhook synchronization.
 -   **Email & Notifications System**: Transactional emails via Resend and in-app notifications.
 -   **Interactivity Nodes**: Supports conversational AI character interaction between cards in live previews.
 -   **Story Fidelity Modes**: Content uploads trigger Script-Exact Mode for script parsing or Interpretive Mode for content summarization.
 -   **Guest-First Conversion Model**: Users experience value before identity or payment.
--   **Website Extraction System**: Automatically detects and extracts product/menu data from business websites using Site Detection, Multi-Page Crawling, Quality Validation, and Image Filtering, including Site Fingerprinting and DOM Extraction Strategies.
--   **Orbit System**: Extracts product/menu catalogues (50-200+ items) from diverse business websites, utilizing Site Fingerprinting, Multi-Page Crawling, AI-Based Extraction (GPT-4o-mini), Quality Validation, and Image Filtering. Supports `catalogue`, `menu`, `service`, and `hybrid` business types.
--   **High-Signal Business Data Extraction**: Captures richer business context beyond products/menus, including `faq`, `team_member`, `business_profile`, `contact`, `opening_hours`, `testimonial`, and `trust_signal` as new box types, with an on-demand enrichment API.
+-   **Website Extraction System**: Automatically extracts product/menu data from business websites using site detection, multi-page crawling, quality validation, and image filtering. This includes specialized support for various business types (catalogue, menu, service, hybrid) and high-signal data extraction (faq, team_member, business_profile, contact, opening_hours, testimonial, trust_signal).
 -   **Launchpad Hub**: A unified command center (`/launchpad`) combining Orbit metrics with IceMaker content creation.
--   **Title Packs System**: Provides professional typography presets for ICE card captions, including Neon Impact, Cinematic Subtitles, Grunge Tape, Editorial Minimal, and Hyper Cut.
--   **Video Export System**: Server-side FFmpeg-based video export for ICE previews, creating downloadable MP4 videos with Title Pack caption overlays, TTS, and optional background music.
--   **Auto-Testimonial Capture System**: Automatically detects customer praise in Orbit chat conversations using AI-powered sentiment analysis, includes classification, quote cleaning, consent management, and export formatting.
+-   **Title Packs System**: Provides professional typography presets for ICE card captions.
+-   **Video Export System**: Server-side FFmpeg-based video export for ICE previews, creating downloadable MP4 videos with caption overlays, TTS, and optional background music.
+-   **Auto-Testimonial Capture System**: Automatically detects customer praise in Orbit chat conversations using AI-powered sentiment analysis.
 -   **Business-Type-Aware Chat System**: Orbit chat automatically detects business type to adjust system prompts and language.
--   **Shared Orbit Chat Service**: Consolidated chat logic in `server/services/orbitChatService.ts` providing `buildOrbitContext`, `buildSystemPrompt`, `generateChatResponse`, and `processEchoResponse`.
+-   **Shared Orbit Chat Service**: Consolidated chat logic in `server/services/orbitChatService.ts`.
 -   **Hero Posts System**: Allows Orbit owners to add best-performing social media posts for AI-powered pattern analysis and AI-generated follow-up suggestions.
--   **Tone of Voice System**: Analyzes hero posts to generate brand voice profiles, extracting `brandVoiceSummary`, `voiceTraits`, `audienceNotes`, and `toneGuidance`.
--   **Knowledge Coach System**: Proactively generates weekly AI-powered questions to help business owners fill knowledge gaps in their Orbit based on gap detection and impact scoring.
--   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence for Business Name, Website URL, AI Discovery Settings, and Notification Preferences.
--   **Category Discovery Pages**: Educational category pages with SEO-friendly content, interactive audits, Q&A libraries, and sponsored content, starting with Smart Glasses (`/smartglasses`).
--   **Orbit Type Doctrine**: Architectural distinction between 'industry' and 'standard' orbits. Industry Orbits are pre-seeded, continuously updated, cannot be claimed or owned by users, and participation never grants editorial control. Standard Orbits may be claimed, grant ownership, and intelligence emerges through user interaction.
--   **Orbit Seed Pack v1.0.0 (FROZEN)**: JSON format for seeding Industry Orbits with products, entities, communities, and tiles. Formerly known as CPAC (Canonical Pulse And Content). See `docs/CPAC-v1-specification.md` for full schema, enum values, quality scoring rules, and severity doctrine. Key fields: products should include `releaseDate` (announcement date), `summary` (rich description with target audience), and communities should include `notes` (context explaining what the community is and why it matters). Future changes must be additive only (v1.x) or require v2.0.0.
--   **Orbit CPAC Admin Panel**: Admin interface at `/admin/cpac` for managing Industry Orbit knowledge packs. Features: (1) Download pre-populated CPAC JSON with all current orbit data, (2) Generate Claude Extension Prompts with current stats and expansion rules, (3) Upload and analyze CPAC diffs with duplicate detection and merge preview. The workflow enables iterative knowledge expansion: export → generate prompt → extend via Claude → analyze diff → review before applying.
--   **Orbit → ICE Flywheel**: Enables admins and influencers to convert Orbit insights, chat responses, and View Engine outputs (compare, shortlist, checklist, pulse) into shareable ICE content drafts. Features: (1) "Turn into ICE" buttons in ViewWindscreen and ChatHub for privileged users, (2) Role-based permissions (admin/influencer only), (3) Unified iceDrafts table with source discriminator ('launchpad' | 'orbit'), (4) Template type mapping (compare→compare_ice, shortlist→shortlist_ice, etc.), (5) API endpoint at POST /api/orbit/:slug/ice-drafts. Supports deep linking back to Orbit context.
--   **Caption Engine (Milestones 1-6 Complete)**: Remotion-based caption system for ICE content. Features: (1) Token-driven design system with typography, colors, backgrounds, and animations, (2) 12 caption presets (clean_white, boxed_black, neon_blue, etc.), (3) Safe area profiles for TikTok/Reels/Shorts to avoid platform UI overlays, (4) Phrase grouping algorithm with configurable line breaks (max 32 chars/line, 2 lines/group), (5) SRT/VTT/JSON transcript parsers, (6) Karaoke highlighting with 6 styles (weight, brightness, underline, color, scale, glow), (7) Word-level timing with smooth transitions and highlightAhead easing, (8) Multiline caption preservation during karaoke mode, (9) Milestone 4: CaptionStylePicker UI with three-tab interface (Styles/Effects/Layout), visual preset previews organized by category, karaoke toggle with highlight style selector, animation picker, and demo page at /icemaker/captions, (10) Milestone 5: Export pipeline integration with ASS subtitle generation supporting preset styling, safe area margins, karaoke effects (\k/\kf tags), and animations; FFmpeg ass filter for caption burning when useCaptionEngine=true; API accepts captionState and useCaptionEngine parameters with legacy fallback, (11) Milestone 6: Fit-to-Box Layout Engine with CapCut-style scale-to-fit rendering. Features: canvas-based text measurement (`client/src/caption-engine/layout/fit/`), deterministic line break composer with scoring (penalizes orphans, balances line lengths), ScaleToFitCaption component that renders text at 48px then scales the block to fit the panel, guarantees no mid-word breaks, no truncation, no ellipsis. Contract: words NEVER split, text shrinks until all words fit inside the rounded panel. Key files: `client/src/caption-engine/layout/fit/`, `client/src/components/ScaleToFitCaption.tsx`, `client/src/caption-engine/render/resolveStyles.ts`.
--   **Caption Engine Composition Stage Architecture (LOCKED)**: ICE preview captions use a fixed-width composition stage (1080px) that is scaled via CSS transform. This ensures fit width = render width in the same coordinate system, making clipping impossible. The architecture: (1) Composition stage is exactly 1080px wide, (2) Safe area padding applied inside (54px each side = 5%), (3) Text fitting uses availableCaptionWidth (972px) in composition space, (4) Entire stage scaled via `transform: scale(viewportScale)`, (5) Layout happens first at full size, then paint scales uniformly. DO NOT reintroduce DOM-width fitting, clientWidth/offsetWidth measurements, or viewport-relative constraints for caption sizing. This matches professional video systems (Remotion, CapCut, After Effects). Key file: `client/src/components/CardPlayer.tsx` (see COMPOSITION STAGE comment block).
--   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring Orbit system health with contract-first verification. Features: (1) 51-item versioned contract (v1.2.0) at `config/orbitBehaviourContract.v1.json` defining expected behaviours, (2) Deterministic checks runner for routes, components, orbit validation, tile storage, and caching, (3) Evidence protocol with `nm_*` metadata for server responses and client render events, (4) Green/Amber/Red overall status indicators, (5) Summary stats with pass/fail/warning/pending counts, (6) Category-grouped results view, (7) Issues-only filter tab, (8) JSON export for evidence packs, (9) Orbit-specific health checks by slug, (10) Categories include: chat_core, view_engine, tile_system, orbit_navigation, theme_system, data_persistence, security, performance, ingestion_v2, compliance, ice_preview, ice_navigation. Key files: `server/services/orbitHealthRunner.ts`, `server/services/evidenceMetadata.ts`, `client/src/lib/evidenceLogger.ts`, `client/src/pages/admin/OrbitHealthDashboard.tsx`.
--   **TitlePackSelector Component**: Reusable component for selecting title packs in ICE builder. Features: (1) Visual thumbnails showing each pack's styling, (2) Compact popover mode for inline usage, (3) Full grid mode for expanded view, (4) Shows pack name, description, and visual preview, (5) Instant apply and persistence. Key file: `client/src/components/ice-maker/TitlePackSelector.tsx`.
--   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` as "Website Intelligence" tab. Crawls up to 5 pages, generates 12+ topic tiles with categories, confidence levels, and grounding rules. Tiles stored per orbit slug in `/data/orbits/<slug>.json` with 24hr caching. Tiles marked "confirmed" only with specific citations; "draft" status for inferred content.
+-   **Tone of Voice System**: Analyzes hero posts to generate brand voice profiles.
+-   **Knowledge Coach System**: Proactively generates weekly AI-powered questions to help business owners fill knowledge gaps.
+-   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence for Orbit configurations.
+-   **Category Discovery Pages**: Educational category pages with SEO-friendly content and interactive audits.
+-   **Orbit Type Doctrine**: Architectural distinction between 'industry' (pre-seeded, non-claimable) and 'standard' (user-claimable, owned) orbits.
+-   **Orbit Seed Pack (CPAC)**: JSON format for seeding Industry Orbits with products, entities, communities, and tiles. Managed via an admin panel at `/admin/cpac`.
+-   **Orbit → ICE Flywheel**: Enables admins and influencers to convert Orbit insights into shareable ICE content drafts.
+-   **Caption Engine**: Remotion-based caption system for ICE content with token-driven design, various presets, safe area profiles for social media, phrase grouping, karaoke highlighting, word-level timing, and a fit-to-box layout engine. The composition stage is fixed-width (1080px) and scaled via CSS transform for consistent rendering.
+-   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring Orbit system health with contract-first verification and deterministic checks.
+-   **Media Cost Guardrails**: Strictly enforced economic constraints on video (5-second cap, no HD) and images (1024x1024, ~$0.04/image) to preserve profitability. No silent retries or hidden multi-candidate generation.
+-   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
 
 ## External Dependencies
--   **OpenAI API**: For chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
--   **Kling AI API**: For video generation.
--   **Replicate API**: For alternative video generation models.
--   **Stripe**: For subscription billing and payment processing.
--   **Resend**: For transactional email delivery.
--   **Replit Object Storage (R2/S3-compatible)**: For file storage.
--   **Neon (PostgreSQL)**: Managed PostgreSQL database service.
+-   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
+-   **Kling AI API**: Utilized for video generation.
+-   **Replicate API**: Provides alternative models for video generation.
+-   **Stripe**: Integrated for subscription billing and payment processing.
+-   **Resend**: Handles transactional email delivery.
+-   **Replit Object Storage (R2/S3-compatible)**: Used for general file storage.
+-   **Neon (PostgreSQL)**: Serves as the managed PostgreSQL database service.

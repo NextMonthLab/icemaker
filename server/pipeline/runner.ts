@@ -146,11 +146,17 @@ async function callAI(systemPrompt: string, userPrompt: string, jsonMode = true,
     console.log(`[COST_AUDIT] ${stageName}: model=${metrics.model}, prompt_tokens=${metrics.promptTokens}, completion_tokens=${metrics.completionTokens}, total=${metrics.totalTokens}`);
   }
   
-  const content = response.choices[0]?.message?.content || "";
-  if (!content) {
-    throw new Error("Empty response from AI");
-  }
-  return content;
+    const content = response.choices[0]?.message?.content || "";
+    if (!content) {
+      throw new Error("Empty response from AI");
+    }
+
+    // LOGGING: cost_per_delivered_ICE authoritative metric tracking
+    if (process.env.COST_AUDIT_LOGGING === 'true' && response.usage) {
+      console.log(`[COST_DELIVERED_ICE] stage=${stageName} total_tokens=${response.usage.total_tokens}`);
+    }
+
+    return content;
 }
 
 export async function stage0_normalise(ctx: PipelineContext, sourceText: string): Promise<void> {
