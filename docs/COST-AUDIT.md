@@ -251,93 +251,228 @@ const LIMITS = {
 
 ---
 
-## F) Corporate L&D Pricing Model (MVP)
+## F) L&D Usage Model: Normal vs Excessive
 
-Based on target market: **Corporate L&D** (demo-led, fewer but higher value accounts)
+Understanding what "normal" usage looks like for Corporate L&D helps define quotas, detect abuse, and price appropriately.
+
+### L&D Mental Models
+
+IceMaker maps to how L&D professionals already think:
+
+| Concept | IceMaker Equivalent | Usage Pattern |
+|---------|---------------------|---------------|
+| **Modules** | ICE experiences | Built once, run many times per cohort |
+| **Cohorts** | Shared/separate memory contexts | 8-25 learners, 4-12 sessions |
+| **Learning journeys** | Multi-ICE programmes | 3-6 ICEs building on each other |
+| **Facilitation** | Intelligence support | Challenges thinking, prompts reflection |
+
+### What is a "Session"?
+
+A session is one cohort interaction with one ICE experience:
+
+| Session Type | Duration | Questions/Learner | Total Questions | Frequency |
+|--------------|----------|-------------------|-----------------|-----------|
+| **Self-paced module** | 15-30 min | 2-5 | 16-125 (8-25 learners) | Once per cohort |
+| **Live workshop support** | 60-90 min | 5-10 | 40-250 (8-25 learners) | Weekly for 4-8 weeks |
+| **Coaching companion** | Ongoing | 3-8 per week | 12-32/learner/month | Continuous |
+| **Strategy/scenario session** | 2-3 hours | 10-20 | 80-500 (8-25 learners) | Monthly |
+
+### Normal Usage: Pilot Programme
+
+*Single facilitator, 1 cohort, 1 module*
+
+| Metric | Normal Range | Cost Implication |
+|--------|--------------|------------------|
+| ICEs built | 1-2/month | ~£0.80-1.50 build cost |
+| Learners | 8-15 | - |
+| Sessions | 4-6/month | - |
+| Questions/cohort | 150-400/month | ~£1.50-4.00/month |
+| **Total monthly cost** | - | **~£2.30-5.50** |
+
+### Normal Usage: Active Programme
+
+*1-2 facilitators, 2-3 cohorts, 3-4 modules*
+
+| Metric | Normal Range | Cost Implication |
+|--------|--------------|------------------|
+| ICEs built | 3-6/month | ~£2.50-5.00 build cost |
+| Learners | 25-50 total | - |
+| Sessions | 15-25/month | - |
+| Questions/cohort | 400-1,200/month | ~£4.00-12.00/month |
+| **Total monthly cost** | - | **~£6.50-17.00** |
+
+### Normal Usage: Team Programme
+
+*3-5 facilitators, 5-10 cohorts, 6-10 modules*
+
+| Metric | Normal Range | Cost Implication |
+|--------|--------------|------------------|
+| ICEs built | 6-12/month | ~£5.00-10.00 build cost |
+| Learners | 75-200 total | - |
+| Sessions | 40-80/month | - |
+| Questions/total | 1,500-5,000/month | ~£15.00-50.00/month |
+| **Total monthly cost** | - | **~£20.00-60.00** |
+
+### Excessive Usage: Warning Signs
+
+These patterns indicate abuse, runaway costs, or incorrect tier:
+
+| Pattern | Threshold | Action |
+|---------|-----------|--------|
+| Questions/learner/session > 20 | Warn at 15, hard cap at 25 | Rate limit, suggest tier upgrade |
+| ICE rebuilds same content | > 3x same source in 7 days | Cache, suggest edit instead |
+| Empty/test ICEs | > 50% builds < 10 questions total | Soft-cap trial builds |
+| API hammering | > 100 questions/hour from single user | Throttle, investigate |
+| Multi-tenant sharing | Single account, 10+ distinct cohorts | Enforce seat pricing |
+
+### Memory Refresh Cadence
+
+When should cohort memory reset?
+
+| Programme Type | Memory Lifetime | Refresh Trigger |
+|----------------|-----------------|-----------------|
+| Single module | End of cohort | Manual or cohort completion |
+| Multi-week journey | Programme duration | Manual at programme end |
+| Always-on coaching | 90 days rolling | Automatic trim, keep key insights |
+| Strategy/scenario | Session-only | Reset per session by design |
+
+### What "Success" Looks Like (Not Maximum)
+
+| Metric | Success | Maximum | Abuse |
+|--------|---------|---------|-------|
+| Questions per learner per session | 3-8 | 15 | 25+ |
+| Sessions per cohort per week | 1-2 | 4 | 10+ |
+| ICE builds per facilitator per month | 1-3 | 8 | 20+ |
+| Cohorts per facilitator | 2-4 | 8 | 15+ |
+
+---
+
+## G) Corporate L&D Pricing Model (Refined)
+
+Based on target market: **Corporate L&D** (demo-led, fewer but higher value accounts)  
+Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptable", £29 feels consumer**
 
 ### Two Cost Buckets
 
 1. **Build Allowance** - covers ingestion + structuring + narration + music + images + optional video
-2. **Audience Allowance** - covers viewer Q&A interactions
+2. **Audience Allowance** - covers viewer Q&A interactions (now capped at 20-message context)
 
-### MVP Pricing Tiers
+### Unit Cost Reference (GBP, 1 USD = 0.80 GBP)
 
-#### Starter — £29/month
-*For solo L&D leads and small pilots*
+| Item | USD Cost | GBP Cost |
+|------|----------|----------|
+| Q&A Question | $0.01 | £0.008 |
+| Medium ICE Build | $0.70 | £0.56 |
+| Long ICE Build (no video) | $1.50 | £1.20 |
+| Long ICE Build (4 videos) | $2.80 | £2.24 |
+| Haiper video clip | $0.25 | £0.20 |
+| Kling video clip | $1.40 | £1.12 |
 
-| Allowance | Included | Overage |
-|-----------|----------|---------|
-| Build | ~2 Short or 1 Medium ICE/month | Top-up required |
-| Audience | 500 questions/month | Top-up required |
-| Video | Off (or 1 clip/month max) | Premium add-on |
-| Storage | Small cap | - |
+### Tier Structure (L&D-Appropriate Pricing)
 
-**Margin at usage:** ~65% (assuming 1 Medium ICE + 400 questions)
-
-#### Pro — £59/month (Main Plan)
-*For real L&D deployments*
-
-| Allowance | Included | Overage |
-|-----------|----------|---------|
-| Build | ~4 Medium or 1 Long ICE/month | Top-up available |
-| Audience | 1,500 questions/month | Top-up available |
-| Video | Optional add-on pack | Separate pricing |
-| Storage | Standard | - |
-
-**Margin at usage:** ~70% (assuming 3 Medium ICEs + 1,200 questions)
-
-#### Team — £149/month (includes 3 seats) + £25/extra seat
-*For L&D teams and agencies*
+#### Pilot — £49/month (or £79 with coaching pack)
+*Single facilitator testing IceMaker with one cohort*
 
 | Allowance | Included | Overage |
 |-----------|----------|---------|
-| Build | ~10 Medium or 3 Long ICE/month | Top-up available |
-| Audience | 5,000 questions/month | Top-up available |
-| Video | Pack included or discounted | - |
-| Collaboration | Roles & permissions | - |
-| Storage | Large | - |
+| Facilitators | 1 | - |
+| Build | 2 Medium ICEs/month | Top-up £12/ICE |
+| Audience | 400 questions/month | Top-up £15/500 |
+| Cohorts | 1 active | - |
+| Memory | 30-day retention | - |
+| Video | Off | Premium add-on |
+| Support | Email | - |
 
-**Margin at usage:** ~72% (assuming 8 Medium ICEs + 4,000 questions)
+**Upsell trigger:** > 1 cohort, > 400 questions, or programme expansion
 
-#### Enterprise — Custom
-*For large organizations*
+#### Team — £149/month (or £199 with video pack)
+*Real L&D deployment: multiple cohorts, shared memory*
 
-- High Q&A volumes
+| Allowance | Included | Overage |
+|-----------|----------|---------|
+| Facilitators | 3 included (+£35/seat) | - |
+| Build | 6 Medium or 2 Long ICEs/month | Top-up £10/ICE |
+| Audience | 2,000 questions/month | Top-up £12/500 |
+| Cohorts | 5 active | £20/extra cohort |
+| Memory | 90-day retention | - |
+| Video | Optional: +£50/month for 8 clips | - |
+| Collaboration | Roles, shared library | - |
+| Support | Priority email + onboarding call | - |
+
+**Upsell trigger:** > 5 cohorts, > 2,000 questions, department expansion
+
+#### Department — £299/month (or £399 with full video + analytics)
+*L&D team or agency running multiple programmes*
+
+| Allowance | Included | Overage |
+|-----------|----------|---------|
+| Facilitators | 8 included (+£30/seat) | - |
+| Build | 15 Medium or 5 Long ICEs/month | Top-up £8/ICE |
+| Audience | 6,000 questions/month | Top-up £10/500 |
+| Cohorts | 15 active | £15/extra cohort |
+| Memory | 180-day retention | - |
+| Video | 12 clips/month included | - |
+| Collaboration | Full permissions, templates | - |
+| Analytics | Cohort insights, pattern reports | - |
+| Support | Priority + quarterly review | - |
+
+**Upsell trigger:** > 15 cohorts, API access, SSO requirement
+
+### Tier Economics Sanity Table
+
+| Tier | Revenue | Builds Cost | Questions Cost | Video Cost | Total Cost | Contribution | Margin |
+|------|---------|-------------|----------------|------------|------------|--------------|--------|
+| **Pilot** £49 | £49 | 2 × £0.56 = £1.12 | 400 × £0.008 = £3.20 | £0 | £4.32 | £44.68 | **91%** |
+| **Team** £149 | £149 | 6 × £0.56 = £3.36 | 2,000 × £0.008 = £16.00 | £0 | £19.36 | £129.64 | **87%** |
+| **Dept** £299 | £299 | 15 × £0.56 = £8.40 | 6,000 × £0.008 = £48.00 | 12 × £0.20 = £2.40 | £58.80 | £240.20 | **80%** |
+
+*Note: These are "at full allowance" costs. Actual usage typically 60-70% of allowance.*
+
+#### Enterprise — Custom (£500+/month)
+*Large organizations with specific requirements*
+
+- Unlimited facilitators (within reason)
+- Volume discounts on builds + questions
 - SSO integration
-- Security requirements
-- SLAs
-- Dedicated support
+- Custom data retention
+- Dedicated success manager
+- SLA guarantees
+- Invoice billing
 
-### Top-Up Packs (Critical for Margin Protection)
+### Why These Prices Work for L&D
 
-| Pack | Price | Contents | Margin |
-|------|-------|----------|--------|
-| Audience Pack | £15 | +1,000 questions | ~70% |
-| Build Pack (Small) | £25 | +2 Medium ICEs | ~68% |
-| Build Pack (Large) | £45 | +4 Medium ICEs | ~70% |
-| Video Pack (Budget) | £35 | 8 haiper clips | ~65% |
-| Video Pack (Premium) | £75 | 8 kling clips | ~60% |
+| Price Point | L&D Perception | Comparison |
+|-------------|----------------|------------|
+| £49/month | "Tool trial budget" | Less than 1 consultant hour |
+| £149/month | "Serious capability" | Cost of 2 days training materials |
+| £299/month | "Programme investment" | Less than 1 external facilitator day |
+| Top-ups | "Rounding error" | Coffee for the team |
 
-### Break-Even Analysis
+### Top-Up Economics
 
-| ICE Type | Our Cost | Min Price | Target Price | Margin |
-|----------|----------|-----------|--------------|--------|
-| Short (6 cards, 3 images) | ~$0.40 | $1.50 | $5.00 | 73% |
-| Medium (10 cards, 6 images, TTS) | ~$0.70 | $2.50 | $8.00 | 71% |
-| Long (15 cards, 15 images, TTS, 4 videos) | ~$2.80 | $10.00 | $18.00 | 69% |
-| Full Cinematic | ~$12.00 | $40.00 | $50.00 | 68% |
+| Pack | Price | Contents | Cost | Contribution | Margin |
+|------|-------|----------|------|--------------|--------|
+| Audience Pack | £15 | +500 questions | £4.00 | £11.00 | 73% |
+| Build Pack (Small) | £20 | +2 Medium ICEs | £1.12 | £18.88 | 94% |
+| Build Pack (Large) | £35 | +4 Medium ICEs | £2.24 | £32.76 | 94% |
+| Video Pack (Standard) | £40 | 6 haiper clips | £1.20 | £38.80 | 97% |
+| Video Pack (Premium) | £75 | 6 kling clips | £6.72 | £68.28 | 91% |
 
-### Questions Cost at Scale
+### Break-Even Check
 
-| Questions | Our Cost | Included In | Margin |
-|-----------|----------|-------------|--------|
-| 500/month | ~$5.00 | Starter (£29) | 83% |
-| 1,500/month | ~$15.00 | Pro (£59) | 75% |
-| 5,000/month | ~$50.00 | Team (£149) | 67% |
+| Scenario | Revenue | Cost | Margin | Status |
+|----------|---------|------|--------|--------|
+| Pilot at full usage | £49 | £4.32 | 91% | Healthy |
+| Team at full usage | £149 | £19.36 | 87% | Healthy |
+| Dept at full usage | £299 | £58.80 | 80% | Healthy |
+| Pilot + 1 top-up | £64 | £8.32 | 87% | Healthy |
+| Heavy Pilot (2x usage) | £49 | £8.64 | 82% | Watch |
+
+*Danger zone: Any tier where cost > 50% of revenue needs intervention.*
 
 ---
 
-## G) Summary: Cost Per ICE
+## H) Summary: Cost Per ICE
 
 | ICE Type | Build Cost | Storage/month | 100 Viewers | Total 1st Month |
 |----------|------------|---------------|-------------|-----------------|
@@ -348,7 +483,7 @@ Based on target market: **Corporate L&D** (demo-led, fewer but higher value acco
 
 ---
 
-## H) Implementation Priority
+## I) Implementation Priority
 
 ### Immediate (Week 1) - PARTIALLY DONE
 - [x] Add chat context truncation (MAX_CONTEXT_MESSAGES=20)
@@ -374,7 +509,7 @@ Based on target market: **Corporate L&D** (demo-led, fewer but higher value acco
 
 ---
 
-## I) Verification Checklist
+## J) Verification Checklist
 
 Before launching pricing:
 
