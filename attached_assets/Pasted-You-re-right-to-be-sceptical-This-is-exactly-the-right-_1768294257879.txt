@@ -1,0 +1,235 @@
+You’re right to be sceptical. This is exactly the right instinct at this point.
+When numbers look too good, the question isn’t “can I enjoy this?” – it’s “what assumptions might be hiding risk?”
+
+Let’s be very precise and very grounded.
+
+⸻
+
+Short answer (before we go deep)
+
+You cannot rely on those image/video cost numbers yet unless all four of the conditions below are true. If even one is false, your perception (that these feel too cheap) is probably right.
+
+I’ll walk you through how to prove each one.
+
+⸻
+
+Why your intuition is firing (and why it’s valid)
+
+Historically, AI media costs have felt high because:
+	•	Video generation has been expensive
+	•	Many tools hide costs behind credits
+	•	Early-generation APIs were inefficient
+	•	People confuse GPU-hour pricing with per-asset pricing
+	•	Some services subsidise early usage and then ramp pricing later
+
+So your mental model is anchored in:
+
+“AI video = dollars per minute, not pennies per clip”
+
+That model used to be correct.
+
+Now let’s interrogate whether it still applies in your architecture.
+
+⸻
+
+The only way to “absolutely know” the truth
+
+You need to answer five very specific questions.
+Not estimates. Not beliefs. Actual answers.
+
+⸻
+
+1. What exact provider and endpoint is being used?
+
+This is the first trap.
+
+“AI image generation costs £X” is meaningless without this.
+
+You need to confirm, in code:
+	•	Provider (OpenAI, Stability, Replicate, Runway, Pika, etc.)
+	•	Endpoint (e.g. images.generate, Replicate model ID, etc.)
+	•	Pricing unit (per image, per second, per GPU-second, per credit)
+
+Action
+
+In Wraplet / IceMaker codebase, search for:
+
+openai.images
+replicate.run
+runway
+pika
+stability
+
+Then confirm:
+	•	exact API name
+	•	exact model
+	•	exact pricing page that corresponds to that endpoint
+
+If you’re using OpenAI Images (DALL·E):
+	•	pricing is per image
+	•	and it is that low
+
+If you’re using Replicate-hosted video models:
+	•	pricing may be per second of video
+	•	but clips can still land in the £0.25–£1.50 range if short
+
+So step one is: which one is it, exactly?
+
+⸻
+
+2. Are you measuring the API bill, or the product abstraction?
+
+This is the most common source of false confidence.
+
+There are three layers:
+	1.	Raw provider cost (what OpenAI/Replicate charges you)
+	2.	Wrapper cost (if using a platform that bundles or abstracts)
+	3.	Product cost (what your system actually triggers)
+
+Your test likely measured layer 1 only.
+
+But ask:
+	•	Are retries happening?
+	•	Are failed generations being silently retried?
+	•	Are you generating multiple candidates and discarding them?
+	•	Are you caching outputs or regenerating each time?
+
+Action
+
+Log every media generation call:
+	•	request ID
+	•	success/fail
+	•	retry count
+	•	asset count per ICE
+
+If you ever generate 3 images to pick 1, your real cost is 3×, not 1×.
+
+⸻
+
+3. What resolution, duration, and quality tier are you using?
+
+This is where perception and reality often diverge.
+
+Images
+	•	512×512 vs 1024×1024 can double cost
+	•	“HD” or “quality=high” flags matter
+	•	Aspect ratio can change pricing
+
+Video
+	•	3–5 seconds vs 10–15 seconds is everything
+	•	Frame rate (12fps vs 24fps)
+	•	Resolution (720p vs 1080p)
+	•	Model generation vs interpolation
+
+If your ICE videos are:
+	•	short
+	•	low-to-mid resolution
+	•	stylised rather than photoreal
+
+Then £0.25–£1.40 per clip is entirely plausible.
+
+If you silently plan to:
+	•	increase length
+	•	increase realism
+	•	increase resolution
+
+Those numbers will move.
+
+Action
+
+Hard-lock media specs in code and document them:
+
+“ICE videos are max X seconds, Y resolution, Z style”
+
+That’s how you protect pricing.
+
+⸻
+
+4. Are you accidentally benefiting from subsidised or beta pricing?
+
+This is a real risk.
+
+Many providers:
+	•	underprice during beta
+	•	change pricing with little notice
+	•	throttle later
+
+Ask:
+	•	Is this a beta model?
+	•	Is pricing “subject to change”?
+	•	Are you on a promotional tier?
+
+Action
+
+Create a pricing volatility buffer:
+	•	assume image costs double
+	•	assume video costs double
+
+Re-run your margin math with 2× media costs.
+
+If margins are still healthy (they are), you’re safe.
+
+⸻
+
+5. What happens at scale (this is the quiet killer)
+
+Right now:
+	•	low concurrency
+	•	low retry contention
+	•	warm caches
+	•	friendly provider limits
+
+At scale:
+	•	throttling causes retries
+	•	retries cause duplication
+	•	duplication causes cost creep
+
+This doesn’t break you, but it does erode margin if unobserved.
+
+Action
+
+Add one metric:
+
+media_cost_per_successful_ICE
+
+Not per request.
+Per completed, delivered ICE.
+
+That’s the number that matters.
+
+⸻
+
+The uncomfortable but reassuring conclusion
+
+Your instinct is right to question this.
+But the data you’ve gathered is not implausible given:
+	•	short-form media
+	•	modern pricing
+	•	efficient orchestration
+	•	capped usage
+	•	Corporate L&D (not consumer TikTok-scale output)
+
+The key point is this:
+
+Your economics do not rely on media being cheap.
+They survive even if media costs double or triple.
+
+That’s the position you want to be in.
+
+⸻
+
+What I recommend you do next (very specific)
+	1.	Confirm provider + model + endpoint for image/video
+	2.	Log retries and discarded generations
+	3.	Lock media specs in code
+	4.	Run a 2× and 3× cost stress test
+	5.	Track cost per delivered ICE, not per call
+
+If you want, paste:
+	•	the image generation function
+	•	the video generation function
+
+…and I’ll walk through them line by line and tell you exactly where hidden costs could creep in (or not).
+
+Your scepticism is healthy.
+Now let’s turn it into certainty.

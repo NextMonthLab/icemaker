@@ -537,6 +537,34 @@ Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptabl
 
 *Danger zone: Any tier where cost > 50% of revenue needs intervention.*
 
+### Stress Test: What If Media Costs Double or Triple?
+
+This tests resilience to pricing volatility (beta pricing removal, provider changes, etc.):
+
+| Scenario | Base Cost | 2× Media | 3× Media | Margin@2× | Margin@3× |
+|----------|-----------|----------|----------|-----------|-----------|
+| **Pilot** £49 (no video) | £3.72 | £4.24 | £4.76 | 91% | 90% |
+| **Team** £149 (no video) | £17.56 | £18.68 | £19.80 | 87% | 87% |
+| **Dept** £299 (12 videos) | £54.30 | £58.20 | £62.10 | 81% | 79% |
+| **Cinematic ICE** $2.50 | $2.50 | $4.50 | $6.50 | n/a | n/a |
+
+**Finding:** Margins remain healthy (79%+) even at 3× media costs. The pricing model is resilient.
+
+**Calculation Notes:**
+- Base media costs: Images £0.16/build (5 images × £0.032), Video £0.20/clip
+- At 2×: Images £0.32/build, Video £0.40/clip
+- At 3×: Images £0.48/build, Video £0.60/clip
+- LLM costs don't change with media pricing
+
+### Provider Risk Summary
+
+| Provider | Subsidy Risk | Price Volatility | Mitigation |
+|----------|--------------|------------------|------------|
+| Replit AI Integrations (images) | **Medium** | Unknown | Monitor, have OpenAI direct fallback |
+| Replicate (video) | Low | Low (marketplace) | Multiple models available |
+| Kling Direct (video) | Low | Low | Alternative to Replicate |
+| OpenAI Direct (TTS) | Low | Stable | Well-established pricing |
+
 ---
 
 ## H) Summary: Cost Per ICE (Revised with Empirical Data)
