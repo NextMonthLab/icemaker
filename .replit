@@ -49,3 +49,4 @@ expertMode = true
 
 [userenv.development]
 ORBIT_SCHEMA_ALLOW_UNCLAIMED = "true"
+COST_AUDIT_LOGGING = "true"
