@@ -1,0 +1,169 @@
+# IceMaker Prompt (Replit) — High-Value UX + Publishing + Lead Gate (No Scope Creep)
+
+## Context
+We are polishing IceMaker for launch. Keep changes minimal, high-impact, and consistent with the existing dark/cinematic UI. Do NOT introduce new complex “platform” systems or algorithms. This is about: clearer user mental model, better publishing, and obvious commercial value.
+
+## Goals (in priority order)
+1) Make AI interaction points feel like “conversation moments” (visual cue).
+2) Add a real Publish flow with states: Private / Unlisted / Public.
+3) Add optional lead capture gate for published ICEs (simple v1).
+4) Add Story Structure Mode as an optional overlay with contextual guidance (popover), not a rigid template.
+5) Keep everything backwards compatible with existing ICEs.
+
+---
+
+## 1) Interaction “Plus” should look like a speech bubble
+### Problem
+The “+ between cards” is currently a generic square/round button. It should visually read as “dialogue moment”.
+
+### Requirements
+- Update the UI for the “add AI interaction” control between cards:
+  - Keep the plus in the centre.
+  - Add a subtle “speech bubble tail” (small notch/triangle) on the container so it resembles a modern speech bubble.
+  - Not cartoonish. Minimal, premium. Same styling as current UI (dark, gradients, glow).
+- Must remain tappable on mobile and accessible (hit area unchanged).
+- No layout shift.
+
+### Implementation Notes
+- Tail can be implemented with CSS pseudo-element ::after on the container.
+- Ensure it works on dark backgrounds and scales correctly.
+
+---
+
+## 2) Proper Publish button + Publish States
+### Problem
+We need an explicit Publish action and proper publish states, not implied behaviour.
+
+### Requirements
+Add a Publish CTA in the ICE editor (or where “Download vs Publish” currently lives), with a modal wizard:
+
+Publish states:
+1) Private (default)
+   - Visible only to creator in Library.
+   - No public URL (or URL requires auth).
+2) Unlisted
+   - Generates shareable URL.
+   - Not shown in Discovery.
+   - Shown in creator Library as “Unlisted”.
+3) Public
+   - Shown in Discovery.
+   - Requires metadata: Title, short description, thumbnail.
+   - Optional category/tag (keep minimal).
+
+### UI
+- Publish modal has clear state selector.
+- For Public: enforce required fields before publish.
+- For Unlisted/Public: show share URL after publishing (copy button).
+
+### Data model
+- Add `visibility: "private" | "unlisted" | "public"` to ICE.
+- Add `publishedAt`, `shareSlug` (or equivalent).
+- For Public: store `title`, `description`, `thumbnailUrl`, `category` (optional).
+
+### Backend
+- Add/extend endpoint to set publish state and metadata.
+- Ensure auth checks: only owner can publish/unpublish.
+- Ensure unlisted ICE is accessible via URL but not indexed in discovery endpoints.
+
+---
+
+## 3) Lead Capture Gate (v1, simple, valuable)
+### Goal
+Allow creators to add a single email gate for valuable ICE content.
+
+### Requirements (v1)
+- One gate per ICE (limit v1).
+- Gate placement options:
+  - Start of experience
+  - After a specific card (select from list)
+- When enabled:
+  - Viewer must enter email to continue past gate.
+  - Store email + ICE id + timestamp.
+- Must be optional and respectful:
+  - Copy like “Enter your email to continue” + optional creator message.
+  - No dark patterns.
+- For Unlisted/Public ICEs only (Private doesn’t need it).
+
+### Data model
+- `leadGateEnabled: boolean`
+- `leadGatePosition: "start" | { afterCardId: string }`
+- `leadGateCopy?: string`
+- Store submissions: `iceId`, `email`, `createdAt`, `source` (public/unlisted), `utm?` (optional).
+
+### UI
+- In Publish modal (or ICE settings) include “Lead capture” section:
+  - Toggle on/off
+  - Position selector
+  - Optional message field
+
+### Viewer experience
+- If gate triggers, show a clean modal overlay:
+  - Email field + continue
+  - Validate basic email format
+  - Success continues playback
+- Ensure mobile friendly.
+
+---
+
+## 4) Story Structure Mode (Overlay) + “Eye” guidance popover
+### Goal
+Help creators structure narrative/learning without enforcing templates.
+
+### Requirements (v1)
+- Add toggle: “Story Structure Mode” (OFF by default)
+- When ON:
+  - Cards are grouped into suggested sections (labels only, not locked).
+  - Example section labels (avoid copyrighted terms):
+    - Opening
+    - Context
+    - Build
+    - Challenge
+    - Turning Point
+    - Resolution
+    - Reflection
+  - Each section header includes a small “eye/info” icon.
+- Tapping the eye opens a contextual guidance popover/panel with:
+  1) What this moment is for (plain English)
+  2) What works well here (3–5 bullets)
+  3) What to avoid (2–4 bullets)
+
+### Copy
+- Keep guidance concise and practical.
+- Include both narrative and learning framing (e.g., “In training, this might be…”).
+
+### Implementation approach
+- Do not change underlying card structure.
+- This is a UI lens:
+  - Suggest grouping based on card order (even distribution) or creator drag handles (optional later).
+- Store optional per-card `storyBeatLabel` only if needed; otherwise computed.
+
+---
+
+## 5) Discovery (defer heavy build) — Minimal “Public Gallery” stub only
+### We are NOT building a full platform.
+But we should support a minimal public listing for Public ICEs.
+
+### Requirements (v1)
+- Add endpoint: list public ICEs (paginated, newest first).
+- Frontend: simple “Discover” page/grid (optional if already exists), with:
+  - Thumbnail, title, short description, creator name
+  - Click opens experience
+- No algorithms, no likes, no comments, no accounts beyond existing.
+
+If this is too much for this sprint, only implement the backend listing and a placeholder UI entry.
+
+---
+
+## Acceptance Criteria
+- The “+ between cards” reads visually as conversation/speech, consistent with current theme.
+- Users can publish an ICE as Private/Unlisted/Public with correct behaviour.
+- Unlisted ICE accessible by URL but not listed publicly.
+- Public ICE shows in a basic public listing endpoint.
+- Lead gate works on Unlisted/Public ICEs with start/after-card placement, stores emails.
+- Story Structure Mode is purely optional, helps via popovers, doesn’t break existing ICEs.
+- Mobile UX remains smooth.
+
+## Non-goals (do NOT do these now)
+- Full creator economy, subscriptions per ICE, payments per viewer, comments/likes, recommendation algorithm.
+- Multiple lead gates per ICE (later).
+- Complex beat detection from content (later).
