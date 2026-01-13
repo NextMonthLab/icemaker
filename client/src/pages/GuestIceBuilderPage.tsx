@@ -684,6 +684,21 @@ export default function GuestIceBuilderPage() {
       if (!hasSeenWalkthrough()) {
         setShowWalkthrough(true);
       }
+      
+      // Auto-generate Project Bible for logged-in users (fire-and-forget)
+      if (user && data.id && data.cards?.length > 0) {
+        setBibleGenerating(true);
+        fetch(`/api/ice/preview/${data.id}/bible/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ regenerate: false }),
+        })
+          .then(res => res.ok ? res.json() : Promise.reject())
+          .then(bibleData => setProjectBible(bibleData.bible))
+          .catch(error => console.error("Auto-generate bible failed:", error))
+          .finally(() => setBibleGenerating(false));
+      }
     },
     onError: (error: Error) => {
       setCurrentStage(-1); // Reset stages on error

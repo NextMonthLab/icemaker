@@ -117,8 +117,8 @@ export function ContinuityPanel({
   if (!bible) {
     return (
       <div className="p-6 text-center space-y-4" data-testid="continuity-empty">
-        <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto">
-          <Sparkles className="w-8 h-8 text-purple-400" />
+        <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center mx-auto">
+          <Sparkles className="w-8 h-8 text-cyan-400" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white mb-1">No Project Bible</h3>
@@ -129,7 +129,7 @@ export function ContinuityPanel({
         <Button 
           onClick={onGenerate} 
           disabled={isGenerating}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
           data-testid="button-generate-bible"
         >
           {isGenerating ? (
