@@ -24,7 +24,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
+const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1736761132/IceMaker_Logo_u6j2qj.png";
 
 interface AppHeaderProps {
   showBackToMarketing?: boolean;
