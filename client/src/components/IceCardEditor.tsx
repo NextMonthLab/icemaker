@@ -47,6 +47,7 @@ interface PreviewCard {
   enhancePromptEnabled?: boolean;
   basePrompt?: string;
   enhancedPrompt?: string;
+  preferredMediaType?: 'image' | 'video';
 }
 
 interface Entitlements {
@@ -117,7 +118,7 @@ export function IceCardEditor({
   const canGenerateVoiceover = entitlements?.canUploadAudio ?? false;
   const isPro = entitlements && entitlements.tier !== "free";
   
-  const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration" | "upload">("content");
   const [editedTitle, setEditedTitle] = useState(card.title);
   const [editedContent, setEditedContent] = useState(card.content);
   
@@ -751,6 +752,18 @@ export function IceCardEditor({
                   Narration
                   {!canGenerateVoiceover && <Lock className="w-3 h-3 ml-1 text-yellow-400" />}
                 </button>
+                <button
+                  onClick={() => setActiveTab("upload")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
+                    activeTab === "upload" 
+                      ? "bg-cyan-600 text-white" 
+                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                  data-testid="tab-upload"
+                >
+                  <Upload className="w-4 h-4" />
+                  Your Media
+                </button>
               </div>
               
               {activeTab === "content" && (
@@ -1010,14 +1023,6 @@ export function IceCardEditor({
                       )}
                       {imageUploading ? "Uploading..." : "Upload"}
                     </Button>
-                    <input
-                      ref={imageInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageFileChange}
-                      data-testid="input-upload-image"
-                    />
                   </div>
                 </div>
               )}
@@ -1201,14 +1206,6 @@ export function IceCardEditor({
                           )}
                           {videoUploading ? "Uploading..." : "Upload"}
                         </Button>
-                        <input
-                          ref={videoInputRef}
-                          type="file"
-                          accept="video/*"
-                          className="hidden"
-                          onChange={handleVideoFileChange}
-                          data-testid="input-upload-video"
-                        />
                       </div>
                     </>
                   )}
@@ -1334,6 +1331,113 @@ export function IceCardEditor({
                   )}
                 </div>
               )}
+              
+              {activeTab === "upload" && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 rounded-lg border border-cyan-500/20">
+                    <h4 className="text-sm font-medium text-cyan-300 mb-3 flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      Upload Your Own Media
+                    </h4>
+                    <p className="text-xs text-slate-400 mb-4">
+                      Add your own images or videos to this card instead of using AI-generated content.
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={imageUploading}
+                          className="w-full bg-cyan-600 hover:bg-cyan-700 gap-2"
+                          data-testid="button-upload-own-image"
+                        >
+                          {imageUploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Image className="w-4 h-4" />
+                          )}
+                          {imageUploading ? "Uploading..." : "Upload Image"}
+                        </Button>
+                        <p className="text-xs text-slate-500 text-center">JPG, PNG, WebP</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => videoInputRef.current?.click()}
+                          disabled={videoUploading}
+                          className="w-full bg-blue-600 hover:bg-blue-700 gap-2"
+                          data-testid="button-upload-own-video"
+                        >
+                          {videoUploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Video className="w-4 h-4" />
+                          )}
+                          {videoUploading ? "Uploading..." : "Upload Video"}
+                        </Button>
+                        <p className="text-xs text-slate-500 text-center">MP4, WebM, MOV</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Show current media */}
+                  {(card.generatedImageUrl || card.generatedVideoUrl) && (
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Current Card Media</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {card.generatedImageUrl && (
+                          <div className="relative rounded-lg overflow-hidden border border-slate-700 aspect-video">
+                            <img 
+                              src={card.generatedImageUrl} 
+                              alt="Card image" 
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-cyan-600/90 rounded text-xs text-white">
+                              Image
+                            </div>
+                          </div>
+                        )}
+                        {card.generatedVideoUrl && (
+                          <div className="relative rounded-lg overflow-hidden border border-slate-700 aspect-video">
+                            <video 
+                              src={card.generatedVideoUrl} 
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-blue-600/90 rounded text-xs text-white">
+                              Video
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="p-3 bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-400">
+                      Uploaded media will replace any AI-generated content for this card.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Hidden file inputs - always mounted for all tabs */}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFileChange}
+                data-testid="input-upload-image"
+              />
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={handleVideoFileChange}
+                data-testid="input-upload-video"
+              />
             </div>
           </motion.div>
         )}
