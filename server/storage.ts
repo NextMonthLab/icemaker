@@ -125,6 +125,7 @@ export interface IStorage {
   // ICE Previews (Guest Builder)
   getIcePreview(id: string): Promise<schema.IcePreview | undefined>;
   getIcePreviewsByUser(userId: number): Promise<schema.IcePreview[]>;
+  getPublicIcePreviews(limit: number, offset: number): Promise<schema.IcePreview[]>;
   createIcePreview(preview: schema.InsertIcePreview): Promise<schema.IcePreview>;
   updateIcePreview(id: string, data: Partial<schema.InsertIcePreview>): Promise<schema.IcePreview | undefined>;
   deleteIcePreview(id: string): Promise<void>;
@@ -990,6 +991,16 @@ export class DatabaseStorage implements IStorage {
     const results = await db.query.icePreviews.findMany({
       where: eq(schema.icePreviews.ownerUserId, userId),
       orderBy: (previews, { desc }) => [desc(previews.createdAt)],
+    });
+    return results;
+  }
+  
+  async getPublicIcePreviews(limit: number, offset: number): Promise<schema.IcePreview[]> {
+    const results = await db.query.icePreviews.findMany({
+      where: eq(schema.icePreviews.visibility, 'public'),
+      orderBy: (previews, { desc }) => [desc(previews.publishedAt), desc(previews.createdAt)],
+      limit,
+      offset,
     });
     return results;
   }

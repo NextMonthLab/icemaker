@@ -6089,6 +6089,31 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Public discovery endpoint - list public ICEs for gallery
+  app.get("/api/ice/discover", async (req, res) => {
+    try {
+      const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 50));
+      const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+      
+      const publicIces = await storage.getPublicIcePreviews(limit, offset);
+      
+      res.json({
+        ices: publicIces.map(ice => ({
+          id: ice.id,
+          title: ice.title,
+          shareSlug: ice.shareSlug,
+          thumbnailUrl: (ice.cards as any[])?.[0]?.imageUrl || null,
+          cardCount: (ice.cards as any[])?.length || 0,
+          publishedAt: ice.publishedAt?.toISOString() || ice.createdAt.toISOString(),
+        })),
+        hasMore: publicIces.length === limit,
+      });
+    } catch (error) {
+      console.error("Error fetching public ICEs:", error);
+      res.status(500).json({ message: "Error fetching public ICEs" });
+    }
+  });
+  
   // Delete an ICE preview (owner only)
   app.delete("/api/ice/preview/:id", requireAuth, async (req, res) => {
     try {
