@@ -17,7 +17,7 @@ Key architectural decisions and features include:
 -   **Lens-Based User Experience**: Onboarding is customized by user-selected "lens" (Brand, Creative, Knowledge).
 -   **Tiered Capability Model**: Features are gated by "Orbit" subscription tiers (Free, Grow, Understand, Intelligence).
 -   **Pattern Intelligence**: Analytics focus on pattern recognition for session journeys, event ordering, object interaction, and outcome linkage.
--   **UI/UX**: Features a cinematic dark theme with specific fonts and a pink-purple-blue gradient, utilizing a three-tier navigation system.
+-   **UI/UX**: Features a cinematic dark theme with specific fonts and an **icy blue/cyan branding palette** (cyan-500/600 for primary actions, blue-500/600 for gradients), utilizing a three-tier navigation system. The IceMaker product uses consistent cyan branding throughout the wizard, editor, checkout, and media generation interfaces.
 -   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection.
 -   **Orbit Device System**: Enables display on thin clients with kiosk mode and voice interaction.
 -   **Orbit Signal Schema**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems.

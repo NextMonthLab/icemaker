@@ -25,15 +25,15 @@ export default function IceMakerHome() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Link href="/icemaker/create">
-            <div className="group p-6 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-500/30 hover:border-pink-500/50 transition-all cursor-pointer" data-testid="card-create-experience">
-              <div className="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-pink-400" />
+            <div className="group p-6 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 transition-all cursor-pointer" data-testid="card-create-experience">
+              <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4">
+                <Sparkles className="w-6 h-6 text-cyan-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Create Experience</h3>
               <p className="text-sm text-white/60 mb-4">
                 Start a new interactive experience from scratch or upload content
               </p>
-              <div className="flex items-center text-pink-400 text-sm font-medium group-hover:gap-2 transition-all">
+              <div className="flex items-center text-cyan-400 text-sm font-medium group-hover:gap-2 transition-all">
                 Get Started <ArrowRight className="w-4 h-4 ml-1" />
               </div>
             </div>
@@ -82,8 +82,8 @@ export default function IceMakerHome() {
               { icon: Play, title: "Publish", desc: "Share your interactive experience" },
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-white/5" data-testid={`step-${i + 1}`}>
-                <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0">
-                  <step.icon className="w-4 h-4 text-pink-400" />
+                <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                  <step.icon className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div>
                   <h4 className="font-medium text-white">{step.title}</h4>

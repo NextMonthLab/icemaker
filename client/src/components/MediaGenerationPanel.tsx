@@ -41,12 +41,12 @@ function LockedFeature({ icon, title, description, onUpgrade }: LockedFeaturePro
   return (
     <div className="relative group">
       <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-lg z-10 flex flex-col items-center justify-center gap-3 opacity-100 transition-opacity">
-        <Lock className="w-8 h-8 text-purple-400" />
+        <Lock className="w-8 h-8 text-cyan-400" />
         <p className="text-sm text-slate-300 text-center px-4">{description}</p>
         <Button 
           size="sm" 
           onClick={onUpgrade}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
           data-testid="button-upgrade-feature"
         >
           Upgrade to Unlock
@@ -139,7 +139,7 @@ export function MediaGenerationPanel({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Wand2 className="w-5 h-5 text-purple-400" />
+        <Wand2 className="w-5 h-5 text-cyan-400" />
         <h3 className="text-lg font-semibold text-white">AI Media Generation</h3>
       </div>
 
@@ -148,7 +148,7 @@ export function MediaGenerationPanel({
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <Image className="w-4 h-4 text-purple-400" />
+                <Image className="w-4 h-4 text-cyan-400" />
                 AI Image
               </CardTitle>
             </CardHeader>
@@ -172,7 +172,7 @@ export function MediaGenerationPanel({
               <Button
                 onClick={() => generateImageMutation.mutate()}
                 disabled={isGeneratingImage}
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full bg-cyan-600 hover:bg-cyan-700"
                 data-testid="button-generate-image"
               >
                 {isGeneratingImage ? (
@@ -191,7 +191,7 @@ export function MediaGenerationPanel({
           </Card>
         ) : (
           <LockedFeature
-            icon={<Image className="w-5 h-5 text-purple-400" />}
+            icon={<Image className="w-5 h-5 text-cyan-400" />}
             title="AI Image Generation"
             description="Generate unique AI images for each card"
             onUpgrade={onUpgradeClick}
@@ -202,7 +202,7 @@ export function MediaGenerationPanel({
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <Video className="w-4 h-4 text-pink-400" />
+                <Video className="w-4 h-4 text-blue-400" />
                 AI Video
               </CardTitle>
             </CardHeader>
@@ -224,7 +224,7 @@ export function MediaGenerationPanel({
               <Button
                 onClick={() => generateVideoMutation.mutate()}
                 disabled={isGeneratingVideo || (videoMode === "image-to-video" && !generatedImageUrl)}
-                className="w-full bg-pink-600 hover:bg-pink-700"
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 data-testid="button-generate-video"
               >
                 {isGeneratingVideo ? (
@@ -243,7 +243,7 @@ export function MediaGenerationPanel({
           </Card>
         ) : (
           <LockedFeature
-            icon={<Video className="w-5 h-5 text-pink-400" />}
+            icon={<Video className="w-5 h-5 text-blue-400" />}
             title="AI Video Generation"
             description="Create cinematic video clips from your cards"
             onUpgrade={onUpgradeClick}
@@ -326,7 +326,7 @@ export function CompactMediaControls({
         size="sm"
         variant="outline"
         onClick={onUpgradeClick}
-        className="border-purple-500/50 text-purple-300 hover:bg-purple-500/20"
+        className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/20"
         data-testid="button-upgrade-media"
       >
         <Lock className="w-3 h-3 mr-1" />
@@ -342,7 +342,7 @@ export function CompactMediaControls({
         variant="outline"
         onClick={onGenerateImage}
         disabled={isGeneratingImage}
-        className="border-purple-500/50 text-purple-300 hover:bg-purple-500/20"
+        className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/20"
         data-testid="button-quick-generate-image"
       >
         {isGeneratingImage ? (
@@ -359,7 +359,7 @@ export function CompactMediaControls({
         variant="outline"
         onClick={onGenerateVideo}
         disabled={isGeneratingVideo || !hasImage}
-        className="border-pink-500/50 text-pink-300 hover:bg-pink-500/20"
+        className="border-blue-500/50 text-blue-300 hover:bg-blue-500/20"
         data-testid="button-quick-generate-video"
       >
         {isGeneratingVideo ? (

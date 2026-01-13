@@ -28,7 +28,7 @@ const planIcons: Record<string, any> = {
 
 const planColors: Record<string, string> = {
   free: "bg-muted",
-  pro: "bg-gradient-to-br from-purple-500 to-pink-500",
+  pro: "bg-gradient-to-br from-cyan-500 to-blue-500",
   business: "bg-gradient-to-br from-blue-600 to-cyan-500",
 };
 

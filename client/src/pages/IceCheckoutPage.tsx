@@ -234,7 +234,7 @@ export default function IceCheckoutPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
       </div>
     );
   }
@@ -264,12 +264,12 @@ export default function IceCheckoutPage() {
           
           {/* Scene Map & Expansion Scope (for scripts) */}
           {preview?.sceneMap && preview.sceneMap.contentType === 'script' && (
-            <Card className="bg-slate-900/50 border-slate-800 border-purple-500/30">
+            <Card className="bg-slate-900/50 border-slate-800 border-cyan-500/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Film className="w-5 h-5 text-purple-400" />
+                  <Film className="w-5 h-5 text-cyan-400" />
                   Script Structure Detected
-                  <span className="ml-2 px-2 py-0.5 bg-purple-900/50 text-purple-300 text-xs rounded-full">
+                  <span className="ml-2 px-2 py-0.5 bg-cyan-900/50 text-cyan-300 text-xs rounded-full">
                     Script-Exact Mode
                   </span>
                 </CardTitle>
@@ -284,7 +284,7 @@ export default function IceCheckoutPage() {
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
                     <div 
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+                      className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all"
                       style={{ width: `${(preview.sceneMap.generatedScenes / preview.sceneMap.totalScenes) * 100}%` }}
                     />
                   </div>
@@ -306,7 +306,7 @@ export default function IceCheckoutPage() {
                       onClick={() => setExpansionScope(value)}
                       className={`w-full p-3 rounded-lg border text-left transition-all ${
                         expansionScope === value
-                          ? "border-purple-500 bg-purple-900/20"
+                          ? "border-cyan-500 bg-cyan-900/20"
                           : "border-slate-700 bg-slate-800/30 hover:border-slate-600"
                       }`}
                       data-testid={`expansion-${value}`}
@@ -330,7 +330,7 @@ export default function IceCheckoutPage() {
           <Card className="bg-slate-900/50 border-slate-800">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Film className="w-5 h-5 text-purple-400" />
+                <Film className="w-5 h-5 text-cyan-400" />
                 Base Experience
               </CardTitle>
               <p className="text-xs text-slate-500 mt-1">Core ICE creation and processing</p>
@@ -338,8 +338,8 @@ export default function IceCheckoutPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-900/50 flex items-center justify-center">
-                    <Film className="w-4 h-4 text-purple-400" />
+                  <div className="w-8 h-8 rounded-lg bg-cyan-900/50 flex items-center justify-center">
+                    <Film className="w-4 h-4 text-cyan-400" />
                   </div>
                   <div>
                     <p className="font-medium text-white">{preview?.title || "Your Story"}</p>
@@ -379,8 +379,8 @@ export default function IceCheckoutPage() {
               {interactivityNodeCount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-pink-900/50 flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 text-pink-400" />
+                    <div className="w-8 h-8 rounded-lg bg-cyan-900/50 flex items-center justify-center">
+                      <MessageCircle className="w-4 h-4 text-cyan-400" />
                     </div>
                     <div>
                       <p className="font-medium text-white">AI Interactions</p>
@@ -406,7 +406,7 @@ export default function IceCheckoutPage() {
           <Card className="bg-slate-900/50 border-slate-800">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-400" />
+                <Sparkles className="w-5 h-5 text-cyan-400" />
                 Media Enhancements
               </CardTitle>
               <p className="text-xs text-slate-500 mt-1">Optional add-ons to enrich your experience</p>
@@ -424,7 +424,7 @@ export default function IceCheckoutPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-purple-400" />
+                      <Icon className="w-4 h-4 text-cyan-400" />
                     </div>
                     <div>
                       <p className="font-medium text-white text-sm">{label}</p>
@@ -468,14 +468,14 @@ export default function IceCheckoutPage() {
                 onClick={() => setOutputChoice("download")}
                 className={`w-full p-4 rounded-lg border text-left transition-all ${
                   outputChoice === "download"
-                    ? "border-purple-500 bg-purple-900/20"
+                    ? "border-cyan-500 bg-cyan-900/20"
                     : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                 }`}
                 data-testid="option-download"
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    outputChoice === "download" ? "bg-purple-600" : "bg-slate-700"
+                    outputChoice === "download" ? "bg-cyan-600" : "bg-slate-700"
                   }`}>
                     <Download className="w-5 h-5 text-white" />
                   </div>
@@ -483,7 +483,7 @@ export default function IceCheckoutPage() {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-white">Download</p>
                       {outputChoice === "download" && (
-                        <Check className="w-4 h-4 text-purple-400" />
+                        <Check className="w-4 h-4 text-cyan-400" />
                       )}
                     </div>
                     <p className="text-sm text-slate-400 mt-1">
@@ -500,14 +500,14 @@ export default function IceCheckoutPage() {
                 onClick={() => setOutputChoice("publish")}
                 className={`w-full p-4 rounded-lg border text-left transition-all ${
                   outputChoice === "publish"
-                    ? "border-purple-500 bg-purple-900/20"
+                    ? "border-cyan-500 bg-cyan-900/20"
                     : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                 }`}
                 data-testid="option-publish"
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    outputChoice === "publish" ? "bg-purple-600" : "bg-slate-700"
+                    outputChoice === "publish" ? "bg-cyan-600" : "bg-slate-700"
                   }`}>
                     <Globe className="w-5 h-5 text-white" />
                   </div>
@@ -515,7 +515,7 @@ export default function IceCheckoutPage() {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-white">Publish</p>
                       {outputChoice === "publish" && (
-                        <Check className="w-4 h-4 text-purple-400" />
+                        <Check className="w-4 h-4 text-cyan-400" />
                       )}
                     </div>
                     <p className="text-sm text-slate-400 mt-1">
@@ -543,7 +543,7 @@ export default function IceCheckoutPage() {
                         onClick={() => setSelectedPlan("pro")}
                         className={`w-full p-4 rounded-lg border text-left transition-all ${
                           selectedPlan === "pro"
-                            ? "border-purple-500 bg-purple-900/30"
+                            ? "border-cyan-500 bg-cyan-900/30"
                             : "border-slate-600 bg-slate-800/30 hover:border-slate-500"
                         }`}
                         data-testid="plan-pro"
@@ -552,23 +552,23 @@ export default function IceCheckoutPage() {
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-white">Pro</p>
                             {selectedPlan === "pro" && (
-                              <Check className="w-4 h-4 text-purple-400" />
+                              <Check className="w-4 h-4 text-cyan-400" />
                             )}
                           </div>
                           <p className="font-bold text-white">$19<span className="text-xs font-normal text-slate-400">/mo</span></p>
                         </div>
                         <ul className="text-xs text-slate-400 space-y-1">
                           <li className="flex items-center gap-1.5">
-                            <span className="text-purple-400">•</span> Up to 10 live interactive experiences
+                            <span className="text-cyan-400">•</span> Up to 10 live interactive experiences
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="text-purple-400">•</span> AI character conversations
+                            <span className="text-cyan-400">•</span> AI character conversations
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="text-purple-400">•</span> Basic view analytics
+                            <span className="text-cyan-400">•</span> Basic view analytics
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="text-purple-400">•</span> Email support
+                            <span className="text-cyan-400">•</span> Email support
                           </li>
                         </ul>
                       </button>
@@ -577,19 +577,19 @@ export default function IceCheckoutPage() {
                         onClick={() => setSelectedPlan("business")}
                         className={`w-full p-4 rounded-lg border text-left transition-all relative ${
                           selectedPlan === "business"
-                            ? "border-purple-500 bg-purple-900/30"
+                            ? "border-cyan-500 bg-cyan-900/30"
                             : "border-slate-600 bg-slate-800/30 hover:border-slate-500"
                         }`}
                         data-testid="plan-business"
                       >
-                        <span className="absolute -top-2 right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                        <span className="absolute -top-2 right-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
                           BEST VALUE
                         </span>
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-white">Business</p>
                             {selectedPlan === "business" && (
-                              <Check className="w-4 h-4 text-purple-400" />
+                              <Check className="w-4 h-4 text-cyan-400" />
                             )}
                           </div>
                           <p className="font-bold text-white">$49<span className="text-xs font-normal text-slate-400">/mo</span></p>
@@ -614,7 +614,7 @@ export default function IceCheckoutPage() {
                       </button>
                     </div>
                     <p className="text-xs text-slate-500 mt-3 text-center">
-                      Cancel anytime. <span className="text-purple-400 cursor-pointer hover:underline">Compare plans</span>
+                      Cancel anytime. <span className="text-cyan-400 cursor-pointer hover:underline">Compare plans</span>
                     </p>
                   </motion.div>
                 )}
@@ -622,10 +622,10 @@ export default function IceCheckoutPage() {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-500/30">
+          <Card className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border-cyan-500/30">
             <CardContent className="py-6">
               {/* Price breakdown summary */}
-              <div className="space-y-2 mb-4 pb-4 border-b border-purple-500/20">
+              <div className="space-y-2 mb-4 pb-4 border-b border-cyan-500/20">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Base Experience</span>
                   <span className="text-white">${(pricingConfig?.basePricePerIce ?? 9.99).toFixed(2)}</span>
@@ -668,7 +668,7 @@ export default function IceCheckoutPage() {
               <Button
                 onClick={handleProceedToPayment}
                 disabled={!outputChoice || (outputChoice === "publish" && !selectedPlan) || checkoutMutation.isPending}
-                className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg font-semibold"
+                className="w-full h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-lg font-semibold"
                 data-testid="button-proceed-to-payment"
               >
                 {checkoutMutation.isPending ? (

@@ -81,14 +81,14 @@ function LockedOverlay({
 }) {
   return (
     <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 z-10">
-      <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full p-3 mb-3">
-        <Lock className="w-6 h-6 text-purple-400" />
+      <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full p-3 mb-3">
+        <Lock className="w-6 h-6 text-cyan-400" />
       </div>
       <h4 className="text-white font-semibold mb-1">{feature}</h4>
       <p className="text-slate-400 text-sm text-center mb-4 max-w-xs">{description}</p>
       <Button
         onClick={onUpgrade}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
+        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
         size="sm"
       >
         <Crown className="w-4 h-4" />
@@ -652,13 +652,13 @@ export function IceCardEditor({
     <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-900/80">
       <div 
         className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${
-          isExpanded ? "bg-purple-900/30 border-b border-purple-500/30" : "hover:bg-slate-800/50"
+          isExpanded ? "bg-cyan-900/30 border-b border-cyan-500/30" : "hover:bg-slate-800/50"
         }`}
         onClick={onToggleExpand}
         data-testid={`card-editor-header-${cardIndex}`}
       >
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-mono text-sm ${
-          isExpanded ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400"
+          isExpanded ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400"
         }`}>
           {String(cardIndex + 1).padStart(2, '0')}
         </div>
@@ -678,8 +678,8 @@ export function IceCardEditor({
             </div>
           )}
           {card.narrationAudioUrl && (
-            <div className="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center" title="Has narration">
-              <Mic className="w-3 h-3 text-purple-400" />
+            <div className="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center" title="Has narration">
+              <Mic className="w-3 h-3 text-cyan-400" />
             </div>
           )}
           {isExpanded ? (
@@ -704,7 +704,7 @@ export function IceCardEditor({
                   onClick={() => setActiveTab("content")}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
                     activeTab === "content" 
-                      ? "bg-purple-600 text-white" 
+                      ? "bg-cyan-600 text-white" 
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                   }`}
                   data-testid="tab-content"
@@ -716,7 +716,7 @@ export function IceCardEditor({
                   onClick={() => setActiveTab("image")}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
                     activeTab === "image" 
-                      ? "bg-purple-600 text-white" 
+                      ? "bg-cyan-600 text-white" 
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                   }`}
                   data-testid="tab-image-gen"
@@ -729,7 +729,7 @@ export function IceCardEditor({
                   onClick={() => setActiveTab("video")}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
                     activeTab === "video" 
-                      ? "bg-purple-600 text-white" 
+                      ? "bg-cyan-600 text-white" 
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                   }`}
                   data-testid="tab-video-gen"
@@ -742,7 +742,7 @@ export function IceCardEditor({
                   onClick={() => setActiveTab("narration")}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                     activeTab === "narration" 
-                      ? "bg-purple-600 text-white" 
+                      ? "bg-cyan-600 text-white" 
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                   }`}
                   data-testid="tab-narration"
@@ -828,7 +828,7 @@ export function IceCardEditor({
                             <div className="absolute top-1 left-1 flex gap-1">
                               <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                                 asset.source === 'ai' 
-                                  ? 'bg-purple-500/80 text-white' 
+                                  ? 'bg-cyan-500/80 text-white' 
                                   : 'bg-blue-500/80 text-white'
                               }`}>
                                 {asset.source === 'ai' ? 'AI' : 'Upload'}
@@ -883,7 +883,7 @@ export function IceCardEditor({
                   <div className="p-3 bg-slate-800/50 rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
                         <Label className="text-slate-300 cursor-pointer">Enhance Prompt</Label>
                       </div>
                       <Switch
@@ -940,7 +940,7 @@ export function IceCardEditor({
                             variant="outline"
                             onClick={() => handleEnhancePrompt('image')}
                             disabled={enhanceLoading}
-                            className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+                            className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
                             data-testid="button-regenerate-enhanced"
                           >
                             {enhanceLoading ? (
@@ -986,7 +986,7 @@ export function IceCardEditor({
                     <Button
                       onClick={handleGenerateImage}
                       disabled={imageLoading || imageUploading}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
+                      className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
                       data-testid="button-generate-image"
                     >
                       {imageLoading ? (
@@ -1226,9 +1226,9 @@ export function IceCardEditor({
                   )}
                   
                   {card.narrationAudioUrl && (
-                    <div className="rounded-lg overflow-hidden border border-purple-500/30 bg-purple-500/5">
-                      <div className="p-2 bg-purple-500/10 flex items-center justify-between">
-                        <span className="text-sm font-medium text-purple-400">Generated Narration</span>
+                    <div className="rounded-lg overflow-hidden border border-cyan-500/30 bg-cyan-500/5">
+                      <div className="p-2 bg-cyan-500/10 flex items-center justify-between">
+                        <span className="text-sm font-medium text-cyan-400">Generated Narration</span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1319,7 +1319,7 @@ export function IceCardEditor({
                         <Button
                           onClick={handleGenerateNarration}
                           disabled={narrationLoading || !narrationText.trim() || narrationText.length > 3000}
-                          className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
+                          className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
                           data-testid="button-generate-narration"
                         >
                           {narrationLoading ? (

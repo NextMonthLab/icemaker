@@ -40,7 +40,7 @@ function TitlePackThumbnail({ pack, isSelected }: { pack: TitlePack; isSelected:
         "bg-gradient-to-b from-slate-800 to-slate-900",
         "border-2 transition-all",
         isSelected 
-          ? "border-pink-500 ring-2 ring-pink-500/30" 
+          ? "border-cyan-500 ring-2 ring-cyan-500/30" 
           : "border-white/10 hover:border-white/30"
       )}
     >
@@ -74,7 +74,7 @@ function TitlePackThumbnail({ pack, isSelected }: { pack: TitlePack; isSelected:
       </div>
       
       {isSelected && (
-        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center">
+        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
           <Check className="w-3 h-3 text-white" />
         </div>
       )}
@@ -98,7 +98,7 @@ export function TitlePackSelector({ value, onChange, className, compact = false 
             )}
             data-testid="button-title-pack-selector"
           >
-            <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
             <span className="flex-1 text-left text-sm text-white">{selectedPack.name}</span>
             <ChevronDown className="w-4 h-4 text-white/60" />
           </button>
@@ -124,7 +124,7 @@ export function TitlePackSelector({ value, onChange, className, compact = false 
                   className={cn(
                     "w-full flex items-center gap-3 p-2 rounded-lg transition-colors",
                     value === pack.id 
-                      ? "bg-pink-500/20 border border-pink-500/30" 
+                      ? "bg-cyan-500/20 border border-cyan-500/30" 
                       : "hover:bg-white/5 border border-transparent"
                   )}
                   data-testid={`button-title-pack-${pack.id}`}
@@ -137,7 +137,7 @@ export function TitlePackSelector({ value, onChange, className, compact = false 
                     <div className="text-xs text-white/50 line-clamp-1">{pack.description}</div>
                   </div>
                   {value === pack.id && (
-                    <Check className="w-4 h-4 text-pink-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
                   )}
                 </button>
               ))}
@@ -168,7 +168,7 @@ export function TitlePackSelector({ value, onChange, className, compact = false 
             <TitlePackThumbnail pack={pack} isSelected={value === pack.id} />
             <span className={cn(
               "text-[10px] block truncate transition-colors",
-              value === pack.id ? "text-pink-400" : "text-white/60 group-hover:text-white"
+              value === pack.id ? "text-cyan-400" : "text-white/60 group-hover:text-white"
             )}>
               {pack.name}
             </span>
