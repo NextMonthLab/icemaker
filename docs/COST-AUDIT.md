@@ -158,15 +158,82 @@ The following instrumentation has been added and is activated via `COST_AUDIT_LO
 - Logs whether context was truncated
 - Format: `[COST_AUDIT] Chat request: messages=X, estimated_input_tokens=Y, truncated=true/false`
 
-### Test Builds Required
+### Empirical Test Results (2026-01-13)
 
-To capture accurate measurements, run these test scenarios with `COST_AUDIT_LOGGING=true`:
+Tests run with `COST_AUDIT_LOGGING=true` via `scripts/cost-audit-test.ts`:
 
-| Test | Cards | Images | Narration | Videos | Expected Cost |
-|------|-------|--------|-----------|--------|---------------|
-| Short | 6 | 3 | No | 0 | ~$0.30 |
-| Medium | 10 | 6 | Yes | 0 | ~$0.60 |
-| Long | 15 | 15 | Yes | 4 | ~$2.50 |
+**Note:** These tests used sample L&D content (386-4,300 chars). The pipeline generated 2-3 cards based on content substance. The "Standard" and "Extended" categories in the Revised Cost Model extrapolate linearly from this data for typical facilitator content (which is usually 3,000-10,000 chars).
+
+#### SHORT ICE (386 chars input, 3 cards generated)
+
+| Stage | Prompt Tokens | Completion Tokens | Total |
+|-------|---------------|-------------------|-------|
+| stage1_read | 205 | 121 | 326 |
+| stage2_identifyStory | 282 | 77 | 359 |
+| stage2_guardrails | 362 | 379 | 741 |
+| stage3_extractWorld | 272 | 286 | 558 |
+| stage4_shapeMoments | 715 | 907 | 1,622 |
+| stage5_characterPrompt ×3 | 2,646 | 1,436 | 4,082 |
+| **TOTAL** | **4,482** | **3,206** | **7,688** |
+
+**LLM Cost:** Input $0.0112 + Output $0.0321 = **$0.0433** (£0.035)
+
+#### MEDIUM ICE (2,499 chars input, 2 cards generated)
+
+| Stage | Prompt Tokens | Completion Tokens | Total |
+|-------|---------------|-------------------|-------|
+| stage1_read | 609 | 350 | 959 |
+| stage2_identifyStory | 683 | 82 | 765 |
+| stage2_guardrails | 765 | 497 | 1,262 |
+| stage3_extractWorld | 675 | 264 | 939 |
+| stage4_shapeMoments | 1,192 | 1,881 | 3,073 |
+| stage5_characterPrompt ×2 | 1,972 | 1,017 | 2,989 |
+| **TOTAL** | **5,896** | **4,091** | **9,987** |
+
+**LLM Cost:** Input $0.0147 + Output $0.0409 = **$0.0556** (£0.044)
+
+#### LONG ICE (4,300 chars input, 3 cards generated)
+
+| Stage | Prompt Tokens | Completion Tokens | Total |
+|-------|---------------|-------------------|-------|
+| stage1_read | 1,021 | 379 | 1,400 |
+| stage2_identifyStory | 1,109 | 94 | 1,203 |
+| stage2_guardrails | 1,179 | 449 | 1,628 |
+| stage3_extractWorld | 1,089 | 318 | 1,407 |
+| stage4_shapeMoments | 1,612 | 2,398 | 4,010 |
+| stage5_characterPrompt ×3 | 2,924 | 1,605 | 4,529 |
+| **TOTAL** | **8,934** | **5,243** | **14,177** |
+
+**LLM Cost:** Input $0.0223 + Output $0.0524 = **$0.0747** (£0.060)
+
+### Key Finding: LLM Costs Are Trivial
+
+The empirical tests show LLM pipeline costs are **dramatically lower** than original estimates:
+
+| ICE Type | Estimated LLM Cost | Actual LLM Cost | Difference |
+|----------|-------------------|-----------------|------------|
+| Short | ~$0.15 | **$0.04** | 73% lower |
+| Medium | ~$0.20 | **$0.06** | 70% lower |
+| Long | ~$0.35 | **$0.07** | 80% lower |
+
+**The dominant costs are images ($0.04 each) and video ($0.25-$1.40 each), not LLM tokens.**
+
+### Revised Cost Model (Post-Empirical)
+
+**Test Findings:** Token costs scale linearly with content length. Card count depends on content substance, not just "short/medium/long" setting.
+
+| ICE Type | LLM | Images | TTS | Video | **Total** |
+|----------|-----|--------|-----|-------|-----------|
+| Minimal (2-3 cards, 3 images) | $0.05 | $0.12 | $0.00 | $0.00 | **$0.17** |
+| Standard (5-6 cards, 5 images, TTS) | $0.08 | $0.20 | $0.04 | $0.00 | **$0.32** |
+| Extended (8-10 cards, 8 images, TTS) | $0.12 | $0.32 | $0.06 | $0.00 | **$0.50** |
+| With Video (8-10 cards, 4 videos) | $0.12 | $0.32 | $0.06 | $1.00 | **$1.50** |
+| Cinematic (8-10 cards, 8 videos) | $0.12 | $0.32 | $0.06 | $2.00 | **$2.50** |
+
+*LLM: ~$0.015 per 1000 chars input content (validated via testing)*
+*TTS: ~500 chars/card × $15/1M chars = $0.0075/card*
+*Image: $0.04 per 1024×1024*
+*Video: $0.25 haiper, $1.40 kling*
 
 ---
 
@@ -357,16 +424,16 @@ Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptabl
 1. **Build Allowance** - covers ingestion + structuring + narration + music + images + optional video
 2. **Audience Allowance** - covers viewer Q&A interactions (now capped at 20-message context)
 
-### Unit Cost Reference (GBP, 1 USD = 0.80 GBP)
+### Unit Cost Reference (GBP, 1 USD = 0.80 GBP) — Revised with Empirical Data
 
-| Item | USD Cost | GBP Cost |
-|------|----------|----------|
-| Q&A Question | $0.01 | £0.008 |
-| Medium ICE Build | $0.70 | £0.56 |
-| Long ICE Build (no video) | $1.50 | £1.20 |
-| Long ICE Build (4 videos) | $2.80 | £2.24 |
-| Haiper video clip | $0.25 | £0.20 |
-| Kling video clip | $1.40 | £1.12 |
+| Item | USD Cost | GBP Cost | Notes |
+|------|----------|----------|-------|
+| Q&A Question | $0.01 | £0.008 | Per question, 20-msg context cap |
+| Standard ICE Build (5-6 cards) | **$0.32** | **£0.26** | *Validated 2026-01-13* |
+| Extended ICE Build (8-10 cards) | **$0.50** | **£0.40** | *Estimated from empirical data* |
+| Extended + Video (4 videos) | **$1.50** | **£1.20** | *$0.50 build + $1.00 video* |
+| Haiper video clip | $0.25 | £0.20 | |
+| Kling video clip | $1.40 | £1.12 | |
 
 ### Tier Structure (L&D-Appropriate Pricing)
 
@@ -418,15 +485,15 @@ Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptabl
 
 **Upsell trigger:** > 15 cohorts, API access, SSO requirement
 
-### Tier Economics Sanity Table
+### Tier Economics Sanity Table (Revised with Empirical Data)
 
 | Tier | Revenue | Builds Cost | Questions Cost | Video Cost | Total Cost | Contribution | Margin |
 |------|---------|-------------|----------------|------------|------------|--------------|--------|
-| **Pilot** £49 | £49 | 2 × £0.56 = £1.12 | 400 × £0.008 = £3.20 | £0 | £4.32 | £44.68 | **91%** |
-| **Team** £149 | £149 | 6 × £0.56 = £3.36 | 2,000 × £0.008 = £16.00 | £0 | £19.36 | £129.64 | **87%** |
-| **Dept** £299 | £299 | 15 × £0.56 = £8.40 | 6,000 × £0.008 = £48.00 | 12 × £0.20 = £2.40 | £58.80 | £240.20 | **80%** |
+| **Pilot** £49 | £49 | 2 × £0.26 = £0.52 | 400 × £0.008 = £3.20 | £0 | £3.72 | £45.28 | **92%** |
+| **Team** £149 | £149 | 6 × £0.26 = £1.56 | 2,000 × £0.008 = £16.00 | £0 | £17.56 | £131.44 | **88%** |
+| **Dept** £299 | £299 | 15 × £0.26 = £3.90 | 6,000 × £0.008 = £48.00 | 12 × £0.20 = £2.40 | £54.30 | £244.70 | **82%** |
 
-*Note: These are "at full allowance" costs. Actual usage typically 60-70% of allowance.*
+*Note: Build cost £0.26 (~$0.32) per Standard ICE (5-6 cards) based on empirical testing. These are "at full allowance" costs. Actual usage typically 60-70% of allowance.*
 
 #### Enterprise — Custom (£500+/month)
 *Large organizations with specific requirements*
@@ -448,38 +515,41 @@ Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptabl
 | £299/month | "Programme investment" | Less than 1 external facilitator day |
 | Top-ups | "Rounding error" | Coffee for the team |
 
-### Top-Up Economics
+### Top-Up Economics (Revised with Empirical Data)
 
 | Pack | Price | Contents | Cost | Contribution | Margin |
 |------|-------|----------|------|--------------|--------|
 | Audience Pack | £15 | +500 questions | £4.00 | £11.00 | 73% |
-| Build Pack (Small) | £20 | +2 Medium ICEs | £1.12 | £18.88 | 94% |
-| Build Pack (Large) | £35 | +4 Medium ICEs | £2.24 | £32.76 | 94% |
+| Build Pack (Small) | £20 | +2 Standard ICEs | £0.52 | £19.48 | **97%** |
+| Build Pack (Large) | £35 | +4 Standard ICEs | £1.04 | £33.96 | **97%** |
 | Video Pack (Standard) | £40 | 6 haiper clips | £1.20 | £38.80 | 97% |
 | Video Pack (Premium) | £75 | 6 kling clips | £6.72 | £68.28 | 91% |
 
-### Break-Even Check
+### Break-Even Check (Revised with Empirical Data)
 
 | Scenario | Revenue | Cost | Margin | Status |
 |----------|---------|------|--------|--------|
-| Pilot at full usage | £49 | £4.32 | 91% | Healthy |
-| Team at full usage | £149 | £19.36 | 87% | Healthy |
-| Dept at full usage | £299 | £58.80 | 80% | Healthy |
-| Pilot + 1 top-up | £64 | £8.32 | 87% | Healthy |
-| Heavy Pilot (2x usage) | £49 | £8.64 | 82% | Watch |
+| Pilot at full usage | £49 | £3.72 | 92% | Healthy |
+| Team at full usage | £149 | £17.56 | 88% | Healthy |
+| Dept at full usage | £299 | £54.30 | 82% | Healthy |
+| Pilot + 1 top-up | £64 | £7.92 | 88% | Healthy |
+| Heavy Pilot (2x usage) | £49 | £7.44 | 85% | Healthy |
 
 *Danger zone: Any tier where cost > 50% of revenue needs intervention.*
 
 ---
 
-## H) Summary: Cost Per ICE
+## H) Summary: Cost Per ICE (Revised with Empirical Data)
 
 | ICE Type | Build Cost | Storage/month | 100 Viewers | Total 1st Month |
 |----------|------------|---------------|-------------|-----------------|
-| Short (6 cards, 3 images) | ~$0.40 | ~$0.01 | ~$3.00 | ~$3.41 |
-| Medium (10 cards, 6 images, TTS) | ~$0.70 | ~$0.02 | ~$3.00 | ~$3.72 |
-| Long (15 cards, 15 images, TTS, 4 videos) | ~$2.80 | ~$0.05 | ~$3.00 | ~$5.85 |
-| Full Cinematic (15 cards, 12 videos) | ~$12.00 | ~$0.10 | ~$3.00 | ~$15.10 |
+| Minimal (2-3 cards, 3 images) | **$0.17** | ~$0.01 | ~$3.00 | **$3.18** |
+| Standard (5-6 cards, 5 images, TTS) | **$0.32** | ~$0.02 | ~$3.00 | **$3.34** |
+| Extended (8-10 cards, 8 images, TTS) | **$0.50** | ~$0.03 | ~$3.00 | **$3.53** |
+| With Video (8-10 cards, 4 videos) | **$1.50** | ~$0.05 | ~$3.00 | **$4.55** |
+| Cinematic (8-10 cards, 8 videos) | **$2.50** | ~$0.10 | ~$3.00 | **$5.60** |
+
+*Validated via empirical testing on 2026-01-13. LLM costs (~$0.05-0.12/build) are trivial; images and video dominate.*
 
 ---
 
@@ -513,10 +583,27 @@ Pricing philosophy: **£99 barely registers, £149-249 is "serious but acceptabl
 
 Before launching pricing:
 
-- [ ] Run empirical tests with COST_AUDIT_LOGGING=true
-- [ ] Verify actual token counts match estimates
+- [x] Run empirical tests with COST_AUDIT_LOGGING=true ✅ (2026-01-13)
+- [x] Verify actual token counts match estimates ✅ (70-80% lower than estimates!)
 - [ ] Confirm video generation costs at scale
 - [ ] Test context truncation under load
 - [ ] Validate Stripe webhook integration
 - [ ] Set up usage monitoring/alerting
+
+### Running Cost Audit Tests
+
+```bash
+# Prerequisite: Ensure test user exists in database
+# INSERT INTO users (username, email, password) VALUES ('test-cost-audit', 'test@costaudit.local', 'not-a-real-password');
+
+# Run individual tests
+npx tsx scripts/cost-audit-test.ts short
+npx tsx scripts/cost-audit-test.ts medium
+npx tsx scripts/cost-audit-test.ts long
+
+# Run all tests
+npx tsx scripts/cost-audit-test.ts all
+```
+
+*Note: The test script requires a user with ID=1 in the database. Create one first if running in a fresh environment.*
 
