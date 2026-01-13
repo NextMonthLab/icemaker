@@ -1,0 +1,161 @@
+Got it — good catch, and this is actually a much stronger architectural decision. Using the exact same pipeline as users is the right call. It keeps demos honest and dogfoods the product properly.
+
+Below is the corrected Raplet prompt, rewritten to make it explicit that:
+	•	Demo ICEs are created via the standard IceMaker UI
+	•	They are stored and treated as normal ICEs
+	•	The difference is how they are surfaced, not how they’re built
+
+This is still expectation-setting only. No build yet.
+
+⸻
+
+Raplet System Prompt – IceMaker Demo & Case Study Architecture (Revised: Non-Hardcoded)
+
+Context
+
+IceMaker will soon include a set of first-party demo ICEs used for:
+	•	Product demonstration
+	•	Sales enablement
+	•	Onboarding inspiration
+
+These demo ICEs are not hard-coded.
+
+They are:
+	•	Created using the standard IceMaker UI
+	•	Generated through the same ingestion, card generation, media generation, and interaction pipeline as user ICEs
+	•	Stored in the same underlying ICE system
+
+The distinction is presentation and surfacing, not creation.
+
+This prompt is not a build request.
+It is an architectural signal so the project is prepared for what’s coming.
+
+⸻
+
+Core Principle (Important)
+
+Demo ICEs must prove IceMaker by being made with IceMaker.
+
+There must be:
+	•	No special rendering path
+	•	No special playback logic
+	•	No “fake” or mocked experience
+
+If a demo works, it works because IceMaker works.
+
+⸻
+
+Concept: Demo ICEs
+
+Demo ICEs are:
+	•	Created via the normal UI
+	•	Generated from real prompts and source material
+	•	Identical in structure to user ICEs
+
+They differ only in:
+	•	How they are flagged or categorised
+	•	How they are surfaced in the UI
+
+Examples of future identifiers (do not implement yet):
+	•	isDemo: true
+	•	visibility: demo
+	•	category: case-study
+
+Exact mechanism TBD.
+
+⸻
+
+Dedicated Demo / Case Study Page (Future Scaffold)
+
+Raplet should expect a future dedicated page conceptually similar to:
+	•	/demos
+	•	/case-studies
+	•	/examples
+
+This page will:
+	•	Query and list ICEs that are marked as demo ICEs
+	•	Display them as cards or tiles
+	•	Provide short contextual copy per demo:
+	•	Sector
+	•	Use case
+	•	What problem it solves
+	•	Include a single primary action per demo:
+	•	“View demo”
+	•	“Launch experience”
+
+Important:
+	•	The launch action opens the ICE using the standard ICE viewer
+	•	No editing or duplication from this page
+	•	This is a showcase, not a workspace
+
+⸻
+
+Homepage Awareness (Future)
+
+The IceMaker homepage will later include:
+	•	A small section introducing demo ICEs
+	•	A short explanation like:
+“See how IceMaker works in real scenarios”
+	•	A CTA such as:
+	•	“View demos”
+	•	“Explore examples”
+
+This CTA routes users to the dedicated demo page.
+
+The homepage does not embed full demos.
+
+⸻
+
+Separation of Concerns
+
+Raplet should conceptually separate:
+
+User ICEs
+	•	Created by users
+	•	Listed in personal or team dashboards
+	•	Editable, duplicable, exportable
+
+Demo ICEs
+	•	Created by the IceMaker team (via the same UI)
+	•	Listed on a public-facing demo page
+	•	View-only
+	•	Used for inspiration, sales, and onboarding
+
+Same data model.
+Different surfacing.
+
+⸻
+
+Future-Proofing Notes (Do Not Build Yet)
+
+Raplet should assume:
+	•	Multiple demo ICEs across different sectors
+	•	Demo ICEs may be updated, replaced, or retired
+	•	Demo ICEs may later include:
+	•	A “Use this as a starting point” flow
+	•	A “Duplicate into my workspace” action (optional, future)
+
+None of this is required now.
+Just don’t block it.
+
+⸻
+
+Summary for Raplet
+	•	Demo ICEs are real ICEs
+	•	They are not hard-coded
+	•	They are created through the standard IceMaker UI
+	•	The system will later need:
+	•	A demo listing page
+	•	Homepage links to that page
+	•	A clean way to surface demo ICEs separately from user ICEs
+
+No implementation required yet.
+Just be ready.
+
+⸻
+
+If you want, next step I can:
+	•	Tighten this into a single “Raplet Expectation Block” you can keep pinned
+	•	Or help you define the minimal metadata you’ll eventually need to flag demo ICEs cleanly without regret later
+
+This is solid groundwork. You’re thinking like a platform owner, not a feature builder.

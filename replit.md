@@ -45,8 +45,9 @@ Key architectural decisions and features include:
 -   **Orbit → ICE Flywheel**: Enables admins and influencers to convert Orbit insights into shareable ICE content drafts.
 -   **Caption Engine**: Remotion-based caption system for ICE content with token-driven design, various presets, safe area profiles for social media, phrase grouping, karaoke highlighting, word-level timing, and a fit-to-box layout engine. The composition stage is fixed-width (1080px) and scaled via CSS transform for consistent rendering.
 -   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring Orbit system health with contract-first verification and deterministic checks.
--   **Media Cost Guardrails**: Strictly enforced economic constraints on video (5-second cap, no HD) and images (1024x1024, ~$0.04/image) to preserve profitability. No silent retries or hidden multi-candidate generation.
+-   **Media Cost Guardrails (LOCKED)**: Strictly enforced economic constraints on video (5-second cap, no HD) and images (1024x1024, ~$0.04/image) to preserve profitability. No silent retries or hidden multi-candidate generation.
 -   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
+-   **Demo ICE Architecture (FUTURE)**: Demo ICEs are real ICEs created via the standard IceMaker UI, not hard-coded. They use the same ingestion, card generation, media generation, and interaction pipeline as user ICEs. The distinction is presentation and surfacing, not creation. Future implementation will include: (1) Demo flagging mechanism (e.g., `isDemo: true` or `visibility: demo`), (2) Dedicated demo listing page at `/demos` or `/case-studies`, (3) Homepage section with CTA routing to demo page. Core principle: Demo ICEs must prove IceMaker by being made with IceMaker—no special rendering, no mocked experiences.
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
