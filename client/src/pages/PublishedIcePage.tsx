@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
 import GlobalNav from "@/components/GlobalNav";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PreviewCard {
   id: string;
@@ -35,6 +37,10 @@ export default function PublishedIcePage() {
   const [narrationMuted, setNarrationMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const musicAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadCaptured, setLeadCaptured] = useState(false);
+  const [leadError, setLeadError] = useState("");
 
   const { data: ice, isLoading, error } = useQuery({
     queryKey: ["/api/ice/s", shareSlug],
@@ -49,6 +55,31 @@ export default function PublishedIcePage() {
     enabled: !!shareSlug,
   });
 
+  const leadMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await apiRequest("POST", `/api/ice/s/${shareSlug}/lead`, { email });
+      return response.json();
+    },
+    onSuccess: () => {
+      setLeadCaptured(true);
+      setLeadError("");
+      sessionStorage.setItem(`ice_lead_${shareSlug}`, "true");
+      setIsPlaying(true);
+    },
+    onError: (error: Error) => {
+      setLeadError(error.message || "Failed to submit email");
+    },
+  });
+
+  const handleLeadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadEmail || !leadEmail.includes("@")) {
+      setLeadError("Please enter a valid email address");
+      return;
+    }
+    leadMutation.mutate(leadEmail);
+  };
+
   const cards: PreviewCard[] = ice?.cards || [];
   const characters: StoryCharacter[] = (ice?.characters || []).map((c: any) => ({
     id: c.id,
@@ -59,6 +90,8 @@ export default function PublishedIcePage() {
     systemPrompt: c.systemPrompt,
   }));
   const interactivityNodes: InteractivityNodeData[] = ice?.interactivityNodes || [];
+  
+  const requiresLeadGate = ice?.leadGateEnabled && !leadCaptured && !sessionStorage.getItem(`ice_lead_${shareSlug}`);
 
   useEffect(() => {
     if (ice?.musicEnabled && ice?.musicTrackUrl) {
@@ -162,15 +195,62 @@ export default function PublishedIcePage() {
           <p className="text-white/60 mb-8">
             {cards.length} cards • Interactive experience
           </p>
-          <Button 
-            onClick={() => setIsPlaying(true)}
-            size="lg"
-            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-6 text-lg"
-            data-testid="button-start-experience"
-          >
-            <Play className="w-6 h-6 mr-2" />
-            Start Experience
-          </Button>
+          
+          {requiresLeadGate ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 max-w-sm mx-auto"
+            >
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Mail className="w-5 h-5 text-cyan-400" />
+                <span className="text-white font-medium">
+                  {ice?.leadGatePrompt || "Enter your email to continue watching"}
+                </span>
+              </div>
+              <form onSubmit={handleLeadSubmit} className="space-y-3">
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  data-testid="input-lead-email"
+                />
+                {leadError && (
+                  <p className="text-red-400 text-sm">{leadError}</p>
+                )}
+                <Button 
+                  type="submit"
+                  disabled={leadMutation.isPending}
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+                  data-testid="button-submit-lead"
+                >
+                  {leadMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </motion.div>
+          ) : (
+            <Button 
+              onClick={() => setIsPlaying(true)}
+              size="lg"
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-6 text-lg"
+              data-testid="button-start-experience"
+            >
+              <Play className="w-6 h-6 mr-2" />
+              Start Experience
+            </Button>
+          )}
         </div>
       </div>
     );

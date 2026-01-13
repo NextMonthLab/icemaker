@@ -1085,6 +1085,10 @@ export const icePreviews = pgTable("ice_previews", {
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted
   shareSlug: text("share_slug").unique(), // Human-friendly 8-char slug for published ICEs
   
+  // Lead Gate settings
+  leadGateEnabled: boolean("lead_gate_enabled").default(false), // Require email before viewing
+  leadGatePrompt: text("lead_gate_prompt"), // Custom prompt for lead capture (e.g., "Enter your email to continue")
+  
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
   promotedToJobId: integer("promoted_to_job_id").references(() => transformationJobs.id),
@@ -1099,6 +1103,29 @@ export const icePreviews = pgTable("ice_previews", {
 export const insertIcePreviewSchema = createInsertSchema(icePreviews).omit({ createdAt: true });
 export type InsertIcePreview = z.infer<typeof insertIcePreviewSchema>;
 export type IcePreview = typeof icePreviews.$inferSelect;
+
+// ============ ICE LEADS (Lead capture for published ICEs) ============
+
+export const iceLeads = pgTable("ice_leads", {
+  id: serial("id").primaryKey(),
+  iceId: text("ice_id").references(() => icePreviews.id).notNull(),
+  
+  // Lead information
+  email: text("email").notNull(),
+  name: text("name"), // Optional name if collected
+  
+  // Attribution
+  visitorIp: text("visitor_ip"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertIceLeadSchema = createInsertSchema(iceLeads).omit({ id: true, createdAt: true });
+export type InsertIceLead = z.infer<typeof insertIceLeadSchema>;
+export type IceLead = typeof iceLeads.$inferSelect;
 
 // ============ ORBIT → ICE FLYWHEEL (Types Only - Tables in main ICE section) ============
 

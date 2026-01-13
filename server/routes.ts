@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, db } from "./storage";
-import { sql, eq, desc, gte, isNotNull } from "drizzle-orm";
+import { sql, eq, desc, gte, gt, and, isNotNull } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
@@ -7403,7 +7403,7 @@ Stay engaging, reference story details, and help the audience understand the nar
   app.put("/api/ice/preview/:previewId/publish", requireAuth, async (req, res) => {
     try {
       const { previewId } = req.params;
-      const { visibility } = req.body;
+      const { visibility, leadGateEnabled, leadGatePrompt } = req.body;
       const user = req.user as schema.User;
       
       // Validate visibility
@@ -7426,9 +7426,19 @@ Stay engaging, reference story details, and help the audience understand the nar
         visibility,
       };
       
-      // When reverting to private, invalidate share slug to prevent continued access
+      // Update lead gate settings if provided
+      if (typeof leadGateEnabled === 'boolean') {
+        updateData.leadGateEnabled = leadGateEnabled;
+      }
+      if (typeof leadGatePrompt === 'string') {
+        updateData.leadGatePrompt = leadGatePrompt || null;
+      }
+      
+      // When reverting to private, invalidate share slug and lead gate to prevent continued access
       if (visibility === 'private') {
         updateData.shareSlug = null;
+        updateData.leadGateEnabled = false;
+        updateData.leadGatePrompt = null;
       }
       
       // First time publishing or re-publishing (moving from private to unlisted/public)
@@ -7523,6 +7533,8 @@ Stay engaging, reference story details, and help the audience understand the nar
         musicEnabled: preview.musicEnabled,
         narrationVolume: preview.narrationVolume,
         captionSettings: preview.captionSettings,
+        leadGateEnabled: preview.leadGateEnabled,
+        leadGatePrompt: preview.leadGatePrompt,
         projectBible: preview.projectBible ? {
           characters: preview.projectBible.characters,
           world: preview.projectBible.world,
@@ -7532,6 +7544,76 @@ Stay engaging, reference story details, and help the audience understand the nar
     } catch (error) {
       console.error("Error fetching ICE by slug:", error);
       res.status(500).json({ message: "Error fetching ICE" });
+    }
+  });
+  
+  // Submit lead for an ICE (public access)
+  app.post("/api/ice/s/:shareSlug/lead", async (req, res) => {
+    try {
+      const { shareSlug } = req.params;
+      const { email, name } = req.body;
+      
+      // Validate email with proper regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || typeof email !== 'string' || !emailRegex.test(email) || email.length > 254) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+      
+      // Sanitize name if provided
+      const sanitizedName = typeof name === 'string' ? name.slice(0, 100).trim() : null;
+      
+      // Find the ICE
+      const [preview] = await db.select()
+        .from(schema.icePreviews)
+        .where(eq(schema.icePreviews.shareSlug, shareSlug))
+        .limit(1);
+      
+      if (!preview || preview.visibility === 'private') {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      // Check if lead gate is enabled
+      if (!preview.leadGateEnabled) {
+        return res.status(400).json({ message: "Lead gate not enabled for this ICE" });
+      }
+      
+      // Get visitor info
+      const visitorIp = req.ip || req.socket.remoteAddress || 'unknown';
+      const userAgent = req.get('User-Agent') || 'unknown';
+      const referrer = req.get('Referer') || null;
+      
+      // Check for duplicate leads (same email for same ICE within 24 hours)
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const existingLead = await db.select()
+        .from(schema.iceLeads)
+        .where(
+          and(
+            eq(schema.iceLeads.iceId, preview.id),
+            eq(schema.iceLeads.email, email.toLowerCase()),
+            gt(schema.iceLeads.createdAt, twentyFourHoursAgo)
+          )
+        )
+        .limit(1);
+      
+      // If recent lead exists, just return success (don't create duplicate)
+      if (existingLead.length > 0) {
+        return res.json({ success: true, message: "Access granted" });
+      }
+      
+      // Insert new lead
+      await db.insert(schema.iceLeads).values({
+        iceId: preview.id,
+        email: email.toLowerCase(),
+        name: sanitizedName,
+        visitorIp,
+        userAgent,
+        referrer,
+      });
+      
+      res.json({ success: true, message: "Lead captured successfully" });
+    } catch (error) {
+      console.error("Error capturing lead:", error);
+      res.status(500).json({ message: "Error capturing lead" });
     }
   });
 

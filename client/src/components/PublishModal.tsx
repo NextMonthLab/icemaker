@@ -19,7 +19,11 @@ import {
   Eye,
   Users,
   Shield,
+  Mail,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -31,10 +35,14 @@ interface PublishModalProps {
   previewId: string;
   currentVisibility: ContentVisibility;
   shareSlug?: string | null;
+  leadGateEnabled?: boolean;
+  leadGatePrompt?: string | null;
   onPublishComplete?: (data: {
     visibility: ContentVisibility;
     shareSlug: string | null;
     shareUrl: string | null;
+    leadGateEnabled?: boolean;
+    leadGatePrompt?: string | null;
   }) => void;
 }
 
@@ -76,6 +84,8 @@ export function PublishModal({
   previewId,
   currentVisibility,
   shareSlug,
+  leadGateEnabled: initialLeadGateEnabled = false,
+  leadGatePrompt: initialLeadGatePrompt = null,
   onPublishComplete,
 }: PublishModalProps) {
   const { toast } = useToast();
@@ -84,10 +94,16 @@ export function PublishModal({
   const [shareUrl, setShareUrl] = useState<string | null>(
     shareSlug ? `${window.location.origin}/ice/${shareSlug}` : null
   );
+  const [leadGateEnabled, setLeadGateEnabled] = useState(initialLeadGateEnabled);
+  const [leadGatePrompt, setLeadGatePrompt] = useState(initialLeadGatePrompt || "");
 
   const publishMutation = useMutation({
     mutationFn: async (visibility: ContentVisibility) => {
-      const response = await apiRequest("PUT", `/api/ice/preview/${previewId}/publish`, { visibility });
+      const response = await apiRequest("PUT", `/api/ice/preview/${previewId}/publish`, { 
+        visibility,
+        leadGateEnabled,
+        leadGatePrompt: leadGatePrompt || null,
+      });
       return response.json();
     },
     onSuccess: (data) => {
@@ -105,6 +121,8 @@ export function PublishModal({
         visibility: data.visibility,
         shareSlug: data.shareSlug,
         shareUrl: newShareUrl,
+        leadGateEnabled,
+        leadGatePrompt: leadGatePrompt || null,
       });
     },
     onError: (error: Error) => {
@@ -137,7 +155,9 @@ export function PublishModal({
     }
   };
 
-  const hasChanges = selectedVisibility !== currentVisibility;
+  const hasChanges = selectedVisibility !== currentVisibility || 
+    leadGateEnabled !== initialLeadGateEnabled || 
+    leadGatePrompt !== (initialLeadGatePrompt || "");
   const isPublished = currentVisibility !== "private" && shareUrl;
 
   return (
@@ -194,6 +214,55 @@ export function PublishModal({
               );
             })}
           </div>
+
+          <AnimatePresence>
+            {selectedVisibility !== "private" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-3 pt-2"
+              >
+                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-cyan-400" />
+                      <Label htmlFor="lead-gate" className="text-sm text-white cursor-pointer">
+                        Require email to view
+                      </Label>
+                    </div>
+                    <Switch
+                      id="lead-gate"
+                      checked={leadGateEnabled}
+                      onCheckedChange={setLeadGateEnabled}
+                      data-testid="switch-lead-gate"
+                    />
+                  </div>
+                  <AnimatePresence>
+                    {leadGateEnabled && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3"
+                      >
+                        <Input
+                          placeholder="Custom prompt (optional)"
+                          value={leadGatePrompt}
+                          onChange={(e) => setLeadGatePrompt(e.target.value)}
+                          className="bg-slate-900 border-slate-600 text-white placeholder:text-slate-500"
+                          data-testid="input-lead-gate-prompt"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          Default: "Enter your email to continue watching"
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <AnimatePresence>
             {isPublished && selectedVisibility !== "private" && (
