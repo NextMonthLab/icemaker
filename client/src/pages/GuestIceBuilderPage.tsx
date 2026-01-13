@@ -1894,6 +1894,7 @@ export default function GuestIceBuilderPage() {
                   captionState={captionState}
                   narrationVolume={narrationVolume}
                   narrationMuted={narrationMuted}
+                  showPlaceholderOverlay={!cards[previewCardIndex].generatedImageUrl && !cards[previewCardIndex].generatedVideoUrl}
                   onPhaseChange={(phase) => {
                     if (phase === 'context') {
                       handleCardPhaseComplete();

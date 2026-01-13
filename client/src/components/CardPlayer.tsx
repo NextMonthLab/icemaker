@@ -69,6 +69,7 @@ interface CardPlayerProps {
   narrationVolume?: number; // 0-100
   narrationMuted?: boolean;
   captionState?: CaptionState; // Caption Engine state for presets/karaoke/animations
+  showPlaceholderOverlay?: boolean; // Show "ADD YOUR..." overlay on placeholder backgrounds
 }
 
 type Phase = "cinematic" | "context";
@@ -83,7 +84,8 @@ export default function CardPlayer({
   brandPreferences,
   narrationVolume = 100,
   narrationMuted = false,
-  captionState
+  captionState,
+  showPlaceholderOverlay = false
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -477,11 +479,37 @@ export default function CardPlayer({
                   data-testid="video-player"
                 />
               ) : activeMedia.imageUrl ? (
-                <img
-                  src={activeMedia.imageUrl}
-                  alt={card.title}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={activeMedia.imageUrl}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* ADD YOUR... overlay for placeholder backgrounds */}
+                  {showPlaceholderOverlay && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                      <div className="text-center mb-8">
+                        <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+                          ADD YOUR...
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                          <Image className="w-6 h-6 text-cyan-300" />
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                          <Play className="w-6 h-6 text-cyan-300" />
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                          <Music className="w-6 h-6 text-cyan-300" />
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-400/30 flex items-center justify-center">
+                          <Mic className="w-6 h-6 text-cyan-300" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   {/* Placeholder gradient background with ADD YOUR... overlay */}
