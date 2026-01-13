@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, Di
 import CardPlayer from "@/components/CardPlayer";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import previewCardBackground from "@assets/generated_images/minimal_sunset_with_top_silhouettes.png";
+import previewCardBackground from "@assets/generated_images/icy_mountain_landscape_placeholder.png";
 import { InteractivityNode, AddInteractivityButton, StoryCharacter } from "@/components/InteractivityNode";
 import { GuidedWalkthrough } from "@/components/GuidedWalkthrough";
 import { MediaGenerationPanel } from "@/components/MediaGenerationPanel";
