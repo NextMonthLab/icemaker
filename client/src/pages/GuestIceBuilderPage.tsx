@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -313,7 +313,7 @@ export default function GuestIceBuilderPage() {
   const isProfessionalMode = entitlements && entitlements.tier !== "free";
   const [urlValue, setUrlValue] = useState("");
   const [textValue, setTextValue] = useState("");
-  const [contentContext, setContentContext] = useState<"story" | "article" | "business" | "auto">("auto");
+  const [contentContext, setContentContext] = useState<"ld_framework" | "case_study" | "program_notes" | "auto">("auto");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [cards, setCards] = useState<PreviewCard[]>([]);
@@ -1094,10 +1094,10 @@ export default function GuestIceBuilderPage() {
         {!preview && (
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Create Interactive Experience
+              Turn material into a <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">thinking experience</span>
             </h1>
             <p className="text-white/50 text-sm max-w-xl mx-auto">
-              Transform content into an interactive story. Paste a URL or your script.
+              Upload your framework, model, or case study. IceMaker builds a guided experience that challenges, prompts, and remembers.
             </p>
           </div>
         )}
@@ -1131,20 +1131,20 @@ export default function GuestIceBuilderPage() {
                       data-testid="input-url"
                     />
                     <div className="flex flex-wrap gap-2">
-                      <span className="text-sm text-white/50 self-center mr-2">Content type:</span>
+                      <span className="text-sm text-white/50 self-center mr-2">Context:</span>
                       {[
                         { id: "auto", label: "Auto-detect", icon: Sparkles },
-                        { id: "story", label: "Story/Script", icon: Film },
-                        { id: "article", label: "Article/Blog", icon: FileText },
-                        { id: "business", label: "Business/Product", icon: Globe },
+                        { id: "ld_framework", label: "L&D Framework", icon: GraduationCap },
+                        { id: "case_study", label: "Case Study", icon: FileText },
+                        { id: "program_notes", label: "Program Notes", icon: ScrollText },
                       ].map((ctx) => (
                         <button
                           key={ctx.id}
                           type="button"
-                          onClick={() => setContentContext(ctx.id as typeof contentContext)}
+                          onClick={() => setContentContext(ctx.id as any)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
                             contentContext === ctx.id
-                              ? "bg-pink-500/20 border border-pink-500/50 text-pink-300"
+                              ? "bg-cyan-500/20 border border-cyan-500/50 text-cyan-300"
                               : "bg-white/5 border border-white/10 text-white/60 hover:bg-white/10"
                           }`}
                           data-testid={`context-${ctx.id}`}
@@ -1257,7 +1257,7 @@ export default function GuestIceBuilderPage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={createPreviewMutation.isPending || isFileUploading}
-                  className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
                   data-testid="button-create-preview"
                 >
                   Create Preview
@@ -1344,15 +1344,16 @@ export default function GuestIceBuilderPage() {
                       Add AI-generated visuals, video, music, and interactive character conversations.
                     </p>
                   </div>
+                <Link href={`/ice/preview/${preview.id}/checkout`}>
                   <Button
-                    onClick={() => navigate(`/ice/preview/${preview.id}/checkout`)}
-                    className="bg-purple-600 hover:bg-purple-700 text-sm whitespace-nowrap"
+                    className="bg-cyan-600 hover:bg-cyan-700 text-sm whitespace-nowrap"
                     size="sm"
                     data-testid="button-upgrade-preview"
                   >
                     <Sparkles className="w-3 h-3 mr-1.5" />
                     Upgrade
                   </Button>
+                </Link>
                 </div>
               </div>
             )}
