@@ -426,7 +426,18 @@ export function AddInteractivityButton({
             animate={{ opacity: 1, scale: 1 }}
             className="relative z-20 bg-slate-900 border border-purple-500/40 rounded-lg p-3 shadow-xl min-w-[200px]"
           >
-            <p className="text-[10px] text-purple-300 mb-2 font-medium">Choose character type</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] text-purple-300 font-medium">Choose character type</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCharacterMenu(false)}
+                className="h-5 w-5 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                data-testid={`button-close-character-menu-${afterCardIndex}`}
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
             
             {characters.length > 0 && (
               <>
