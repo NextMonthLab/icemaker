@@ -444,6 +444,7 @@ export function AddInteractivityButton({
   const [showCharacterMenu, setShowCharacterMenu] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingCharacterId, setEditingCharacterId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("");
   const [customRole, setCustomRole] = useState("");
   const [customGreeting, setCustomGreeting] = useState("");
@@ -505,6 +506,28 @@ export function AddInteractivityButton({
   };
 
   const handleCreateCustom = () => {
+    setEditingCharacterId(null);
+    setCustomName("");
+    setCustomRole("");
+    setCustomGreeting("");
+    setCustomPersona("");
+    setCustomKnowledge("");
+    setCustomFields([]);
+    setAvatarPreview(null);
+    setAvatarFile(null);
+    setShowCharacterMenu(false);
+    setShowCreateDialog(true);
+  };
+
+  const handleEditCharacter = (char: StoryCharacter) => {
+    setEditingCharacterId(char.id);
+    setCustomName(char.name || "");
+    setCustomRole(char.role || "");
+    setCustomGreeting(char.openingMessage || "");
+    setCustomPersona(char.systemPrompt || "");
+    setCustomKnowledge(char.knowledgeContext || "");
+    setAvatarPreview(char.avatar || null);
+    setAvatarEnabled(char.avatarEnabled !== false);
     setShowCharacterMenu(false);
     setShowCreateDialog(true);
   };
@@ -513,9 +536,10 @@ export function AddInteractivityButton({
     if (!customName.trim()) return;
     
     setIsCreating(true);
+    const isEditing = !!editingCharacterId;
     
     try {
-      let uploadedAvatarUrl: string | undefined;
+      let uploadedAvatarUrl: string | undefined = avatarPreview || undefined;
       
       if (avatarFile && previewId) {
         setIsUploadingAvatar(true);
@@ -534,8 +558,8 @@ export function AddInteractivityButton({
         setIsUploadingAvatar(false);
       }
       
-      const newCharacter: StoryCharacter = {
-        id: `custom-${Date.now()}`,
+      const characterData: StoryCharacter = {
+        id: isEditing ? editingCharacterId : `custom-${Date.now()}`,
         name: customName.trim(),
         role: customRole.trim() || "AI Assistant",
         openingMessage: customGreeting.trim() || `Hello! I'm ${customName.trim()}. How can I help you today?`,
@@ -546,26 +570,42 @@ export function AddInteractivityButton({
       };
 
       if (previewId) {
-        const response = await fetch(`/api/ice/preview/${previewId}/characters`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...newCharacter,
-            customFields: customFields.length > 0 ? customFields : undefined,
-          }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          newCharacter.id = data.id || newCharacter.id;
+        if (isEditing) {
+          const response = await fetch(`/api/ice/preview/${previewId}/characters/${editingCharacterId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...characterData,
+              customFields: customFields.length > 0 ? customFields : undefined,
+            }),
+          });
+          
+          if (response.ok) {
+            onCharacterCreated?.(characterData);
+          }
+        } else {
+          const response = await fetch(`/api/ice/preview/${previewId}/characters`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...characterData,
+              customFields: customFields.length > 0 ? customFields : undefined,
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            characterData.id = data.id || characterData.id;
+          }
+          
+          onCharacterCreated?.(characterData);
+          onCharacterSelect?.(characterData.id);
+          onAdd();
         }
       }
-
-      onCharacterCreated?.(newCharacter);
-      onCharacterSelect?.(newCharacter.id);
-      onAdd();
       
       setShowCreateDialog(false);
+      setEditingCharacterId(null);
       setCustomName("");
       setCustomRole("");
       setCustomGreeting("");
@@ -577,7 +617,7 @@ export function AddInteractivityButton({
       setAvatarPreview(null);
       setAvatarEnabled(true);
     } catch (error) {
-      console.error("Failed to create character:", error);
+      console.error("Failed to save character:", error);
     } finally {
       setIsCreating(false);
       setIsUploadingAvatar(false);
@@ -621,19 +661,30 @@ export function AddInteractivityButton({
                   <Sparkles className="w-3 h-3 text-cyan-400" />
                   <span className="text-xs text-slate-400">AI-Generated Characters</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="space-y-2 mb-3">
                   {characters.map((char) => (
-                    <Button
-                      key={char.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCharacterSelect(char.id)}
-                      className="h-auto py-2.5 px-3 text-xs justify-start border-cyan-500/20 text-cyan-100 hover:bg-cyan-500/10 hover:border-cyan-500/40 hover:text-white"
-                      data-testid={`button-select-char-${char.id}-after-${afterCardIndex}`}
-                    >
-                      <User className="w-3.5 h-3.5 mr-2 text-cyan-400" />
-                      {char.name}
-                    </Button>
+                    <div key={char.id} className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCharacterSelect(char.id)}
+                        className="flex-1 h-auto py-2.5 px-3 text-xs justify-start border-cyan-500/20 text-cyan-100 hover:bg-cyan-500/10 hover:border-cyan-500/40 hover:text-white"
+                        data-testid={`button-select-char-${char.id}-after-${afterCardIndex}`}
+                      >
+                        <User className="w-3.5 h-3.5 mr-2 text-cyan-400" />
+                        <span className="truncate">{char.name}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditCharacter(char)}
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                        data-testid={`button-edit-char-${char.id}-after-${afterCardIndex}`}
+                        title="Edit character"
+                      >
+                        <PenLine className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
                 <div className="border-t border-slate-700/50 my-3" />
@@ -667,15 +718,20 @@ export function AddInteractivityButton({
         )}
       </div>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        setShowCreateDialog(open);
+        if (!open) setEditingCharacterId(null);
+      }}>
         <DialogContent className="bg-slate-900 border-purple-500/30 max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <PenLine className="w-5 h-5 text-purple-400" />
-              Create Custom Character
+              {editingCharacterId ? "Edit Character" : "Create Custom Character"}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Define a custom AI character for your audience to chat with.
+              {editingCharacterId 
+                ? "Update the character details below."
+                : "Define a custom AI character for your audience to chat with."}
             </DialogDescription>
           </DialogHeader>
           

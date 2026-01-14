@@ -7429,6 +7429,72 @@ Provide a JSON response with:
     }
   });
   
+  // ICE Preview - Update existing character
+  app.patch("/api/ice/preview/:id/characters/:characterId", async (req, res) => {
+    try {
+      const { id: previewId, characterId } = req.params;
+      const { name, role, openingMessage, systemPrompt, knowledgeContext, avatar, avatarEnabled } = req.body;
+      
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ message: "Character name is required" });
+      }
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check expiry
+      if (preview.expiresAt < new Date() && preview.status !== "promoted") {
+        return res.status(410).json({ message: "Preview has expired" });
+      }
+      
+      const existingCharacters = (preview.characters || []) as schema.IcePreviewCharacter[];
+      const charIndex = existingCharacters.findIndex(c => c.id === characterId);
+      
+      if (charIndex === -1) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+      
+      // Build the system prompt
+      let finalSystemPrompt = "";
+      if (systemPrompt && typeof systemPrompt === "string" && systemPrompt.trim()) {
+        finalSystemPrompt = systemPrompt.trim();
+      } else {
+        finalSystemPrompt = `You are ${name}, ${role || "an AI assistant"}. You are helpful, friendly, and knowledgeable about the content in this experience. Answer questions naturally and stay in character.`;
+      }
+      
+      if (knowledgeContext && typeof knowledgeContext === "string" && knowledgeContext.trim()) {
+        finalSystemPrompt += `\n\n## KNOWLEDGE BASE\nUse the following information to inform your responses:\n\n${knowledgeContext.trim()}`;
+      }
+      
+      // Update the character
+      const updatedCharacter: schema.IcePreviewCharacter = {
+        ...existingCharacters[charIndex],
+        name: name.trim(),
+        role: (role || "AI Assistant").trim(),
+        description: `Custom character: ${name}`,
+        systemPrompt: finalSystemPrompt,
+        openingMessage: openingMessage || `Hello! I'm ${name}. How can I help you today?`,
+        avatar: avatar || existingCharacters[charIndex].avatar,
+        avatarEnabled: avatarEnabled === true,
+      };
+      
+      existingCharacters[charIndex] = updatedCharacter;
+      
+      // Update the preview
+      await storage.updateIcePreview(previewId, { characters: existingCharacters });
+      
+      res.json({ 
+        success: true, 
+        character: updatedCharacter,
+      });
+    } catch (error) {
+      console.error("Error updating character:", error);
+      res.status(500).json({ message: "Error updating character" });
+    }
+  });
+  
   // ICE Preview - Upload character avatar
   app.post("/api/ice/preview/:id/character-avatar", upload.single("avatar"), async (req, res) => {
     try {
