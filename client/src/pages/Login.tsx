@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Sparkles, Globe, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
-const LOGO_URL = "/logo.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -32,7 +32,7 @@ export default function Login() {
         await register(username, password);
         toast({
           title: "Account created",
-          description: "Welcome to NextMonth!",
+          description: "Welcome to IceMaker!",
         });
         setLocation("/onboarding");
       } else {
@@ -64,15 +64,17 @@ export default function Login() {
 
         <div className="w-full max-w-md space-y-4 md:space-y-6 relative z-10">
             <div className="text-center space-y-1">
-                <img 
-                  src={LOGO_URL} 
-                  alt="NextMonth" 
-                  className="h-28 md:h-48 mx-auto object-contain"
-                  style={{ clipPath: 'inset(35% 0 35% 0)' }}
-                  data-testid="img-logo"
-                />
+                <div className="h-14 md:h-20 overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={icemakerLogo} 
+                    alt="IceMaker" 
+                    className="h-[150px] md:h-[200px] w-auto object-contain"
+                    style={{ marginTop: '-45px', marginBottom: '-45px' }}
+                    data-testid="img-logo"
+                  />
+                </div>
                 <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest uppercase">
-                    Create Experiences. Control AI Discovery.
+                    Interactive Content Experiences
                 </p>
             </div>
 
@@ -117,7 +119,7 @@ export default function Login() {
                             />
                         </div>
                         <Button 
-                          className="w-full h-10 font-bold tracking-wide bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700" 
+                          className="w-full h-10 font-bold tracking-wide" 
                           disabled={isLoading}
                           data-testid="button-submit"
                         >
