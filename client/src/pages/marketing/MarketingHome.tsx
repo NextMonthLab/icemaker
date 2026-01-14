@@ -88,40 +88,45 @@ export default function MarketingHome() {
       <MarketingHeader />
 
       <main>
-        {/* Hero Section */}
+        {/* Hero Section - Full-bleed cinematic treatment */}
         <BrandBackground purpose="home-hero" variant="hero" className="relative min-h-screen flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black opacity-90" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
+          {/* Full-bleed veil overlay - soft gradient, no hard edges */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+          {/* Radial vignette for cinematic depth */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.4)_100%)]" />
+          {/* Subtle cyan accent glow at top */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/15 via-transparent to-transparent" />
           
+          {/* Content - no box, fully transparent container */}
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 leading-[1.1]" data-testid="text-hero-title">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 leading-[1.1] drop-shadow-lg" data-testid="text-hero-title">
                 Turn training and enablement content into{' '}
                 <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">interactive experiences</span>{' '}
                 people actually finish.
               </h1>
               
-              <p className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-6 leading-relaxed" data-testid="text-hero-description">
+              <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-6 leading-relaxed drop-shadow-md" data-testid="text-hero-description">
                 IceMaker transforms PDFs, decks, URLs and scripts into scene-based experiences with AI visuals, music, and an on-screen guide that answers questions using only your approved material.
               </p>
               
-              <p className="text-sm text-white/50 max-w-2xl mx-auto mb-10">
+              <p className="text-sm text-white/60 max-w-2xl mx-auto mb-10 drop-shadow-sm">
                 Not a slideshow. Not a chatbot. Interactive cinematic experiences — grounded, controlled, and built from what you already have.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Link href="/try">
-                  <Button size="lg" className="gap-2 text-base px-8" data-testid="button-start-building">
+                  <Button size="lg" className="gap-2 text-base px-8 shadow-lg shadow-primary/20" data-testid="button-start-building">
                     Start building
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
                 <Link href="/discover">
-                  <Button size="lg" variant="outline" className="gap-2 text-base px-8 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" data-testid="button-browse-examples">
+                  <Button size="lg" variant="outline" className="gap-2 text-base px-8 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 backdrop-blur-sm" data-testid="button-browse-examples">
                     <Compass className="w-4 h-4" />
                     Browse Examples
                   </Button>

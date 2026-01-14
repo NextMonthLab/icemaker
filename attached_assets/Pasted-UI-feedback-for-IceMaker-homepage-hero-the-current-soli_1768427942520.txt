@@ -1,0 +1,42 @@
+UI feedback for IceMaker homepage hero: the current solid black “floating box” behind the headline looks like a modal/card and feels visually cheap. We need a more premium treatment.
+
+Goal:
+- Replace the harsh black rectangle with a full-hero overlay treatment that blends with the background image.
+- The hero should feel like cinematic text over a background, not a box sitting on top.
+
+Requirements:
+1) Full-bleed hero overlay layer
+- Add an overlay that covers the entire hero area (full width + full height of the hero section).
+- Overlay should be a subtle gradient/veil, not a solid block.
+- Example: a dark-to-transparent gradient, plus a light vignette, so text remains readable but the background still feels present.
+
+2) Make the content container “glass” not “box”
+- The headline + body + buttons can still sit in a centred container, but that container must NOT be a solid black rectangle.
+- Use one of these premium options:
+  A) Fully transparent container (no background), relying on the full-hero overlay for readability
+  B) Very subtle frosted glass panel: low-opacity dark, backdrop blur, soft border, big radius
+- No hard edges. No heavy shadows.
+
+3) Visual spec (rough)
+- Hero overlay:
+  - opacity: light to medium (enough for contrast)
+  - gradient: darker near centre or bottom, easing to transparent at edges
+  - optional: subtle noise texture
+- Container panel (if used):
+  - background: rgba(0,0,0,0.25) or similar (light)
+  - backdrop-blur: 12–24px
+  - border: 1px solid rgba(255,255,255,0.08)
+  - radius: 24–32px
+
+4) Keep it accessible
+- Ensure headline contrast passes (don’t let background overpower text).
+- Buttons must remain clearly visible.
+
+5) Keep it calm and premium
+- No animations required.
+- If any animation exists, ensure prefers-reduced-motion is respected.
+
+Deliverable:
+- Update the homepage hero to remove the “black floating box” look.
+- The hero should read as: background image + full-section gradient veil + clean typographic content.
+- Please include before/after screenshots in your response.
