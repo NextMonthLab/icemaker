@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { Sparkles, Play, Globe, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import GlobalNav from "@/components/GlobalNav";
+import SiteNav from "@/components/SiteNav";
 
 interface PublicIce {
   id: string;
@@ -60,7 +60,7 @@ export default function DiscoverPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      <GlobalNav />
+      <SiteNav variant="marketing" />
       
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
