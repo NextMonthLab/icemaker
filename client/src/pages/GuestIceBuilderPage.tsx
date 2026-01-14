@@ -31,6 +31,7 @@ import { BookOpen } from "lucide-react";
 import type { ProjectBible } from "@shared/schema";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { createDefaultCaptionState, type CaptionState } from "@/caption-engine/schemas";
+import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Share2 } from "lucide-react";
 import { PublishModal } from "@/components/PublishModal";
@@ -1735,6 +1736,9 @@ export default function GuestIceBuilderPage() {
                   </div>
                 </div>
               </div>
+              <div className="mt-3 pt-3 border-t border-white/5">
+                <EnterpriseBrandingUpsell context="audio" variant="compact" />
+              </div>
             </div>
 
             {/* Logo Branding Panel */}
@@ -1833,6 +1837,9 @@ export default function GuestIceBuilderPage() {
                   </div>
                 )}
               </div>
+              <div className="mt-3 pt-3 border-t border-white/5">
+                <EnterpriseBrandingUpsell context="assets" variant="compact" />
+              </div>
             </div>
 
             {/* Advanced Caption Settings */}
@@ -1859,6 +1866,9 @@ export default function GuestIceBuilderPage() {
                     captionState={captionState}
                     onStateChange={setCaptionState}
                   />
+                  <div className="mt-4 pt-3 border-t border-white/5">
+                    <EnterpriseBrandingUpsell context="captions" variant="compact" />
+                  </div>
                 </div>
               </CollapsibleContent>
             </Collapsible>

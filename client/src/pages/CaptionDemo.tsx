@@ -4,6 +4,7 @@ import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { CaptionPreviewPlayer } from "@/components/ice-maker/CaptionPreviewPlayer";
 import { createDefaultCaptionState } from "@/caption-engine/schemas";
 import type { CaptionState, PhraseGroup, WordTiming } from "@/caption-engine/schemas";
+import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell";
 
 const sampleWords: WordTiming[] = [
   { word: "Welcome", startMs: 0, endMs: 400 },
@@ -127,6 +128,10 @@ export default function CaptionDemo() {
                   </span>
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-4">
+              <EnterpriseBrandingUpsell context="captions" variant="card" />
             </div>
           </div>
           

@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell";
 
 interface TitlePackSelectorProps {
   value: string;
@@ -179,6 +180,8 @@ export function TitlePackSelector({ value, onChange, className, compact = false 
       <p className="text-xs text-white/40 italic">
         {selectedPack.description}
       </p>
+      
+      <EnterpriseBrandingUpsell context="titles" variant="compact" className="mt-3" />
     </div>
   );
 }
