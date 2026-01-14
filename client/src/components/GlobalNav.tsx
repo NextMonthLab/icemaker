@@ -16,7 +16,7 @@ import {
   Users,
   BarChart3,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/lib/auth";
 import {
@@ -63,6 +63,7 @@ export default function GlobalNav({
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -100,24 +101,19 @@ export default function GlobalNav({
         <div className="flex items-center gap-3">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer" data-testid="link-global-logo">
-              <img 
-                src={LOGO_URL_DARK} 
-                alt="IceMaker" 
-                className="h-24 w-auto"
-                style={{ clipPath: 'inset(35% 0 35% 0)' }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.nextElementSibling;
-                  if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                }}
-              />
-              <span 
-                className="text-xl font-bold text-cyan-400 hidden items-center"
-                style={{ display: 'none' }}
-              >
-                IceMaker
-              </span>
+              {logoError ? (
+                <span className="text-xl font-bold text-cyan-400 flex items-center">
+                  IceMaker
+                </span>
+              ) : (
+                <img 
+                  src={LOGO_URL_DARK} 
+                  alt="IceMaker" 
+                  className="h-24 w-auto"
+                  style={{ clipPath: 'inset(35% 0 35% 0)' }}
+                  onError={() => setLogoError(true)}
+                />
+              )}
             </div>
           </Link>
 

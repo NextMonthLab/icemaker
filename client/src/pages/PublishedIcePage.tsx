@@ -284,11 +284,6 @@ export default function PublishedIcePage() {
                   narrationAudioUrl: currentCard.narrationAudioUrl,
                   generatedVideoUrl: currentCard.generatedVideoUrl,
                 }}
-                currentCardIndex={currentCardIndex}
-                totalCards={cards.length}
-                onNext={handleNext}
-                onPrev={handlePrev}
-                onCardPhaseComplete={handleCardComplete}
                 narrationMuted={narrationMuted}
                 narrationVolume={ice?.narrationVolume || 100}
               />

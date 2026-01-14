@@ -2076,6 +2076,8 @@ export default function GuestIceBuilderPage() {
           previewId={preview.id}
           currentVisibility={iceVisibility}
           shareSlug={shareSlug}
+          totalCards={cards.length}
+          cardsWithMedia={cards.filter(c => c.generatedImageUrl || c.generatedVideoUrl || (c.mediaAssets && c.mediaAssets.length > 0)).length}
           onPublishComplete={(data) => {
             setIceVisibility(data.visibility);
             setShareSlug(data.shareSlug);

@@ -20,6 +20,7 @@ import {
   Users,
   Shield,
   Mail,
+  AlertCircle,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,8 @@ interface PublishModalProps {
   shareSlug?: string | null;
   leadGateEnabled?: boolean;
   leadGatePrompt?: string | null;
+  totalCards?: number;
+  cardsWithMedia?: number;
   onPublishComplete?: (data: {
     visibility: ContentVisibility;
     shareSlug: string | null;
@@ -86,6 +89,8 @@ export function PublishModal({
   shareSlug,
   leadGateEnabled: initialLeadGateEnabled = false,
   leadGatePrompt: initialLeadGatePrompt = null,
+  totalCards = 0,
+  cardsWithMedia = 0,
   onPublishComplete,
 }: PublishModalProps) {
   const { toast } = useToast();
@@ -159,6 +164,14 @@ export function PublishModal({
     leadGateEnabled !== initialLeadGateEnabled || 
     leadGatePrompt !== (initialLeadGatePrompt || "");
   const isPublished = currentVisibility !== "private" && shareUrl;
+  
+  const minCardsForPublic = 3;
+  const isReadyForPublic = totalCards >= minCardsForPublic && cardsWithMedia >= Math.min(minCardsForPublic, totalCards);
+  const publicBlockedReason = !isReadyForPublic 
+    ? totalCards < minCardsForPublic 
+      ? `Need at least ${minCardsForPublic} cards (you have ${totalCards})`
+      : `Add media to your cards (${cardsWithMedia}/${totalCards} have media)`
+    : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -178,28 +191,32 @@ export function PublishModal({
             {visibilityOptions.map((option) => {
               const Icon = option.icon;
               const isSelected = selectedVisibility === option.value;
+              const isPublicBlocked = option.value === "public" && !isReadyForPublic;
               
               return (
                 <motion.button
                   key={option.value}
-                  onClick={() => setSelectedVisibility(option.value)}
+                  onClick={() => !isPublicBlocked && setSelectedVisibility(option.value)}
+                  disabled={isPublicBlocked}
                   className={`w-full p-4 rounded-lg border transition-all text-left ${
-                    isSelected
+                    isPublicBlocked
+                      ? "bg-slate-800/30 border-slate-700/30 cursor-not-allowed opacity-60"
+                      : isSelected
                       ? "bg-cyan-500/10 border-cyan-500/50"
                       : "bg-slate-800/50 border-slate-700/50 hover:border-slate-600"
                   }`}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={isPublicBlocked ? {} : { scale: 1.01 }}
+                  whileTap={isPublicBlocked ? {} : { scale: 0.99 }}
                   data-testid={`button-visibility-${option.value}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 ${option.color}`}>
+                    <div className={`mt-0.5 ${isPublicBlocked ? "text-slate-500" : option.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">{option.label}</span>
-                        {isSelected && (
+                        <span className={isPublicBlocked ? "text-slate-500 font-medium" : "text-white font-medium"}>{option.label}</span>
+                        {isSelected && !isPublicBlocked && (
                           <motion.span
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -207,7 +224,13 @@ export function PublishModal({
                           />
                         )}
                       </div>
-                      <p className="text-sm text-slate-400 mt-0.5">{option.description}</p>
+                      <p className={`text-sm mt-0.5 ${isPublicBlocked ? "text-slate-600" : "text-slate-400"}`}>{option.description}</p>
+                      {isPublicBlocked && publicBlockedReason && (
+                        <div className="flex items-center gap-1.5 mt-2 text-xs text-amber-400/80">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>{publicBlockedReason}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.button>
