@@ -1,0 +1,104 @@
+==> Available at your primary URL https://icemaker.onrender.com
+==> 
+[GET]
+icemaker.onrender.com/ clientIP="34.82.84.118" requestID="d76ecb2b-5c58-40bc" responseTimeMS=19 responseBytes=223158 userAgent="Go-http-client/2.0"
+==> ///////////////////////////////////////////////////////////
+[GET]
+icemaker.onrender.com/ clientIP="86.133.77.159" requestID="f4b8fe27-f6ff-4fe8" responseTimeMS=10 responseBytes=1112 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/assets/index-D270thNi.css clientIP="86.133.77.159" requestID="5982fffe-7f5b-4686" responseTimeMS=9 responseBytes=30336 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+Error fetching universes: error: relation "universes" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38022
+    at async wI.getAllUniverses (/opt/render/project/src/dist/index.cjs:70:205594)
+    at async /opt/render/project/src/dist/index.cjs:462:32280 {
+  length: 109,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '476',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1466',
+  routine: 'parserOpenTable'
+}
+8:43:10 PM [express] GET /api/universes 500 in 92ms :: {"message":"Error fetching universes"}
+Error fetching universes: error: relation "universes" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38022
+    at async wI.getAllUniverses (/opt/render/project/src/dist/index.cjs:70:205594)
+    at async /opt/render/project/src/dist/index.cjs:462:32280 {
+  length: 109,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+[GET]
+icemaker.onrender.com/assets/index-CjkaENA9.js clientIP="86.133.77.159" requestID="4385809b-e3ba-4acd" responseTimeMS=90 responseBytes=434196 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/favicon.png clientIP="86.133.77.159" requestID="da96f8af-9c85-4663" responseTimeMS=5 responseBytes=1458 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/api/universes clientIP="86.133.77.159" requestID="8aee9229-4d22-4454" responseTimeMS=96 responseBytes=312 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/api/auth/me clientIP="86.133.77.159" requestID="30a49a15-feac-4153" responseTimeMS=9 responseBytes=306 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/api/auth/me clientIP="86.133.77.159" requestID="f62e6808-18d1-4d7e" responseTimeMS=3 responseBytes=306 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/api/universes clientIP="86.133.77.159" requestID="51ef2a3d-4bb5-4b46" responseTimeMS=10 responseBytes=312 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+icemaker.onrender.com/assets/icemaker-logo-Bt_-Uqbj.png clientIP="86.133.77.159" requestID="243b4aed-7129-4050" responseTimeMS=51 responseBytes=2253116 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+  position: '476',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1466',
+  routine: 'parserOpenTable'
+}
+8:43:11 PM [express] GET /api/universes 500 in 8ms :: {"message":"Error fetching universes"}
+8:43:11 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Not authenticated"}
+8:43:11 PM [express] GET /api/auth/me 401 in 1ms :: {"message":"Not authenticated"}
+[GET]
+icemaker.onrender.com/api/plans clientIP="86.133.77.159" requestID="d8f8b675-de51-4a19" responseTimeMS=11 responseBytes=309 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+Error fetching plans: error: relation "plans" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38022
+    at async wI.getAllPlans (/opt/render/project/src/dist/index.cjs:70:218728)
+    at async /opt/render/project/src/dist/index.cjs:477:13292 {
+  length: 105,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '167',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1466',
+  routine: 'parserOpenTable'
+}
+8:43:14 PM [express] GET /api/plans 500 in 9ms :: {"message":"Error fetching plans"}
+[POST]
+icemaker.onrender.com/api/ice/preview/upload clientIP="86.133.77.159" requestID="8d354dcb-e8bc-4a38" responseTimeMS=223 responseBytes=314 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
