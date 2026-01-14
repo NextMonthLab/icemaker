@@ -340,7 +340,6 @@ export function AddInteractivityButton({
   previewId,
   onCharacterCreated,
 }: AddInteractivityButtonProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [showCharacterMenu, setShowCharacterMenu] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -413,54 +412,56 @@ export function AddInteractivityButton({
   return (
     <>
       <div
-        className="relative h-8 flex items-center justify-center group cursor-pointer"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); if (!showCreateDialog) setShowCharacterMenu(false); }}
+        className="relative py-3 flex items-center justify-center"
         data-testid={`button-add-node-after-${afterCardIndex}`}
       >
-        <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+        <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
         
         {showCharacterMenu ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative z-20 bg-slate-900 border border-purple-500/40 rounded-lg p-3 shadow-xl min-w-[200px]"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="relative z-20 w-full max-w-sm bg-slate-900/95 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-4 shadow-xl shadow-cyan-500/10"
           >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] text-purple-300 font-medium">Choose character type</p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-cyan-400" />
+                <p className="text-sm text-white font-medium">Choose a character</p>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCharacterMenu(false)}
-                className="h-5 w-5 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full"
                 data-testid={`button-close-character-menu-${afterCardIndex}`}
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </Button>
             </div>
             
             {characters.length > 0 && (
               <>
                 <div className="flex items-center gap-2 mb-2">
-                  <Wand2 className="w-3 h-3 text-purple-400" />
-                  <span className="text-[10px] text-slate-400">AI-Generated</span>
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <span className="text-xs text-slate-400">AI-Generated Characters</span>
                 </div>
-                <div className="flex flex-wrap gap-1 mb-3">
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   {characters.map((char) => (
                     <Button
                       key={char.id}
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => handleCharacterSelect(char.id)}
-                      className="h-auto py-1.5 px-2 text-xs text-purple-200 hover:bg-purple-500/20 hover:text-white"
+                      className="h-auto py-2.5 px-3 text-xs justify-start border-cyan-500/20 text-cyan-100 hover:bg-cyan-500/10 hover:border-cyan-500/40 hover:text-white"
                       data-testid={`button-select-char-${char.id}-after-${afterCardIndex}`}
                     >
-                      <User className="w-3 h-3 mr-1" />
+                      <User className="w-3.5 h-3.5 mr-2 text-cyan-400" />
                       {char.name}
                     </Button>
                   ))}
                 </div>
-                <div className="border-t border-slate-700 my-2" />
+                <div className="border-t border-slate-700/50 my-3" />
               </>
             )}
             
@@ -468,45 +469,26 @@ export function AddInteractivityButton({
               variant="outline"
               size="sm"
               onClick={handleCreateCustom}
-              className="w-full h-auto py-2 text-xs border-dashed border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:text-white"
+              className="w-full h-auto py-2.5 text-xs border-dashed border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 hover:text-white hover:border-cyan-500/50"
               data-testid={`button-create-custom-after-${afterCardIndex}`}
             >
-              <PenLine className="w-3 h-3 mr-2" />
+              <PenLine className="w-3.5 h-3.5 mr-2" />
               Create Custom Character
             </Button>
           </motion.div>
         ) : (
-          <>
-            <motion.button
-              initial={false}
-              animate={{
-                scale: isHovered ? 1.05 : 1,
-              }}
-              onClick={handleClick}
-              className={`relative z-10 w-8 h-7 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                isHovered 
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 border-purple-400/60 shadow-lg shadow-purple-500/20" 
-                  : "bg-slate-800/90 border-purple-500/40"
-              } border`}
-              style={{
-                clipPath: "polygon(0% 0%, 100% 0%, 100% 70%, 60% 70%, 50% 100%, 40% 70%, 0% 70%)",
-              }}
-            >
-              <Plus className={`w-3 h-3 -mt-1 ${isHovered ? "text-white" : "text-purple-400"}`} />
-            </motion.button>
-            <AnimatePresence>
-              {isHovered && (
-                <motion.span
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="absolute left-1/2 translate-x-6 text-xs text-purple-300 whitespace-nowrap bg-slate-900/90 px-2 py-1 rounded"
-                >
-                  Add AI Chat
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </>
+          <motion.button
+            initial={false}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleClick}
+            className="relative z-10 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-400/50 hover:from-cyan-600/30 hover:to-blue-600/30 transition-all duration-200 group shadow-lg shadow-cyan-500/5"
+          >
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/10 to-blue-500/10 animate-pulse opacity-50" />
+            <MessageCircle className="w-4 h-4 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+            <span className="text-sm font-medium text-cyan-200 group-hover:text-white transition-colors">Add AI Chat</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400/60 group-hover:text-cyan-300 transition-colors" />
+          </motion.button>
         )}
       </div>
 
