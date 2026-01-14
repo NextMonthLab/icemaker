@@ -5215,6 +5215,37 @@ Output only the narration paragraph, nothing else.`;
 
   // ============ CARD MEDIA UPLOADS ============
   
+  // Generic upload URL request for ICE preview media
+  app.post("/api/uploads/request-url", requireAuth, async (req, res) => {
+    try {
+      const { name, size, contentType } = req.body;
+      
+      if (!name || !size || !contentType) {
+        return res.status(400).json({ message: "Missing required fields: name, size, contentType" });
+      }
+      
+      // Validate file size (50MB limit)
+      const MAX_SIZE = 50 * 1024 * 1024;
+      if (size > MAX_SIZE) {
+        return res.status(400).json({ message: "File too large. Maximum size is 50MB." });
+      }
+      
+      // Get presigned upload URL from object storage
+      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
+      const objectStorage = new ObjectStorageService();
+      const uploadURL = await objectStorage.getObjectEntityUploadURL();
+      const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+      
+      res.json({
+        uploadURL,
+        objectPath,
+      });
+    } catch (error) {
+      console.error("Error requesting upload URL:", error);
+      res.status(500).json({ message: "Error generating upload URL" });
+    }
+  });
+  
   // Get user storage usage and quota
   app.get("/api/storage/usage", requireAuth, async (req, res) => {
     try {
