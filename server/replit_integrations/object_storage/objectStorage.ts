@@ -298,6 +298,35 @@ export class ObjectStorageService {
       requestedPermission: requestedPermission ?? ObjectPermission.READ,
     });
   }
+
+  // Deletes an object from storage by its file key
+  // Accepts both absolute paths (/bucket/path) and relative paths (path/to/file)
+  async deleteObject(fileKey: string): Promise<void> {
+    try {
+      let fullPath: string;
+      
+      // If the key starts with '/', treat it as an absolute path
+      if (fileKey.startsWith('/')) {
+        fullPath = fileKey;
+      } else {
+        // Otherwise, prefix with the private object directory
+        const privateObjectDir = this.getPrivateObjectDir();
+        fullPath = `${privateObjectDir}/${fileKey}`;
+      }
+      
+      const { bucketName, objectName } = parseObjectPath(fullPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      const [exists] = await file.exists();
+      if (exists) {
+        await file.delete();
+      }
+    } catch (error) {
+      console.error("Error deleting object:", error);
+      throw error;
+    }
+  }
 }
 
 function parseObjectPath(path: string): {

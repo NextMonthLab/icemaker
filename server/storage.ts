@@ -369,6 +369,8 @@ export interface IStorage {
   getOrphanedAssets(olderThanDays: number): Promise<schema.MediaAsset[]>;
   getProfileStorageUsage(profileId: number): Promise<number>;
   updateProfileStorageUsage(profileId: number, deltaBytes: number): Promise<schema.CreatorProfile | undefined>;
+  recalculateProfileStorage(profileId: number): Promise<{ calculatedBytes: number; previousBytes: number }>;
+  getAllProfilesForReconciliation(): Promise<{ id: number; userId: number; usedStorageBytes: number }[]>;
 
   // AI Usage Events (Cost Tracking)
   logAiUsageEvent(event: schema.InsertAiUsageEvent): Promise<schema.AiUsageEvent>;
@@ -4120,6 +4122,41 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return { totalCredits, byType };
+  }
+
+  async recalculateProfileStorage(profileId: number): Promise<{ calculatedBytes: number; previousBytes: number }> {
+    const profile = await db.query.creatorProfiles.findFirst({
+      where: eq(schema.creatorProfiles.id, profileId),
+    });
+    const previousBytes = profile?.usedStorageBytes ?? 0;
+
+    const assets = await db.query.mediaAssets.findMany({
+      where: and(
+        eq(schema.mediaAssets.profileId, profileId),
+        eq(schema.mediaAssets.status, 'active')
+      ),
+    });
+
+    const calculatedBytes = assets.reduce((sum, asset) => sum + asset.fileSizeBytes, 0);
+
+    if (calculatedBytes !== previousBytes) {
+      await db.update(schema.creatorProfiles)
+        .set({ usedStorageBytes: calculatedBytes })
+        .where(eq(schema.creatorProfiles.id, profileId));
+    }
+
+    return { calculatedBytes, previousBytes };
+  }
+
+  async getAllProfilesForReconciliation(): Promise<{ id: number; userId: number; usedStorageBytes: number }[]> {
+    const profiles = await db.query.creatorProfiles.findMany({
+      columns: { id: true, userId: true, usedStorageBytes: true },
+    });
+    return profiles.map(p => ({
+      id: p.id,
+      userId: p.userId,
+      usedStorageBytes: p.usedStorageBytes ?? 0,
+    }));
   }
 }
 
