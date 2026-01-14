@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { useLocation, useSearch } from "wouter";
 import { useState } from "react";
-import { Sparkles, Globe, User } from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import icemakerLogo from "@assets/icemaker-logo.png";
@@ -173,9 +173,6 @@ export default function Login() {
             <div className="flex justify-center gap-4 md:gap-8 text-[10px] md:text-xs text-muted-foreground font-mono tracking-widest uppercase opacity-50">
                 <div className="flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-cyan-400" /> IceMaker
-                </div>
-                <div className="flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-cyan-400" /> Orbit
                 </div>
                 <div className="flex items-center gap-1">
                     <User className="w-3 h-3 text-cyan-400" /> One Account
