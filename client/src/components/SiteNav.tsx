@@ -77,12 +77,12 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
         {/* Left: Logo */}
         <Link href={logoHref}>
           <div className="flex items-center cursor-pointer" data-testid="link-site-logo">
-            <div className="h-10 overflow-hidden flex items-center">
+            <div className="h-14 overflow-hidden flex items-center">
               <img 
                 src={icemakerLogo} 
                 alt="IceMaker" 
-                className="h-[100px] w-auto object-contain"
-                style={{ marginTop: '-30px', marginBottom: '-30px' }}
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
               />
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
                 <Link href="/try">
                   <Button 
                     size="sm"
-                    className="hidden sm:flex bg-cyan-600 hover:bg-cyan-700 text-white gap-1.5 h-8 px-3 text-xs"
+                    className="hidden sm:flex gap-1.5 h-8 px-3 text-xs"
                     data-testid="nav-cta-ice"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
               <Link href="/try">
                 <Button 
                   size="sm"
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white gap-1.5 h-8 px-3 text-xs"
+                  className="gap-1.5 h-8 px-3 text-xs"
                   data-testid="nav-cta-ice"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
