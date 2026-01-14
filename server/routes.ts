@@ -547,6 +547,17 @@ export async function registerRoutes(
       // Get universes for this creator
       const universes = await storage.getUniversesByCreator(profile.userId);
       
+      // Get social links for this profile
+      const links = await storage.getCreatorProfileLinks(profile.id);
+      
+      // Get follower/following counts
+      const followerCount = await storage.getFollowerCount(profile.id);
+      const followingCount = await storage.getFollowingCount(profile.id);
+      
+      // Get public ICEs for this creator
+      const allIces = await storage.getIcePreviewsByUser(profile.userId);
+      const publicIces = allIces.filter(ice => ice.visibility === 'public');
+      
       // Return public info only (exclude stripe IDs, etc.)
       res.json({
         id: profile.id,
@@ -556,6 +567,10 @@ export async function registerRoutes(
         bio: profile.bio,
         avatarUrl: profile.avatarUrl,
         externalLink: profile.externalLink,
+        links,
+        followerCount,
+        followingCount,
+        iceCount: publicIces.length,
         universes: universes.map(u => ({
           id: u.id,
           slug: u.slug,
@@ -564,10 +579,206 @@ export async function registerRoutes(
           coverImageUrl: u.coverImageUrl,
           genre: u.genre,
         })),
+        ices: publicIces.map(ice => ({
+          id: ice.id,
+          title: ice.title,
+          description: ice.description,
+          coverImageUrl: ice.cards?.[0]?.generatedImageUrl || null,
+          visibility: ice.visibility,
+          createdAt: ice.createdAt,
+        })),
       });
     } catch (error) {
       console.error("Error fetching public creator profile:", error);
       res.status(500).json({ message: "Error fetching creator profile" });
+    }
+  });
+  
+  // Get current user's profile links
+  app.get("/api/me/creator-profile/links", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+      const links = await storage.getCreatorProfileLinks(profile.id);
+      res.json(links);
+    } catch (error) {
+      console.error("Error fetching profile links:", error);
+      res.status(500).json({ message: "Error fetching profile links" });
+    }
+  });
+  
+  // Set profile links (replace all)
+  app.put("/api/me/creator-profile/links", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+      const { links } = req.body;
+      if (!Array.isArray(links)) {
+        return res.status(400).json({ message: "Links must be an array" });
+      }
+      const result = await storage.setCreatorProfileLinks(profile.id, links);
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating profile links:", error);
+      res.status(500).json({ message: "Error updating profile links" });
+    }
+  });
+  
+  // Follow a creator
+  app.post("/api/creators/:profileId/follow", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(403).json({ message: "You need a creator profile to follow others" });
+      }
+      const targetProfileId = parseInt(req.params.profileId);
+      if (isNaN(targetProfileId)) {
+        return res.status(400).json({ message: "Invalid profile ID" });
+      }
+      if (profile.id === targetProfileId) {
+        return res.status(400).json({ message: "You cannot follow yourself" });
+      }
+      await storage.followCreator(profile.id, targetProfileId);
+      const followerCount = await storage.getFollowerCount(targetProfileId);
+      res.json({ following: true, followerCount });
+    } catch (error) {
+      console.error("Error following creator:", error);
+      res.status(500).json({ message: "Error following creator" });
+    }
+  });
+  
+  // Unfollow a creator
+  app.delete("/api/creators/:profileId/follow", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(403).json({ message: "You need a creator profile to unfollow others" });
+      }
+      const targetProfileId = parseInt(req.params.profileId);
+      if (isNaN(targetProfileId)) {
+        return res.status(400).json({ message: "Invalid profile ID" });
+      }
+      await storage.unfollowCreator(profile.id, targetProfileId);
+      const followerCount = await storage.getFollowerCount(targetProfileId);
+      res.json({ following: false, followerCount });
+    } catch (error) {
+      console.error("Error unfollowing creator:", error);
+      res.status(500).json({ message: "Error unfollowing creator" });
+    }
+  });
+  
+  // Check if following a creator
+  app.get("/api/creators/:profileId/follow", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.json({ following: false });
+      }
+      const targetProfileId = parseInt(req.params.profileId);
+      if (isNaN(targetProfileId)) {
+        return res.status(400).json({ message: "Invalid profile ID" });
+      }
+      const isFollowing = await storage.isFollowing(profile.id, targetProfileId);
+      res.json({ following: isFollowing });
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+      res.status(500).json({ message: "Error checking follow status" });
+    }
+  });
+  
+  // Get my followers
+  app.get("/api/me/followers", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.json({ followers: [] });
+      }
+      const followers = await storage.getFollowers(profile.id);
+      res.json({ followers: followers.map(f => ({
+        id: f.profile.id,
+        displayName: f.profile.displayName,
+        slug: f.profile.slug,
+        avatarUrl: f.profile.avatarUrl,
+        headline: f.profile.headline,
+      }))});
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      res.status(500).json({ message: "Error fetching followers" });
+    }
+  });
+  
+  // Get who I'm following
+  app.get("/api/me/following", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.json({ following: [] });
+      }
+      const following = await storage.getFollowing(profile.id);
+      res.json({ following: following.map(f => ({
+        id: f.profile.id,
+        displayName: f.profile.displayName,
+        slug: f.profile.slug,
+        avatarUrl: f.profile.avatarUrl,
+        headline: f.profile.headline,
+      }))});
+    } catch (error) {
+      console.error("Error fetching following:", error);
+      res.status(500).json({ message: "Error fetching following" });
+    }
+  });
+  
+  // Like an ICE
+  app.post("/api/ice/preview/:id/like", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(403).json({ message: "You need a creator profile to like ICEs" });
+      }
+      await storage.likeIce(profile.id, req.params.id);
+      const likeCount = await storage.getIceLikeCount(req.params.id);
+      res.json({ liked: true, likeCount });
+    } catch (error) {
+      console.error("Error liking ICE:", error);
+      res.status(500).json({ message: "Error liking ICE" });
+    }
+  });
+  
+  // Unlike an ICE
+  app.delete("/api/ice/preview/:id/like", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(403).json({ message: "You need a creator profile to unlike ICEs" });
+      }
+      await storage.unlikeIce(profile.id, req.params.id);
+      const likeCount = await storage.getIceLikeCount(req.params.id);
+      res.json({ liked: false, likeCount });
+    } catch (error) {
+      console.error("Error unliking ICE:", error);
+      res.status(500).json({ message: "Error unliking ICE" });
+    }
+  });
+  
+  // Check if liked an ICE + get like count
+  app.get("/api/ice/preview/:id/like", async (req, res) => {
+    try {
+      const likeCount = await storage.getIceLikeCount(req.params.id);
+      let liked = false;
+      if (req.user) {
+        const profile = await storage.getCreatorProfile(req.user.id);
+        if (profile) {
+          liked = await storage.hasLikedIce(profile.id, req.params.id);
+        }
+      }
+      res.json({ liked, likeCount });
+    } catch (error) {
+      console.error("Error checking ICE like status:", error);
+      res.status(500).json({ message: "Error checking ICE like status" });
     }
   });
   

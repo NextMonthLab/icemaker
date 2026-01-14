@@ -35,6 +35,29 @@ export interface IStorage {
   getUniversesByCreator(userId: number): Promise<schema.Universe[]>;
   getCreatorForUniverse(universeId: number): Promise<schema.CreatorProfile | undefined>;
   
+  // Creator Profile Links
+  getCreatorProfileLinks(profileId: number): Promise<schema.CreatorProfileLink[]>;
+  createCreatorProfileLink(link: schema.InsertCreatorProfileLink): Promise<schema.CreatorProfileLink>;
+  updateCreatorProfileLink(id: number, data: Partial<schema.InsertCreatorProfileLink>): Promise<schema.CreatorProfileLink | undefined>;
+  deleteCreatorProfileLink(id: number): Promise<void>;
+  setCreatorProfileLinks(profileId: number, links: Omit<schema.InsertCreatorProfileLink, 'profileId'>[]): Promise<schema.CreatorProfileLink[]>;
+  
+  // Creator Follows
+  followCreator(followerProfileId: number, followedProfileId: number): Promise<schema.CreatorFollow | undefined>;
+  unfollowCreator(followerProfileId: number, followedProfileId: number): Promise<void>;
+  isFollowing(followerProfileId: number, followedProfileId: number): Promise<boolean>;
+  getFollowers(profileId: number): Promise<{ profile: schema.CreatorProfile; user: schema.User }[]>;
+  getFollowing(profileId: number): Promise<{ profile: schema.CreatorProfile; user: schema.User }[]>;
+  getFollowerCount(profileId: number): Promise<number>;
+  getFollowingCount(profileId: number): Promise<number>;
+  
+  // ICE Likes
+  likeIce(profileId: number, iceId: string): Promise<schema.IceLike | undefined>;
+  unlikeIce(profileId: number, iceId: string): Promise<void>;
+  hasLikedIce(profileId: number, iceId: string): Promise<boolean>;
+  getIceLikeCount(iceId: string): Promise<number>;
+  getLikedIces(profileId: number): Promise<schema.IcePreview[]>;
+  
   // Universe
   getUniverse(id: number): Promise<schema.Universe | undefined>;
   getUniverseBySlug(slug: string): Promise<schema.Universe | undefined>;
@@ -456,6 +479,171 @@ export class DatabaseStorage implements IStorage {
     });
     if (!ownerRecord) return undefined;
     return await this.getCreatorProfile(ownerRecord.userId);
+  }
+  
+  // Creator Profile Links
+  async getCreatorProfileLinks(profileId: number): Promise<schema.CreatorProfileLink[]> {
+    return await db.query.creatorProfileLinks.findMany({
+      where: eq(schema.creatorProfileLinks.profileId, profileId),
+      orderBy: [asc(schema.creatorProfileLinks.sortOrder)],
+    });
+  }
+  
+  async createCreatorProfileLink(link: schema.InsertCreatorProfileLink): Promise<schema.CreatorProfileLink> {
+    const [result] = await db.insert(schema.creatorProfileLinks).values(link).returning();
+    return result;
+  }
+  
+  async updateCreatorProfileLink(id: number, data: Partial<schema.InsertCreatorProfileLink>): Promise<schema.CreatorProfileLink | undefined> {
+    const [result] = await db.update(schema.creatorProfileLinks)
+      .set(data)
+      .where(eq(schema.creatorProfileLinks.id, id))
+      .returning();
+    return result;
+  }
+  
+  async deleteCreatorProfileLink(id: number): Promise<void> {
+    await db.delete(schema.creatorProfileLinks).where(eq(schema.creatorProfileLinks.id, id));
+  }
+  
+  async setCreatorProfileLinks(profileId: number, links: Omit<schema.InsertCreatorProfileLink, 'profileId'>[]): Promise<schema.CreatorProfileLink[]> {
+    await db.delete(schema.creatorProfileLinks).where(eq(schema.creatorProfileLinks.profileId, profileId));
+    if (links.length === 0) return [];
+    const linksWithProfile = links.map((link, idx) => ({ ...link, profileId, sortOrder: link.sortOrder ?? idx }));
+    const results = await db.insert(schema.creatorProfileLinks).values(linksWithProfile).returning();
+    return results;
+  }
+  
+  // Creator Follows
+  async followCreator(followerProfileId: number, followedProfileId: number): Promise<schema.CreatorFollow | undefined> {
+    if (followerProfileId === followedProfileId) return undefined;
+    try {
+      const [result] = await db.insert(schema.creatorFollows)
+        .values({ followerProfileId, followedProfileId })
+        .returning();
+      return result;
+    } catch (e: any) {
+      if (e.code === '23505') return undefined;
+      throw e;
+    }
+  }
+  
+  async unfollowCreator(followerProfileId: number, followedProfileId: number): Promise<void> {
+    await db.delete(schema.creatorFollows).where(
+      and(
+        eq(schema.creatorFollows.followerProfileId, followerProfileId),
+        eq(schema.creatorFollows.followedProfileId, followedProfileId)
+      )
+    );
+  }
+  
+  async isFollowing(followerProfileId: number, followedProfileId: number): Promise<boolean> {
+    const result = await db.query.creatorFollows.findFirst({
+      where: and(
+        eq(schema.creatorFollows.followerProfileId, followerProfileId),
+        eq(schema.creatorFollows.followedProfileId, followedProfileId)
+      ),
+    });
+    return !!result;
+  }
+  
+  async getFollowers(profileId: number): Promise<{ profile: schema.CreatorProfile; user: schema.User }[]> {
+    const follows = await db.query.creatorFollows.findMany({
+      where: eq(schema.creatorFollows.followedProfileId, profileId),
+    });
+    const results: { profile: schema.CreatorProfile; user: schema.User }[] = [];
+    for (const follow of follows) {
+      const profile = await db.query.creatorProfiles.findFirst({
+        where: eq(schema.creatorProfiles.id, follow.followerProfileId),
+      });
+      if (profile) {
+        const user = await this.getUser(profile.userId);
+        if (user) results.push({ profile, user });
+      }
+    }
+    return results;
+  }
+  
+  async getFollowing(profileId: number): Promise<{ profile: schema.CreatorProfile; user: schema.User }[]> {
+    const follows = await db.query.creatorFollows.findMany({
+      where: eq(schema.creatorFollows.followerProfileId, profileId),
+    });
+    const results: { profile: schema.CreatorProfile; user: schema.User }[] = [];
+    for (const follow of follows) {
+      const profile = await db.query.creatorProfiles.findFirst({
+        where: eq(schema.creatorProfiles.id, follow.followedProfileId),
+      });
+      if (profile) {
+        const user = await this.getUser(profile.userId);
+        if (user) results.push({ profile, user });
+      }
+    }
+    return results;
+  }
+  
+  async getFollowerCount(profileId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.creatorFollows)
+      .where(eq(schema.creatorFollows.followedProfileId, profileId));
+    return result[0]?.count ?? 0;
+  }
+  
+  async getFollowingCount(profileId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.creatorFollows)
+      .where(eq(schema.creatorFollows.followerProfileId, profileId));
+    return result[0]?.count ?? 0;
+  }
+  
+  // ICE Likes
+  async likeIce(profileId: number, iceId: string): Promise<schema.IceLike | undefined> {
+    try {
+      const [result] = await db.insert(schema.iceLikes)
+        .values({ profileId, iceId })
+        .returning();
+      return result;
+    } catch (e: any) {
+      if (e.code === '23505') return undefined;
+      throw e;
+    }
+  }
+  
+  async unlikeIce(profileId: number, iceId: string): Promise<void> {
+    await db.delete(schema.iceLikes).where(
+      and(
+        eq(schema.iceLikes.profileId, profileId),
+        eq(schema.iceLikes.iceId, iceId)
+      )
+    );
+  }
+  
+  async hasLikedIce(profileId: number, iceId: string): Promise<boolean> {
+    const result = await db.query.iceLikes.findFirst({
+      where: and(
+        eq(schema.iceLikes.profileId, profileId),
+        eq(schema.iceLikes.iceId, iceId)
+      ),
+    });
+    return !!result;
+  }
+  
+  async getIceLikeCount(iceId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.iceLikes)
+      .where(eq(schema.iceLikes.iceId, iceId));
+    return result[0]?.count ?? 0;
+  }
+  
+  async getLikedIces(profileId: number): Promise<schema.IcePreview[]> {
+    const likes = await db.query.iceLikes.findMany({
+      where: eq(schema.iceLikes.profileId, profileId),
+      orderBy: [desc(schema.iceLikes.createdAt)],
+    });
+    const iceIds = likes.map(l => l.iceId);
+    if (iceIds.length === 0) return [];
+    return await db.query.icePreviews.findMany({
+      where: inArray(schema.icePreviews.id, iceIds),
+    });
   }
   
   // Universe
