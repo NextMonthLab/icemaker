@@ -56,7 +56,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: GLOBAL_BG_IMAGE_ID,
     label: "Global Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424814/Winter_Lake_original_1297313_fpmqtu.jpg", // Rob: paste Cloudinary URL here
     alt: "Abstract cinematic background",
     purpose: "global-bg",
     mood: "cinematic",
@@ -80,7 +80,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: "home-section-features",
     label: "Home Features Section",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424827/Splash_Gin_And_Tonic_original_581990_i3trma.jpg", // Rob: paste Cloudinary URL here
     alt: "Features background",
     purpose: "home-section",
     mood: "cinematic",
@@ -93,7 +93,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: PRICING_BG_IMAGE_ID,
     label: "Pricing Hero Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424824/Aerial_Forest_And_Snow_original_906874_mmrecb.jpg", // Rob: paste Cloudinary URL here
     alt: "Premium pricing background",
     purpose: "pricing-hero",
     mood: "cinematic",
@@ -106,7 +106,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: LIBRARY_BG_IMAGE_ID,
     label: "Library Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424827/Ama_Dablam_In_The_Clouds_original_1127041_wogn08.jpg", // Rob: paste Cloudinary URL here
     alt: "Library background",
     purpose: "library-bg",
     mood: "cinematic",
@@ -120,7 +120,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: "fallback-cover-1",
     label: "Fallback Cover 1",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424827/Granite_Mountains_With_Snow_original_1168530_nwbahw.jpg", // Rob: paste Cloudinary URL here
     alt: "Story cover",
     purpose: "library-card-fallback",
     mood: "cinematic",
@@ -129,7 +129,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: "fallback-cover-2",
     label: "Fallback Cover 2",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424824/Aerial_Forest_And_Snow_original_906874_mmrecb.jpg", // Rob: paste Cloudinary URL here
     alt: "Story cover",
     purpose: "library-card-fallback",
     mood: "cinematic",
@@ -138,7 +138,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: "fallback-cover-3",
     label: "Fallback Cover 3",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424824/Aerial_Forest_And_Snow_original_906874_mmrecb.jpg", // Rob: paste Cloudinary URL here
     alt: "Story cover",
     purpose: "library-card-fallback",
     mood: "cinematic",
@@ -147,7 +147,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: "fallback-cover-4",
     label: "Fallback Cover 4",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424814/Winter_Lake_original_1297313_fpmqtu.jpg", // Rob: paste Cloudinary URL here
     alt: "Story cover",
     purpose: "library-card-fallback",
     mood: "playful",
@@ -158,7 +158,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: EXAMPLES_BG_IMAGE_ID,
     label: "Examples Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424814/Icebergs_At_Sunrise_original_1111454_d6gyy0.jpg", // Rob: paste Cloudinary URL here
     alt: "Examples showcase background",
     purpose: "examples-bg",
     mood: "playful",
@@ -169,7 +169,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: DISCOVER_BG_IMAGE_ID,
     label: "Discover Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424824/Iced_Strawberry_Punch_Cocktail_original_1038966_wcsdjn.jpg", // Rob: paste Cloudinary URL here
     alt: "Discover page background",
     purpose: "discover-bg",
     mood: "playful",
