@@ -1,0 +1,144 @@
+We are about to add brand imagery to IceMaker using Cloudinary-hosted images. Do not source images from local assets or Unsplash. Rob will provide Cloudinary URLs and will assign them to specific site sections. Your job is to implement an image configuration + rendering approach that:
+
+- Keeps the site looking premium (subtle, not gimmicky)
+- Is performant (responsive images, lazy loading, preloading where appropriate)
+- Is easy to update (Rob can swap URLs without touching JSX everywhere)
+- Has safe fallbacks if a URL is missing or fails to load
+
+This is a UI refinement only. Do not change backend behaviour or routes.
+
+--------------------------------------------------------------------
+A) Create a single source of truth for brand images
+--------------------------------------------------------------------
+Create: `client/src/brand/brandImages.ts`
+
+It must export a typed config object that supports:
+1) Global backgrounds
+2) Page-specific hero backgrounds
+3) Section backgrounds
+4) Library card placeholders (fallback cover images)
+5) Optional “playful” images for discover/examples only
+
+Example shape (use TypeScript types/interfaces):
+
+type BrandImage = {
+  id: string;
+  label: string;
+  url: string;            // Cloudinary URL (Rob will paste these)
+  alt?: string;
+  purpose:
+    | "global-bg"
+    | "home-hero"
+    | "home-section"
+    | "pricing-hero"
+    | "library-bg"
+    | "library-card-fallback"
+    | "examples-bg"
+    | "discover-bg";
+  mood?: "cinematic" | "playful";
+  overlayOpacity?: number; // recommended overlay to maintain contrast
+  blurPx?: number;         // for background usage
+  preload?: boolean;       // true for above-the-fold hero only
+};
+
+export const BRAND_IMAGES: BrandImage[] = [
+  // placeholders with empty urls until Rob provides links
+];
+
+Also export helper getters:
+- `getBrandImageById(id)`
+- `getBrandImagesByPurpose(purpose)`
+- `getFallbackLibraryCovers()` (returns an array)
+
+Include placeholders for Rob to fill in:
+- HOME_HERO_IMAGE_ID
+- GLOBAL_BG_IMAGE_ID
+- LIBRARY_BG_IMAGE_ID
+- PRICING_BG_IMAGE_ID
+- EXAMPLES_BG_IMAGE_ID
+
+Rob will later paste Cloudinary URLs into this file.
+
+--------------------------------------------------------------------
+B) Background rendering component
+--------------------------------------------------------------------
+Create: `client/src/components/brand/BrandBackground.tsx`
+
+Props:
+- purpose: BrandImage["purpose"]
+- imageId?: string
+- variant?: "subtle" | "hero"
+- className?: string
+
+Behaviour:
+- Uses base gradient + optional background image
+- Background image:
+  - applied with blur (from config blurPx or default)
+  - low opacity overlay (from overlayOpacity or default)
+  - must not reduce text legibility
+- If image missing or fails, degrade to gradient only
+- Respect prefers-reduced-motion: do not animate backgrounds
+
+Implementation details:
+- Use CSS background-image or an absolutely positioned <img> with object-fit cover.
+- For Cloudinary images: do not assume we can use SDK. Just use the URL.
+- Add `loading="eager"` only if preload is true; otherwise lazy.
+
+--------------------------------------------------------------------
+C) Foreground image component (for cards/covers)
+--------------------------------------------------------------------
+Create: `client/src/components/brand/BrandImage.tsx`
+
+Props:
+- imageId?: string
+- fallbackPurpose?: BrandImage["purpose"] (default "library-card-fallback")
+- alt?: string
+- className?: string
+
+Behaviour:
+- If imageId exists and resolves, use it.
+- Else choose a deterministic fallback from `getFallbackLibraryCovers()`:
+  - deterministic based on a stable key (eg ICE id) if provided
+  - otherwise rotate by index
+- Always include:
+  - `loading="lazy"`
+  - `decoding="async"`
+  - onError fallback to next available image then gradient placeholder.
+
+Optional: if Cloudinary URLs include width parameters already, keep them.
+If not, do not break URLs. Just use them as-is.
+
+--------------------------------------------------------------------
+D) Apply backgrounds to key pages
+--------------------------------------------------------------------
+1) Home page:
+- Add `BrandBackground purpose="home-hero" variant="hero"` behind the hero section.
+- Add subtle backgrounds to feature sections only if needed (keep it minimal).
+
+2) Pricing page:
+- Use only cinematic/subtle imagery. No playful images here.
+
+3) Library page:
+- Add `BrandBackground purpose="library-bg" variant="subtle"`
+- Update ICE cards to display a cover image area:
+  - If ICE has its own generated image, use it
+  - Else use BrandImage fallback covers
+
+Do not change the data model for ICEs. If a cover image field already exists, use it. If not, just use fallbacks.
+
+--------------------------------------------------------------------
+E) Cloudinary URL hygiene + performance notes
+--------------------------------------------------------------------
+- Do not embed Cloudinary URLs all over the codebase. Only in brandImages.ts.
+- Ensure all images have appropriate contrast: apply overlay gradient layer.
+- Use responsive layout; do not hardcode pixel heights except for consistent card covers.
+- Add minimal CSS only; do not introduce heavy dependencies.
+
+--------------------------------------------------------------------
+F) Deliverable
+--------------------------------------------------------------------
+- Commit message: "ui: add Cloudinary brand imagery system"
+- Provide a short note in the PR description explaining:
+  - where Rob pastes URLs
+  - which image ids map to which sections
+  - how fallbacks work
