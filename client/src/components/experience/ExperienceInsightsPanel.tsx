@@ -1,16 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { 
-  Eye, 
-  MessageCircle, 
-  TrendingUp, 
+import {
+  Eye,
+  MessageCircle,
+  TrendingUp,
   HelpCircle,
   BarChart3,
-  Sparkles,
-  ArrowRight
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 
 interface ExperienceInsightsPanelProps {
   universeId: number;
@@ -149,25 +146,6 @@ export function ExperienceInsightsPanel({ universeId, universeName }: Experience
           </CardContent>
         </Card>
       )}
-
-      <Card className="bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-sm">Want deeper insights?</h4>
-              <p className="text-xs text-muted-foreground">
-                Connect this experience to Orbit for advanced analytics, lead capture, and AI conversations.
-              </p>
-            </div>
-            <Link href="/orbit">
-              <Button size="sm" className="gap-2" data-testid="button-connect-orbit">
-                Connect to Orbit
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
