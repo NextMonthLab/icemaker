@@ -1370,17 +1370,31 @@ export default function GuestIceBuilderPage() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                   
-                  <div className="mt-4 pt-4 border-t border-white/10 text-center">
-                    <p className="text-xs text-white/40 mb-1">Have a producer brief or spec document?</p>
-                    <Link 
-                      href="/create" 
-                      className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
-                      data-testid="link-producer-brief"
-                    >
-                      <ScrollText className="w-3.5 h-3.5" />
-                      Upload Producer Brief
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
+                  <div className="mt-4 pt-4 border-t border-white/10 text-center space-y-3">
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Want to design from scratch?</p>
+                      <Link 
+                        href="/create" 
+                        className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                        data-testid="link-creation-wizard"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Use the ICE Wizard
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/40 mb-1">Have a producer brief or spec document?</p>
+                      <Link 
+                        href="/create" 
+                        className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white/80 transition-colors"
+                        data-testid="link-producer-brief"
+                      >
+                        <ScrollText className="w-3.5 h-3.5" />
+                        Upload Producer Brief
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
                   </div>
                 </>
               )}
