@@ -6488,14 +6488,17 @@ Stay focused on the content and be helpful.`,
           lastCardInStage.characterId = brief.aiCharacter?.name.toLowerCase().replace(/[^a-z0-9]/g, "_") || "guide";
           
           // Create interactivity node for this checkpoint
+          // Frontend expects: afterCardIndex (number), isActive (boolean), selectedCharacterId (string)
+          const lastCardIndex = globalCardIndex - 1; // globalCardIndex was incremented after adding the card
           interactivityNodes.push({
             id: `checkpoint_stage_${stage.stageNumber}`,
+            afterCardIndex: lastCardIndex,
+            isActive: true,
+            selectedCharacterId: lastCardInStage.characterId,
             type: "ai_chat",
-            triggerCardId: lastCardInStage.id,
             stageNumber: stage.stageNumber,
             stageName: stage.stageName,
             description: stage.checkpointDescription || `Chat with your guide about ${stage.stageName}`,
-            characterId: lastCardInStage.characterId,
             stageContext: brief.aiCharacter?.stageContexts.find(sc => sc.stageNumber === stage.stageNumber)?.contextAddition,
           });
         }
