@@ -89,15 +89,18 @@ export default function MarketingHome() {
 
       <main>
         {/* Hero Section - Full-bleed cinematic treatment */}
-        <BrandBackground purpose="home-hero" variant="hero" className="relative min-h-screen flex items-center justify-center">
-          {/* Full-bleed veil overlay - soft gradient, no hard edges */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
-          {/* Radial vignette for cinematic depth */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.4)_100%)]" />
-          {/* Subtle cyan accent glow at top */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/15 via-transparent to-transparent" />
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          {/* Background image layer (from brand system) */}
+          <BrandBackground purpose="home-hero" variant="hero" className="absolute inset-0" />
           
-          {/* Content - no box, fully transparent container */}
+          {/* Full-bleed veil overlay - soft gradient, no hard edges */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 pointer-events-none" />
+          {/* Radial vignette for cinematic depth */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.3)_100%)] pointer-events-none" />
+          {/* Subtle cyan accent glow at top */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent pointer-events-none" />
+          
+          {/* Content - no box, fully transparent */}
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -134,7 +137,7 @@ export default function MarketingHome() {
               </div>
             </motion.div>
           </div>
-        </BrandBackground>
+        </section>
 
         {/* Trust / Proof Strip */}
         <section className="py-16 border-y border-white/5 bg-neutral-950/50">
