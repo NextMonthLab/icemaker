@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import { MarketingFooter } from "@/components/MarketingFooter";
+import { BrandBackground } from "@/components/brand/BrandBackground";
 
 const useCases = [
   "Interactive product explainers",
@@ -53,8 +54,11 @@ export default function MarketingAgencies() {
       <main>
         {/* Hero */}
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
+          {/* Background image layer */}
+          <BrandBackground purpose="marketing-agencies-hero" variant="hero" className="absolute inset-0" />
+          {/* Full-bleed gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent pointer-events-none" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
             <motion.div

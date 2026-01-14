@@ -18,7 +18,9 @@ export type BrandImagePurpose =
   | "library-bg"
   | "library-card-fallback"
   | "examples-bg"
-  | "discover-bg";
+  | "discover-bg"
+  | "corporate-training-hero"
+  | "marketing-agencies-hero";
 
 export type BrandImageMood = "cinematic" | "playful";
 
@@ -44,6 +46,8 @@ export const LIBRARY_BG_IMAGE_ID = "library-bg-main";
 export const PRICING_BG_IMAGE_ID = "pricing-hero-main";
 export const EXAMPLES_BG_IMAGE_ID = "examples-bg-main";
 export const DISCOVER_BG_IMAGE_ID = "discover-bg-main";
+export const CORPORATE_TRAINING_HERO_ID = "corporate-training-hero-main";
+export const MARKETING_AGENCIES_HERO_ID = "marketing-agencies-hero-main";
 
 /**
  * BRAND IMAGES CONFIGURATION
@@ -176,6 +180,32 @@ export const BRAND_IMAGES: BrandImage[] = [
     overlayOpacity: 0.88,
     blurPx: 18,
     preload: false,
+  },
+
+  // ============ CORPORATE TRAINING PAGE ============
+  {
+    id: CORPORATE_TRAINING_HERO_ID,
+    label: "Corporate Training Hero",
+    url: "", // Rob: paste Cloudinary URL here
+    alt: "Corporate training hero background",
+    purpose: "corporate-training-hero",
+    mood: "cinematic",
+    overlayOpacity: 0.75,
+    blurPx: 2,
+    preload: true,
+  },
+
+  // ============ MARKETING & AGENCIES PAGE ============
+  {
+    id: MARKETING_AGENCIES_HERO_ID,
+    label: "Marketing Agencies Hero",
+    url: "", // Rob: paste Cloudinary URL here
+    alt: "Marketing agencies hero background",
+    purpose: "marketing-agencies-hero",
+    mood: "playful",
+    overlayOpacity: 0.75,
+    blurPx: 2,
+    preload: true,
   },
 ];
 

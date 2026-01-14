@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LogOut, Clock, MessageSquare, Shield,
-  Play, Plus, Sparkles, BarChart3
+  Play, Plus, Sparkles, BarChart3, Zap,
+  Eye, ChevronRight, Crown
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
