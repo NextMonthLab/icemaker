@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Compass,
   Shield,
+  Search,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -38,6 +39,7 @@ interface SiteNavProps {
 const marketingLinks = [
   { href: '/corporate-training', label: 'Corporate Training', icon: GraduationCap },
   { href: '/marketing-agencies', label: 'Marketing & Agencies', icon: Building2 },
+  { href: '/discover', label: 'Discover', icon: Search },
   { href: '/blog', label: 'Blog', icon: Film },
 ];
 
