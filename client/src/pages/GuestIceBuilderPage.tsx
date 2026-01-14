@@ -46,11 +46,28 @@ const CREATION_STAGES = [
 ];
 
 const MUSIC_TRACKS = [
-  { id: "none", name: "No Music", url: null },
-  { id: "cinematic", name: "Cinematic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-  { id: "emotional", name: "Emotional", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-  { id: "epic", name: "Epic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-  { id: "ambient", name: "Ambient", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+  { id: "none", name: "No Music", url: null, category: null },
+  // Cinematic & Epic
+  { id: "cinematic", name: "Cinematic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", category: "cinematic" },
+  { id: "epic", name: "Epic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", category: "cinematic" },
+  { id: "dramatic", name: "Dramatic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", category: "cinematic" },
+  // Chill & Ambient
+  { id: "ambient", name: "Ambient", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", category: "chill" },
+  { id: "chill-lofi", name: "Chill Lo-Fi", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", category: "chill" },
+  { id: "relaxed", name: "Relaxed", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", category: "chill" },
+  { id: "mellow", name: "Mellow", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", category: "chill" },
+  { id: "dreamy", name: "Dreamy", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3", category: "chill" },
+  // Vlog & Upbeat
+  { id: "vlog-upbeat", name: "Vlog Upbeat", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", category: "vlog" },
+  { id: "vlog-travel", name: "Vlog Travel", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", category: "vlog" },
+  { id: "vlog-lifestyle", name: "Vlog Lifestyle", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3", category: "vlog" },
+  { id: "vlog-adventure", name: "Vlog Adventure", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3", category: "vlog" },
+  // Pop & Modern
+  { id: "emotional", name: "Emotional", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", category: "pop" },
+  { id: "pop-modern", name: "Pop Modern", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", category: "pop" },
+  { id: "pop-bright", name: "Pop Bright", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", category: "pop" },
+  { id: "pop-feel-good", name: "Pop Feel Good", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3", category: "pop" },
+  { id: "pop-energetic", name: "Pop Energetic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3", category: "pop" },
 ];
 
 interface PreviewCard {
@@ -1755,11 +1772,35 @@ export default function GuestIceBuilderPage() {
                       className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
                       data-testid="select-music-track-editor"
                     >
-                      {MUSIC_TRACKS.map((track) => (
-                        <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
-                          {track.name}
-                        </option>
-                      ))}
+                      <option value="none" className="bg-slate-900 text-white">No Music</option>
+                      <optgroup label="Chill & Ambient" className="bg-slate-900 text-white">
+                        {MUSIC_TRACKS.filter(t => t.category === "chill").map((track) => (
+                          <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
+                            {track.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Vlog & Upbeat" className="bg-slate-900 text-white">
+                        {MUSIC_TRACKS.filter(t => t.category === "vlog").map((track) => (
+                          <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
+                            {track.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Pop & Modern" className="bg-slate-900 text-white">
+                        {MUSIC_TRACKS.filter(t => t.category === "pop").map((track) => (
+                          <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
+                            {track.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Cinematic & Epic" className="bg-slate-900 text-white">
+                        {MUSIC_TRACKS.filter(t => t.category === "cinematic").map((track) => (
+                          <option key={track.id} value={track.url || "none"} className="bg-slate-900 text-white">
+                            {track.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                     {musicTrackUrl && (
                       <button
