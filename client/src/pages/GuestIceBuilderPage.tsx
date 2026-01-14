@@ -1359,15 +1359,30 @@ export default function GuestIceBuilderPage() {
                   </div>
                 </div>
               ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={createPreviewMutation.isPending || isFileUploading}
-                  className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-                  data-testid="button-create-preview"
-                >
-                  Create Preview
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={createPreviewMutation.isPending || isFileUploading}
+                    className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                    data-testid="button-create-preview"
+                  >
+                    Create Preview
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  
+                  <div className="mt-4 pt-4 border-t border-white/10 text-center">
+                    <p className="text-xs text-white/40 mb-1">Have a producer brief or spec document?</p>
+                    <Link 
+                      href="/create" 
+                      className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                      data-testid="link-producer-brief"
+                    >
+                      <ScrollText className="w-3.5 h-3.5" />
+                      Upload Producer Brief
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </>
               )}
             </CardContent>
           </UiCard>
