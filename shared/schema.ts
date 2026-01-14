@@ -930,7 +930,7 @@ export type TransformationJob = typeof transformationJobs.$inferSelect;
 // Stores lightweight card previews for guest users before login
 
 export type IcePreviewStatus = 'active' | 'promoted' | 'expired';
-export type IcePreviewSourceType = 'url' | 'text' | 'file';
+export type IcePreviewSourceType = 'url' | 'text' | 'file' | 'wizard';
 export type IcePreviewTier = 'short' | 'medium' | 'long';
 export type IceContentType = 'script' | 'article' | 'document' | 'unknown';
 export type IceFidelityMode = 'script_exact' | 'interpretive';
