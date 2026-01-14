@@ -493,10 +493,13 @@ export default function CardPlayer({
                     alt={card.title}
                     className="w-full h-full object-cover"
                   />
-                  {/* ADD YOUR... overlay for placeholder backgrounds */}
-                  {showPlaceholderOverlay && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                      <div className="text-center mb-8">
+                  {/* ADD YOUR... overlay for placeholder backgrounds - positions with captions */}
+                  {showPlaceholderOverlay && (() => {
+                    const overlayPosition = captionState?.position || 'bottom';
+                    const overlayJustify = overlayPosition === 'top' ? 'justify-start pt-16' : overlayPosition === 'middle' ? 'justify-center' : 'justify-end pb-24';
+                    return (
+                    <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10`}>
+                      <div className="text-center mb-4">
                         <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
                           ADD YOUR...
                         </h3>
@@ -516,14 +519,19 @@ export default function CardPlayer({
                         </div>
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
                 </>
               ) : (
                 <>
-                  {/* Placeholder gradient background with ADD YOUR... overlay */}
+                  {/* Placeholder gradient background with ADD YOUR... overlay - positions with captions */}
                   <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 via-blue-900/30 to-slate-900/50" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                    <div className="text-center mb-8">
+                  {(() => {
+                    const overlayPosition = captionState?.position || 'bottom';
+                    const overlayJustify = overlayPosition === 'top' ? 'justify-start pt-16' : overlayPosition === 'middle' ? 'justify-center' : 'justify-end pb-24';
+                    return (
+                  <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10`}>
+                    <div className="text-center mb-4">
                       <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
                         ADD YOUR...
                       </h3>
@@ -543,6 +551,8 @@ export default function CardPlayer({
                       </div>
                     </div>
                   </div>
+                    );
+                  })()}
                 </>
               )}
             </motion.div>
