@@ -7734,7 +7734,7 @@ Stay engaging, reference story details, and help the audience understand the nar
   app.put("/api/ice/preview/:previewId/settings", async (req, res) => {
     try {
       const { previewId } = req.params;
-      const { musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume, captionSettings } = req.body;
+      const { musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume, captionSettings, logoEnabled, logoUrl, logoPosition } = req.body;
       
       const preview = await storage.getIcePreview(previewId);
       if (!preview) {
@@ -7749,6 +7749,9 @@ Stay engaging, reference story details, and help the audience understand the nar
       if (titlePackId !== undefined) updateData.titlePackId = titlePackId;
       if (narrationVolume !== undefined) updateData.narrationVolume = narrationVolume;
       if (captionSettings !== undefined) updateData.captionSettings = captionSettings;
+      if (logoEnabled !== undefined) updateData.logoEnabled = logoEnabled;
+      if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+      if (logoPosition !== undefined) updateData.logoPosition = logoPosition;
       
       await storage.updateIcePreview(previewId, updateData);
       

@@ -362,6 +362,13 @@ export default function GuestIceBuilderPage() {
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   
+  // Logo branding settings
+  const [logoEnabled, setLogoEnabled] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoPosition, setLogoPosition] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("top-right");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  
   const handleManualNav = (newIndex: number) => {
     setActivePreviewNodeIndex(null);
     setPreviewCardIndex(newIndex);
@@ -512,6 +519,9 @@ export default function GuestIceBuilderPage() {
             musicVolume,
             musicEnabled,
             narrationVolume,
+            logoEnabled,
+            logoUrl,
+            logoPosition,
             captionSettings: {
               presetId: captionState.presetId,
               animationId: captionState.animationId,
@@ -531,7 +541,7 @@ export default function GuestIceBuilderPage() {
         clearTimeout(settingsSaveTimeoutRef.current);
       }
     };
-  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume, captionState.presetId, captionState.animationId, captionState.karaokeEnabled, captionState.karaokeStyle, captionState.safeAreaProfileId]);
+  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume, logoEnabled, logoUrl, logoPosition, captionState.presetId, captionState.animationId, captionState.karaokeEnabled, captionState.karaokeStyle, captionState.safeAreaProfileId]);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -625,6 +635,16 @@ export default function GuestIceBuilderPage() {
           karaokeStyle: existingPreview.captionSettings.karaokeStyle || prev.karaokeStyle,
         }));
       }
+      // Load logo branding settings
+      if (existingPreview.logoEnabled !== undefined) {
+        setLogoEnabled(existingPreview.logoEnabled);
+      }
+      if (existingPreview.logoUrl) {
+        setLogoUrl(existingPreview.logoUrl);
+      }
+      if (existingPreview.logoPosition) {
+        setLogoPosition(existingPreview.logoPosition);
+      }
       // Load publish state
       if (existingPreview.visibility) {
         setIceVisibility(existingPreview.visibility);
@@ -677,6 +697,61 @@ export default function GuestIceBuilderPage() {
       });
     } catch (error) {
       console.error("Failed to save bible:", error);
+    }
+  };
+
+  // Handle logo file upload
+  const handleLogoUpload = async (file: File) => {
+    if (!file || !user) return;
+    
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file (PNG, JPG, etc.)", variant: "destructive" });
+      return;
+    }
+    
+    // Validate file size (2MB max for logos)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Logo must be under 2MB", variant: "destructive" });
+      return;
+    }
+    
+    setIsUploadingLogo(true);
+    try {
+      // Get presigned upload URL
+      const urlRes = await fetch("/api/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+        }),
+      });
+      
+      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL, objectPath } = await urlRes.json();
+      
+      // Upload file to object storage
+      const uploadRes = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      
+      if (!uploadRes.ok) throw new Error("Failed to upload logo");
+      
+      // Set the logo URL and enable
+      setLogoUrl(objectPath);
+      setLogoEnabled(true);
+      
+      toast({ title: "Logo uploaded", description: "Your logo will appear on all cards" });
+    } catch (error) {
+      console.error("Logo upload failed:", error);
+      toast({ title: "Upload failed", description: "Failed to upload logo. Please try again.", variant: "destructive" });
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -1662,6 +1737,104 @@ export default function GuestIceBuilderPage() {
               </div>
             </div>
 
+            {/* Logo Branding Panel */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Logo Upload Section */}
+                <div className="flex-1">
+                  <label className="text-xs text-white/60 mb-1.5 block">Logo Branding</label>
+                  <div className="flex items-center gap-3">
+                    {/* Logo Preview / Upload Button */}
+                    {logoUrl ? (
+                      <div className="relative group">
+                        <div className="w-12 h-12 rounded-lg bg-black/30 border border-white/10 overflow-hidden flex items-center justify-center">
+                          <img 
+                            src={logoUrl} 
+                            alt="Logo" 
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            setLogoUrl(null);
+                            setLogoEnabled(false);
+                          }}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          data-testid="button-remove-logo"
+                        >
+                          <X className="w-2.5 h-2.5 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={isUploadingLogo || !user}
+                        className="w-12 h-12 rounded-lg bg-black/30 border border-dashed border-white/20 flex items-center justify-center hover:border-cyan-500/50 transition-colors disabled:opacity-50"
+                        data-testid="button-upload-logo"
+                      >
+                        {isUploadingLogo ? (
+                          <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 text-white/40" />
+                        )}
+                      </button>
+                    )}
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogoUpload(file);
+                        e.target.value = "";
+                      }}
+                      className="hidden"
+                      data-testid="input-logo-file"
+                    />
+                    
+                    {/* Enable/Disable Toggle */}
+                    {logoUrl && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={logoEnabled}
+                          onChange={(e) => setLogoEnabled(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-9 h-5 rounded-full transition-colors ${logoEnabled ? "bg-cyan-500" : "bg-white/20"}`}>
+                          <div className={`w-4 h-4 rounded-full bg-white mt-0.5 transition-transform ${logoEnabled ? "translate-x-4.5 ml-0.5" : "translate-x-0.5"}`} />
+                        </div>
+                        <span className="text-xs text-white/60">{logoEnabled ? "Showing" : "Hidden"}</span>
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    {logoUrl ? (logoEnabled ? "Logo appears on all cards" : "Logo hidden") : "Upload your logo to brand your content"}
+                  </p>
+                </div>
+
+                {/* Logo Position Selector */}
+                {logoUrl && logoEnabled && (
+                  <div className="sm:w-32">
+                    <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
+                      <Image className="w-3 h-3" /> Position
+                    </label>
+                    <select
+                      value={logoPosition}
+                      onChange={(e) => setLogoPosition(e.target.value as typeof logoPosition)}
+                      className="w-full bg-black/30 text-sm text-white border border-white/10 rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                      data-testid="select-logo-position"
+                    >
+                      <option value="top-left" className="bg-slate-900">Top Left</option>
+                      <option value="top-right" className="bg-slate-900">Top Right</option>
+                      <option value="bottom-left" className="bg-slate-900">Bottom Left</option>
+                      <option value="bottom-right" className="bg-slate-900">Bottom Right</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Advanced Caption Settings */}
             <Collapsible open={showCaptionSettings} onOpenChange={setShowCaptionSettings} className="mb-4">
               <CollapsibleTrigger asChild>
@@ -1945,6 +2118,9 @@ export default function GuestIceBuilderPage() {
                   narrationMuted={narrationMuted}
                   showPlaceholderOverlay={!cards[previewCardIndex].generatedImageUrl && !cards[previewCardIndex].generatedVideoUrl}
                   icePreviewId={preview?.id}
+                  logoEnabled={logoEnabled}
+                  logoUrl={logoUrl}
+                  logoPosition={logoPosition}
                   onPhaseChange={(phase) => {
                     if (phase === 'context') {
                       handleCardPhaseComplete();

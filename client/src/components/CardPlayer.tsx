@@ -71,6 +71,9 @@ interface CardPlayerProps {
   captionState?: CaptionState; // Caption Engine state for presets/karaoke/animations
   showPlaceholderOverlay?: boolean; // Show "ADD YOUR..." overlay on placeholder backgrounds
   icePreviewId?: string; // For ICE card message boards
+  logoEnabled?: boolean; // Show logo overlay on cards
+  logoUrl?: string | null; // URL to the logo image
+  logoPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right"; // Position of logo overlay
 }
 
 type Phase = "cinematic" | "context";
@@ -87,7 +90,10 @@ export default function CardPlayer({
   narrationMuted = false,
   captionState,
   showPlaceholderOverlay = false,
-  icePreviewId
+  icePreviewId,
+  logoEnabled = false,
+  logoUrl = null,
+  logoPosition = "top-right"
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -542,6 +548,27 @@ export default function CardPlayer({
             </motion.div>
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none" />
+
+            {/* Logo Overlay */}
+            {logoEnabled && logoUrl && (
+              <div 
+                className={`absolute z-30 pointer-events-none ${
+                  logoPosition === "top-left" ? "top-4 left-4" :
+                  logoPosition === "top-right" ? "top-4 right-4" :
+                  logoPosition === "bottom-left" ? "bottom-24 left-4" :
+                  "bottom-24 right-4"
+                }`}
+                data-testid="logo-overlay"
+              >
+                <div className="w-12 h-12 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden flex items-center justify-center p-1">
+                  <img 
+                    src={logoUrl} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="absolute top-4 left-4 right-4 flex items-center justify-end">
               <div className="flex items-center gap-2">
