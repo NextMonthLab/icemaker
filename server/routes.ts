@@ -417,7 +417,34 @@ export async function registerRoutes(
       res.status(401).json({ message: "Not authenticated" });
     }
   });
-  
+
+  // ============ HEALTH & FEATURE FLAGS ============
+
+  // Health check endpoint showing enabled features (admin only for security)
+  app.get("/api/health/features", requireAdmin, async (_req, res) => {
+    try {
+      const { featureFlags, killSwitches, costLimits } = await import("./config/featureFlags");
+
+      res.json({
+        status: "healthy",
+        features: {
+          orbit: featureFlags.orbit,
+          iceGeneration: featureFlags.iceGeneration,
+          ai: featureFlags.ai,
+          notifications: featureFlags.notifications,
+          magicLinks: featureFlags.magicLinks,
+          softLaunch: featureFlags.softLaunch,
+        },
+        killSwitches,
+        costLimits,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching feature flags:", error);
+      res.status(500).json({ message: "Error fetching feature flags" });
+    }
+  });
+
   // ============ CREATOR ROUTES ============
   
   // Get user's entitlements (subscription-based access)
