@@ -1094,6 +1094,12 @@ export const icePreviewCardSchema = z.object({
   // Continuity tracking
   charactersPresent: z.array(z.string()).optional(), // Character IDs appearing in this card
   bibleVersionIdUsed: z.string().optional(), // Which bible version was used for media generation
+  
+  // Scene continuity controls (per-card override of Project Bible scene)
+  sceneMode: z.enum(['USE_LOCKED_SCENE', 'OVERRIDE_SCENE', 'NO_SCENE']).optional(), // How to handle scene lock
+  overrideSceneDescription: z.string().optional(), // Custom scene description when OVERRIDE_SCENE
+  overrideCameraAngle: z.string().optional(), // Custom camera when OVERRIDE_SCENE
+  overrideLighting: z.string().optional(), // Custom lighting when OVERRIDE_SCENE
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;
@@ -1169,6 +1175,37 @@ export const styleBibleSchema = z.object({
 
 export type StyleBible = z.infer<typeof styleBibleSchema>;
 
+// Scene Bible - defines spatial/set continuity (optional, for visual consistency across cards)
+export const cameraAngleEnum = z.enum(['TOP_DOWN', 'FORTY_FIVE_DEGREE', 'EYE_LEVEL', 'CUSTOM']);
+export type CameraAngle = z.infer<typeof cameraAngleEnum>;
+
+export const sceneLockFlagsSchema = z.object({
+  lockEnvironment: z.boolean().default(true),
+  lockCamera: z.boolean().default(true),
+  lockLighting: z.boolean().default(true),
+  lockBackgroundElements: z.boolean().default(true),
+});
+
+export type SceneLockFlags = z.infer<typeof sceneLockFlagsSchema>;
+
+export const sceneBibleSchema = z.object({
+  sceneName: z.string().optional(), // e.g., "Rustic Pizza Prep Table"
+  setDescription: z.string().optional(), // Detailed physical environment spec
+  cameraAngle: cameraAngleEnum.optional(), // Preset camera angle
+  cameraAngleCustom: z.string().optional(), // Free text for CUSTOM angle
+  framingNotes: z.string().optional(), // e.g., "table fills frame, hands visible, no faces"
+  lightingNotes: z.string().optional(), // e.g., "natural daylight from left, soft shadows"
+  lockFlags: sceneLockFlagsSchema.optional(), // Which elements to lock
+  enabled: z.boolean().default(false), // Whether scene lock is active
+  updatedAt: z.string().optional(),
+});
+
+export type SceneBible = z.infer<typeof sceneBibleSchema>;
+
+// Scene mode for individual cards (how to handle scene continuity)
+export const cardSceneModeEnum = z.enum(['USE_LOCKED_SCENE', 'OVERRIDE_SCENE', 'NO_SCENE']);
+export type CardSceneMode = z.infer<typeof cardSceneModeEnum>;
+
 // Complete Project Bible with versioning
 export const projectBibleSchema = z.object({
   versionId: z.string(), // UUID for this version
@@ -1176,6 +1213,7 @@ export const projectBibleSchema = z.object({
   characters: z.array(characterBibleEntrySchema).default([]),
   world: worldBibleSchema.optional(),
   style: styleBibleSchema.optional(),
+  scene: sceneBibleSchema.optional(), // NEW: Optional scene lock for spatial continuity
   createdAt: z.string(),
   updatedAt: z.string(),
   updatedBy: z.string().optional(), // user ID or "system"

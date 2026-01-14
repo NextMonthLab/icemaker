@@ -8,7 +8,9 @@ import {
   CharacterBibleEntry, 
   WorldBible, 
   StyleBible,
-  IcePreviewCard 
+  SceneBible,
+  IcePreviewCard,
+  CardSceneMode
 } from "@shared/schema";
 
 interface PromptContext {
@@ -250,6 +252,8 @@ interface ComposedBiblePrompt {
   styleDirectives: string[];
   lockedConstraints: string[];
   bibleVersionId: string;
+  sceneMode?: string; // USE_LOCKED_SCENE, OVERRIDE_SCENE, or NO_SCENE
+  hasLockedScene?: boolean;
 }
 
 export function composePromptWithBible(context: BiblePromptContext): ComposedBiblePrompt {
@@ -333,7 +337,24 @@ export function composePromptWithBible(context: BiblePromptContext): ComposedBib
     }
   }
   
-  // 3. Character Bible - detailed descriptions for characters in scene
+  // 3. Scene Bible - spatial/set continuity (PRIORITY: injected first for strict enforcement)
+  const sceneContext = buildSceneContext(bible.scene, card);
+  if (sceneContext.scenePrompt) {
+    // Prepend scene as strict anchor (highest priority)
+    promptParts.unshift(sceneContext.scenePrompt);
+    
+    // Add scene constraints
+    if (sceneContext.lockedElements.length > 0) {
+      lockedConstraints.push(...sceneContext.lockedElements.map(e => `SCENE: ${e}`));
+    }
+    
+    // Add strict enforcement instruction
+    if (sceneContext.isLocked) {
+      promptParts.push("STRICT: Do not alter camera position, environment, lighting, or background unless explicitly overridden.");
+    }
+  }
+  
+  // 4. Character Bible - detailed descriptions for characters in scene
   const matchedCharacters = findCharactersInScene(bible.characters, charactersInScene, card);
   
   for (const char of matchedCharacters) {
@@ -349,12 +370,12 @@ export function composePromptWithBible(context: BiblePromptContext): ComposedBib
     }
   }
   
-  // 4. Card-specific content
+  // 5. Card-specific content
   if (card.content) {
     promptParts.push(card.content);
   }
   
-  // 5. Build final prompt
+  // 6. Build final prompt
   const fullPrompt = promptParts.filter(Boolean).join(". ").replace(/\.\./g, ".").trim();
   const negativePrompt = Array.from(new Set(negativePromptParts)).join(", ");
   
@@ -366,6 +387,122 @@ export function composePromptWithBible(context: BiblePromptContext): ComposedBib
     styleDirectives,
     lockedConstraints,
     bibleVersionId: bible.versionId,
+    sceneMode: sceneContext.sceneMode,
+    hasLockedScene: sceneContext.isLocked,
+  };
+}
+
+interface SceneContextResult {
+  scenePrompt: string;
+  lockedElements: string[];
+  isLocked: boolean;
+  sceneMode: string;
+}
+
+function buildSceneContext(scene: SceneBible | undefined, card: IcePreviewCard): SceneContextResult {
+  // Default: no scene context
+  const noScene: SceneContextResult = {
+    scenePrompt: "",
+    lockedElements: [],
+    isLocked: false,
+    sceneMode: "NO_SCENE",
+  };
+  
+  // Check card's scene mode - if NO_SCENE or scene not enabled, skip
+  const cardSceneMode = card.sceneMode || "USE_LOCKED_SCENE"; // Default to using locked scene if one exists
+  
+  if (cardSceneMode === "NO_SCENE") {
+    return noScene;
+  }
+  
+  // If card overrides scene, use card's override values
+  if (cardSceneMode === "OVERRIDE_SCENE") {
+    const overrideParts: string[] = [];
+    
+    if (card.overrideSceneDescription) {
+      overrideParts.push(`Scene: ${card.overrideSceneDescription}`);
+    }
+    if (card.overrideCameraAngle) {
+      overrideParts.push(`Camera: ${card.overrideCameraAngle}`);
+    }
+    if (card.overrideLighting) {
+      overrideParts.push(`Lighting: ${card.overrideLighting}`);
+    }
+    
+    return {
+      scenePrompt: overrideParts.join(". "),
+      lockedElements: [],
+      isLocked: false, // Overridden scenes are not locked
+      sceneMode: "OVERRIDE_SCENE",
+    };
+  }
+  
+  // USE_LOCKED_SCENE: Apply the Project Bible's locked scene
+  if (!scene || !scene.enabled) {
+    return noScene;
+  }
+  
+  const promptParts: string[] = [];
+  const lockedElements: string[] = [];
+  const lockFlags = scene.lockFlags || {
+    lockEnvironment: true,
+    lockCamera: true,
+    lockLighting: true,
+    lockBackgroundElements: true,
+  };
+  
+  // Build scene prompt with locked elements
+  if (scene.sceneName) {
+    promptParts.push(`Locked Scene: ${scene.sceneName}`);
+  }
+  
+  if (scene.setDescription && lockFlags.lockEnvironment) {
+    promptParts.push(`Environment (must not deviate): ${scene.setDescription}`);
+    lockedElements.push(`Environment: ${scene.setDescription}`);
+  } else if (scene.setDescription) {
+    promptParts.push(`Environment: ${scene.setDescription}`);
+  }
+  
+  // Camera angle
+  const cameraDesc = scene.cameraAngle === "CUSTOM" && scene.cameraAngleCustom
+    ? scene.cameraAngleCustom
+    : scene.cameraAngle === "TOP_DOWN" 
+      ? "bird's eye view, looking straight down"
+      : scene.cameraAngle === "FORTY_FIVE_DEGREE"
+        ? "45-degree angle, three-quarter view"
+        : scene.cameraAngle === "EYE_LEVEL"
+          ? "eye-level perspective, natural viewpoint"
+          : null;
+  
+  if (cameraDesc && lockFlags.lockCamera) {
+    promptParts.push(`Camera (must not deviate): ${cameraDesc}`);
+    lockedElements.push(`Camera: ${cameraDesc}`);
+  } else if (cameraDesc) {
+    promptParts.push(`Camera: ${cameraDesc}`);
+  }
+  
+  if (scene.framingNotes && lockFlags.lockCamera) {
+    promptParts.push(`Framing (must not deviate): ${scene.framingNotes}`);
+    lockedElements.push(`Framing: ${scene.framingNotes}`);
+  } else if (scene.framingNotes) {
+    promptParts.push(`Framing: ${scene.framingNotes}`);
+  }
+  
+  if (scene.lightingNotes && lockFlags.lockLighting) {
+    promptParts.push(`Lighting (must not deviate): ${scene.lightingNotes}`);
+    lockedElements.push(`Lighting: ${scene.lightingNotes}`);
+  } else if (scene.lightingNotes) {
+    promptParts.push(`Lighting: ${scene.lightingNotes}`);
+  }
+  
+  // Check if any elements are actually locked
+  const hasLockedElements = Object.values(lockFlags).some(v => v);
+  
+  return {
+    scenePrompt: promptParts.join(". "),
+    lockedElements,
+    isLocked: hasLockedElements && promptParts.length > 0,
+    sceneMode: "USE_LOCKED_SCENE",
   };
 }
 

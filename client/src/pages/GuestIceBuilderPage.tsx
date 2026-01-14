@@ -2036,6 +2036,7 @@ export default function GuestIceBuilderPage() {
                       onMoveUp={() => handleMoveCardUp(index)}
                       onMoveDown={() => handleMoveCardDown(index)}
                       onDelete={() => handleDeleteCard(card.id)}
+                      hasLockedScene={projectBible?.scene?.enabled || false}
                     />
                     
                     {/* Interactivity node slot between cards */}

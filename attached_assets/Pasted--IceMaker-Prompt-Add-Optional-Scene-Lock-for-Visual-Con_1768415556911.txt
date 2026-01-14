@@ -1,0 +1,89 @@
+## IceMaker Prompt: Add Optional “Scene Lock” for Visual Continuity (Project Bible)
+
+Goal
+We need to improve continuity of AI-generated images/videos across ICE cards by introducing an OPTIONAL “Scene Lock” layer in the Project Bible. Current Project Bible supports “World” and “Style” but does not capture a persistent set/camera setup. This causes drift (table changes, camera angle changes, lighting changes) when generating assets across multiple cards.
+
+Key Principle
+There are two types of continuity:
+1) World continuity (era/culture/tone) – already supported
+2) Spatial/set continuity (the physical environment + camera) – missing
+We need #2 as an opt-in control that anchors all generation prompts unless overridden.
+
+Deliverables
+
+A) UI: Project Bible adds a new tab/section
+Add a new tab next to Characters / World / Style:
+- Name: “Scene” (preferred) OR “Continuity Scene”
+- Label: “Optional”
+- Helper text (must be clear):
+  “Lock a physical setup for visual continuity across cards. If set, AI will not deviate unless overridden per card.”
+
+B) Scene Model (Minimal but effective)
+Add a Scene object to the Project Bible schema (persisted with ICE project):
+Fields:
+- sceneName (string) e.g. “Rustic Pizza Prep Table”
+- setDescription (textarea) (detailed physical environment spec)
+- cameraAngle (enum + optional free text)
+  Options: TOP_DOWN, FORTY_FIVE_DEGREE, EYE_LEVEL, CUSTOM
+- framingNotes (string/textarea) e.g. “table fills frame, hands visible, no faces”
+- lightingNotes (string/textarea) e.g. “natural daylight from left, soft shadows”
+- lockFlags (object booleans):
+  - lockEnvironment
+  - lockCamera
+  - lockLighting
+  - lockBackgroundElements
+Default: all true when Scene is set (can be toggled)
+
+C) Generation Behaviour (the actual continuity enforcement)
+When Scene is set AND the card is not overriding it, ALL image/video prompts must automatically incorporate the Scene as a strict anchor.
+
+Implement prompt injection rule:
+- Prepend (or strongly include) the locked scene definition:
+  “Locked Scene (must not deviate): [setDescription]. Camera: [cameraAngle + framingNotes]. Lighting: [lightingNotes].”
+- Add strict instruction:
+  “Do not alter camera position, environment, lighting, or background unless this card explicitly overrides.”
+
+This must apply to:
+- Image generation prompts
+- Video generation prompts
+- Any “visual asset” prompt pipeline used by IceMaker
+
+D) Card-Level Override (must exist)
+Each ICE card needs a small control:
+Field: sceneMode (enum)
+- USE_LOCKED_SCENE (default when scene exists)
+- OVERRIDE_SCENE (allow card-specific scene override text fields)
+- NO_SCENE (free generation)
+
+If OVERRIDE_SCENE:
+- Provide overrideSceneDescription / overrideCamera / overrideLighting fields for that card
+- Pipeline uses overrides instead of locked scene for that card only
+
+E) UX microcopy + affordance
+In the card editor where visuals are generated:
+- Show a small badge:
+  “Scene: Locked” (if using locked scene)
+  “Scene: Overridden” (if overridden)
+  “Scene: None” (if no scene)
+Add tooltip explaining what it means.
+
+F) Backwards compatibility
+- Existing projects without Scene must behave exactly as they do now.
+- Scene tab/fields should be optional and not required for Bible generation.
+
+G) Example Use Case (for validation)
+Create/validate with this scenario:
+- Scene: “Rustic wooden table, top-down or fixed 45-degree angle, same board, same lighting”
+- Cards: dough kneading → sauce spread → cheese added → basil → baked pizza
+Expected result: same table, same angle, same lighting across assets, only the action changes.
+
+Acceptance Criteria
+1) Users can define a Scene in Project Bible and it persists.
+2) With Scene enabled, generated visuals show dramatically reduced drift in environment/camera/lighting across cards.
+3) Users can override Scene per card or disable it per card.
+4) No regressions to existing generation flows when Scene is not set.
+5) Clear UI guidance that this is opt-in continuity control.
+
+Notes
+- Keep it minimal and elegant (no scope creep).
+- The key is prompt injection and card-level override, not a huge new subsystem.

@@ -20,13 +20,17 @@ import {
   ChevronUp,
   Sparkles,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Camera
 } from "lucide-react";
 import type { 
   ProjectBible, 
   CharacterBibleEntry, 
   WorldBible, 
-  StyleBible 
+  StyleBible,
+  SceneBible,
+  CameraAngle,
+  SceneLockFlags
 } from "@shared/schema";
 
 interface ContinuityPanelProps {
@@ -114,6 +118,18 @@ export function ContinuityPanel({
     });
   }, [bible, onBibleChange]);
   
+  const handleSceneUpdate = useCallback((updates: Partial<SceneBible>) => {
+    if (!bible) return;
+    onBibleChange({ 
+      ...bible, 
+      scene: { 
+        ...(bible.scene || { enabled: false }), 
+        ...updates,
+        updatedAt: new Date().toISOString()
+      } 
+    });
+  }, [bible, onBibleChange]);
+  
   if (!bible) {
     return (
       <div className="p-6 text-center space-y-4" data-testid="continuity-empty">
@@ -163,7 +179,7 @@ export function ContinuityPanel({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-3 mx-3 mt-3">
+        <TabsList className="grid grid-cols-4 mx-3 mt-3">
           <TabsTrigger value="characters" className="text-xs" data-testid="tab-characters">
             <Users className="w-3 h-3 mr-1" />
             Characters
@@ -175,6 +191,10 @@ export function ContinuityPanel({
           <TabsTrigger value="style" className="text-xs" data-testid="tab-style">
             <Palette className="w-3 h-3 mr-1" />
             Style
+          </TabsTrigger>
+          <TabsTrigger value="scene" className="text-xs" data-testid="tab-scene">
+            <Camera className="w-3 h-3 mr-1" />
+            Scene
           </TabsTrigger>
         </TabsList>
         
@@ -214,6 +234,13 @@ export function ContinuityPanel({
             <StyleEditor 
               style={bible.style} 
               onUpdate={handleStyleUpdate} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="scene" className="mt-0">
+            <SceneEditor 
+              scene={bible.scene} 
+              onUpdate={handleSceneUpdate} 
             />
           </TabsContent>
         </ScrollArea>
@@ -660,6 +687,211 @@ function StyleEditor({ style, onUpdate }: StyleEditorProps) {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+interface SceneEditorProps {
+  scene: SceneBible | undefined;
+  onUpdate: (updates: Partial<SceneBible>) => void;
+}
+
+function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
+  const lockFlags = scene?.lockFlags || {
+    lockEnvironment: true,
+    lockCamera: true,
+    lockLighting: true,
+    lockBackgroundElements: true,
+  };
+  
+  const handleLockFlagChange = (key: keyof SceneLockFlags, value: boolean) => {
+    onUpdate({ lockFlags: { ...lockFlags, [key]: value } });
+  };
+  
+  return (
+    <div className="space-y-4" data-testid="scene-editor">
+      {/* Enable/Disable Scene Lock */}
+      <Card className="bg-cyan-900/20 border-cyan-800/50">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-white flex items-center gap-2">
+                <Camera className="w-4 h-4 text-cyan-400" />
+                Scene Lock
+                <Badge variant="outline" className="text-[10px] border-cyan-700 text-cyan-400">Optional</Badge>
+              </label>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Lock a physical setup for visual continuity across cards. AI will not deviate unless overridden per card.
+              </p>
+            </div>
+            <Switch 
+              checked={scene?.enabled || false}
+              onCheckedChange={(checked) => onUpdate({ enabled: checked })}
+              data-testid="switch-scene-enabled"
+            />
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Scene Definition - only show when enabled */}
+      {scene?.enabled && (
+        <>
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm font-medium">Scene Definition</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-3">
+              <div>
+                <label className="text-xs text-zinc-500">Scene Name</label>
+                <Input 
+                  value={scene?.sceneName || ''}
+                  onChange={(e) => onUpdate({ sceneName: e.target.value })}
+                  placeholder="e.g., Rustic Pizza Prep Table"
+                  className="h-8 text-sm bg-zinc-800 border-zinc-700"
+                  data-testid="input-scene-name"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-zinc-500">Set Description (Physical Environment)</label>
+                <Textarea 
+                  value={scene?.setDescription || ''}
+                  onChange={(e) => onUpdate({ setDescription: e.target.value })}
+                  placeholder="Describe the physical environment in detail: e.g., Rustic wooden table with flour-dusted surface, ceramic bowls, warm ambient lighting from left window..."
+                  className="h-20 text-sm bg-zinc-800 border-zinc-700 resize-none"
+                  data-testid="input-set-description"
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm font-medium">Camera Setup</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-3">
+              <div>
+                <label className="text-xs text-zinc-500">Camera Angle</label>
+                <select 
+                  value={scene?.cameraAngle || ''}
+                  onChange={(e) => onUpdate({ cameraAngle: e.target.value as CameraAngle })}
+                  className="w-full h-8 text-sm bg-zinc-800 border border-zinc-700 rounded-md px-2 text-white"
+                  data-testid="select-camera-angle"
+                >
+                  <option value="">Select angle...</option>
+                  <option value="TOP_DOWN">Top Down (Bird's Eye)</option>
+                  <option value="FORTY_FIVE_DEGREE">45° Angle (Three-Quarter View)</option>
+                  <option value="EYE_LEVEL">Eye Level (Natural)</option>
+                  <option value="CUSTOM">Custom (specify below)</option>
+                </select>
+              </div>
+              
+              {scene?.cameraAngle === "CUSTOM" && (
+                <div>
+                  <label className="text-xs text-zinc-500">Custom Camera Description</label>
+                  <Input 
+                    value={scene?.cameraAngleCustom || ''}
+                    onChange={(e) => onUpdate({ cameraAngleCustom: e.target.value })}
+                    placeholder="e.g., Low angle looking up at the chef"
+                    className="h-8 text-sm bg-zinc-800 border-zinc-700"
+                    data-testid="input-camera-custom"
+                  />
+                </div>
+              )}
+              
+              <div>
+                <label className="text-xs text-zinc-500">Framing Notes</label>
+                <Input 
+                  value={scene?.framingNotes || ''}
+                  onChange={(e) => onUpdate({ framingNotes: e.target.value })}
+                  placeholder="e.g., Table fills frame, hands visible, no faces"
+                  className="h-8 text-sm bg-zinc-800 border-zinc-700"
+                  data-testid="input-framing-notes"
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm font-medium">Lighting</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-3">
+              <div>
+                <label className="text-xs text-zinc-500">Lighting Notes</label>
+                <Textarea 
+                  value={scene?.lightingNotes || ''}
+                  onChange={(e) => onUpdate({ lightingNotes: e.target.value })}
+                  placeholder="e.g., Natural daylight from left window, soft shadows, warm golden tones"
+                  className="h-16 text-sm bg-zinc-800 border-zinc-700 resize-none"
+                  data-testid="input-lighting-notes"
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Lock className="w-4 h-4 text-amber-400" />
+                Lock Controls
+              </CardTitle>
+              <p className="text-xs text-zinc-500 mt-1">
+                Toggle which elements AI must preserve across all cards
+              </p>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-2">
+              <div className="flex items-center justify-between py-1">
+                <div>
+                  <label className="text-sm text-white">Lock Environment</label>
+                  <p className="text-xs text-zinc-500">Same set/props in every shot</p>
+                </div>
+                <Switch 
+                  checked={lockFlags.lockEnvironment}
+                  onCheckedChange={(v) => handleLockFlagChange('lockEnvironment', v)}
+                  data-testid="switch-lock-environment"
+                />
+              </div>
+              
+              <div className="flex items-center justify-between py-1">
+                <div>
+                  <label className="text-sm text-white">Lock Camera</label>
+                  <p className="text-xs text-zinc-500">Same angle and framing</p>
+                </div>
+                <Switch 
+                  checked={lockFlags.lockCamera}
+                  onCheckedChange={(v) => handleLockFlagChange('lockCamera', v)}
+                  data-testid="switch-lock-camera"
+                />
+              </div>
+              
+              <div className="flex items-center justify-between py-1">
+                <div>
+                  <label className="text-sm text-white">Lock Lighting</label>
+                  <p className="text-xs text-zinc-500">Same lighting direction and quality</p>
+                </div>
+                <Switch 
+                  checked={lockFlags.lockLighting}
+                  onCheckedChange={(v) => handleLockFlagChange('lockLighting', v)}
+                  data-testid="switch-lock-lighting"
+                />
+              </div>
+              
+              <div className="flex items-center justify-between py-1">
+                <div>
+                  <label className="text-sm text-white">Lock Background</label>
+                  <p className="text-xs text-zinc-500">Same background elements</p>
+                </div>
+                <Switch 
+                  checked={lockFlags.lockBackgroundElements}
+                  onCheckedChange={(v) => handleLockFlagChange('lockBackgroundElements', v)}
+                  data-testid="switch-lock-background"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

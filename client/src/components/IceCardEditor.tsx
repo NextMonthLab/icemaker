@@ -49,6 +49,11 @@ interface PreviewCard {
   basePrompt?: string;
   enhancedPrompt?: string;
   preferredMediaType?: 'image' | 'video';
+  // Scene continuity controls
+  sceneMode?: 'USE_LOCKED_SCENE' | 'OVERRIDE_SCENE' | 'NO_SCENE';
+  overrideSceneDescription?: string;
+  overrideCameraAngle?: string;
+  overrideLighting?: string;
 }
 
 interface Entitlements {
@@ -74,6 +79,7 @@ interface IceCardEditorProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onDelete?: () => void;
+  hasLockedScene?: boolean; // Whether Project Bible has a locked scene defined
 }
 
 function LockedOverlay({ 
@@ -118,6 +124,7 @@ export function IceCardEditor({
   onMoveUp,
   onMoveDown,
   onDelete,
+  hasLockedScene = false,
 }: IceCardEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -948,6 +955,82 @@ export function IceCardEditor({
                         alt={card.title}
                         className="w-full max-h-48 object-contain bg-black"
                       />
+                    </div>
+                  )}
+                  
+                  {/* Scene Continuity Controls - Only show when there's a locked scene */}
+                  {hasLockedScene && (
+                    <div className="p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-amber-400" />
+                          <Label className="text-slate-300">Scene Continuity</Label>
+                        </div>
+                        <select
+                          value={card.sceneMode || 'USE_LOCKED_SCENE'}
+                          onChange={(e) => onCardUpdate(card.id, { 
+                            sceneMode: e.target.value as 'USE_LOCKED_SCENE' | 'OVERRIDE_SCENE' | 'NO_SCENE' 
+                          })}
+                          className="bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-2 py-1"
+                          data-testid="select-scene-mode"
+                        >
+                          <option value="USE_LOCKED_SCENE">Use Locked Scene</option>
+                          <option value="OVERRIDE_SCENE">Override for this card</option>
+                          <option value="NO_SCENE">No scene constraints</option>
+                        </select>
+                      </div>
+                      
+                      <p className="text-xs text-amber-400/70">
+                        {card.sceneMode === 'OVERRIDE_SCENE' 
+                          ? 'This card will use custom scene settings instead of the project scene lock.'
+                          : card.sceneMode === 'NO_SCENE'
+                          ? 'This card will have no scene constraints applied.'
+                          : 'AI will maintain the locked scene from Project Bible.'
+                        }
+                      </p>
+                      
+                      {/* Override fields - only show when OVERRIDE_SCENE is selected */}
+                      {card.sceneMode === 'OVERRIDE_SCENE' && (
+                        <div className="space-y-3 pt-2 border-t border-amber-800/30">
+                          <div>
+                            <Label className="text-xs text-slate-400">Override Scene Description</Label>
+                            <Textarea
+                              value={card.overrideSceneDescription || ''}
+                              onChange={(e) => onCardUpdate(card.id, { overrideSceneDescription: e.target.value })}
+                              placeholder="Describe the scene for this specific card..."
+                              rows={2}
+                              className="bg-slate-900 border-slate-700 text-white text-sm mt-1"
+                              data-testid="input-override-scene"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-slate-400">Camera Angle</Label>
+                              <select
+                                value={card.overrideCameraAngle || ''}
+                                onChange={(e) => onCardUpdate(card.id, { overrideCameraAngle: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-2 py-1 mt-1"
+                                data-testid="select-override-camera"
+                              >
+                                <option value="">Same as locked</option>
+                                <option value="TOP_DOWN">Top Down</option>
+                                <option value="FORTY_FIVE_DEGREE">45° Angle</option>
+                                <option value="EYE_LEVEL">Eye Level</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-slate-400">Lighting</Label>
+                              <Input
+                                value={card.overrideLighting || ''}
+                                onChange={(e) => onCardUpdate(card.id, { overrideLighting: e.target.value })}
+                                placeholder="e.g., Dramatic spotlight"
+                                className="bg-slate-900 border-slate-700 text-white text-sm mt-1"
+                                data-testid="input-override-lighting"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   
