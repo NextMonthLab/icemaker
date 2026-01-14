@@ -54,6 +54,7 @@ import BecomeCreator from "@/pages/BecomeCreator";
 import PublishedIcePage from "@/pages/PublishedIcePage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import LeadsPage from "@/pages/LeadsPage";
+import IceAnalyticsPage from "@/pages/IceAnalyticsPage";
 import Onboarding from "@/pages/Onboarding";
 import CreatorProfile from "@/pages/CreatorProfile";
 import RequireAuth from "@/components/RequireAuth";
@@ -135,6 +136,7 @@ function Router() {
       <Route path="/ice/:shareSlug" component={PublishedIcePage} />
       <Route path="/discover" component={DiscoverPage} />
       <Route path="/leads" component={LeadsPage} />
+      <Route path="/analytics" component={IceAnalyticsPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
       <Route path="/app" component={ProtectedLibrary} />

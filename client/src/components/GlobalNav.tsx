@@ -17,6 +17,7 @@ import {
   Moon,
   Shield,
   Users,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -81,7 +82,10 @@ export default function GlobalNav({
   const quickLinks = [
     { href: '/discover', label: 'Discover', icon: Compass, context: 'marketing' as NavContext },
     { href: '/library', label: 'Library', icon: Sparkles, context: 'ice' as NavContext },
-    ...(user ? [{ href: '/leads', label: 'Leads', icon: Users, context: 'ice' as NavContext }] : []),
+    ...(user ? [
+      { href: '/analytics', label: 'Analytics', icon: BarChart3, context: 'ice' as NavContext },
+      { href: '/leads', label: 'Leads', icon: Users, context: 'ice' as NavContext },
+    ] : []),
   ];
 
   const audienceLinks = [

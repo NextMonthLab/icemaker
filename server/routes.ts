@@ -6137,6 +6137,36 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // ICE Analytics - summary
+  app.get("/api/ice/analytics/summary", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      const days = Math.min(Math.max(parseInt(req.query.days as string) || 30, 1), 365);
+      
+      const summary = await storage.getIceAnalyticsSummary(user.id, days);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching analytics summary:", error);
+      res.status(500).json({ message: "Error fetching analytics" });
+    }
+  });
+  
+  // ICE Analytics - by ICE
+  app.get("/api/ice/analytics/by-ice", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      
+      const analytics = await storage.getIceAnalyticsByIce(user.id);
+      res.json(analytics.map(a => ({
+        ...a,
+        publishedAt: a.publishedAt?.toISOString() || null,
+      })));
+    } catch (error) {
+      console.error("Error fetching analytics by ICE:", error);
+      res.status(500).json({ message: "Error fetching analytics" });
+    }
+  });
+  
   // Pexels API proxy (to protect API key) - requires auth to prevent abuse
   app.get("/api/pexels/search", requireAuth, async (req, res) => {
     try {

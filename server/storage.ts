@@ -136,6 +136,23 @@ export interface IStorage {
   getLeadsByUser(userId: number): Promise<Array<schema.IceLead & { iceTitle: string }>>;
   getLeadsByIce(iceId: string): Promise<schema.IceLead[]>;
   
+  // ICE Analytics
+  getIceAnalyticsSummary(userId: number, days: number): Promise<{
+    totalViews: number;
+    totalLeads: number;
+    totalShares: number;
+    viewsByDay: Array<{ date: string; views: number; leads: number }>;
+  }>;
+  getIceAnalyticsByIce(userId: number): Promise<Array<{
+    iceId: string;
+    title: string;
+    views: number;
+    leads: number;
+    shares: number;
+    publishedAt: Date | null;
+  }>>;
+  logIceAnalyticsEvent(event: schema.InsertIceAnalyticsEvent): Promise<schema.IceAnalyticsEvent>;
+  
   // Reference Assets (Visual Bible)
   getReferenceAsset(id: number): Promise<schema.UniverseReferenceAsset | undefined>;
   getReferenceAssetsByUniverse(universeId: number): Promise<schema.UniverseReferenceAsset[]>;
@@ -1077,6 +1094,124 @@ export class DatabaseStorage implements IStorage {
       orderBy: (leads, { desc }) => [desc(leads.createdAt)],
     });
     return results;
+  }
+  
+  // ICE Analytics
+  async getIceAnalyticsSummary(userId: number, days: number): Promise<{
+    totalViews: number;
+    totalLeads: number;
+    totalShares: number;
+    viewsByDay: Array<{ date: string; views: number; leads: number }>;
+  }> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Get user's ICE IDs
+    const userIces = await db.query.icePreviews.findMany({
+      where: eq(schema.icePreviews.ownerUserId, userId),
+      columns: { id: true },
+    });
+    const iceIds = userIces.map(ice => ice.id);
+    
+    if (iceIds.length === 0) {
+      return { totalViews: 0, totalLeads: 0, totalShares: 0, viewsByDay: [] };
+    }
+    
+    // Get analytics events
+    const events = await db.query.iceAnalyticsEvents.findMany({
+      where: and(
+        inArray(schema.iceAnalyticsEvents.iceId, iceIds),
+        gte(schema.iceAnalyticsEvents.createdAt, startDate)
+      ),
+    });
+    
+    const totalViews = events.filter(e => e.eventType === 'ice_view').length;
+    const totalShares = events.filter(e => e.eventType === 'ice_share').length;
+    
+    // Get leads
+    const leads = await db.query.iceLeads.findMany({
+      where: and(
+        inArray(schema.iceLeads.iceId, iceIds),
+        gte(schema.iceLeads.createdAt, startDate)
+      ),
+    });
+    const totalLeads = leads.length;
+    
+    // Group by day (using UTC to avoid timezone issues)
+    const viewsByDay: Record<string, { views: number; leads: number }> = {};
+    const now = new Date();
+    const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    for (let i = 0; i < days; i++) {
+      const date = new Date(todayUtc);
+      date.setUTCDate(date.getUTCDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      viewsByDay[dateStr] = { views: 0, leads: 0 };
+    }
+    
+    events.filter(e => e.eventType === 'ice_view').forEach(e => {
+      const dateStr = e.createdAt.toISOString().split('T')[0];
+      if (viewsByDay[dateStr]) viewsByDay[dateStr].views++;
+    });
+    
+    leads.forEach(l => {
+      const dateStr = l.createdAt.toISOString().split('T')[0];
+      if (viewsByDay[dateStr]) viewsByDay[dateStr].leads++;
+    });
+    
+    return {
+      totalViews,
+      totalLeads,
+      totalShares,
+      viewsByDay: Object.entries(viewsByDay)
+        .map(([date, data]) => ({ date, ...data }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    };
+  }
+  
+  async getIceAnalyticsByIce(userId: number): Promise<Array<{
+    iceId: string;
+    title: string;
+    views: number;
+    leads: number;
+    shares: number;
+    publishedAt: Date | null;
+  }>> {
+    const userIces = await db.query.icePreviews.findMany({
+      where: eq(schema.icePreviews.ownerUserId, userId),
+    });
+    
+    if (userIces.length === 0) return [];
+    
+    const iceIds = userIces.map(ice => ice.id);
+    
+    // Get all events for user's ICEs
+    const events = await db.query.iceAnalyticsEvents.findMany({
+      where: inArray(schema.iceAnalyticsEvents.iceId, iceIds),
+    });
+    
+    // Get all leads for user's ICEs
+    const leads = await db.query.iceLeads.findMany({
+      where: inArray(schema.iceLeads.iceId, iceIds),
+    });
+    
+    return userIces.map(ice => {
+      const iceEvents = events.filter(e => e.iceId === ice.id);
+      const iceLeads = leads.filter(l => l.iceId === ice.id);
+      
+      return {
+        iceId: ice.id,
+        title: ice.title,
+        views: iceEvents.filter(e => e.eventType === 'ice_view').length,
+        leads: iceLeads.length,
+        shares: iceEvents.filter(e => e.eventType === 'ice_share').length,
+        publishedAt: ice.publishedAt,
+      };
+    }).sort((a, b) => b.views - a.views);
+  }
+  
+  async logIceAnalyticsEvent(event: schema.InsertIceAnalyticsEvent): Promise<schema.IceAnalyticsEvent> {
+    const [result] = await db.insert(schema.iceAnalyticsEvents).values(event).returning();
+    return result;
   }
   
   // Reference Assets (Visual Bible)
