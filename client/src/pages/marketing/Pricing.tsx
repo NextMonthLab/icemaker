@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Zap, Crown, Star } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Star, Building2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import MarketingHeader from "@/components/MarketingHeader";
 import { cn } from "@/lib/utils";
@@ -77,6 +77,24 @@ const pricingPlans = [
     ctaHref: "/book-demo",
   },
 ];
+
+const enterprisePlan = {
+  name: "Enterprise",
+  tagline: "Custom branding at scale",
+  description: "Turn IceMaker into your on-brand content factory with custom title packs, captions, music, and asset libraries.",
+  features: [
+    "Everything in Studio",
+    "Custom Brand Packs (titles, captions, music, assets)",
+    "Branded caption styles and motion",
+    "Custom music beds and sonic identity",
+    "Brand asset library with governance",
+    "Done-for-you media production (optional)",
+    "Dedicated account manager",
+    "Custom onboarding and training",
+  ],
+  cta: "Find out more",
+  ctaHref: "/enterprise/custom-branding",
+};
 
 const comparisonFeatures = [
   { name: "ICE Experiences", starter: "5", creator: "15", studio: "50" },
@@ -236,6 +254,68 @@ export default function Pricing() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Enterprise Section */}
+        <section className="py-16 px-6">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative rounded-2xl border border-cyan-500/30 p-8 md:p-12 bg-gradient-to-br from-cyan-950/20 via-black to-black overflow-hidden"
+              data-testid="card-pricing-enterprise"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative z-10">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-cyan-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold">{enterprisePlan.name}</h3>
+                        <p className="text-sm text-white/40">{enterprisePlan.tagline}</p>
+                      </div>
+                    </div>
+
+                    <p className="text-white/60 mb-6 max-w-lg">
+                      {enterprisePlan.description}
+                    </p>
+
+                    <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                      {enterprisePlan.features.map((feature) => (
+                        <div key={feature} className="flex items-start gap-2 text-sm">
+                          <Check className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+                          <span className="text-white/80">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-start md:items-end gap-4">
+                    <div className="text-right">
+                      <p className="text-sm text-white/40 mb-1">Pricing</p>
+                      <p className="text-lg font-medium">Tailored to requirements</p>
+                    </div>
+                    <Link href={enterprisePlan.ctaHref}>
+                      <Button 
+                        size="lg" 
+                        className="gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                        data-testid="button-pricing-enterprise"
+                      >
+                        {enterprisePlan.cta}
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 

@@ -10005,6 +10005,39 @@ Return a JSON object with:
     }
   });
 
+  // Enterprise branding enquiry endpoint
+  app.post("/api/enterprise/branding-enquiry", async (req, res) => {
+    try {
+      const { name, company, email, customisations, notes } = req.body;
+
+      if (!name || !company || !email) {
+        return res.status(400).json({ message: "Name, company, and email are required" });
+      }
+
+      // Log the enquiry (TODO: Store in database or send via email when Resend is configured)
+      console.log("[Enterprise Enquiry] Branding enquiry received:", {
+        name,
+        company,
+        email,
+        customisations: customisations || [],
+        notes: notes || "",
+        timestamp: new Date().toISOString(),
+        ip: req.ip || req.socket.remoteAddress,
+      });
+
+      // TODO: Send notification email to sales team when Resend is fully configured
+      // For now, log to console for manual follow-up
+
+      res.json({ 
+        success: true, 
+        message: "Enquiry received. We'll be in touch within 2 business days." 
+      });
+    } catch (error) {
+      console.error("Error processing branding enquiry:", error);
+      res.status(500).json({ message: "Failed to submit enquiry" });
+    }
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
   startOrphanCleanupJob(storage);

@@ -1,0 +1,118 @@
+You are Rapplet working inside the IceMaker codebase.
+
+Goal
+Build a new “Enterprise Custom Branding” information page and wire it into the app via strong, contextual CTAs (without adding it to the main navigation). This page must be discoverable from:
+1) The Enterprise tier on the Pricing page (“Find out more” button)
+2) Any relevant customisation areas inside the IceMaker UI (advanced caption settings, title/graph styling, media library, audio/music settings, etc.)
+
+This page is a sales + education page, not a checkout.
+Pricing is NOT fixed and must be framed as “tailored to requirements”.
+
+Non-negotiables
+- Do NOT add this page to the primary navigation menu.
+- Do add clear, consistent “Find out more” / “Enterprise custom branding” CTAs in the right places.
+- Keep it premium, minimal, and on-brand with IceMaker.
+- The page must work in both light/dark themes (or the existing site theme).
+- Use UK English spelling.
+- Avoid long dashes (—). Use normal hyphens.
+
+Route + Page
+- Create a new route: `/enterprise/custom-branding`
+- Page title: “Enterprise Custom Branding”
+- Subtitle: “Turn IceMaker into your on-brand content factory for interactive experiences and video.”
+
+Page structure (must implement)
+1) Hero
+- Heading: Enterprise Custom Branding
+- Subheading: Consistent, brand-safe outputs across interactive experiences and video.
+- Primary CTA button: “Talk to us about custom branding” (links to existing contact flow if present, otherwise a simple contact form on the page)
+- Secondary CTA: “See what’s included” (scrolls down)
+
+2) What this unlocks (explain the concept)
+Short paragraph describing: IceMaker can be configured with a brand system so every export looks like the business created it in-house.
+
+3) Feature blocks (cards or sections)
+Include these as separate blocks with short descriptions and example bullets:
+
+A) Custom Title Packs
+- Fonts, colours, motion rules, lower-thirds, scene titles, intro/outro variants
+- Designed to match brand guidelines
+- Multiple layouts (top, middle, bottom) with correct spacing and sizing rules
+
+B) Branded Captions and Data Styling
+- Caption styles and animation aligned to the brand
+- Graph/chart title styling and overlays
+- Safe defaults for teams
+
+C) Custom Music and Sonic Identity
+- Approved music beds and mood packs
+- Optional sonic logo / stings
+- Consistent intro/outro audio
+
+D) Custom Sound Effects Pack
+- Brand-appropriate SFX library
+- Optional “moment” effects for reveals, transitions, emphasis
+
+E) Brand Asset Library
+- Upload logos, imagery, icons, b-roll, templates
+- IceMaker prefers approved assets over generic stock
+
+F) Done-for-you Media Production (Enterprise Add-on)
+- Filmed video intros/outros
+- Presenter footage, interviews, b-roll
+- Photography and campaign asset creation
+Important: Frame as “available as a managed service” and “quoted separately”.
+
+4) How it works (simple 3-step)
+- Step 1: Discovery and brand guidelines
+- Step 2: Build the Brand Pack (title packs, caption styles, audio, asset library)
+- Step 3: Deploy into your IceMaker workspace with governance controls
+
+5) Governance and approval
+- Only admins can edit Brand Packs
+- Versioning or change log if system supports it (if not, include UI copy that implies controlled updates)
+- Optional: “approval workflow” as “available on request”
+
+6) Call to action (bottom)
+- Repeat CTA: “Request Enterprise custom branding”
+- Include short note: “Enterprise customisation is tailored to your requirements. Final pricing depends on scope.”
+
+Contact mechanism
+- If there is already a contact page or contact flow, use it.
+- If not, add a lightweight form on this page with:
+  - Name
+  - Company
+  - Email
+  - What you want to customise (checkboxes: Title packs, Captions, Music, SFX, Asset Library, Filming, Photography)
+  - Notes
+  - Submit should POST to an existing public endpoint if available. If no backend exists, stub the endpoint and store locally or log server-side with a TODO clearly marked.
+
+Wiring requirements (add CTAs)
+1) Pricing page
+- In Enterprise plan card/section add:
+  - Bullet: “Custom Brand Packs (titles, captions, music, assets)”
+  - Button: “Find out more” -> `/enterprise/custom-branding`
+
+2) Inside IceMaker UI: add “Custom branding” upsell entry points
+Add small inline links/buttons in relevant areas:
+- Advanced caption settings
+- Title packs / title editor area
+- Graph title / data styling area (wherever titles are configured)
+- Audio/music settings
+- Media library / assets uploader
+Each should show:
+- Label: “Enterprise custom branding available”
+- Link: “Find out more” -> `/enterprise/custom-branding`
+
+Implementation notes
+- Reuse existing UI components (Button, Card, PageLayout) to keep style consistent.
+- Keep copy tight and premium, no waffle.
+- Ensure all new links work and do not break routing.
+- Add basic analytics hooks if the codebase already supports them (track clicks on “Find out more” and “Request Enterprise custom branding”).
+
+Deliverables
+- New page at `/enterprise/custom-branding`
+- Pricing page updated with Enterprise CTA
+- Contextual “Custom branding” links added in the UI areas listed
+- Any new components kept minimal and reusable
+- No new top-level nav items
