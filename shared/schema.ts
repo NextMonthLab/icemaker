@@ -1177,6 +1177,11 @@ export const icePreviews = pgTable("ice_previews", {
   leadGateEnabled: boolean("lead_gate_enabled").default(false), // Require email before viewing
   leadGatePrompt: text("lead_gate_prompt"), // Custom prompt for lead capture (e.g., "Enter your email to continue")
   
+  // Logo Branding settings
+  logoEnabled: boolean("logo_enabled").default(false), // Show logo on every card
+  logoUrl: text("logo_url"), // URL to uploaded logo image
+  logoPosition: text("logo_position").$type<"top-left" | "top-right" | "bottom-left" | "bottom-right">().default("top-right"), // Position on cards
+  
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
   promotedToJobId: integer("promoted_to_job_id").references(() => transformationJobs.id),
