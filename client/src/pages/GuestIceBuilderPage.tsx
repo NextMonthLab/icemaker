@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -1088,6 +1088,68 @@ export default function GuestIceBuilderPage() {
     // Legacy handler - no longer used directly
   };
 
+  // Add a new blank card
+  const handleAddCard = () => {
+    const newCardId = `card_${Date.now()}`;
+    const newCard: PreviewCard = {
+      id: newCardId,
+      title: `Card ${cards.length + 1}`,
+      content: "Add your content here...",
+      order: cards.length,
+      imageUrl: undefined,
+      generatedImageUrl: undefined,
+      generatedVideoUrl: undefined,
+    };
+    const newCards = [...cards, newCard];
+    setCards(newCards);
+    cardsRef.current = newCards;
+    performSave();
+    toast({ title: "Card added", description: "New card added to your experience." });
+  };
+
+  // Delete a card
+  const handleDeleteCard = (cardId: string) => {
+    if (cards.length <= 1) {
+      toast({ title: "Cannot delete", description: "You must have at least one card.", variant: "destructive" });
+      return;
+    }
+    const newCards = cards.filter(c => c.id !== cardId);
+    newCards.forEach((card, i) => card.order = i);
+    setCards(newCards);
+    cardsRef.current = newCards;
+    
+    // Also update interactivity nodes to adjust indices
+    setInteractivityNodes(nodes => 
+      nodes.filter(n => n.afterCardIndex < newCards.length - 1)
+           .map(n => ({ ...n, afterCardIndex: Math.min(n.afterCardIndex, newCards.length - 2) }))
+    );
+    
+    performSave();
+    toast({ title: "Card deleted", description: "Card removed from your experience." });
+  };
+
+  // Move a card up in the order
+  const handleMoveCardUp = (cardIndex: number) => {
+    if (cardIndex <= 0) return;
+    const newCards = [...cards];
+    [newCards[cardIndex - 1], newCards[cardIndex]] = [newCards[cardIndex], newCards[cardIndex - 1]];
+    newCards.forEach((card, i) => card.order = i);
+    setCards(newCards);
+    cardsRef.current = newCards;
+    performSave();
+  };
+
+  // Move a card down in the order
+  const handleMoveCardDown = (cardIndex: number) => {
+    if (cardIndex >= cards.length - 1) return;
+    const newCards = [...cards];
+    [newCards[cardIndex], newCards[cardIndex + 1]] = [newCards[cardIndex + 1], newCards[cardIndex]];
+    newCards.forEach((card, i) => card.order = i);
+    setCards(newCards);
+    cardsRef.current = newCards;
+    performSave();
+  };
+
   // Get cards that need images (have content but no image)
   const cardsNeedingImages = cards.filter(card => !card.generatedImageUrl);
   
@@ -1913,12 +1975,16 @@ export default function GuestIceBuilderPage() {
                       previewId={preview?.id || ""}
                       card={card}
                       cardIndex={index}
+                      totalCards={cards.length}
                       entitlements={entitlements || null}
                       isExpanded={expandedCardIndex === index}
                       onToggleExpand={() => setExpandedCardIndex(expandedCardIndex === index ? null : index)}
                       onCardUpdate={handleCardUpdate}
                       onCardSave={saveCardsWithUpdates}
                       onUpgradeClick={() => setShowUpgradeModal(true)}
+                      onMoveUp={() => handleMoveCardUp(index)}
+                      onMoveDown={() => handleMoveCardDown(index)}
+                      onDelete={() => handleDeleteCard(card.id)}
                     />
                     
                     {/* Interactivity node slot between cards */}
@@ -1996,6 +2062,17 @@ export default function GuestIceBuilderPage() {
                   </div>
                 );
               })}
+              
+              {/* Add New Card button */}
+              <Button
+                variant="outline"
+                onClick={handleAddCard}
+                className="w-full mt-4 border-dashed border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 hover:text-white hover:border-cyan-500/50"
+                data-testid="button-add-new-card"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Card
+              </Button>
             </div>
 
             {/* Unlock Premium Features - only show for non-Pro users */}

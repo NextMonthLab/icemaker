@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
-  ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus
+  ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -64,12 +64,16 @@ interface IceCardEditorProps {
   previewId: string;
   card: PreviewCard;
   cardIndex: number;
+  totalCards: number;
   entitlements: Entitlements | null;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onCardUpdate: (cardId: string, updates: Partial<PreviewCard>) => void;
   onCardSave: (cardId: string, updates: Partial<PreviewCard>) => void;
   onUpgradeClick: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onDelete?: () => void;
 }
 
 function LockedOverlay({ 
@@ -104,12 +108,16 @@ export function IceCardEditor({
   previewId,
   card,
   cardIndex,
+  totalCards,
   entitlements,
   isExpanded,
   onToggleExpand,
   onCardUpdate,
   onCardSave,
   onUpgradeClick,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
 }: IceCardEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -684,6 +692,44 @@ export function IceCardEditor({
               <Mic className="w-3 h-3 text-cyan-400" />
             </div>
           )}
+          
+          {/* Card reorder and delete controls */}
+          <div className="flex items-center gap-1 ml-2 border-l border-slate-700 pl-2" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
+              onClick={onMoveUp}
+              disabled={cardIndex === 0}
+              title="Move up"
+              data-testid={`button-move-up-${cardIndex}`}
+            >
+              <ArrowUp className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
+              onClick={onMoveDown}
+              disabled={cardIndex >= totalCards - 1}
+              title="Move down"
+              data-testid={`button-move-down-${cardIndex}`}
+            >
+              <ArrowDown className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+              onClick={onDelete}
+              disabled={totalCards <= 1}
+              title="Delete card"
+              data-testid={`button-delete-card-${cardIndex}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+          
           {isExpanded ? (
             <ChevronUp className="w-5 h-5 text-slate-400" />
           ) : (
