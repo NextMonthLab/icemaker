@@ -372,6 +372,62 @@ export const insertCharacterSchema = createInsertSchema(characters).omit({ id: t
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
 export type Character = typeof characters.$inferSelect;
 
+// ============ AI CHARACTER CUSTOM FIELDS (Structured Data Capture) ============
+// Business-tier feature for capturing structured data during AI conversations
+
+export type CustomFieldType = 'text' | 'number' | 'single_select' | 'multi_select' | 'date' | 'boolean' | 'email' | 'phone';
+
+// Custom field options for select fields
+export const customFieldOptionsSchema = z.object({
+  options: z.array(z.object({
+    value: z.string(),
+    label: z.string(),
+  })).optional(),
+});
+export type CustomFieldOptions = z.infer<typeof customFieldOptionsSchema>;
+
+// Character custom fields definition
+export const aiCharacterCustomFields = pgTable("ai_character_custom_fields", {
+  id: serial("id").primaryKey(),
+  characterId: integer("character_id").references(() => characters.id, { onDelete: "cascade" }).notNull(),
+  fieldKey: text("field_key").notNull(), // Unique key within character (e.g., "company_name")
+  label: text("label").notNull(), // Display label (e.g., "Company Name")
+  fieldType: text("field_type").$type<CustomFieldType>().notNull().default("text"),
+  placeholder: text("placeholder"), // Optional placeholder text
+  required: boolean("required").default(false).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  options: jsonb("options").$type<CustomFieldOptions>(), // For select fields
+  description: text("description"), // Help text shown to viewers
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAiCharacterCustomFieldSchema = createInsertSchema(aiCharacterCustomFields).omit({ id: true, createdAt: true });
+export type InsertAiCharacterCustomField = z.infer<typeof insertAiCharacterCustomFieldSchema>;
+export type AiCharacterCustomField = typeof aiCharacterCustomFields.$inferSelect;
+
+// Field responses captured during chat sessions
+export const aiCharacterFieldResponses = pgTable("ai_character_field_responses", {
+  id: serial("id").primaryKey(),
+  icePreviewId: text("ice_preview_id").references(() => icePreviews.id, { onDelete: "cascade" }).notNull(),
+  characterId: integer("character_id").references(() => characters.id, { onDelete: "cascade" }).notNull(),
+  fieldId: integer("field_id").references(() => aiCharacterCustomFields.id, { onDelete: "cascade" }).notNull(),
+  
+  // Viewer identification (anonymous or authenticated)
+  viewerSessionId: text("viewer_session_id").notNull(), // Unique session identifier
+  viewerDisplayName: text("viewer_display_name"), // Optional display name
+  viewerUserId: integer("viewer_user_id").references(() => users.id), // If authenticated
+  
+  // Response data
+  value: jsonb("value").notNull(), // Flexible storage for any field type
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAiCharacterFieldResponseSchema = createInsertSchema(aiCharacterFieldResponses).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertAiCharacterFieldResponse = z.infer<typeof insertAiCharacterFieldResponseSchema>;
+export type AiCharacterFieldResponse = typeof aiCharacterFieldResponses.$inferSelect;
+
 // Locations (for consistent environments in engine_generated mode)
 export const locations = pgTable("locations", {
   id: serial("id").primaryKey(),
