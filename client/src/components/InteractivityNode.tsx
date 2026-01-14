@@ -24,6 +24,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { CustomFieldsEditor, CustomField } from "@/components/CustomFieldsEditor";
+import { FieldCaptureForm, CaptureField } from "@/components/FieldCaptureForm";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 
@@ -77,7 +78,30 @@ export function InteractivityNode({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showCaptureForm, setShowCaptureForm] = useState(false);
+  const [captureSubmitted, setCaptureSubmitted] = useState(false);
+  const [isSubmittingCapture, setIsSubmittingCapture] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { data: captureFields = [] } = useQuery<CaptureField[]>({
+    queryKey: ["/api/characters", currentCharacter?.id, "custom-fields"],
+    queryFn: async () => {
+      if (!currentCharacter?.id) return [];
+      const numericId = parseInt(currentCharacter.id.replace(/\D/g, "")) || 0;
+      if (!numericId) return [];
+      const res = await fetch(`/api/characters/${numericId}/custom-fields`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!currentCharacter?.id && isActive,
+    staleTime: 60000,
+  });
+
+  useEffect(() => {
+    if (captureFields.length > 0 && messages.length >= 3 && !captureSubmitted && !showCaptureForm) {
+      setShowCaptureForm(true);
+    }
+  }, [captureFields, messages.length, captureSubmitted, showCaptureForm]);
 
   useEffect(() => {
     const char = characters.find(c => c.id === selectedCharacterId) || characters[0];
@@ -87,6 +111,8 @@ export function InteractivityNode({
         role: "assistant",
         content: char.openingMessage || `Hello, I'm ${char.name}. What would you like to know?`,
       }]);
+      setShowCaptureForm(false);
+      setCaptureSubmitted(false);
     }
   }, [selectedCharacterId, characters]);
 
@@ -153,6 +179,37 @@ export function InteractivityNode({
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCaptureSubmit = async (values: Record<string, unknown>) => {
+    setIsSubmittingCapture(true);
+    try {
+      const response = await fetch(`/api/ice/preview/${previewId}/field-responses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterId: currentCharacter?.id,
+          sessionId: `session-${Date.now()}`,
+          responses: values,
+        }),
+      });
+
+      if (response.ok) {
+        setCaptureSubmitted(true);
+        setShowCaptureForm(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Thanks for sharing that info! How else can I help you?",
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to submit capture:", error);
+    } finally {
+      setIsSubmittingCapture(false);
     }
   };
 
@@ -301,6 +358,22 @@ export function InteractivityNode({
                 <Loader2 className="w-3 h-3 animate-spin" />
                 {displayName} is thinking...
               </div>
+            </motion.div>
+          )}
+          {showCaptureForm && captureFields.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <FieldCaptureForm
+                fields={captureFields}
+                onSubmit={handleCaptureSubmit}
+                onDismiss={() => {
+                  setShowCaptureForm(false);
+                  setCaptureSubmitted(true);
+                }}
+                isSubmitting={isSubmittingCapture}
+              />
             </motion.div>
           )}
         </div>
