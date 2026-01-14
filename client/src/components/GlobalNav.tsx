@@ -25,9 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-
-const LOGO_URL_LIGHT = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1746537994/0A6752C9-3498-4269-9627-A1BE7A36A800_dgqotr.jpg";
-const LOGO_URL_DARK = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1736761132/IceMaker_Logo_u6j2qj.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 type NavContext = 'marketing' | 'app' | 'ice';
 
@@ -59,7 +57,6 @@ export default function GlobalNav({
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [logoError, setLogoError] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -93,19 +90,11 @@ export default function GlobalNav({
         <div className="flex items-center gap-3">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer" data-testid="link-global-logo">
-              {logoError ? (
-                <span className="text-xl font-bold text-cyan-400 flex items-center">
-                  IceMaker
-                </span>
-              ) : (
-                <img 
-                  src={LOGO_URL_DARK} 
-                  alt="IceMaker" 
-                  className="h-24 w-auto"
-                  style={{ clipPath: 'inset(35% 0 35% 0)' }}
-                  onError={() => setLogoError(true)}
-                />
-              )}
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-8 w-auto"
+              />
             </div>
           </Link>
 
