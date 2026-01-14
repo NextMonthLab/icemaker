@@ -9,9 +9,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  Building2,
-  Film,
-  GraduationCap,
   Compass,
   Sun,
   Moon,
@@ -88,12 +85,6 @@ export default function GlobalNav({
     ] : []),
   ];
 
-  const audienceLinks = [
-    { href: '/for/business', label: 'For Businesses', icon: Building2 },
-    { href: '/for/creators', label: 'For Creators', icon: Film },
-    { href: '/for/educator', label: 'For Educators', icon: GraduationCap },
-  ];
-  
   const showCTAs = !user && context === 'marketing';
 
   return (
@@ -157,24 +148,6 @@ export default function GlobalNav({
                 );
               })}
               
-              {context === 'marketing' && (
-                <>
-                  <div className="w-px h-4 bg-white/20 mx-1" />
-                  {audienceLinks.map((link) => (
-                    <Link key={link.href} href={link.href}>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-white/50 hover:text-white hover:bg-white/10 gap-1 h-8 px-2 text-xs"
-                        data-testid={`global-nav-${link.href.split('/').pop()}`}
-                      >
-                        <link.icon className="w-3 h-3" />
-                        {link.label}
-                      </Button>
-                    </Link>
-                  ))}
-                </>
-              )}
             </nav>
 
             <div className="flex items-center gap-2">
@@ -308,23 +281,6 @@ export default function GlobalNav({
             );
           })}
           
-          {context === 'marketing' && (
-            <>
-              <div className="border-t border-border my-2" />
-              {audienceLinks.map((link) => (
-                <Link key={link.href} href={link.href}>
-                  <div 
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    data-testid={`global-mobile-${link.href.split('/').pop()}`}
-                  >
-                    <link.icon className="w-4 h-4" />
-                    {link.label}
-                  </div>
-                </Link>
-              ))}
-            </>
-          )}
           
           {user?.isAdmin && (
             <>
