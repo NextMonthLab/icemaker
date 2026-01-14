@@ -1,0 +1,151 @@
+# IceMaker Repository Inventory
+# Generated: January 2025
+
+## Directory Tree (depth 4)
+
+.
+├── attached_assets/
+│   ├── generated_images/
+│   └── stock_images/
+├── client/
+│   ├── public/
+│   │   └── templates/
+│   └── src/
+│       ├── ai/
+│       │   └── local/
+│       ├── caption-engine/
+│       │   ├── grouping/
+│       │   ├── karaoke/
+│       │   ├── layout/
+│       │   │   ├── fit/
+│       │   │   └── title/
+│       │   ├── presets/
+│       │   ├── render/
+│       │   ├── safe-area/
+│       │   ├── schemas/
+│       │   └── tokens/
+│       ├── components/
+│       │   ├── experience/
+│       │   ├── ice-maker/
+│       │   ├── launchpad/
+│       │   ├── onboarding/
+│       │   ├── preview/
+│       │   ├── radar/
+│       │   ├── spatial/
+│       │   └── ui/
+│       ├── hooks/
+│       ├── lib/
+│       │   └── types/
+│       ├── pages/
+│       │   ├── admin/
+│       │   ├── enterprise/
+│       │   ├── icemaker/
+│       │   ├── legal/
+│       │   ├── marketing/
+│       │   └── smartglasses/
+│       │       └── components/
+│       └── remotion/
+│           ├── compositions/
+│           ├── layers/
+│           └── utils/
+├── config/
+├── data/
+│   └── orbits/
+├── docs/
+│   └── claude-code/
+├── server/
+│   ├── caption-engine/
+│   ├── config/
+│   ├── jobs/
+│   ├── pipeline/
+│   ├── replit_integrations/
+│   ├── services/
+│   │   └── email/
+│   ├── storage/
+│   ├── tests/
+│   ├── tts/
+│   ├── utils/
+│   └── video/
+└── shared/
+
+
+## Key Files
+
+### Package Configuration
+- package.json                    # Dependencies and scripts
+- tsconfig.json                   # TypeScript configuration
+- drizzle.config.ts              # Database ORM configuration
+- vite.config.ts                 # Vite bundler configuration
+- tailwind.config.ts             # Tailwind CSS configuration
+
+### Scripts (from package.json)
+- npm run dev                    # Start development server
+- npm run build                  # Build for production
+- npm run start                  # Start production server
+- npm run check                  # TypeScript type checking
+- npm run db:push                # Push schema to database
+
+### Server Entry Points
+- server/index.ts                # Express app entry point
+- server/routes.ts               # All API routes (~10k lines)
+- server/storage.ts              # Database operations (IStorage)
+- server/vite.ts                 # Vite dev server integration
+
+### Client Entry Points
+- client/src/main.tsx            # React app entry
+- client/src/App.tsx             # Root component with routing
+- client/index.html              # HTML template
+
+### Core Files
+- shared/schema.ts               # All data models (4000+ lines)
+- server/entitlements.ts         # Subscription tier gating
+- server/previewHelpers.ts       # ICE CRUD operations
+- client/src/lib/queryClient.ts  # TanStack Query setup
+
+
+## Routes Files
+
+- server/routes.ts               # Main API router (all endpoints)
+
+
+## Database/Schema Files
+
+- shared/schema.ts               # Drizzle schema definitions
+- drizzle.config.ts              # Drizzle configuration
+
+
+## Key Component Files
+
+### Pages
+- client/src/pages/GuestIceBuilderPage.tsx    # Main ICE creation
+- client/src/pages/CreateIcePage.tsx          # 4-step wizard
+- client/src/pages/PreviewPage.tsx            # ICE preview player
+- client/src/pages/PublishedIcePage.tsx       # Published ICE viewer
+- client/src/pages/Library.tsx                # User's ICE library
+- client/src/pages/Login.tsx                  # Authentication
+- client/src/pages/Admin.tsx                  # Admin dashboard
+
+### Components
+- client/src/components/IceCardEditor.tsx     # Card editing
+- client/src/components/SiteNav.tsx           # Navigation
+- client/src/components/GlobalNav.tsx         # Global header
+- client/src/components/TallyContactForm.tsx  # Contact form embed
+
+### Services
+- server/services/briefParser.ts              # Producer brief parsing
+- server/services/conversationIntelligence.ts # Chat insights
+- server/services/topicTileGenerator.ts       # Topic extraction
+
+### Jobs
+- server/jobs/archiveExpiredPreviews.ts       # Cleanup expired ICEs
+- server/jobs/orphanCleanup.ts                # Remove orphaned files
+- server/jobs/storageReconciliation.ts        # Storage quota sync
+
+
+## External Integration Files
+
+- server/video/index.ts                       # Kling/Replicate video
+- server/tts/                                 # OpenAI TTS
+- server/stripeClient.ts                      # Stripe billing
+- server/webhookHandlers.ts                   # Stripe webhooks
+- server/replit_integrations/object_storage.ts # R2/S3 storage

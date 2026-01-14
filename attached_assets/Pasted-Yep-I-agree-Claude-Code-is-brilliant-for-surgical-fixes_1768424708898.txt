@@ -1,0 +1,217 @@
+Yep, I agree. Claude Code is brilliant for “surgical fixes” when it has a proper map of the world. The trick is giving it an orientation pack that is:
+	•	Truthful (pulled from the actual repo, not vibes)
+	•	Navigable (clear file paths, run commands, where logic lives)
+	•	Outcome-driven (what “perfect” looks like, and what to protect)
+
+Below is a copy-paste Replit prompt that tells Replit to generate a Claude Code Orientation Pack inside your IceMaker repo. It’s designed so Claude Code can land, read 3-5 docs, and immediately know how to operate without breaking things.
+
+⸻
+
+Replit Prompt: Generate Claude Code Orientation Pack for IceMaker
+
+Prompt to give Replit (paste as-is):
+
+Build a documentation pack inside this repo so that Claude Code can immediately orientate itself and safely do refinements and bug fixing without introducing regressions. This is not a new feature build. This is an “operations manual + architecture map + monetisation model” for IceMaker, based on the code that exists right now.
+
+Create a new folder:
+	•	docs/claude-code/
+
+And generate the following files with real, repo-specific detail. Do not guess. If you cannot find something, write “UNKNOWN” and add a short “How to find it” note.
+
+0) Rules
+	•	Extract facts from the codebase (package.json, server routes, db schema, env usage, integrations, pipelines).
+	•	Every major claim must include:
+	•	file path(s)
+	•	function/class names
+	•	key endpoints
+	•	example payloads where relevant
+	•	Keep it concise but complete. Make it useful for bug fixing and safe refactors.
+	•	UK English spelling.
+	•	Avoid long dashes.
+
+⸻
+
+1) Create: docs/claude-code/00-START-HERE.md
+
+Purpose: The one-page landing guide for Claude Code.
+
+Include:
+	•	What IceMaker is, in one paragraph, and what it is NOT
+	•	The “philosophy” (simplicity, cinematic cards, creativity-first, avoid scope creep)
+	•	10 “golden rules” for changes (eg: do not break Render env vars, do not change API contracts, etc.)
+	•	Quick commands:
+	•	install, dev, build, start
+	•	run server, run client, run tests (if any)
+	•	Where to look first when something breaks (top 10 files)
+	•	High level architecture diagram in text (client, server, storage, db, external providers)
+
+⸻
+
+2) Create: docs/claude-code/01-ARCHITECTURE-MAP.md
+
+Purpose: A structured map of modules.
+
+Include sections:
+	•	Frontend overview
+	•	routes/pages, key components, state management, how cards render and transition
+	•	Backend overview
+	•	server entry, routing, middleware, auth, rate limiting
+	•	ICE data model
+	•	what an ICE is in the database and in the API
+	•	all core entities, relationships, and constraints
+	•	Pipelines
+	•	ingestion, parsing, asset generation, assembly, publishing
+	•	step-by-step sequence with file paths and key functions
+	•	Storage
+	•	object storage provider, bucket layout, naming, lifecycle rules, signed URLs, privacy defaults
+	•	Third-party integrations
+	•	OpenAI (image, chat, TTS), Kling/Replicate (video), any other
+	•	where keys are used and how errors are handled
+	•	Render deployment
+	•	build command, start command, required env vars, health checks
+
+⸻
+
+3) Create: docs/claude-code/02-DEPENDENCIES-AND-INTERDEPENDENCIES.md
+
+Purpose: Tell Claude what depends on what.
+
+Include:
+	•	Dependency graph by area:
+	•	ICE creation -> media generation -> storage -> playback UI
+	•	auth -> tenant isolation -> billing tier gating (if present)
+	•	“If you change X, you must check Y” lists:
+	•	card transitions
+	•	ICE player
+	•	API contracts
+	•	storage URLs
+	•	pricing guards / quotas
+	•	Known fragile points:
+	•	race conditions, async flows, timeouts, retries
+
+⸻
+
+4) Create: docs/claude-code/03-ENV-VARS-RUNBOOK.md
+
+Purpose: Make Render and local dev bulletproof.
+
+Include:
+	•	Table of all environment variables actually used in code, with:
+	•	name
+	•	where referenced (file path + line reference if possible)
+	•	purpose
+	•	required in dev? required in prod?
+	•	example format (not real secrets)
+	•	Render runbook:
+	•	how to confirm env vars are set
+	•	common deployment failures and how to diagnose
+	•	Secrets safety:
+	•	never log secrets
+	•	redaction patterns
+
+To find env vars, scan for process.env usage and any config modules.
+
+⸻
+
+5) Create: docs/claude-code/04-API-CONTRACTS.md
+
+Purpose: Claude should not accidentally break the frontend.
+
+Include:
+	•	List all API endpoints with:
+	•	method + path
+	•	purpose
+	•	request shape (example JSON)
+	•	response shape (example JSON)
+	•	auth requirements
+	•	error shapes
+	•	Flag “public” vs “internal” endpoints
+	•	Identify which endpoints are used by the ICE player, library page, creation UI, uploads, asset jobs
+
+If OpenAPI or route definitions exist, use them. Otherwise derive from router code.
+
+⸻
+
+6) Create: docs/claude-code/05-MONETISATION-AND-PERFECT-PICTURE.md
+
+Purpose: The “full capacity” picture + pricing guardrails.
+
+Include:
+	•	What “perfect picture” looks like:
+	•	stable build pipeline
+	•	predictable unit costs per ICE type
+	•	guardrails that stop loss-making behaviour (video-heavy ICEs)
+	•	tenant quotas and billing tiers (even if not fully implemented, note current status)
+	•	Pricing model:
+	•	current planned tiers (if stored anywhere in code/docs)
+	•	which features belong to which tier
+	•	Cost model:
+	•	list cost centres (LLM, image, video, TTS, storage, egress)
+	•	where those calls happen in code
+	•	recommended usage caps and fail-safes
+	•	Operational metrics to track:
+	•	ICE build success rate, build time, cost per ICE, media generation error rate
+	•	storage growth, orphaned uploads
+	•	Risk list:
+	•	biggest ways to accidentally lose money
+	•	what code-level guardrails should exist
+
+If there is existing cost audit documentation in repo, summarise and link to it.
+
+⸻
+
+7) Create: docs/claude-code/06-BUGFIX-WORKFLOW.md
+
+Purpose: Claude’s operating method.
+
+Include:
+	•	How to reproduce issues:
+	•	where logs appear, how to enable debug logging
+	•	local dev steps
+	•	How to patch safely:
+	•	create small PRs
+	•	add or update tests (if test harness exists)
+	•	manual regression checklist
+	•	Regression checklist:
+	•	create ICE, generate image, generate video, playback, transitions, publish, share
+	•	“Do not touch” list (if any areas are sensitive)
+
+⸻
+
+8) Add: docs/claude-code/README.md
+
+A short index linking all the above.
+
+⸻
+
+9) Optional but recommended: generate a repo inventory snapshot
+
+Create docs/claude-code/99-REPO-INVENTORY.txt containing:
+	•	directory tree (depth 4)
+	•	key files list (package.json scripts, server entry, client entry)
+	•	list of routes files
+	•	list of database/schema files
+
+⸻
+
+10) Finally: sanity check
+
+After generating docs:
+	•	Ensure paths match actual repo structure.
+	•	Ensure nothing references “Orbit” unless it genuinely exists in this repo.
+	•	Ensure docs reflect Render deployment reality (not Replit-only behaviour).
+
+Deliver as a single commit with message:
+“docs: add Claude Code orientation pack”
+
+⸻
+
+Why this works (in plain English)
+
+This gives Claude Code:
+	•	a map (where things are)
+	•	a contract (what not to break)
+	•	a playbook (how to fix safely)
+	•	and a money brain (how not to bankrupt you with video generation)
+
+If you want, I can also give you a second prompt for Replit that generates a one-page “Claude Guardrails” file (a strict checklist Claude must follow before committing). That’s the bit that stops it doing anything “helpful” that quietly breaks pricing or tenancy.
