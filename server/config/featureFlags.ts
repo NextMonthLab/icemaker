@@ -10,24 +10,32 @@ export const featureFlags = {
     enabled: process.env.NOTIFICATIONS_ENABLED !== 'false',
     emailDigestsEnabled: process.env.EMAIL_DIGESTS_ENABLED !== 'false',
   },
-  
+
   magicLinks: {
     enabled: process.env.MAGIC_LINKS_ENABLED !== 'false',
     expiryDays: parseInt(process.env.MAGIC_LINK_EXPIRY_DAYS || '7', 10),
   },
-  
+
   iceGeneration: {
     enabled: process.env.ICE_GENERATION_ENABLED !== 'false',
     videoGenerationEnabled: process.env.VIDEO_GENERATION_ENABLED !== 'false',
     maxVideoScenes: parseInt(process.env.MAX_VIDEO_SCENES || '4', 10),
   },
-  
+
   ai: {
     chatEnabled: process.env.AI_CHAT_ENABLED !== 'false',
     imageGenerationEnabled: process.env.AI_IMAGE_GENERATION_ENABLED !== 'false',
     ttsEnabled: process.env.AI_TTS_ENABLED !== 'false',
   },
-  
+
+  // Orbit features: DISABLED for IceMaker v1 (ICE-first strategy)
+  // Schema tables exist but API/UI abandoned mid-development
+  // Re-enable via ORBIT_ENABLED=true if needed for internal testing
+  orbit: {
+    enabled: process.env.ORBIT_ENABLED === 'true', // Default: false
+    smartGlassesEnabled: process.env.ORBIT_SMARTGLASSES_ENABLED === 'true',
+  },
+
   softLaunch: {
     inviteOnlyMode: process.env.INVITE_ONLY_MODE === 'true',
     allowedDomains: (process.env.ALLOWED_DOMAINS || '').split(',').filter(Boolean),

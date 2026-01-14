@@ -34,7 +34,6 @@ import Admin from "@/pages/Admin";
 import SuperAdmin from "@/pages/SuperAdmin";
 import AdminCreate from "@/pages/AdminCreate";
 import AdminImport from "@/pages/AdminImport";
-import AdminCpac from "@/pages/AdminCpac";
 import AdminCardDetail from "@/pages/AdminCardDetail";
 import AdminCardEdit from "@/pages/AdminCardEdit";
 import AdminAudio from "@/pages/AdminAudio";
@@ -86,7 +85,6 @@ const ProtectedAdmin = withAuth(Admin);
 const ProtectedSuperAdmin = withAuth(SuperAdmin);
 const ProtectedAdminCreate = withAuth(AdminCreate);
 const ProtectedAdminImport = withAuth(AdminImport);
-const ProtectedAdminCpac = withAuth(AdminCpac);
 const ProtectedAdminAudio = withAuth(AdminAudio);
 const ProtectedAdminCardDetail = withAuth(AdminCardDetail);
 const ProtectedAdminCardEdit = withAuth(AdminCardEdit);
@@ -168,7 +166,6 @@ function Router() {
       <Route path="/super-admin" component={ProtectedSuperAdmin} />
       <Route path="/admin/create" component={ProtectedAdminCreate} />
       <Route path="/admin/import" component={ProtectedAdminImport} />
-      <Route path="/admin/cpac" component={ProtectedAdminCpac} />
       <Route path="/admin/audio" component={ProtectedAdminAudio} />
       <Route path="/admin/cards/:id" component={ProtectedAdminCardDetail} />
       <Route path="/admin/cards/:id/edit" component={ProtectedAdminCardEdit} />
