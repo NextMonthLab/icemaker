@@ -10,14 +10,11 @@ import {
   Menu,
   X,
   Compass,
-  Sun,
-  Moon,
   Shield,
   Users,
   BarChart3,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
@@ -61,16 +58,11 @@ export default function GlobalNav({
 }: GlobalNavProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-  };
-  
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const getInitials = (name: string) => {
@@ -219,23 +211,6 @@ export default function GlobalNav({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={toggleTheme} 
-                      className="cursor-pointer"
-                      data-testid="global-menu-theme"
-                    >
-                      {theme === 'dark' ? (
-                        <>
-                          <Sun className="w-4 h-4 mr-2" />
-                          Light Mode
-                        </>
-                      ) : (
-                        <>
-                          <Moon className="w-4 h-4 mr-2" />
-                          Dark Mode
-                        </>
-                      )}
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-400 hover:text-red-300" data-testid="global-menu-logout">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
@@ -306,26 +281,7 @@ export default function GlobalNav({
             </>
           )}
           
-          {user && (
-            <div 
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
-              onClick={toggleTheme}
-              data-testid="global-mobile-theme"
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-4 h-4" />
-                  Light Mode
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4" />
-                  Dark Mode
-                </>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
       )}
     </header>
   );
