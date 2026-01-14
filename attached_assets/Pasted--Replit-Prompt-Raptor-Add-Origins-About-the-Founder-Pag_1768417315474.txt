@@ -1,0 +1,112 @@
+## Replit Prompt (Raptor): Add “Origins / About the Founder” Page to Footer Menu
+
+Goal
+We want to add a quiet, credibility-focused page to IceMaker that gives context about who is behind the product and why it exists. This is NOT a fundraising or investor pitch page. It is a low-key trust and legitimacy signal for sophisticated users, partners, and future strategic conversations.
+
+This should feel intentional, understated, and premium.
+
+Scope
+Small, contained change:
+- Add a new page
+- Add a footer link
+- No changes to core product flows
+
+Do not introduce calls to action around funding, pricing, or decks.
+
+---
+
+A) Footer Navigation Update
+
+Add a new footer link:
+- Label: **“Origins”** (preferred)
+  - Alternative acceptable label if needed: “About the Founder”
+
+Placement:
+- Footer only
+- Near links like About / Legal / Privacy (not in main header navigation)
+
+The link should route to a new static page.
+
+---
+
+B) New Page: “Origins”
+
+Create a new page route, e.g.:
+- `/origins`
+- `/about-founder` (only if routing conventions require it)
+
+Page intent:
+- Explain *why IceMaker exists*
+- Provide light founder context
+- Signal long-term thinking and seriousness
+- Avoid sales, hype, or fundraising language
+
+---
+
+C) Content Structure (simple + elegant)
+
+1) Page title
+- “Origins”
+- Optional subtitle:
+  “Why IceMaker exists”
+
+2) Opening section (short narrative)
+- A concise, human explanation of:
+  - The motivation behind IceMaker
+  - The intersection of storytelling, technology, and interactivity
+  - Why interactive cinematic experiences matter
+
+Tone:
+- Calm
+- Thoughtful
+- Confident
+- No buzzwords
+
+3) About the Founder (high-signal, brief)
+- One short section introducing the founder
+- Focus on:
+  - Background in filmmaking and storytelling
+  - Experience building real systems and products
+  - Why this combination led naturally to IceMaker
+
+Avoid:
+- Full CV
+- Long timelines
+- Overly personal details
+
+4) Forward-looking closing line (important)
+Include a single, restrained sentence along the lines of:
+- IceMaker is being built deliberately, with a focus on quality and long-term value.
+- Strategic conversations are welcome when the timing is right.
+
+This is not a CTA. No buttons required.
+
+---
+
+D) Design & UX Guidance
+
+- Keep layout clean and minimal
+- Text-first page
+- No heavy graphics required
+- Must feel consistent with IceMaker’s visual language
+- Mobile-friendly by default
+
+---
+
+E) Technical Notes
+
+- Static content is fine (no CMS required at this stage)
+- Easy to edit later as the product evolves
+- No analytics or tracking changes required
+
+---
+
+Acceptance Criteria
+
+1) A new “Origins” (or equivalent) page exists and is accessible from the footer.
+2) The page feels credible and intentional, not promotional or fundraising-led.
+3) No impact on existing IceMaker flows or performance.
+4) The page can later evolve into a fuller “About / Investor” page without structural rework.
+
+Notes
+This page is about trust and context, not conversion. Keep it subtle.

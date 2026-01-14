@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,69 @@ import GlobalNav from "@/components/GlobalNav";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
+import { useCardReadiness, usePreloadNextCard, TRANSITION_CONFIG } from "@/hooks/useCardReadiness";
+
+interface ReadyCardPlayerProps {
+  card: PreviewCard;
+  cardIndex: number;
+  narrationMuted: boolean;
+  narrationVolume: number;
+  icePreviewId?: string;
+  onReady: () => void;
+}
+
+function MediaPreloader({ 
+  card, 
+  onReady 
+}: { card: PreviewCard; onReady: () => void }) {
+  const hasMedia = !!(card.generatedImageUrl || card.generatedVideoUrl);
+  const preferVideo = !!card.generatedVideoUrl;
+  
+  const { markMounted } = useCardReadiness({
+    imageUrl: card.generatedImageUrl,
+    videoUrl: card.generatedVideoUrl,
+    preferVideo,
+    onReady,
+  });
+
+  useEffect(() => {
+    if (hasMedia) {
+      markMounted();
+    } else {
+      onReady();
+    }
+  }, [hasMedia, markMounted, onReady]);
+
+  return null;
+}
+
+function VisibleCardPlayer({ 
+  card, 
+  cardIndex, 
+  narrationMuted, 
+  narrationVolume, 
+  icePreviewId,
+}: Omit<ReadyCardPlayerProps, 'onReady'>) {
+  return (
+    <CardPlayer
+      card={{
+        id: card.id,
+        title: card.title,
+        image: card.generatedImageUrl || "/placeholder-dark.jpg",
+        captions: [card.content],
+        sceneText: card.content,
+        recapText: card.title,
+        publishDate: new Date().toISOString(),
+        dayIndex: cardIndex,
+        narrationAudioUrl: card.narrationAudioUrl,
+        generatedVideoUrl: card.generatedVideoUrl,
+      }}
+      narrationMuted={narrationMuted}
+      narrationVolume={narrationVolume}
+      icePreviewId={icePreviewId}
+    />
+  );
+}
 
 interface PreviewCard {
   id: string;
@@ -36,7 +99,6 @@ export default function PublishedIcePage() {
   const { shareSlug } = useParams<{ shareSlug: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNodeIndex, setActiveNodeIndex] = useState<number | null>(null);
   const [narrationMuted, setNarrationMuted] = useState(false);
@@ -150,6 +212,33 @@ export default function PublishedIcePage() {
   
   const requiresLeadGate = ice?.leadGateEnabled && !leadCaptured && !sessionStorage.getItem(`ice_lead_${shareSlug}`);
 
+  const [displayedCardIndex, setDisplayedCardIndex] = useState(0);
+  const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null);
+  const pendingReadyRef = useRef(false);
+  
+  usePreloadNextCard(cards, displayedCardIndex);
+  
+  const handleCardReady = useCallback(() => {
+    if (pendingCardIndex !== null && !pendingReadyRef.current) {
+      pendingReadyRef.current = true;
+      setTimeout(() => {
+        setDisplayedCardIndex(pendingCardIndex);
+        setPendingCardIndex(null);
+        pendingReadyRef.current = false;
+      }, TRANSITION_CONFIG.readyDelay);
+    }
+  }, [pendingCardIndex]);
+  
+  const navigateToCard = useCallback((targetIndex: number) => {
+    if (pendingCardIndex !== null) return;
+    if (targetIndex >= 0 && targetIndex < cards.length && targetIndex !== displayedCardIndex) {
+      pendingReadyRef.current = false;
+      setPendingCardIndex(targetIndex);
+    }
+  }, [pendingCardIndex, cards.length, displayedCardIndex]);
+  
+  const nextCard = pendingCardIndex !== null ? cards[pendingCardIndex] : null;
+
   useEffect(() => {
     if (ice?.musicEnabled && ice?.musicTrackUrl) {
       setMusicEnabled(true);
@@ -177,30 +266,32 @@ export default function PublishedIcePage() {
   }, [musicEnabled, isPlaying, ice?.musicTrackUrl, ice?.musicVolume]);
 
   const handleNext = () => {
-    if (currentCardIndex < cards.length - 1) {
-      const nodeAtCurrentCard = interactivityNodes.find(n => n.afterCardIndex === currentCardIndex);
-      if (nodeAtCurrentCard && activeNodeIndex !== currentCardIndex) {
-        setActiveNodeIndex(currentCardIndex);
+    if (pendingCardIndex !== null) return;
+    if (displayedCardIndex < cards.length - 1) {
+      const nodeAtCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
+      if (nodeAtCard && activeNodeIndex !== displayedCardIndex) {
+        setActiveNodeIndex(displayedCardIndex);
       } else {
         setActiveNodeIndex(null);
-        setCurrentCardIndex(prev => prev + 1);
+        navigateToCard(displayedCardIndex + 1);
       }
     }
   };
 
   const handlePrev = () => {
-    if (currentCardIndex > 0) {
+    if (pendingCardIndex !== null) return;
+    if (displayedCardIndex > 0) {
       setActiveNodeIndex(null);
-      setCurrentCardIndex(prev => prev - 1);
+      navigateToCard(displayedCardIndex - 1);
     }
   };
 
   const handleCardComplete = () => {
-    const nodeAtCurrentCard = interactivityNodes.find(n => n.afterCardIndex === currentCardIndex);
-    if (nodeAtCurrentCard) {
-      setActiveNodeIndex(currentCardIndex);
-    } else if (currentCardIndex < cards.length - 1) {
-      setCurrentCardIndex(prev => prev + 1);
+    const nodeAtCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
+    if (nodeAtCard) {
+      setActiveNodeIndex(displayedCardIndex);
+    } else if (displayedCardIndex < cards.length - 1) {
+      navigateToCard(displayedCardIndex + 1);
     }
   };
 
@@ -313,34 +404,42 @@ export default function PublishedIcePage() {
     );
   }
 
-  const currentCard = cards[currentCardIndex];
-  const nodeAtCurrentCard = interactivityNodes.find(n => n.afterCardIndex === currentCardIndex);
+  const displayedCard = cards[displayedCardIndex];
+  const nodeAtDisplayedCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
+
+  const cardTransitionVariants = {
+    initial: { opacity: 0, x: 30, scale: 0.98 },
+    animate: { opacity: 1, x: 0, scale: 1 },
+    exit: { opacity: 0, x: -30, scale: 0.98 },
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md relative">
+          {nextCard && (
+            <MediaPreloader
+              card={nextCard}
+              onReady={handleCardReady}
+            />
+          )}
+          
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentCardIndex}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
+              key={displayedCardIndex}
+              variants={cardTransitionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ 
+                duration: TRANSITION_CONFIG.duration, 
+                ease: TRANSITION_CONFIG.ease,
+              }}
+              className="will-change-transform"
             >
-              <CardPlayer
-                card={{
-                  id: currentCard.id,
-                  title: currentCard.title,
-                  image: currentCard.generatedImageUrl || "/placeholder-dark.jpg",
-                  captions: [currentCard.content],
-                  sceneText: currentCard.content,
-                  recapText: currentCard.title,
-                  publishDate: new Date().toISOString(),
-                  dayIndex: currentCardIndex,
-                  narrationAudioUrl: currentCard.narrationAudioUrl,
-                  generatedVideoUrl: currentCard.generatedVideoUrl,
-                }}
+              <VisibleCardPlayer
+                card={displayedCard}
+                cardIndex={displayedCardIndex}
                 narrationMuted={narrationMuted}
                 narrationVolume={ice?.narrationVolume || 100}
                 icePreviewId={ice?.id}
@@ -348,28 +447,28 @@ export default function PublishedIcePage() {
             </motion.div>
           </AnimatePresence>
 
-          {activeNodeIndex !== null && nodeAtCurrentCard && (
+          {activeNodeIndex !== null && nodeAtDisplayedCard && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-4"
             >
               <InteractivityNode
-                nodeId={nodeAtCurrentCard.id}
-                afterCardIndex={nodeAtCurrentCard.afterCardIndex}
+                nodeId={nodeAtDisplayedCard.id}
+                afterCardIndex={nodeAtDisplayedCard.afterCardIndex}
                 previewId={ice?.id || ""}
                 isActive={true}
                 onActivate={() => {}}
                 onRemove={() => {}}
                 characters={characters}
-                selectedCharacterId={nodeAtCurrentCard.selectedCharacterId}
+                selectedCharacterId={nodeAtDisplayedCard.selectedCharacterId}
               />
               <div className="flex justify-center mt-4">
                 <Button
                   onClick={() => {
                     setActiveNodeIndex(null);
-                    if (currentCardIndex < cards.length - 1) {
-                      setCurrentCardIndex(prev => prev + 1);
+                    if (displayedCardIndex < cards.length - 1) {
+                      navigateToCard(displayedCardIndex + 1);
                     }
                   }}
                   className="bg-cyan-600 hover:bg-cyan-700"
@@ -416,7 +515,7 @@ export default function PublishedIcePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="text-sm text-white/60">
-                {currentCardIndex + 1} / {cards.length}
+                {displayedCardIndex + 1} / {cards.length}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -446,7 +545,7 @@ export default function PublishedIcePage() {
                 variant="ghost"
                 size="icon"
                 onClick={handlePrev}
-                disabled={currentCardIndex === 0}
+                disabled={displayedCardIndex === 0 || pendingCardIndex !== null}
                 className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-prev-card"
               >
@@ -456,7 +555,7 @@ export default function PublishedIcePage() {
                 variant="ghost"
                 size="icon"
                 onClick={handleNext}
-                disabled={currentCardIndex === cards.length - 1 && activeNodeIndex === null}
+                disabled={(displayedCardIndex === cards.length - 1 && activeNodeIndex === null) || pendingCardIndex !== null}
                 className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-next-card"
               >
