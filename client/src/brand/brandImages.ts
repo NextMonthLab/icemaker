@@ -69,7 +69,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: HOME_HERO_IMAGE_ID,
     label: "Home Hero Background",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424827/Splash_Gin_And_Tonic_original_581990_i3trma.jpg", // Rob: paste Cloudinary URL here
     alt: "Cinematic storytelling hero image",
     purpose: "home-hero",
     mood: "cinematic",

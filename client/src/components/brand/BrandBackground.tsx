@@ -67,48 +67,45 @@ export function BrandBackground({
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // If no valid image is configured, just render children without any overlay
+  // This makes the component a transparent passthrough until URLs are added
+  if (!hasValidImage) {
+    return (
+      <div className={cn("relative overflow-hidden", className)}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      {/* Base gradient layer - always visible */}
+      {/* Brand image layer - only renders when valid URL exists */}
       <div
         className={cn(
-          "absolute inset-0",
-          variant === "hero"
-            ? "bg-gradient-to-br from-background via-background/95 to-primary/10"
-            : "bg-gradient-to-b from-background to-background/98"
+          "absolute inset-0 transition-opacity duration-500",
+          imageLoaded ? "opacity-100" : "opacity-0",
+          prefersReducedMotion && "transition-none"
         )}
         aria-hidden="true"
-      />
-
-      {/* Brand image layer - only if valid URL and loaded */}
-      {hasValidImage && brandImage?.url && (
+      >
+        <img
+          src={brandImage.url}
+          alt=""
+          loading={shouldPreload ? "eager" : "lazy"}
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            filter: `blur(${blurPx}px)`,
+            transform: "scale(1.1)", // Prevent blur edge artifacts
+          }}
+          onError={() => setImageError(true)}
+        />
+        {/* Overlay for contrast */}
         <div
-          className={cn(
-            "absolute inset-0 transition-opacity duration-500",
-            imageLoaded ? "opacity-100" : "opacity-0",
-            prefersReducedMotion && "transition-none"
-          )}
-          aria-hidden="true"
-        >
-          <img
-            src={brandImage.url}
-            alt=""
-            loading={shouldPreload ? "eager" : "lazy"}
-            decoding="async"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              filter: `blur(${blurPx}px)`,
-              transform: "scale(1.1)", // Prevent blur edge artifacts
-            }}
-            onError={() => setImageError(true)}
-          />
-          {/* Overlay for contrast */}
-          <div
-            className="absolute inset-0 bg-background"
-            style={{ opacity: overlayOpacity }}
-          />
-        </div>
-      )}
+          className="absolute inset-0 bg-background"
+          style={{ opacity: overlayOpacity }}
+        />
+      </div>
 
       {/* Accent gradient overlay for hero variant */}
       {variant === "hero" && (
