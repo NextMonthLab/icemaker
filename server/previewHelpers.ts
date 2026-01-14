@@ -1237,7 +1237,7 @@ export async function ingestSitePreview(
     totalChars += pageText.length;
     pagesIngested = 1;
 
-    notify('processing', 'Building your Orbit experience...');
+    notify('processing', 'Building your ICE experience...');
 
     // Run SmartSite pipeline for validated content
     try {

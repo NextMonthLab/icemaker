@@ -924,8 +924,8 @@ export async function registerRoutes(
     try {
       const { onboardingCompleted, onboardingDismissed, onboardingPath } = req.body;
       
-      // Validate path if provided
-      const validPaths = ['orbit-first', 'ice-first'];
+      // Validate path if provided (ICE-first only; Orbit removed in v1)
+      const validPaths = ['ice-first'];
       if (onboardingPath && !validPaths.includes(onboardingPath)) {
         return res.status(400).json({ message: "Invalid onboarding path" });
       }
