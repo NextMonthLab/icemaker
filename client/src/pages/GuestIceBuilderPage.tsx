@@ -2225,7 +2225,7 @@ export default function GuestIceBuilderPage() {
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,
                     publishDate: new Date().toISOString(),
-                    narrationEnabled: !narrationMuted && !!cards[previewCardIndex].narrationAudioUrl,
+                    narrationEnabled: !!cards[previewCardIndex].narrationAudioUrl,
                     narrationStatus: cards[previewCardIndex].narrationAudioUrl ? "ready" : undefined,
                     narrationAudioUrl: cards[previewCardIndex].narrationAudioUrl,
                   }}
