@@ -396,13 +396,15 @@ export default function GuestIceBuilderPage() {
     if (showPreviewModal && !musicAudioRef.current) {
       musicAudioRef.current = new Audio();
       musicAudioRef.current.loop = true;
+      // Set initial volume immediately when creating audio element
+      musicAudioRef.current.volume = musicVolume / 100;
     }
     
     if (!showPreviewModal && musicAudioRef.current) {
       musicAudioRef.current.pause();
       musicAudioRef.current = null;
     }
-  }, [showPreviewModal]);
+  }, [showPreviewModal, musicVolume]);
   
   // Handle track changes, play/pause, and volume updates
   useEffect(() => {

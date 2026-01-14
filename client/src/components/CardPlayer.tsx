@@ -282,8 +282,10 @@ export default function CardPlayer({
   const handleAudioLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
       setAudioDuration(audioRef.current.duration);
+      // Set initial volume when audio loads
+      audioRef.current.volume = narrationVolume / 100;
     }
-  }, []);
+  }, [narrationVolume]);
   
   const handleAudioPlay = useCallback(() => {
     setIsAudioPlaying(true);
