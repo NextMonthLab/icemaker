@@ -12,7 +12,8 @@ export type EntitlementKey =
   | 'canCreateCharacter'
   | 'canUploadAudio'
   | 'canViewAnalytics'
-  | 'canViewEngagement';
+  | 'canViewEngagement'
+  | 'canViewConversationInsights';
 
 export interface FullEntitlements {
   canCreateStory: boolean;
@@ -260,6 +261,7 @@ export async function requireEntitlement(
     canUploadAudio: 'canUploadAudio',
     canViewAnalytics: 'canViewAnalytics',
     canViewEngagement: 'canViewEngagement',
+    canViewConversationInsights: 'canViewConversationInsights',
   };
   
   const entitlementKey = keyMap[key];

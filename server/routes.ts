@@ -6336,7 +6336,17 @@ Stay engaging, reference story details, and help the audience understand the nar
         return res.json({ 
           hasData: false,
           message: "Not enough conversation data yet. Insights require at least 5 chat messages.",
-          messageCount: messages.length
+          messageCount: messages.length,
+          summary: null,
+          topTopics: [],
+          commonQuestions: [],
+          sentimentScore: null,
+          engagementInsights: null,
+          actionableRecommendations: [],
+          conversationCount: 0,
+          generatedAt: null,
+          validUntil: null,
+          cached: false
         });
       }
       
@@ -6356,10 +6366,7 @@ Stay engaging, reference story details, and help the audience understand the nar
       }
       if (currentConvo.length > 0) conversations.push(currentConvo);
       
-      // Generate insights via OpenAI
-      const { OpenAI } = await import('openai');
-      const openai = new OpenAI();
-      
+      // Generate insights via shared OpenAI client
       const prompt = `Analyze these conversation transcripts from an interactive learning experience. Generate insights for the content creator.
 
 Conversations:
@@ -6375,7 +6382,7 @@ Provide a JSON response with:
   "actionableRecommendations": ["array of 3-5 specific suggestions for improving the content"]
 }`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
