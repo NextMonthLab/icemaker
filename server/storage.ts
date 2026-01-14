@@ -132,6 +132,10 @@ export interface IStorage {
   countIpIcePreviewsToday(ip: string): Promise<number>;
   promoteIcePreview(id: string, userId: number, jobId: number): Promise<schema.IcePreview | undefined>;
   
+  // ICE Leads
+  getLeadsByUser(userId: number): Promise<Array<schema.IceLead & { iceTitle: string }>>;
+  getLeadsByIce(iceId: string): Promise<schema.IceLead[]>;
+  
   // Reference Assets (Visual Bible)
   getReferenceAsset(id: number): Promise<schema.UniverseReferenceAsset | undefined>;
   getReferenceAssetsByUniverse(universeId: number): Promise<schema.UniverseReferenceAsset[]>;
@@ -1045,6 +1049,34 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.icePreviews.id, id))
       .returning();
     return result;
+  }
+  
+  // ICE Leads
+  async getLeadsByUser(userId: number): Promise<Array<schema.IceLead & { iceTitle: string }>> {
+    const results = await db.select({
+      id: schema.iceLeads.id,
+      iceId: schema.iceLeads.iceId,
+      email: schema.iceLeads.email,
+      name: schema.iceLeads.name,
+      visitorIp: schema.iceLeads.visitorIp,
+      userAgent: schema.iceLeads.userAgent,
+      referrer: schema.iceLeads.referrer,
+      createdAt: schema.iceLeads.createdAt,
+      iceTitle: schema.icePreviews.title,
+    })
+    .from(schema.iceLeads)
+    .innerJoin(schema.icePreviews, eq(schema.iceLeads.iceId, schema.icePreviews.id))
+    .where(eq(schema.icePreviews.ownerUserId, userId))
+    .orderBy(desc(schema.iceLeads.createdAt));
+    return results;
+  }
+  
+  async getLeadsByIce(iceId: string): Promise<schema.IceLead[]> {
+    const results = await db.query.iceLeads.findMany({
+      where: eq(schema.iceLeads.iceId, iceId),
+      orderBy: (leads, { desc }) => [desc(leads.createdAt)],
+    });
+    return results;
   }
   
   // Reference Assets (Visual Bible)

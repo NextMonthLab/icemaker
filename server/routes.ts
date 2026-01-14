@@ -6114,6 +6114,71 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Get user's leads from their ICEs
+  app.get("/api/ice/my-leads", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      const leads = await storage.getLeadsByUser(user.id);
+      
+      res.json({
+        leads: leads.map(l => ({
+          id: l.id,
+          iceId: l.iceId,
+          email: l.email,
+          name: l.name,
+          iceTitle: l.iceTitle,
+          createdAt: l.createdAt.toISOString(),
+        })),
+        totalCount: leads.length,
+      });
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ message: "Error fetching leads" });
+    }
+  });
+  
+  // Pexels API proxy (to protect API key) - requires auth to prevent abuse
+  app.get("/api/pexels/search", requireAuth, async (req, res) => {
+    try {
+      const query = req.query.query as string;
+      const type = (req.query.type as string) || "photos";
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = Math.min(parseInt(req.query.per_page as string) || 15, 30);
+      
+      if (!query) {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      const apiKey = process.env.PEXELS_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "Pexels API key not configured" });
+      }
+      
+      const baseUrl = type === "videos" 
+        ? "https://api.pexels.com/videos/search"
+        : "https://api.pexels.com/v1/search";
+      
+      const response = await fetch(
+        `${baseUrl}?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`,
+        {
+          headers: {
+            Authorization: apiKey,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Pexels API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error searching Pexels:", error);
+      res.status(500).json({ message: "Error searching Pexels" });
+    }
+  });
+  
   // Delete an ICE preview (owner only)
   app.delete("/api/ice/preview/:id", requireAuth, async (req, res) => {
     try {

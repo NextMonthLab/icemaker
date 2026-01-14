@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
-  ChevronDown, ChevronUp, Check, AlertCircle
+  ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus
 } from "lucide-react";
+import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -118,7 +119,7 @@ export function IceCardEditor({
   const canGenerateVoiceover = entitlements?.canUploadAudio ?? false;
   const isPro = entitlements && entitlements.tier !== "free";
   
-  const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration" | "upload">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration" | "upload" | "stock">("content");
   const [editedTitle, setEditedTitle] = useState(card.title);
   const [editedContent, setEditedContent] = useState(card.content);
   
@@ -764,6 +765,18 @@ export function IceCardEditor({
                   <Upload className="w-4 h-4" />
                   Your Media
                 </button>
+                <button
+                  onClick={() => setActiveTab("stock")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
+                    activeTab === "stock" 
+                      ? "bg-cyan-600 text-white" 
+                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                  data-testid="tab-stock"
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  Stock
+                </button>
               </div>
               
               {activeTab === "content" && (
@@ -1385,6 +1398,69 @@ export function IceCardEditor({
                     <p className="text-xs text-slate-400">
                       Uploaded media will replace any AI-generated content for this card.
                     </p>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "stock" && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 rounded-lg border border-cyan-500/20">
+                    <h4 className="text-sm font-medium text-cyan-300 mb-3 flex items-center gap-2">
+                      <ImagePlus className="w-4 h-4" />
+                      Free Stock Media
+                    </h4>
+                    <p className="text-xs text-slate-400 mb-4">
+                      Search and use free, high-quality stock photos and videos from Pexels.
+                    </p>
+                    
+                    <PexelsMediaPicker
+                      onSelectImage={(url, photographer) => {
+                        const newAsset: MediaAsset = {
+                          id: `stock-${Date.now()}`,
+                          kind: 'image',
+                          source: 'upload',
+                          url,
+                          status: 'ready',
+                          createdAt: new Date().toISOString(),
+                          prompt: photographer ? `Stock photo by ${photographer}` : 'Stock photo from Pexels',
+                        };
+                        const updatedAssets = [...(card.mediaAssets || []), newAsset];
+                        onCardUpdate(card.id, { 
+                          mediaAssets: updatedAssets,
+                          selectedMediaAssetId: newAsset.id,
+                          generatedImageUrl: url 
+                        });
+                        onCardSave(card.id, { 
+                          mediaAssets: updatedAssets,
+                          selectedMediaAssetId: newAsset.id,
+                          generatedImageUrl: url 
+                        });
+                      }}
+                      onSelectVideo={(url, thumbnailUrl, photographer) => {
+                        const newAsset: MediaAsset = {
+                          id: `stock-video-${Date.now()}`,
+                          kind: 'video',
+                          source: 'upload',
+                          url,
+                          thumbnailUrl,
+                          status: 'ready',
+                          createdAt: new Date().toISOString(),
+                          prompt: photographer ? `Stock video by ${photographer}` : 'Stock video from Pexels',
+                        };
+                        const updatedAssets = [...(card.mediaAssets || []), newAsset];
+                        onCardUpdate(card.id, { 
+                          mediaAssets: updatedAssets,
+                          selectedMediaAssetId: newAsset.id,
+                          generatedVideoUrl: url 
+                        });
+                        onCardSave(card.id, { 
+                          mediaAssets: updatedAssets,
+                          selectedMediaAssetId: newAsset.id,
+                          generatedVideoUrl: url 
+                        });
+                      }}
+                      showVideos={true}
+                    />
                   </div>
                 </div>
               )}
