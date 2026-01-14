@@ -1,12 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { 
-  Sparkles,
   LayoutDashboard,
   Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import GlobalNav from "./GlobalNav";
 import React from "react";
+
+const LOGO_URL = "https://res.cloudinary.com/drl0fxrkq/image/upload/v1736761132/IceMaker_Logo_u6j2qj.png";
 
 const iceMakerNavItems = [
   { href: "/icemaker", icon: LayoutDashboard, label: "Dashboard", exact: true },
@@ -29,10 +30,16 @@ export default function IceMakerLayout({ children }: { children: React.ReactNode
       
       <div className="flex-1 flex flex-col lg:flex-row">
         <aside className="hidden lg:flex w-56 flex-col border-r border-white/10 p-4 shrink-0 bg-black/95">
-          <div className="flex items-center gap-2 px-3 py-2 mb-4">
-            <Sparkles className="w-5 h-5 text-pink-400" />
-            <span className="font-semibold text-white">IceMaker</span>
-          </div>
+          <Link href="/">
+            <div className="flex items-center px-1 py-2 mb-4 cursor-pointer" data-testid="link-icemaker-sidebar-logo">
+              <img 
+                src={LOGO_URL} 
+                alt="IceMaker" 
+                className="h-16 w-auto"
+                style={{ clipPath: 'inset(35% 0 35% 0)' }}
+              />
+            </div>
+          </Link>
           
           <nav className="space-y-1 flex-1">
             {iceMakerNavItems.map((item) => (
