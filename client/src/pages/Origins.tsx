@@ -1,14 +1,22 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { MarketingFooter } from "@/components/MarketingFooter";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 export default function Origins() {
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-cyan-400" data-testid="link-home">
-            IceMaker
+          <Link href="/" data-testid="link-home">
+            <div className="h-14 overflow-hidden flex items-center cursor-pointer">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
+              />
+            </div>
           </Link>
           <Link href="/" className="text-white/60 hover:text-white transition-colors flex items-center gap-2" data-testid="link-back">
             <ArrowLeft className="w-4 h-4" />
