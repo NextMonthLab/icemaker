@@ -266,9 +266,18 @@ export function InteractivityNode({
       <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 border-b border-purple-500/20">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <User className="w-3.5 h-3.5 text-white" />
-            </div>
+            {currentCharacter?.avatarEnabled && currentCharacter?.avatar ? (
+              <Avatar className="w-7 h-7 border border-purple-500/30">
+                <AvatarImage src={currentCharacter.avatar} alt={currentCharacter.name} />
+                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500">
+                  <User className="w-3.5 h-3.5 text-white" />
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
             
             {characters.length > 1 ? (
               <DropdownMenu>

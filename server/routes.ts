@@ -6724,6 +6724,9 @@ Provide a JSON response with:
         finalSystemPrompt += `\n\n## KNOWLEDGE BASE\nUse the following information to inform your responses:\n\n${knowledgeContext.trim()}`;
       }
       
+      // Get avatar settings from request
+      const { avatar, avatarEnabled } = req.body;
+      
       // Create new character
       const newCharacter: schema.IcePreviewCharacter = {
         id: `custom-${Date.now()}`,
@@ -6732,6 +6735,8 @@ Provide a JSON response with:
         description: `Custom character: ${name}`,
         systemPrompt: finalSystemPrompt,
         openingMessage: openingMessage || `Hello! I'm ${name}. How can I help you today?`,
+        avatar: avatar || undefined,
+        avatarEnabled: avatarEnabled === true,
       };
       
       // Add to existing characters
@@ -6749,6 +6754,88 @@ Provide a JSON response with:
     } catch (error) {
       console.error("Error adding custom character:", error);
       res.status(500).json({ message: "Error adding character" });
+    }
+  });
+  
+  // ICE Preview - Upload character avatar
+  app.post("/api/ice/preview/:id/character-avatar", upload.single("avatar"), async (req, res) => {
+    try {
+      const previewId = req.params.id;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No avatar file uploaded" });
+      }
+      
+      // Validate file type
+      const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type. Only PNG, JPEG, and WebP are allowed." });
+      }
+      
+      // Validate file size (2MB max)
+      const maxSize = 2 * 1024 * 1024;
+      if (req.file.size > maxSize) {
+        return res.status(400).json({ message: "File too large. Maximum size is 2MB." });
+      }
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check expiry
+      if (preview.expiresAt < new Date() && preview.status !== "promoted") {
+        return res.status(410).json({ message: "Preview has expired" });
+      }
+      
+      try {
+        // Upload to object storage
+        const objectStorage = new ObjectStorageService();
+        const uploadURL = await objectStorage.getObjectEntityUploadURL();
+        const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+        
+        // Upload the file to the presigned URL
+        const uploadResponse = await fetch(uploadURL, {
+          method: "PUT",
+          headers: {
+            "Content-Type": req.file.mimetype,
+          },
+          body: req.file.buffer,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload to object storage");
+        }
+        
+        // Return the public URL (objectPath already starts with /objects/)
+        res.json({
+          success: true,
+          url: objectPath,
+        });
+      } catch (storageError) {
+        console.error("Object storage upload failed:", storageError);
+        
+        // Fallback: Save to local filesystem
+        const avatarDir = path.join(process.cwd(), "uploads", "avatars");
+        if (!fs.existsSync(avatarDir)) {
+          fs.mkdirSync(avatarDir, { recursive: true });
+        }
+        
+        const ext = req.file.mimetype.split("/")[1] || "png";
+        const filename = `char-${previewId}-${Date.now()}.${ext}`;
+        const filePath = path.join(avatarDir, filename);
+        fs.writeFileSync(filePath, req.file.buffer);
+        
+        const localUrl = `/uploads/avatars/${filename}`;
+        
+        res.json({
+          success: true,
+          url: localUrl,
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading character avatar:", error);
+      res.status(500).json({ message: "Error uploading avatar" });
     }
   });
   
