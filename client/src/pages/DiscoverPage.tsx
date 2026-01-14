@@ -5,6 +5,7 @@ import { Sparkles, Play, Globe, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SiteNav from "@/components/SiteNav";
+import { BrandImage } from "@/components/brand/BrandImage";
 
 interface PublicIce {
   id: string;
@@ -62,7 +63,7 @@ export default function DiscoverPage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       <SiteNav variant="marketing" />
       
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full px-4 py-1.5 mb-4">
             <Globe className="w-4 h-4 text-cyan-400" />
@@ -116,7 +117,7 @@ export default function DiscoverPage() {
                   className="group bg-white/5 border-white/10 overflow-hidden hover-elevate cursor-pointer transition-all"
                   data-testid={`card-ice-${ice.id}`}
                 >
-                  <div className="aspect-video bg-gradient-to-br from-cyan-900/30 to-blue-900/30 relative overflow-hidden">
+                  <div className="aspect-video relative overflow-hidden">
                     {ice.thumbnailUrl ? (
                       <img 
                         src={ice.thumbnailUrl} 
@@ -124,9 +125,12 @@ export default function DiscoverPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Sparkles className="w-12 h-12 text-cyan-500/30" />
-                      </div>
+                      <BrandImage 
+                        fallbackPurpose="library-card-fallback"
+                        stableKey={ice.id}
+                        alt={ice.title}
+                        className="w-full h-full"
+                      />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">

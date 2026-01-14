@@ -186,7 +186,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: CORPORATE_TRAINING_HERO_ID,
     label: "Corporate Training Hero",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424824/Iced_Strawberry_Punch_Cocktail_original_1038966_wcsdjn.jpg", // Rob: paste Cloudinary URL here
     alt: "Corporate training hero background",
     purpose: "corporate-training-hero",
     mood: "cinematic",
@@ -199,7 +199,7 @@ export const BRAND_IMAGES: BrandImage[] = [
   {
     id: MARKETING_AGENCIES_HERO_ID,
     label: "Marketing Agencies Hero",
-    url: "", // Rob: paste Cloudinary URL here
+    url: "https://res.cloudinary.com/drl0fxrkq/image/upload/v1768424821/Iced_Coffee_original_944660_facibx.jpg", // Rob: paste Cloudinary URL here
     alt: "Marketing agencies hero background",
     purpose: "marketing-agencies-hero",
     mood: "playful",
