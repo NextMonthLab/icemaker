@@ -41,6 +41,7 @@ import BlogPublisherPage from "@/pages/admin/BlogPublisherPage";
 import GuestIceBuilderPage from "@/pages/GuestIceBuilderPage";
 import CaptionDemo from "@/pages/CaptionDemo";
 import CaptionComposerLab from "@/pages/caption-composer-lab";
+import CreateIcePage from "@/pages/CreateIcePage";
 import IceCheckoutPage from "@/pages/IceCheckoutPage";
 import CheckoutSuccessPage from "@/pages/CheckoutSuccessPage";
 import AdminUniverseDetail from "@/pages/AdminUniverseDetail";
@@ -130,6 +131,7 @@ function Router() {
       <Route path="/icemaker/composer-lab" component={CaptionComposerLab} />
 
       <Route path="/ice/new" component={TransformationsPage} />
+      <Route path="/create" component={CreateIcePage} />
       <Route path="/try" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id" component={GuestIceBuilderPage} />
       <Route path="/ice/preview/:id/checkout" component={IceCheckoutPage} />

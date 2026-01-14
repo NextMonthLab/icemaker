@@ -5825,6 +5825,85 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Wizard-based ICE creation (from template blueprint)
+  app.post("/api/ice/preview/wizard", async (req, res) => {
+    try {
+      const { blueprint, draft } = req.body;
+      
+      if (!blueprint || !draft) {
+        return res.status(400).json({ message: "Blueprint and draft are required" });
+      }
+      
+      const userIp = req.ip || req.socket.remoteAddress || "unknown";
+      
+      // Rate limiting by IP
+      const dailyCount = await storage.countIpIcePreviewsToday(userIp);
+      if (dailyCount >= 50) {
+        return res.status(429).json({ message: "Daily preview limit reached (50 per day)" });
+      }
+      
+      // Generate unique preview ID
+      const previewId = `ice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Transform blueprint cards to ICE preview cards
+      const previewCards = draft.cards.map((card: any, index: number) => ({
+        id: card.id || `card_${index}`,
+        title: card.title,
+        content: card.content,
+        order: index,
+        sceneId: card.sceneId || `scene_${index}`,
+      }));
+      
+      // Create a default narrator character for wizard-created ICEs
+      const defaultCharacter = {
+        id: "guide",
+        name: "Experience Guide",
+        role: "Guide",
+        description: "Your guide through this experience.",
+        systemPrompt: `You are a helpful guide for this ${blueprint.templateFamily} experience titled "${draft.title}".
+Help users understand and explore the content in an engaging way.
+Stay focused on the content and be helpful.`,
+        openingMessage: `Welcome to ${draft.title}! I'm here to help you explore this experience. What would you like to know?`,
+      };
+      
+      // Set expiry
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      // Save to database
+      const savedPreview = await storage.createIcePreview({
+        id: previewId,
+        ownerIp: userIp,
+        ownerUserId: req.user?.id || null,
+        sourceType: "wizard" as any,
+        sourceValue: JSON.stringify({
+          templateFamily: blueprint.templateFamily,
+          structureId: blueprint.structureId,
+          length: blueprint.length,
+          style: blueprint.style,
+        }),
+        title: draft.title,
+        cards: previewCards,
+        characters: [defaultCharacter],
+        tier: blueprint.length === "short" ? "short" : blueprint.length === "feature" ? "long" : "medium",
+        status: "active",
+        expiresAt,
+      });
+      
+      res.json({
+        previewId: savedPreview.id,
+        title: savedPreview.title,
+        cards: savedPreview.cards,
+        characters: savedPreview.characters,
+        sourceType: savedPreview.sourceType,
+        createdAt: savedPreview.createdAt.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating wizard ICE:", error);
+      res.status(500).json({ message: "Error creating ICE from wizard" });
+    }
+  });
+  
   // File upload endpoint for ICE preview (PDF, PowerPoint, Word, Text)
   app.post("/api/ice/preview/upload", upload.single("file"), async (req, res) => {
     try {
