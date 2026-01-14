@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Zap, Crown, Star, Building2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import MarketingHeader from "@/components/MarketingHeader";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { cn } from "@/lib/utils";
 
 const pricingPlans = [
@@ -422,17 +423,7 @@ export default function Pricing() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
-          <p>© 2026 IceMaker. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
-            <Link href="/security" className="hover:text-white/60 transition-colors">Security</Link>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

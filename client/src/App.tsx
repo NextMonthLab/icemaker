@@ -20,6 +20,7 @@ import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
 import Security from "@/pages/legal/Security";
+import Origins from "@/pages/Origins";
 import PreviewRedirect from "@/pages/PreviewRedirect";
 import IceMakerCreate from "@/pages/icemaker/IceMakerCreate";
 import IceMakerTemplates from "@/pages/icemaker/IceMakerTemplates";
@@ -123,6 +124,7 @@ function Router() {
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />
       <Route path="/security" component={Security} />
+      <Route path="/origins" component={Origins} />
       <Route path="/preview/:id" component={PreviewRedirect} />
       
       <Route path="/library" component={Library} />
