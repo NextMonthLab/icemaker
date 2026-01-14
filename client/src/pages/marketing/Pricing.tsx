@@ -144,9 +144,12 @@ export default function Pricing() {
 
       <main>
         {/* Hero */}
-        <BrandBackground purpose="pricing-hero" variant="hero" className="relative pt-32 pb-16">
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black opacity-90" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
+        <section className="relative pt-32 pb-16 overflow-hidden">
+          {/* Background image layer */}
+          <BrandBackground purpose="pricing-hero" variant="hero" className="absolute inset-0" />
+          {/* Full-bleed gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent pointer-events-none" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
             <motion.div
@@ -154,16 +157,16 @@ export default function Pricing() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1]" data-testid="text-pricing-title">
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1] drop-shadow-lg" data-testid="text-pricing-title">
                 Simple, transparent{' '}
                 <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">pricing</span>
               </h1>
-              <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto drop-shadow-md">
                 Choose the plan that fits your needs. Start free with our guest builder, then scale as you grow.
               </p>
             </motion.div>
           </div>
-        </BrandBackground>
+        </section>
 
         {/* Pricing Cards */}
         <section className="relative py-12 px-6">
