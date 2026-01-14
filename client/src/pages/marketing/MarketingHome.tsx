@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import { MarketingFooter } from "@/components/MarketingFooter";
+import { BrandBackground } from "@/components/brand/BrandBackground";
 
 const pipelineSteps = [
   { step: 1, title: "Ingest your source", description: "PDF, deck, URL, script", icon: Upload },
@@ -88,8 +89,8 @@ export default function MarketingHome() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
+        <BrandBackground purpose="home-hero" variant="hero" className="relative min-h-screen flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black opacity-90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10 pt-28">
@@ -128,7 +129,7 @@ export default function MarketingHome() {
               </div>
             </motion.div>
           </div>
-        </section>
+        </BrandBackground>
 
         {/* Trust / Proof Strip */}
         <section className="py-16 border-y border-white/5 bg-neutral-950/50">

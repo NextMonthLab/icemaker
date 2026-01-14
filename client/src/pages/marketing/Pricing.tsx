@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import MarketingHeader from "@/components/MarketingHeader";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { cn } from "@/lib/utils";
+import { BrandBackground } from "@/components/brand/BrandBackground";
 
 const pricingPlans = [
   {
@@ -143,8 +144,8 @@ export default function Pricing() {
 
       <main>
         {/* Hero */}
-        <section className="relative pt-32 pb-16 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
+        <BrandBackground purpose="pricing-hero" variant="hero" className="relative pt-32 pb-16">
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black opacity-90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-transparent to-transparent" />
           
           <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
@@ -162,7 +163,7 @@ export default function Pricing() {
               </p>
             </motion.div>
           </div>
-        </section>
+        </BrandBackground>
 
         {/* Pricing Cards */}
         <section className="relative py-12 px-6">

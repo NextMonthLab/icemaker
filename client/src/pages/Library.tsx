@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, FileText, Globe, Loader2, MoreHorizontal, Upload, PenLine, Sparkles, Copy, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BrandBackground } from "@/components/brand/BrandBackground";
 import {
   Dialog,
   DialogContent,
@@ -98,7 +99,7 @@ export default function Library() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <BrandBackground purpose="library-bg" variant="subtle" className="min-h-screen text-white flex flex-col">
       <GlobalNav context="ice" />
       
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-6 py-6 md:py-8">
@@ -196,7 +197,7 @@ export default function Library() {
           setLocation("/try?blank=true");
         }}
       />
-    </div>
+    </BrandBackground>
   );
 }
 
