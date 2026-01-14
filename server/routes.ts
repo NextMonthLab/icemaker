@@ -505,6 +505,37 @@ export async function registerRoutes(
     }
   });
   
+  // Get creator stats (total ICEs, views, engagements)
+  app.get("/api/me/creator-stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get all ICE previews owned by this user
+      const userPreviews = await storage.getIcePreviewsByUser(userId);
+      
+      let totalViews = 0;
+      let totalEngagements = 0;
+      
+      // Aggregate analytics across all user's ICEs
+      for (const preview of userPreviews) {
+        const analytics = await storage.getExperienceAnalytics(preview.id);
+        if (analytics) {
+          totalViews += analytics.totalViews || 0;
+          totalEngagements += analytics.uniqueViewers || 0;
+        }
+      }
+      
+      res.json({
+        totalIces: userPreviews.length,
+        totalViews,
+        totalEngagements,
+      });
+    } catch (error) {
+      console.error("Error fetching creator stats:", error);
+      res.status(500).json({ message: "Error fetching creator stats" });
+    }
+  });
+  
   // Public: Get creator profile by slug
   app.get("/api/creators/:slug", async (req, res) => {
     try {
