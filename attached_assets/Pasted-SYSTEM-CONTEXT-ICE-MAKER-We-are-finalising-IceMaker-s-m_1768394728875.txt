@@ -1,0 +1,132 @@
+SYSTEM CONTEXT – ICE MAKER
+
+We are finalising IceMaker’s media storage and pricing architecture.
+
+IceMaker must fully support:
+- Bring-Your-Own (BYO) media
+- Non-interactive (linear) ICEs
+- Optional AI generation and optional interactive chat (never required)
+
+AI and interactivity are power features, not defaults.
+
+---
+
+1. MEDIA STORAGE STRATEGY (MANDATORY)
+
+We are explicitly choosing:
+- Object storage for ALL uploaded media (video, images, audio, PDFs)
+- Relational database for metadata ONLY
+
+Media must NOT be stored in the database.
+
+Expected characteristics:
+- Video-heavy workloads
+- Long-term asset retention
+- Multi-tenant SaaS
+- Predictable, controlled costs
+
+Required behaviour:
+- Client uploads directly to object storage using pre-signed URLs
+- Server must never proxy large uploads
+- Buckets private by default
+- Media served via signed URLs or token-gated CDN access
+
+Please:
+- Confirm this is the correct architecture for IceMaker
+- Identify any missing components (cleanup jobs, quotas, lifecycle rules, background processing, etc.)
+- Advise whether we should:
+  A) Store originals only, or
+  B) Generate and store web-optimised variants (especially for video)
+
+---
+
+2. OBJECT STORAGE RECOMMENDATION (ICE MAKER SPECIFIC)
+
+Recommend the best object storage solution for IceMaker, considering:
+- Cost predictability at scale
+- Video delivery economics
+- CDN egress costs
+- Integration complexity
+- Long-term SaaS viability
+
+Explicitly consider:
+- Cloudflare R2
+- AWS S3 + CloudFront
+- Google Cloud Storage
+- Azure Blob Storage
+- Cloudinary (as a media layer, not raw storage)
+
+Deliver:
+- Your recommended default choice
+- Clear reasoning
+- Any scaling or cost risks we should plan for now
+
+---
+
+3. PROPOSED PRICING MODEL (FOR VALIDATION)
+
+ICE Starter – £19.99 / month
+- Up to 5 ICEs
+- BYO media only
+- Linear playback only (no chat)
+- 5 GB total storage
+- Titles, captions, layouts
+- Shareable ICE links
+
+ICE Creator – £39.99 / month
+- Up to 15 ICEs
+- BYO media
+- Optional AI generation (credits-based)
+- Linear OR interactive ICEs
+- 25 GB total storage
+- Chapters and light branching
+
+ICE Studio – £79.99 / month
+- Up to 50 ICEs
+- Full AI generation options
+- Interactive characters with memory
+- 100 GB total storage
+- ICE analytics and branding
+
+ICE Enterprise – Custom
+- Custom ICE limits
+- 500 GB+ storage
+- Compliance, SSO, SLAs
+
+Storage add-ons:
+- +50 GB → £10 / month
+- +100 GB → £18 / month
+- +500 GB → £60 / month
+
+---
+
+4. ARCHITECTURE & COST SANITY CHECK (CRITICAL)
+
+Audit the above pricing against the real IceMaker system architecture, including:
+- Object storage costs
+- CDN egress / delivery
+- Metadata database growth
+- AI generation (LLM, images, video, audio)
+- Background workers / pipelines
+- Worst-case scenarios (large videos, long retention, high concurrency)
+
+Please:
+- Confirm whether pricing is sustainable
+- Flag any hidden or underestimated cost centres
+- Recommend changes if storage allowances or pricing are misaligned
+
+---
+
+5. REQUIRED OUTPUT
+
+Respond with:
+1. Recommended object storage solution + rationale
+2. Confirmed storage + metadata architecture
+3. Missing components we should add now
+4. Pricing validation or suggested adjustments
+5. Clear implementation next steps
+
+GOAL:
+IceMaker must feel professional, predictable, and scalable.
+Storage economics must remain sane as we grow.
+AI and interactivity must remain optional accelerators, not mandatory costs.

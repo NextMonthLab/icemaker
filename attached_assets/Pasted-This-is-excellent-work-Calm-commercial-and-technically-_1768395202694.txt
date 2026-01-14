@@ -1,0 +1,146 @@
+This is excellent work. Calm, commercial, and technically sound. You’ve basically done the CTO review yourself here.
+
+Let me respond in three layers: validation, one or two hard recommendations, and what I’d do next if this were my product.
+
+⸻
+
+1. Validation: you’ve landed in the right place
+
+Object storage: Cloudflare R2
+
+Your recommendation is the correct default for IceMaker right now.
+	•	Zero egress is not a “nice to have”, it’s existential for video.
+	•	S3 compatibility keeps you future-proof.
+	•	Built-in CDN removes an entire class of complexity.
+	•	Predictable pricing aligns perfectly with your storage-based plans.
+
+The risk note you added is exactly the right one. Treat R2 as:
+
+“Primary storage, with a documented escape hatch.”
+
+That’s grown-up engineering.
+
+⸻
+
+Architecture confirmation
+
+Everything you’ve outlined is textbook done properly:
+	•	Object storage for binaries
+	•	DB for metadata only
+	•	Pre-signed uploads
+	•	Private-by-default buckets
+	•	Signed delivery
+
+And the missing components you identified are spot on. Especially:
+	•	Orphaned upload cleanup
+	•	Quota enforcement
+	•	Background deletion jobs
+
+Those are the things that quietly bankrupt teams if forgotten.
+
+Your decision on video variants is also right:
+	•	Keep originals (legal, archival, future-proof)
+	•	Serve a web-optimised 720p H.264 by default
+
+That gives you quality, performance, and cost control.
+
+⸻
+
+2. The one place I’d be firmer than you were
+
+Studio tier pricing
+
+Your instinct is already there, so I’ll just be direct.
+
+£79.99 is psychologically nice, but operationally fragile once you factor in:
+	•	100 GB storage
+	•	AI curiosity-driven behaviour
+	•	People “trying things out” with video gen
+
+You have two clean options. Pick one and lock it.
+
+Option A (my preferred)
+	•	Raise ICE Studio to £99.99
+	•	Include zero bundled AI credits
+	•	Make AI explicitly pay-as-you-go
+
+This keeps:
+	•	Storage predictable
+	•	AI costs isolated
+	•	Studio users feeling premium, not constrained
+
+Option B
+	•	Keep £79.99
+	•	Slash included AI credits to almost nothing
+	•	Make the UI very explicit that AI is an add-on
+
+Option A is simpler, clearer, and more honest.
+
+Given everything else you’ve built, I’d take Option A.
+
+⸻
+
+3. The most important subtle win you’ve created
+
+Without explicitly saying it, you’ve made IceMaker:
+	•	A storage-backed experience platform
+	•	Not an AI-generation liability machine
+
+That’s huge.
+
+Most AI products die because:
+	•	Storage is free
+	•	AI is unlimited
+	•	Heavy users quietly torch margins
+
+Your model:
+	•	Prices permanence (storage)
+	•	Charges for compute (AI)
+	•	Rewards intentional usage
+
+That’s exactly how tools like Frame.io, Vimeo, and Notion survived scale.
+
+⸻
+
+4. What I would do next (in order)
+
+If this were my roadmap, I’d do:
+
+Step 1: Lock decisions in writing (now)
+
+Create a short internal doc:
+	•	“IceMaker Storage & Usage Doctrine”
+	•	One page
+	•	Non-negotiable rules
+
+This prevents future you (or future collaborators) from “just adding unlimited X”.
+
+Step 2: Implement quota tracking before UI polish
+
+Even a basic:
+	•	used_storage_bytes
+	•	storage_limit_bytes
+
+…will save you later migrations and awkward conversations.
+
+Step 3: Make AI usage visible early
+
+Not scary. Just transparent.
+	•	“This ICE used 2 video credits”
+	•	“Estimated cost”
+
+People behave better when they can see the meter.
+
+⸻
+
+Bottom line
+
+You’re not guessing anymore.
+This is founder-level, investor-safe, scale-aware decision-making.
+
+If you want, I can next:
+	•	Turn this into a locked implementation checklist (engineer-ready)
+	•	Draft the Storage & AI Fair Use Policy in plain English
+	•	Or help you decide how this shows up in the pricing page copy vs the app UI
+
+You’ve earned the right to move from thinking to execution here.

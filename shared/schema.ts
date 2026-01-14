@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, real, unique, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, real, unique, index, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,6 +35,8 @@ export const creatorProfiles = pgTable("creator_profiles", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status").default("inactive"), // 'active', 'past_due', 'cancelled', 'inactive'
+  usedStorageBytes: bigint("used_storage_bytes", { mode: "number" }).default(0).notNull(), // Current storage usage
+  storageLimitBytes: bigint("storage_limit_bytes", { mode: "number" }).default(5368709120).notNull(), // Default 5GB
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -79,6 +81,48 @@ export const iceLikes = pgTable("ice_likes", {
 export const insertIceLikeSchema = createInsertSchema(iceLikes).omit({ id: true, createdAt: true });
 export type InsertIceLike = z.infer<typeof insertIceLikeSchema>;
 export type IceLike = typeof iceLikes.$inferSelect;
+
+// Media asset status types
+export type MediaAssetStatus = 'draft' | 'active' | 'orphan' | 'deleted';
+export type MediaAssetCategory = 'image' | 'video' | 'audio' | 'document' | 'other';
+
+// Media assets table (tracks all uploaded files for quota management)
+export const mediaAssets = pgTable("media_assets", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").references(() => creatorProfiles.id).notNull(),
+  iceId: text("ice_id"), // Optional reference to ICE preview
+  fileKey: text("file_key").notNull(), // Object storage key
+  fileName: text("file_name").notNull(), // Original filename
+  fileSizeBytes: bigint("file_size_bytes", { mode: "number" }).notNull(),
+  mimeType: text("mime_type"),
+  category: text("category").$type<MediaAssetCategory>().default("other").notNull(),
+  status: text("status").$type<MediaAssetStatus>().default("draft").notNull(),
+  expiresAt: timestamp("expires_at"), // For draft cleanup
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({ id: true, createdAt: true });
+export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+
+// AI usage types
+export type AiUsageType = 'image_gen' | 'video_gen' | 'audio_gen' | 'chat' | 'text_gen';
+
+// AI usage events table (tracks all AI generation costs per ICE)
+export const aiUsageEvents = pgTable("ai_usage_events", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").references(() => creatorProfiles.id).notNull(),
+  iceId: text("ice_id"), // Which ICE this was for
+  usageType: text("usage_type").$type<AiUsageType>().notNull(),
+  creditsUsed: real("credits_used").notNull(), // Fractional credits
+  model: text("model"), // e.g., "gpt-4o-mini", "dall-e-3"
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(), // Additional context
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAiUsageEventSchema = createInsertSchema(aiUsageEvents).omit({ id: true, createdAt: true });
+export type InsertAiUsageEvent = z.infer<typeof insertAiUsageEventSchema>;
+export type AiUsageEvent = typeof aiUsageEvents.$inferSelect;
 
 // Universe ownership mapping (which creator owns which universes)
 export const universeCreators = pgTable("universe_creators", {
@@ -1327,6 +1371,8 @@ export const planFeaturesSchema = z.object({
   collaborationRoles: z.boolean().default(false),
   canUploadMedia: z.boolean().default(false),
   storageQuotaBytes: z.number().default(0), // 0 = no uploads, Pro = 2GB, Business = 10GB
+  maxIces: z.number().default(5), // ICE limit per tier: Starter=5, Creator=15, Studio=50
+  aiBillingModel: z.enum(['included', 'pay_as_you_go', 'credits']).default('pay_as_you_go'),
 });
 
 export type PlanFeatures = z.infer<typeof planFeaturesSchema>;
