@@ -1,10 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   ArrowRight, 
   Palette, 
@@ -20,8 +16,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import MarketingHeader from "@/components/MarketingHeader";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { TallyContactForm } from "@/components/TallyContactForm";
 
 const featureBlocks = [
   {
@@ -122,68 +117,6 @@ const customisationOptions = [
 ];
 
 export default function CustomBranding() {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    customisations: [] as string[],
-    notes: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCustomisationChange = (optionId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      customisations: checked
-        ? [...prev.customisations, optionId]
-        : prev.customisations.filter(id => id !== optionId),
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/enterprise/branding-enquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Enquiry submitted",
-          description: "We'll be in touch within 2 business days.",
-        });
-        setFormData({
-          name: "",
-          company: "",
-          email: "",
-          customisations: [],
-          notes: "",
-        });
-      } else {
-        throw new Error("Failed to submit");
-      }
-    } catch {
-      toast({
-        title: "Enquiry received",
-        description: "We'll be in touch within 2 business days.",
-      });
-      setFormData({
-        name: "",
-        company: "",
-        email: "",
-        customisations: [],
-        notes: "",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const scrollToContact = () => {
     document.getElementById("contact-form")?.scrollIntoView({ behavior: "smooth" });
   };
