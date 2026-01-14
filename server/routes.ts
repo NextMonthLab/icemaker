@@ -1615,6 +1615,103 @@ export async function registerRoutes(
     }
   });
   
+  // ============ ICE CARD MESSAGE BOARD ROUTES (for text-based ICE card IDs) ============
+  
+  app.get("/api/ice/cards/:iceCardId/messages", async (req, res) => {
+    try {
+      const iceCardId = req.params.iceCardId;
+      const messages = await storage.getIceCardMessages(iceCardId, 50);
+      
+      const messagesWithReactions = await Promise.all(messages.map(async (msg) => {
+        const reactions = await storage.getIceCardMessageReactions(msg.id);
+        const reactionCounts: Record<string, number> = {};
+        for (const r of reactions) {
+          reactionCounts[r.reactionType] = (reactionCounts[r.reactionType] || 0) + 1;
+        }
+        return { ...msg, reactions: reactionCounts, reactionCount: reactions.length };
+      }));
+      
+      res.json(messagesWithReactions);
+    } catch (error) {
+      console.error("Error fetching ICE card messages:", error);
+      res.status(500).json({ message: "Error fetching messages" });
+    }
+  });
+  
+  app.post("/api/ice/cards/:iceCardId/messages", async (req, res) => {
+    try {
+      const iceCardId = req.params.iceCardId;
+      const { displayName, body, icePreviewId } = req.body;
+      
+      if (!body || body.length === 0) {
+        return res.status(400).json({ message: "Message body required" });
+      }
+      if (body.length > 280) {
+        return res.status(400).json({ message: "Message too long (max 280 characters)" });
+      }
+      if (!displayName || displayName.length === 0) {
+        return res.status(400).json({ message: "Display name required" });
+      }
+      if (!icePreviewId) {
+        return res.status(400).json({ message: "ICE preview ID required" });
+      }
+      
+      const message = await storage.createIceCardMessage({
+        iceCardId,
+        icePreviewId,
+        userId: req.user?.id || null,
+        displayName: displayName.slice(0, 50),
+        body: body.slice(0, 280),
+      });
+      
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating ICE card message:", error);
+      res.status(500).json({ message: "Error creating message" });
+    }
+  });
+  
+  app.post("/api/ice/cards/messages/:messageId/reactions", async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const { reactionType, anonFingerprint } = req.body;
+      
+      if (!reactionType) {
+        return res.status(400).json({ message: "Reaction type required" });
+      }
+      
+      const reaction = await storage.addIceCardMessageReaction({
+        messageId,
+        userId: req.user?.id || null,
+        anonFingerprint: req.user?.id ? null : anonFingerprint,
+        reactionType,
+      });
+      
+      res.json(reaction);
+    } catch (error) {
+      console.error("Error adding ICE reaction:", error);
+      res.status(500).json({ message: "Error adding reaction" });
+    }
+  });
+  
+  app.delete("/api/ice/cards/messages/:messageId/reactions", async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const { anonFingerprint } = req.body;
+      
+      await storage.removeIceCardMessageReaction(
+        messageId,
+        req.user?.id || null,
+        req.user?.id ? null : anonFingerprint
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing ICE reaction:", error);
+      res.status(500).json({ message: "Error removing reaction" });
+    }
+  });
+  
   app.post("/api/chat/send", requireAuth, chatRateLimiter, async (req, res) => {
     try {
       const { threadId, message, characterId, universeId, cardId } = req.body;

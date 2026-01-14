@@ -1,0 +1,91 @@
+# Prompt: Title Pack Contract Reminder + Consistency Upgrade (IceMaker)
+
+You are working inside the IceMaker repo. We previously embedded a strict **Title Pack Contract** (schema + rendering rules) to ensure titles render consistently across:
+- Editor preview
+- ICE runtime cards
+- Any export / render contexts
+
+This contract must remain intact. Do not introduce breaking schema changes. Any enhancements must be backwards compatible.
+
+## Goal
+Improve **consistency and quality** of Title Packs specifically in:
+1) **Size scaling** (Large must be visibly larger)
+2) **Vertical placement** (Top / Middle / Bottom must be meaningfully different; Middle and Bottom are currently effectively the same)
+3) **Effects** (standardise behaviour so the same effect looks the same across packs and placements)
+
+## Non-negotiables
+- Titles must remain deterministic: same input => same output.
+- Keep using tokens / config-driven behaviour. No one-off styling inside components.
+- Do not add a “million options” UI. Fix the system defaults and contract.
+- Changes must be consistent across:
+  - different card sizes / responsive widths
+  - different title lengths (short vs long)
+  - multi-line wrapping
+
+## Implementation tasks
+
+### 1) Define a single source of truth: Title Layout Engine
+Create or refactor a central function/module that resolves:
+- `size` => fontSize, lineHeight, maxWidth, letterSpacing, padding
+- `placement` => y-position rules and safe margins
+- `effect` => animation parameters and timing
+
+This resolver should output a fully resolved style object used everywhere.
+
+### 2) Fix size scaling (Large must be larger)
+Audit current size tokens. Update so the difference is obvious but not ridiculous.
+Target behaviour:
+- Small: subtle / supporting
+- Medium: default headline
+- Large: hero headline (clearly larger, heavier presence)
+
+Rules:
+- Large should increase fontSize and lineHeight in a way that still wraps nicely.
+- Apply max-lines / wrap strategy so Large doesn’t overflow.
+- Ensure consistent behaviour across portrait/desktop and narrow/wide containers.
+
+### 3) Fix placement: Top / Middle / Bottom must be distinct
+Current bug: Middle and Bottom placements resolve to near-identical y-values.
+
+Implement placement rules like:
+- Top: anchored to top safe area (e.g. safeMarginTop + offset)
+- Middle: true vertical centre (containerHeight/2) with baseline adjustments for multi-line titles
+- Bottom: anchored to bottom safe area (containerHeight - safeMarginBottom - titleBlockHeight - offset)
+
+Key detail:
+- Middle must centre the entire title block (multi-line), not just the first line.
+- Bottom must respect title block height so it never clips.
+
+Add a dev-only overlay toggle (optional) to visualise safe zones + computed title block bounds.
+
+### 4) Effects standardisation
+Audit existing effects and unify them:
+- Same effect name must map to the same motion curve + duration everywhere.
+- Effects must respect placement (e.g. bottom slide-up, top slide-down, centre fade/scale).
+- Effects must not cause layout shifts (no jitter / reflow).
+
+Define a standard effect contract:
+- `enter`: duration, easing, from -> to transforms
+- `exit`: duration, easing, to transforms
+- optional `loop` rules if relevant (but default off)
+
+### 5) Backwards compatibility
+If existing packs rely on old values, migrate safely:
+- Keep old tokens but map them through the new resolver.
+- Add a `version` field only if essential; default to v1 behaviour mapping to v2 outputs without breaking.
+
+### 6) Test plan (must do)
+Provide quick sanity checks:
+- 3 sample titles (short, medium, long wrap)
+- 3 placements (top/middle/bottom)
+- 3 sizes (s/m/l)
+- 3 effects (none, fade, slide)
+Ensure all render consistently in editor + runtime.
+
+## Output required
+1) A short explanation of what was changed (for commit message)
+2) The exact files changed
+3) Any updated token tables (before/after)
+4) Screenshot or short description of visual verification steps
+
+Proceed with the changes now, carefully, preserving the title pack contract.
