@@ -8369,6 +8369,27 @@ Stay engaging, reference story details, and help the audience understand the nar
         return res.status(404).json({ message: "ICE not found" });
       }
       
+      // Get creator profile for attribution
+      let creatorProfile = null;
+      if (preview.creatorProfileId) {
+        const [profile] = await db.select({
+          id: schema.creatorProfiles.id,
+          displayName: schema.creatorProfiles.displayName,
+          slug: schema.creatorProfiles.slug,
+          avatarUrl: schema.creatorProfiles.avatarUrl,
+        })
+        .from(schema.creatorProfiles)
+        .where(eq(schema.creatorProfiles.id, preview.creatorProfileId))
+        .limit(1);
+        creatorProfile = profile || null;
+      }
+      
+      // Get like count
+      const [likeResult] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(schema.iceLikes)
+        .where(eq(schema.iceLikes.iceId, preview.id));
+      const likeCount = likeResult?.count || 0;
+      
       // Return only public-safe fields (no owner details, internal flags, etc.)
       res.json({
         id: preview.id,
@@ -8392,6 +8413,8 @@ Stay engaging, reference story details, and help the audience understand the nar
           world: preview.projectBible.world,
           style: preview.projectBible.style,
         } : null,
+        creator: creatorProfile,
+        likeCount,
       });
     } catch (error) {
       console.error("Error fetching ICE by slug:", error);

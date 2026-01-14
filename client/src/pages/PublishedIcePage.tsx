@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
 import GlobalNav from "@/components/GlobalNav";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 interface PreviewCard {
   id: string;
@@ -31,6 +34,8 @@ interface InteractivityNodeData {
 
 export default function PublishedIcePage() {
   const { shareSlug } = useParams<{ shareSlug: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNodeIndex, setActiveNodeIndex] = useState<number | null>(null);
@@ -70,6 +75,58 @@ export default function PublishedIcePage() {
       setLeadError(error.message || "Failed to submit email");
     },
   });
+
+  const { data: likeStatus } = useQuery<{ liked: boolean; likeCount: number }>({
+    queryKey: ["ice-like", ice?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/ice/preview/${ice!.id}/like`, { credentials: "include" });
+      if (!res.ok) return { liked: false, likeCount: ice?.likeCount || 0 };
+      return res.json();
+    },
+    enabled: !!ice?.id && !!user,
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/ice/preview/${ice!.id}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to like");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ice-like", ice?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ice/s", shareSlug] });
+    },
+  });
+
+  const unlikeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/ice/preview/${ice!.id}/like`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to unlike");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ice-like", ice?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ice/s", shareSlug] });
+    },
+  });
+
+  const handleToggleLike = () => {
+    if (!user) {
+      toast({ title: "Sign in to like", description: "Create an account to like and save ICEs" });
+      return;
+    }
+    if (likeStatus?.liked) {
+      unlikeMutation.mutate();
+    } else {
+      likeMutation.mutate();
+    }
+  };
 
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,55 +385,84 @@ export default function PublishedIcePage() {
       </div>
 
       <div className="p-4 bg-zinc-900/50 border-t border-zinc-800">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-white/60">
-              {currentCardIndex + 1} / {cards.length}
-            </span>
+        <div className="max-w-md mx-auto space-y-3">
+          {ice?.creator && (
+            <div className="flex items-center justify-between">
+              <Link href={ice.creator.slug ? `/creator/${ice.creator.slug}` : "#"}>
+                <div className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-creator">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={ice.creator.avatarUrl || undefined} />
+                    <AvatarFallback className="text-xs bg-gradient-to-br from-cyan-500 to-blue-600">
+                      {ice.creator.displayName?.slice(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-white/80">{ice.creator.displayName}</span>
+                </div>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToggleLike}
+                disabled={likeMutation.isPending || unlikeMutation.isPending}
+                className={`gap-1.5 ${likeStatus?.liked ? "text-red-400 hover:text-red-300" : "text-white/60 hover:text-white"}`}
+                data-testid="button-like"
+              >
+                <Heart className={`w-4 h-4 ${likeStatus?.liked ? "fill-current" : ""}`} />
+                <span className="text-xs">{likeStatus?.likeCount ?? ice?.likeCount ?? 0}</span>
+              </Button>
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-white/60">
+                {currentCardIndex + 1} / {cards.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setNarrationMuted(!narrationMuted)}
+                  className="h-8 w-8 text-white/60 hover:text-white"
+                  data-testid="button-toggle-narration"
+                >
+                  {narrationMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                {ice?.musicTrackUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setMusicEnabled(!musicEnabled)}
+                    className={`h-8 w-8 ${musicEnabled ? "text-cyan-400" : "text-white/60 hover:text-white"}`}
+                    data-testid="button-toggle-music"
+                  >
+                    <Music className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setNarrationMuted(!narrationMuted)}
-                className="h-8 w-8 text-white/60 hover:text-white"
-                data-testid="button-toggle-narration"
+                onClick={handlePrev}
+                disabled={currentCardIndex === 0}
+                className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
+                data-testid="button-prev-card"
               >
-                {narrationMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                <ChevronLeft className="w-4 h-4" />
               </Button>
-              {ice?.musicTrackUrl && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMusicEnabled(!musicEnabled)}
-                  className={`h-8 w-8 ${musicEnabled ? "text-cyan-400" : "text-white/60 hover:text-white"}`}
-                  data-testid="button-toggle-music"
-                >
-                  <Music className="w-4 h-4" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNext}
+                disabled={currentCardIndex === cards.length - 1 && activeNodeIndex === null}
+                className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
+                data-testid="button-next-card"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrev}
-              disabled={currentCardIndex === 0}
-              className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
-              data-testid="button-prev-card"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNext}
-              disabled={currentCardIndex === cards.length - 1 && activeNodeIndex === null}
-              className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
-              data-testid="button-next-card"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
           </div>
         </div>
       </div>
