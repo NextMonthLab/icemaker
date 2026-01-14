@@ -232,12 +232,13 @@ export default function CardPlayer({
     }
   }, [card.id, autoplay, hasVideo]);
 
-  // Update narration volume
-  useEffect(() => {
+  // Update narration volume - use useLayoutEffect for immediate application
+  // and include card.id to re-apply when card changes
+  React.useLayoutEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = narrationVolume / 100;
     }
-  }, [narrationVolume]);
+  }, [narrationVolume, card.id]);
   
   const toggleMediaType = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -282,8 +283,16 @@ export default function CardPlayer({
   const handleAudioLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
       setAudioDuration(audioRef.current.duration);
-      // Set initial volume when audio loads
+      // Always apply current volume when audio loads
       audioRef.current.volume = narrationVolume / 100;
+    }
+  }, [narrationVolume]);
+  
+  // Ref callback to apply volume immediately when audio element is assigned
+  const setAudioRef = useCallback((el: HTMLAudioElement | null) => {
+    audioRef.current = el;
+    if (el) {
+      el.volume = narrationVolume / 100;
     }
   }, [narrationVolume]);
   
@@ -655,7 +664,7 @@ export default function CardPlayer({
             
             {hasNarration && (
               <audio
-                ref={audioRef}
+                ref={setAudioRef}
                 src={card.narrationAudioUrl!}
                 preload="auto"
                 muted={narrationMuted}

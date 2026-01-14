@@ -413,7 +413,6 @@ export default function GuestIceBuilderPage() {
     if (showPreviewModal && !musicAudioRef.current) {
       musicAudioRef.current = new Audio();
       musicAudioRef.current.loop = true;
-      // Set initial volume immediately when creating audio element
       musicAudioRef.current.volume = musicVolume / 100;
     }
     
@@ -421,19 +420,21 @@ export default function GuestIceBuilderPage() {
       musicAudioRef.current.pause();
       musicAudioRef.current = null;
     }
-  }, [showPreviewModal, musicVolume]);
+  }, [showPreviewModal]);
   
-  // Handle track changes, play/pause, and volume updates
+  // Handle track changes - reuse same audio element, just update src
   useEffect(() => {
     if (!musicAudioRef.current) return;
     
     // Update track if changed
-    if (musicTrackUrl && (!musicAudioRef.current.src || !musicAudioRef.current.src.includes(musicTrackUrl.split('/').pop() || ''))) {
-      musicAudioRef.current.src = musicTrackUrl;
+    if (musicTrackUrl) {
+      const currentSrc = musicAudioRef.current.src;
+      const trackFilename = musicTrackUrl.split('/').pop() || '';
+      if (!currentSrc || !currentSrc.includes(trackFilename)) {
+        musicAudioRef.current.src = musicTrackUrl;
+        musicAudioRef.current.load();
+      }
     }
-    
-    // Update volume
-    musicAudioRef.current.volume = musicVolume / 100;
     
     // Play/pause based on enabled state
     if (showPreviewModal && musicEnabled && musicTrackUrl) {
@@ -441,7 +442,14 @@ export default function GuestIceBuilderPage() {
     } else {
       musicAudioRef.current.pause();
     }
-  }, [showPreviewModal, musicEnabled, musicTrackUrl, musicVolume]);
+  }, [showPreviewModal, musicEnabled, musicTrackUrl]);
+  
+  // Separate effect for volume - always apply volume immediately
+  useEffect(() => {
+    if (musicAudioRef.current) {
+      musicAudioRef.current.volume = musicVolume / 100;
+    }
+  }, [musicVolume]);
   
   // Cleanup music audio on component unmount
   useEffect(() => {
