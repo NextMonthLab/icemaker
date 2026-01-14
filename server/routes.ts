@@ -6383,6 +6383,244 @@ Stay focused on the content and be helpful.`,
     }
   });
   
+  // Producer Brief Mode - Creates ICE from structured producer briefs with exact card counts
+  app.post("/api/ice/preview/brief", upload.single("file"), async (req, res) => {
+    try {
+      const file = req.file;
+      const { text: rawText, strictMode = true } = req.body;
+      
+      let contentText = "";
+      
+      if (file) {
+        // Extract text from uploaded file
+        const ext = file.originalname.toLowerCase().split('.').pop();
+        if (ext === "txt" || ext === "md") {
+          contentText = file.buffer.toString("utf-8");
+        } else if (ext === "docx" || ext === "doc") {
+          // Basic text extraction from docx
+          const AdmZip = (await import("adm-zip")).default;
+          const zip = new AdmZip(file.buffer);
+          const docXml = zip.getEntry("word/document.xml");
+          if (docXml) {
+            const xmlContent = docXml.getData().toString("utf-8");
+            // Extract text between <w:t> tags
+            contentText = xmlContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          } else {
+            return res.status(400).json({ message: "Could not read document content" });
+          }
+        } else {
+          return res.status(400).json({ message: "Unsupported file type. Use .docx, .txt, or .md files." });
+        }
+      } else if (rawText) {
+        contentText = rawText;
+      } else {
+        return res.status(400).json({ message: "No brief content provided. Upload a file or provide text." });
+      }
+      
+      if (contentText.length < 200) {
+        return res.status(400).json({ message: "Brief content too short. Producer briefs require detailed specifications." });
+      }
+      
+      const userIp = req.ip || req.socket.remoteAddress || "unknown";
+      
+      // Rate limiting
+      const dailyCount = await storage.countIpIcePreviewsToday(userIp);
+      if (dailyCount >= 50) {
+        return res.status(429).json({ message: "Daily preview limit reached (50 per day)" });
+      }
+      
+      // Parse the producer brief
+      const { parseProducerBrief } = await import("./services/briefParser");
+      const parsedResult = parseProducerBrief(contentText);
+      
+      if (parsedResult.parseErrors.length > 0) {
+        return res.status(400).json({ 
+          message: "Error parsing producer brief", 
+          errors: parsedResult.parseErrors,
+          warnings: parsedResult.parseWarnings,
+        });
+      }
+      
+      const brief = parsedResult.brief;
+      
+      if (brief.stages.length === 0) {
+        return res.status(400).json({ 
+          message: "No stages found in producer brief. Ensure your brief has Stage 1, Stage 2, etc. sections with card tables." 
+        });
+      }
+      
+      if (brief.totalCardCount === 0) {
+        return res.status(400).json({ 
+          message: "No cards found in producer brief. Ensure each stage has a table with Card | Content | Visual columns." 
+        });
+      }
+      
+      // Build cards array from brief stages (STRICT: exact card count from brief)
+      const previewCards: any[] = [];
+      const interactivityNodes: any[] = [];
+      let globalCardIndex = 0;
+      
+      for (const stage of brief.stages) {
+        const stageStartCardIndex = globalCardIndex;
+        
+        for (const card of stage.cards) {
+          previewCards.push({
+            id: `card_${globalCardIndex}`,
+            stageNumber: stage.stageNumber,
+            stageName: stage.stageName,
+            cardId: card.cardId,
+            title: card.cardId,
+            content: card.content,
+            visualPrompt: card.visualPrompt,
+            videoPrompt: card.videoPrompt,
+            order: globalCardIndex,
+            sceneId: `stage_${stage.stageNumber}`,
+            isCheckpoint: false,
+          });
+          globalCardIndex++;
+        }
+        
+        // Add AI checkpoint interactivity node at end of stage
+        if (stage.hasAiCheckpoint && previewCards.length > 0) {
+          const lastCardInStage = previewCards[previewCards.length - 1];
+          lastCardInStage.isCheckpoint = true;
+          lastCardInStage.checkpointDescription = stage.checkpointDescription;
+          lastCardInStage.characterId = brief.aiCharacter?.name.toLowerCase().replace(/[^a-z0-9]/g, "_") || "guide";
+          
+          // Create interactivity node for this checkpoint
+          interactivityNodes.push({
+            id: `checkpoint_stage_${stage.stageNumber}`,
+            type: "ai_chat",
+            triggerCardId: lastCardInStage.id,
+            stageNumber: stage.stageNumber,
+            stageName: stage.stageName,
+            description: stage.checkpointDescription || `Chat with your guide about ${stage.stageName}`,
+            characterId: lastCardInStage.characterId,
+            stageContext: brief.aiCharacter?.stageContexts.find(sc => sc.stageNumber === stage.stageNumber)?.contextAddition,
+          });
+        }
+      }
+      
+      // Build AI character from brief (auto-create with full personality/prompts)
+      const characters: any[] = [];
+      
+      if (brief.aiCharacter) {
+        const char = brief.aiCharacter;
+        
+        // Build comprehensive system prompt
+        let systemPrompt = char.systemPrompt;
+        
+        // Add behaviour rules
+        if (char.behaviourRules.length > 0) {
+          systemPrompt += "\n\nBEHAVIOUR RULES:\n" + char.behaviourRules.map(r => `- ${r}`).join("\n");
+        }
+        
+        // Add example interactions as few-shot examples
+        if (char.exampleInteractions.length > 0) {
+          systemPrompt += "\n\nEXAMPLE INTERACTIONS:";
+          for (const ex of char.exampleInteractions) {
+            systemPrompt += `\n\nUser: ${ex.userMessage}\n${char.name}: ${ex.characterResponse}`;
+          }
+        }
+        
+        // Create base character
+        characters.push({
+          id: char.name.toLowerCase().replace(/[^a-z0-9]/g, "_") || "character",
+          name: char.name,
+          role: char.expertiseLevel || "Guide",
+          description: char.personality,
+          systemPrompt,
+          openingMessage: `Hi! I'm ${char.name}. I'm here to help you through this experience. What would you like to know?`,
+          stageContexts: char.stageContexts, // Pass stage-specific context
+        });
+      } else {
+        // Fallback character
+        characters.push({
+          id: "guide",
+          name: "Experience Guide",
+          role: "Guide",
+          description: "Your guide through this experience.",
+          systemPrompt: `You are a helpful guide for "${brief.title}". Help users understand and explore the content.`,
+          openingMessage: `Welcome to ${brief.title}! I'm here to help you. What would you like to know?`,
+        });
+      }
+      
+      // Generate preview ID
+      const previewId = `ice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      
+      // Set expiry
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30-day expiry for brief-created ICEs
+      
+      // Determine tier based on card count
+      let tier: "short" | "medium" | "long" = "short";
+      if (brief.totalCardCount > 15) tier = "long";
+      else if (brief.totalCardCount > 8) tier = "medium";
+      
+      // Save to database
+      const savedPreview = await storage.createIcePreview({
+        id: previewId,
+        ownerIp: userIp,
+        ownerUserId: req.user?.id || null,
+        sourceType: "brief" as any,
+        sourceValue: JSON.stringify({
+          title: brief.title,
+          format: brief.format,
+          totalCards: brief.totalCardCount,
+          stages: brief.stages.length,
+          hasAiCharacter: !!brief.aiCharacter,
+          strictMode: strictMode,
+          interactivityNodes,
+        }),
+        contentContext: {
+          visualDirection: brief.visualDirection,
+          targetAudience: brief.targetAudience,
+          estimatedDuration: brief.estimatedDuration,
+          interactivityNodes,
+        } as any,
+        title: brief.title,
+        cards: previewCards,
+        characters,
+        tier,
+        status: "active",
+        expiresAt,
+      });
+      
+      res.json({
+        previewId: savedPreview.id,
+        title: savedPreview.title,
+        totalCards: previewCards.length,
+        stages: brief.stages.length,
+        cards: savedPreview.cards,
+        characters: savedPreview.characters,
+        interactivityNodes,
+        sourceType: "brief",
+        strictMode,
+        parseWarnings: parsedResult.parseWarnings,
+        briefSummary: {
+          title: brief.title,
+          format: brief.format,
+          targetAudience: brief.targetAudience,
+          stageBreakdown: brief.stages.map(s => ({
+            stage: s.stageNumber,
+            name: s.stageName,
+            cardCount: s.cards.length,
+            hasCheckpoint: s.hasAiCheckpoint,
+          })),
+          aiCharacter: brief.aiCharacter ? {
+            name: brief.aiCharacter.name,
+            personality: brief.aiCharacter.personality,
+            stageContextCount: brief.aiCharacter.stageContexts.length,
+          } : null,
+        },
+        createdAt: savedPreview.createdAt.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating ICE from producer brief:", error);
+      res.status(500).json({ message: "Error processing producer brief" });
+    }
+  });
+  
   // File upload endpoint for ICE preview (PDF, PowerPoint, Word, Text)
   app.post("/api/ice/preview/upload", upload.single("file"), async (req, res) => {
     try {

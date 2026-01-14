@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   UserPlus, GraduationCap, Briefcase, Package, UtensilsCrossed, Home,
   ClipboardList, Magnet, Film, Sparkles, ArrowLeft, ArrowRight, Check,
-  Wand2, FileInput, ChevronRight
+  Wand2, FileInput, ChevronRight, FileText, Upload, Loader2
 } from "lucide-react";
 import { 
   templateCategories, 
@@ -29,7 +29,11 @@ const iconMap: Record<string, any> = {
   ClipboardList, Magnet, Film, Sparkles,
 };
 
-type WizardStep = "entry" | "category" | "length" | "structure" | "style" | "generating";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+type WizardStep = "entry" | "category" | "length" | "structure" | "style" | "generating" | "brief";
 
 interface WizardState {
   templateFamily: TemplateFamilyId | null;
@@ -47,6 +51,8 @@ export default function CreateIcePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [step, setStep] = useState<WizardStep>("entry");
+  const [briefFile, setBriefFile] = useState<File | null>(null);
+  const [briefText, setBriefText] = useState("");
   const [state, setState] = useState<WizardState>({
     templateFamily: null,
     length: "standard",
@@ -56,6 +62,44 @@ export default function CreateIcePage() {
       voiceMode: "none",
       interactionMode: "none",
       titlePackVibe: "modern",
+    },
+  });
+
+  const createBriefMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      if (briefFile) {
+        formData.append("file", briefFile);
+      } else if (briefText.trim()) {
+        formData.append("text", briefText);
+      }
+      formData.append("strictMode", "true");
+      
+      const response = await fetch("/api/ice/preview/brief", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to process brief");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Producer Brief processed!", 
+        description: `Created ${data.totalCards} cards across ${data.stages} stages`,
+      });
+      navigate(`/ice/edit/${data.previewId}`);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to process brief", 
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -100,8 +144,9 @@ export default function CreateIcePage() {
     createIceMutation.mutate(blueprint);
   }, [state, createIceMutation]);
 
-  const stepProgress = {
+  const stepProgress: Record<WizardStep, number> = {
     entry: 0,
+    brief: 50,
     category: 25,
     length: 50,
     structure: 75,
@@ -110,6 +155,10 @@ export default function CreateIcePage() {
   };
 
   const goBack = () => {
+    if (step === "brief") {
+      setStep("entry");
+      return;
+    }
     const steps: WizardStep[] = ["entry", "category", "length", "structure", "style"];
     const currentIdx = steps.indexOf(step);
     if (currentIdx > 0) setStep(steps[currentIdx - 1]);
@@ -194,6 +243,45 @@ export default function CreateIcePage() {
                 </ul>
                 <Button variant="outline" className="w-full">
                   Ingest Content
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t">
+            <h2 className="text-center text-lg font-semibold text-muted-foreground mb-4">For Producers</h2>
+            <Card 
+              className="cursor-pointer hover-elevate transition-all border-2 hover:border-amber-500 max-w-md mx-auto"
+              onClick={() => setStep("brief")}
+              data-testid="card-producer-brief"
+            >
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3">
+                  <FileText className="w-7 h-7 text-white" />
+                </div>
+                <CardTitle className="text-lg">Upload Producer Brief</CardTitle>
+                <CardDescription>
+                  Import a detailed specification document
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <ul className="text-sm text-muted-foreground space-y-1 mb-3">
+                  <li className="flex items-center justify-center gap-2">
+                    <Check className="w-3 h-3 text-amber-500" />
+                    Exact card counts from brief
+                  </li>
+                  <li className="flex items-center justify-center gap-2">
+                    <Check className="w-3 h-3 text-amber-500" />
+                    Auto-create AI characters
+                  </li>
+                  <li className="flex items-center justify-center gap-2">
+                    <Check className="w-3 h-3 text-amber-500" />
+                    Stage-based checkpoints
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full border-amber-500/50 hover:bg-amber-500/10">
+                  Upload Brief
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
@@ -499,6 +587,114 @@ export default function CreateIcePage() {
                     <Wand2 className="w-5 h-5 mr-2" />
                   )}
                   {createIceMutation.isPending ? "Creating..." : "Generate ICE Blueprint"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {step === "brief" && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Upload Producer Brief</h2>
+              <p className="text-muted-foreground">Import a detailed specification document to auto-generate your ICE</p>
+            </div>
+            
+            <div className="max-w-2xl mx-auto space-y-6">
+              <Card className="border-2 border-dashed border-amber-500/50">
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+                      <Upload className="w-8 h-8 text-amber-500" />
+                    </div>
+                    <Label htmlFor="brief-file" className="text-lg font-medium cursor-pointer">
+                      {briefFile ? briefFile.name : "Click to upload or drop your brief file"}
+                    </Label>
+                    <Input
+                      id="brief-file"
+                      type="file"
+                      accept=".docx,.txt,.md"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setBriefFile(file);
+                          setBriefText("");
+                        }
+                      }}
+                      data-testid="input-brief-file"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Supported: .docx, .txt, .md
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div className="text-center text-muted-foreground">
+                <span>— or paste your brief content —</span>
+              </div>
+              
+              <div>
+                <Label htmlFor="brief-text">Brief Content</Label>
+                <Textarea
+                  id="brief-text"
+                  placeholder={`Paste your producer brief here...
+
+Example structure:
+# Experience Overview
+Ice Title: My Experience
+Format: 4-stage interactive tutorial
+
+# AI Character
+Name: Guide
+Personality: Warm, encouraging
+
+# Stage 1: Introduction
+| Card | Content | Visual |
+|------|---------|--------|
+| 1.1  | Welcome | Opening scene...`}
+                  className="min-h-[300px] mt-2 font-mono text-sm"
+                  value={briefText}
+                  onChange={(e) => {
+                    setBriefText(e.target.value);
+                    if (e.target.value) setBriefFile(null);
+                  }}
+                  disabled={!!briefFile}
+                  data-testid="textarea-brief-content"
+                />
+              </div>
+              
+              <Card className="bg-amber-500/5 border-amber-500/20">
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-amber-500" />
+                    Brief Format Requirements
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Define stages with "Stage 1: Name", "Stage 2: Name", etc.</li>
+                    <li>• Use card tables: Card | Content | Visual Prompt columns</li>
+                    <li>• Include "AI Character" section for auto-character creation</li>
+                    <li>• Add "System Prompt" for character behaviour rules</li>
+                    <li>• Mark "AI Checkpoint" for interactivity at stage ends</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              
+              <div className="pt-4">
+                <Button
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  onClick={() => createBriefMutation.mutate()}
+                  disabled={(!briefFile && !briefText.trim()) || createBriefMutation.isPending}
+                  data-testid="button-process-brief"
+                >
+                  {createBriefMutation.isPending ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-5 h-5 mr-2" />
+                  )}
+                  {createBriefMutation.isPending ? "Processing Brief..." : "Create ICE from Brief"}
                 </Button>
               </div>
             </div>
