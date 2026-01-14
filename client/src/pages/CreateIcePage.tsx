@@ -92,7 +92,7 @@ export default function CreateIcePage() {
         title: "Producer Brief processed!", 
         description: `Created ${data.totalCards} cards across ${data.stages} stages`,
       });
-      navigate(`/ice/edit/${data.previewId}`);
+      navigate(`/ice/preview/${data.previewId}`);
     },
     onError: (error: any) => {
       toast({ 
@@ -114,7 +114,7 @@ export default function CreateIcePage() {
     },
     onSuccess: (data) => {
       toast({ title: "ICE created!", description: "Opening in editor..." });
-      navigate(`/ice/edit/${data.previewId}`);
+      navigate(`/ice/preview/${data.previewId}`);
     },
     onError: (error: any) => {
       toast({ 
