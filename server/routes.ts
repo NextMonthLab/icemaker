@@ -6295,6 +6295,123 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Conversation Insights - get or generate insights for an ICE (Business tier only)
+  app.get("/api/ice/:iceId/conversation-insights", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as schema.User;
+      const { iceId } = req.params;
+      
+      // Check entitlements
+      const { getFullEntitlements } = await import('./entitlements');
+      const entitlements = await getFullEntitlements(user.id);
+      
+      if (!entitlements.canViewConversationInsights) {
+        return res.status(403).json({ 
+          message: "Conversation insights require a Business tier subscription",
+          upgradeRequired: true 
+        });
+      }
+      
+      // Verify ownership
+      const preview = await storage.getIcePreview(iceId);
+      if (!preview || preview.userId !== user.id) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      // Check for valid cached insights
+      const cachedInsights = await storage.getConversationInsights(iceId);
+      if (cachedInsights && new Date(cachedInsights.validUntil) > new Date()) {
+        return res.json({
+          ...cachedInsights,
+          generatedAt: cachedInsights.generatedAt.toISOString(),
+          validUntil: cachedInsights.validUntil.toISOString(),
+          cached: true
+        });
+      }
+      
+      // Fetch chat messages for this ICE
+      const messages = await storage.getPreviewChatMessages(iceId, 500);
+      
+      if (messages.length < 5) {
+        return res.json({ 
+          hasData: false,
+          message: "Not enough conversation data yet. Insights require at least 5 chat messages.",
+          messageCount: messages.length
+        });
+      }
+      
+      // Group messages into conversations (by gaps of >30min)
+      const conversations: Array<Array<{role: string; content: string}>> = [];
+      let currentConvo: Array<{role: string; content: string}> = [];
+      let lastTime: Date | null = null;
+      
+      for (const msg of messages) {
+        const msgTime = new Date(msg.createdAt);
+        if (lastTime && (msgTime.getTime() - lastTime.getTime()) > 30 * 60 * 1000) {
+          if (currentConvo.length > 0) conversations.push(currentConvo);
+          currentConvo = [];
+        }
+        currentConvo.push({ role: msg.role, content: msg.content });
+        lastTime = msgTime;
+      }
+      if (currentConvo.length > 0) conversations.push(currentConvo);
+      
+      // Generate insights via OpenAI
+      const { OpenAI } = await import('openai');
+      const openai = new OpenAI();
+      
+      const prompt = `Analyze these conversation transcripts from an interactive learning experience. Generate insights for the content creator.
+
+Conversations:
+${conversations.map((c, i) => `--- Conversation ${i + 1} ---\n${c.map(m => `${m.role}: ${m.content}`).join('\n')}`).join('\n\n')}
+
+Provide a JSON response with:
+{
+  "summary": "2-3 sentence overall summary of what learners are asking about and engaging with",
+  "topTopics": ["array of 3-5 most discussed topics"],
+  "commonQuestions": ["array of 3-5 frequently asked questions from users"],
+  "sentimentScore": number from -100 (very negative) to 100 (very positive),
+  "engagementInsights": "paragraph about engagement patterns and learning behaviors observed",
+  "actionableRecommendations": ["array of 3-5 specific suggestions for improving the content"]
+}`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 1500
+      });
+      
+      const insightsData = JSON.parse(completion.choices[0].message.content || '{}');
+      
+      // Cache insights for 24 hours
+      const validUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const newInsights = await storage.upsertConversationInsights({
+        icePreviewId: iceId,
+        summary: insightsData.summary || 'No summary available',
+        topTopics: insightsData.topTopics || [],
+        commonQuestions: insightsData.commonQuestions || [],
+        sentimentScore: insightsData.sentimentScore || 0,
+        engagementInsights: insightsData.engagementInsights || null,
+        actionableRecommendations: insightsData.actionableRecommendations || [],
+        conversationCount: conversations.length,
+        messageCount: messages.length,
+        generatedAt: new Date(),
+        validUntil
+      });
+      
+      res.json({
+        ...newInsights,
+        generatedAt: newInsights.generatedAt.toISOString(),
+        validUntil: newInsights.validUntil.toISOString(),
+        cached: false
+      });
+    } catch (error) {
+      console.error("Error generating conversation insights:", error);
+      res.status(500).json({ message: "Error generating insights" });
+    }
+  });
+  
   // Pexels API proxy (to protect API key) - requires auth to prevent abuse
   app.get("/api/pexels/search", requireAuth, async (req, res) => {
     try {

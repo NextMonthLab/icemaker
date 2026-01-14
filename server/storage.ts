@@ -232,6 +232,10 @@ export interface IStorage {
   incrementPreviewMessageCount(previewId: string): Promise<void>;
   incrementPreviewMessageCountIfUnderLimit(previewId: string, maxMessages: number): Promise<number | null>;
 
+  // Conversation Insights (Business tier feature)
+  getConversationInsights(icePreviewId: string): Promise<schema.ConversationInsight | undefined>;
+  upsertConversationInsights(data: schema.InsertConversationInsight): Promise<schema.ConversationInsight>;
+  deleteConversationInsights(icePreviewId: string): Promise<void>;
 
   // Ingestion v2: Domain Risk & Throttling
   getDomainRisk(hostname: string): Promise<schema.DomainRisk | undefined>;
@@ -1724,6 +1728,30 @@ export class DatabaseStorage implements IStorage {
 
     // If no rows updated, we hit the limit
     return result.length > 0 ? result[0].messageCount : null;
+  }
+
+  // Conversation Insights (Business tier feature)
+  async getConversationInsights(icePreviewId: string): Promise<schema.ConversationInsight | undefined> {
+    const result = await db.query.conversationInsights.findFirst({
+      where: eq(schema.conversationInsights.icePreviewId, icePreviewId),
+      orderBy: [desc(schema.conversationInsights.generatedAt)],
+    });
+    return result;
+  }
+
+  async upsertConversationInsights(data: schema.InsertConversationInsight): Promise<schema.ConversationInsight> {
+    // Delete old insights for this ICE
+    await db.delete(schema.conversationInsights)
+      .where(eq(schema.conversationInsights.icePreviewId, data.icePreviewId));
+    
+    // Insert new insights
+    const [result] = await db.insert(schema.conversationInsights).values(data as any).returning();
+    return result;
+  }
+
+  async deleteConversationInsights(icePreviewId: string): Promise<void> {
+    await db.delete(schema.conversationInsights)
+      .where(eq(schema.conversationInsights.icePreviewId, icePreviewId));
   }
 
   // Orbit Meta
