@@ -15,6 +15,7 @@ import {
   Compass,
   Shield,
   Search,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -39,8 +40,8 @@ interface SiteNavProps {
 const marketingLinks = [
   { href: '/corporate-training', label: 'Corporate Training', icon: GraduationCap },
   { href: '/marketing-agencies', label: 'Marketing & Agencies', icon: Building2 },
+  { href: '/pricing', label: 'Pricing', icon: CreditCard },
   { href: '/discover', label: 'Discover', icon: Search },
-  { href: '/blog', label: 'Blog', icon: Film },
 ];
 
 const appLinks = [

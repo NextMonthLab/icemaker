@@ -14,6 +14,7 @@ import MarketingAgencies from "@/pages/marketing/MarketingAgencies";
 import Blog from "@/pages/marketing/Blog";
 import BlogPost from "@/pages/marketing/BlogPost";
 import BookDemo from "@/pages/marketing/BookDemo";
+import Pricing from "@/pages/marketing/Pricing";
 import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import TermsOfService from "@/pages/legal/TermsOfService";
 import CookiePolicy from "@/pages/legal/CookiePolicy";
@@ -114,6 +115,7 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/book-demo" component={BookDemo} />
+      <Route path="/pricing" component={Pricing} />
       
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
