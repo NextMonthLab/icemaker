@@ -36,6 +36,12 @@ This documentation pack provides everything Claude Code (or any developer) needs
 2. Check [06-BUGFIX-WORKFLOW.md](./06-BUGFIX-WORKFLOW.md) for debugging steps
 3. Check [03-ENV-VARS-RUNBOOK.md](./03-ENV-VARS-RUNBOOK.md) for deployment issues
 
+## Getting Support
+
+- **Developer support**: Read this documentation pack first, then check the bugfix workflow
+- **Platform issues**: Replit support at https://replit.com/support, Render at https://render.com/docs
+- **User/customer support**: Enterprise contact form at `/enterprise/custom-branding`
+
 ## Updating This Documentation
 
 When making significant changes to the codebase:

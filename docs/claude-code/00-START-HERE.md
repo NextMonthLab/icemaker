@@ -120,3 +120,31 @@ IceMaker is a **Meaning-to-Experience Engine** - a SaaS platform that transforms
 - **Producer Brief**: Structured markdown document for professional content creation
 - **Entitlements**: Feature flags gated by subscription tier (Free/Creator/Business)
 - **Visual Bible**: Design system ensuring visual consistency across cards
+
+---
+
+## Getting Support
+
+### For Developers / Claude Code
+1. **Read this documentation pack first** - Most questions are answered here
+2. **Check the bugfix workflow** - See `06-BUGFIX-WORKFLOW.md` for debugging steps
+3. **Search the codebase** - Use grep/search to find relevant code patterns
+
+### For Users / Customers
+- **In-app help**: Contact form available on Enterprise pages
+- **Enterprise enquiries**: Use the contact form at `/enterprise/custom-branding`
+- **General support**: Email support via the platform (configured in Resend)
+
+### For Platform Issues (Replit/Render)
+- **Replit support**: https://replit.com/support
+- **Render support**: https://render.com/docs or dashboard support
+- **Database issues**: Check Neon dashboard for PostgreSQL status
+
+### Common Self-Service Solutions
+| Issue | Solution |
+|-------|----------|
+| App not starting | Check logs, verify env vars, run `npm run db:push` |
+| Database errors | Run `npm run db:push` to sync schema |
+| API errors | Check rate limits, verify authentication |
+| Media not loading | Check Object Storage bucket, verify URLs |
+| Billing issues | Check Stripe dashboard, verify webhook setup |
