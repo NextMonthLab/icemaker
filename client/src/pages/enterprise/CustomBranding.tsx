@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   ArrowRight, 
   Palette, 
@@ -104,16 +104,6 @@ const steps = [
     title: "Deploy to your workspace",
     description: "Your Brand Pack is deployed into your IceMaker workspace with governance controls so your team creates on-brand content every time.",
   },
-];
-
-const customisationOptions = [
-  { id: "title-packs", label: "Title packs" },
-  { id: "captions", label: "Captions and data styling" },
-  { id: "music", label: "Music and sonic identity" },
-  { id: "sfx", label: "Sound effects" },
-  { id: "asset-library", label: "Asset library" },
-  { id: "filming", label: "Filming" },
-  { id: "photography", label: "Photography" },
 ];
 
 export default function CustomBranding() {
@@ -367,89 +357,7 @@ export default function CustomBranding() {
             >
               <Card className="bg-neutral-900/50 border-white/10">
                 <CardContent className="pt-6">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Your name"
-                          required
-                          data-testid="input-name"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Company</Label>
-                        <Input
-                          id="company"
-                          value={formData.company}
-                          onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                          placeholder="Company name"
-                          required
-                          data-testid="input-company"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="you@company.com"
-                        required
-                        data-testid="input-email"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>What would you like to customise?</Label>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        {customisationOptions.map((option) => (
-                          <div key={option.id} className="flex items-center gap-2">
-                            <Checkbox
-                              id={option.id}
-                              checked={formData.customisations.includes(option.id)}
-                              onCheckedChange={(checked) => 
-                                handleCustomisationChange(option.id, checked === true)
-                              }
-                              data-testid={`checkbox-${option.id}`}
-                            />
-                            <Label htmlFor={option.id} className="text-sm font-normal cursor-pointer">
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Notes (optional)</Label>
-                      <Textarea
-                        id="notes"
-                        value={formData.notes}
-                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                        placeholder="Tell us about your requirements..."
-                        rows={4}
-                        data-testid="textarea-notes"
-                      />
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full gap-2"
-                      disabled={isSubmitting}
-                      data-testid="button-submit-enquiry"
-                    >
-                      {isSubmitting ? "Submitting..." : "Request Enterprise custom branding"}
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </form>
+                  <TallyContactForm />
                 </CardContent>
               </Card>
             </motion.div>
