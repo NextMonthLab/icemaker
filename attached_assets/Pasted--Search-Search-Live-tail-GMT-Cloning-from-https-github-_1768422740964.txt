@@ -1,0 +1,122 @@
+
+Search
+Search
+
+Live tail
+GMT
+
+
+
+==> Cloning from https://github.com/NextMonthLab/icemaker
+==> Checking out commit f81f2c8a5777c3c5353d748db60de9f0775fdafd in branch main
+==> Requesting Node.js version >=20.0.0
+==> Using Node.js version 25.3.0 via /opt/render/project/src/package.json
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install --include=dev && npm run build'...
+added 869 packages, and audited 870 packages in 20s
+100 packages are looking for funding
+  run `npm fund` for details
+10 vulnerabilities (2 low, 4 moderate, 4 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> icemaker@1.0.0 build
+> tsx script/build.ts
+building client...
+vite v7.1.12 building for production...
+transforming...
+✓ 2762 modules transformed.
+rendering chunks...
+[meta-images] no Replit deployment domain found, skipping meta tag updates
+computing gzip size...
+../dist/public/index.html                                                  2.57 kB │ gzip:   0.86 kB
+../dist/public/assets/icy_mountain_landscape_placeholder-BseCaJX7.png  1,483.45 kB
+../dist/public/assets/icemaker-logo-Bt_-Uqbj.png                       2,252.80 kB
+../dist/public/assets/index-D270thNi.css                                 252.67 kB │ gzip:  32.14 kB
+../dist/public/assets/browser-PSf3j26g.js                                 25.78 kB │ gzip:  10.13 kB
+../dist/public/assets/index-CjkaENA9.js                                1,709.98 kB │ gzip: 450.77 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.47s
+building server...
+  dist/index.cjs  1.9mb ⚠️
+⚡ Done in 345ms
+==> Uploading build...
+==> Uploaded in 60.6s. Compression took 67.9s
+==> Build successful 🎉
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Deploying...
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Running 'npm run start'
+> icemaker@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+========================================
+  Security Startup Checks (Phase 1.1)
+========================================
+Environment: production
+Platform: Standard (Render/other)
+[Token System]
+  - PUBLIC_TOKEN_SECRET: RANDOM (dev mode)
+  - Token version: 1
+  - Token expiry: 3600 seconds (1 hour)
+  - Resource types: story, preview
+  - Audiences: analytics, chat
+[Stripe Configuration]
+  - Mode: Standard environment variables
+  - STRIPE_SECRET_KEY: SET
+  - STRIPE_WEBHOOK_SECRET: SET
+[Email Configuration]
+  - Mode: NOT CONFIGURED
+[Rate Limiting]
+  - Analytics: 100 requests/minute per IP
+  - Activation/Pause: 10 requests/minute per IP
+  - Chat: 30 requests/minute per user/IP
+[Warnings]
+  ⚠️  WARNING: Email not configured - magic links and notifications will not be sent
+[ERRORS - CRITICAL]
+========================================
+  ❌ CRITICAL: PUBLIC_TOKEN_SECRET is REQUIRED in production but not set
+❌ SECURITY CHECKS FAILED - see errors above
+🛑 SERVER WILL NOT START IN PRODUCTION WITH MISSING SECURITY CONFIG
+FATAL: Cannot start server in production with missing security configuration.
+Please set all required environment variables and restart.
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'npm run start'
+> icemaker@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+========================================
+  Security Startup Checks (Phase 1.1)
+========================================
+Environment: production
+Platform: Standard (Render/other)
+[Token System]
+  - PUBLIC_TOKEN_SECRET: RANDOM (dev mode)
+  - Token version: 1
+  - Token expiry: 3600 seconds (1 hour)
+  - Resource types: story, preview
+  - Audiences: analytics, chat
+[Stripe Configuration]
+  - Mode: Standard environment variables
+  - STRIPE_SECRET_KEY: SET
+  - STRIPE_WEBHOOK_SECRET: SET
+[Email Configuration]
+  - Mode: NOT CONFIGURED
+[Rate Limiting]
+  - Analytics: 100 requests/minute per IP
+  - Activation/Pause: 10 requests/minute per IP
+  - Chat: 30 requests/minute per user/IP
+[Warnings]
+  ⚠️  WARNING: Email not configured - magic links and notifications will not be sent
+[ERRORS - CRITICAL]
+  ❌ CRITICAL: PUBLIC_TOKEN_SECRET is REQUIRED in production but not set
+❌ SECURITY CHECKS FAILED - see errors above
+🛑 SERVER WILL NOT START IN PRODUCTION WITH MISSING SECURITY CONFIG
+FATAL: Cannot start server in production with missing security configuration.
+========================================
+Please set all required environment variables and restart.
