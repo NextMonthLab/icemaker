@@ -9005,6 +9005,39 @@ Return a JSON object with:
     }
   });
 
+  // Get aggregated field data by ICE ID (for analytics page)
+  app.get("/api/ice/:iceId/field-aggregates", requireAuth, async (req, res) => {
+    try {
+      const { iceId } = req.params;
+
+      // Check entitlements for conversation insights
+      const { getEntitlementsForUser } = await import("./entitlements");
+      const entitlements = await getEntitlementsForUser(req.user!.id);
+      if (!entitlements.canViewConversationInsights) {
+        return res.status(403).json({ 
+          message: "Viewing field aggregates requires a Business tier subscription",
+          upgradeRequired: true
+        });
+      }
+
+      // Find the preview by ICE ID
+      const preview = await storage.getIcePreview(iceId);
+      if (!preview) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+
+      if (preview.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const aggregates = await storage.getFieldResponseAggregates(iceId);
+      res.json(aggregates);
+    } catch (error) {
+      console.error("Error getting field aggregates by ICE ID:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
 

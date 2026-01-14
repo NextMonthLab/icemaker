@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { 
   BarChart3, Eye, Users, Share2, ArrowLeft, Loader2, 
   TrendingUp, Calendar, ExternalLink, MessageCircle, Sparkles, 
-  Lock, ThumbsUp, ThumbsDown, Lightbulb, Tag, HelpCircle
+  Lock, ThumbsUp, ThumbsDown, Lightbulb, Tag, HelpCircle, ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,6 +52,15 @@ interface ConversationInsight {
   upgradeRequired?: boolean;
 }
 
+interface FieldAggregate {
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: string;
+  totalResponses: number;
+  uniqueValues?: Array<{ value: string; count: number }>;
+  numericStats?: { min: number; max: number; avg: number };
+}
+
 export default function IceAnalyticsPage() {
   const { user } = useAuth();
   const [timeRange, setTimeRange] = useState("30");
@@ -84,6 +93,19 @@ export default function IceAnalyticsPage() {
     },
     enabled: !!user && !!selectedIceId,
     retry: false,
+  });
+
+  const { data: fieldAggregates = [] } = useQuery<FieldAggregate[]>({
+    queryKey: ["/api/ice", selectedIceId, "field-aggregates"],
+    queryFn: async () => {
+      const res = await fetch(`/api/ice/${selectedIceId}/field-aggregates`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!user && !!selectedIceId && !insights?.upgradeRequired,
+    staleTime: 60000,
   });
 
   const isLoading = summaryLoading || iceListLoading;
@@ -462,6 +484,70 @@ export default function IceAnalyticsPage() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {/* Captured Data Fields */}
+                    {fieldAggregates.length > 0 && (
+                      <div className="p-4 bg-white/5 rounded-lg">
+                        <h4 className="text-sm font-medium text-white/70 mb-4 flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4 text-cyan-400" />
+                          Captured Viewer Data
+                          <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 text-xs ml-2">
+                            {fieldAggregates.reduce((sum, f) => sum + f.totalResponses, 0)} responses
+                          </Badge>
+                        </h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {fieldAggregates.map((field) => (
+                            <div key={field.fieldKey} className="p-3 bg-white/5 rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-white">{field.fieldLabel}</span>
+                                <span className="text-xs text-white/40">{field.totalResponses} entries</span>
+                              </div>
+                              {field.uniqueValues && field.uniqueValues.length > 0 && (
+                                <div className="space-y-1.5">
+                                  {field.uniqueValues.slice(0, 5).map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-sm">
+                                      <span className="text-white/70 truncate max-w-[70%]">{item.value}</span>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                          <div 
+                                            className="h-full bg-cyan-500 rounded-full"
+                                            style={{ 
+                                              width: `${Math.round((item.count / field.totalResponses) * 100)}%` 
+                                            }}
+                                          />
+                                        </div>
+                                        <span className="text-white/50 text-xs w-8 text-right">{item.count}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {field.uniqueValues.length > 5 && (
+                                    <p className="text-xs text-white/40 mt-1">
+                                      +{field.uniqueValues.length - 5} more values
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              {field.numericStats && (
+                                <div className="flex items-center gap-4 text-sm">
+                                  <span className="text-white/50">Min: <span className="text-white">{field.numericStats.min}</span></span>
+                                  <span className="text-white/50">Max: <span className="text-white">{field.numericStats.max}</span></span>
+                                  <span className="text-white/50">Avg: <span className="text-cyan-400">{field.numericStats.avg.toFixed(1)}</span></span>
+                                </div>
+                              )}
+                              {field.fieldType === "boolean" && field.uniqueValues && (
+                                <div className="flex items-center gap-3 text-sm">
+                                  {field.uniqueValues.map((item, idx) => (
+                                    <span key={idx} className="text-white/70">
+                                      {item.value === "true" ? "Yes" : "No"}: <span className="text-white font-medium">{item.count}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
