@@ -286,6 +286,7 @@ export default function PublishedIcePage() {
                 }}
                 narrationMuted={narrationMuted}
                 narrationVolume={ice?.narrationVolume || 100}
+                icePreviewId={ice?.id}
               />
             </motion.div>
           </AnimatePresence>

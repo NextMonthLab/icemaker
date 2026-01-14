@@ -16,21 +16,26 @@ interface Message {
 
 interface MessageBoardProps {
   cardId: number | string;
+  icePreviewId?: string;
   compact?: boolean;
 }
 
-export default function MessageBoard({ cardId, compact = true }: MessageBoardProps) {
+export default function MessageBoard({ cardId, icePreviewId, compact = true }: MessageBoardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [displayName, setDisplayName] = useState(() => 
     localStorage.getItem("nextscene_display_name") || ""
   );
   const queryClient = useQueryClient();
+  
+  const isIceCard = typeof cardId === "string";
+  const apiBase = isIceCard ? `/api/ice/cards/${cardId}` : `/api/cards/${cardId}`;
+  const reactionsBase = isIceCard ? "/api/ice/cards/messages" : "/api/cards/messages";
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["card-messages", cardId],
     queryFn: async () => {
-      const response = await fetch(`/api/cards/${cardId}/messages`);
+      const response = await fetch(`${apiBase}/messages`);
       if (!response.ok) throw new Error("Failed to fetch messages");
       return response.json() as Promise<Message[]>;
     },
@@ -39,10 +44,14 @@ export default function MessageBoard({ cardId, compact = true }: MessageBoardPro
   const postMutation = useMutation({
     mutationFn: async ({ body, displayName }: { body: string; displayName: string }) => {
       localStorage.setItem("nextscene_display_name", displayName);
-      const response = await fetch(`/api/cards/${cardId}/messages`, {
+      const response = await fetch(`${apiBase}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, displayName }),
+        body: JSON.stringify({ 
+          body, 
+          displayName,
+          ...(isIceCard && icePreviewId ? { icePreviewId } : {}),
+        }),
       });
       if (!response.ok) throw new Error("Failed to post message");
       return response.json();
@@ -55,7 +64,7 @@ export default function MessageBoard({ cardId, compact = true }: MessageBoardPro
 
   const reactionMutation = useMutation({
     mutationFn: async (messageId: number) => {
-      const response = await fetch(`/api/cards/messages/${messageId}/reactions`, {
+      const response = await fetch(`${reactionsBase}/${messageId}/reactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType: "like" }),

@@ -70,6 +70,7 @@ interface CardPlayerProps {
   narrationMuted?: boolean;
   captionState?: CaptionState; // Caption Engine state for presets/karaoke/animations
   showPlaceholderOverlay?: boolean; // Show "ADD YOUR..." overlay on placeholder backgrounds
+  icePreviewId?: string; // For ICE card message boards
 }
 
 type Phase = "cinematic" | "context";
@@ -85,7 +86,8 @@ export default function CardPlayer({
   narrationVolume = 100,
   narrationMuted = false,
   captionState,
-  showPlaceholderOverlay = false
+  showPlaceholderOverlay = false,
+  icePreviewId
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -907,7 +909,7 @@ export default function CardPlayer({
                 </div>
               ) : null}
               
-              <MessageBoard cardId={card.id} compact={true} />
+              <MessageBoard cardId={card.id} icePreviewId={icePreviewId} compact={true} />
             </div>
           </motion.div>
         )}

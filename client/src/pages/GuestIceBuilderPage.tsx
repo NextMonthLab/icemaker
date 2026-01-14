@@ -1944,6 +1944,7 @@ export default function GuestIceBuilderPage() {
                   narrationVolume={narrationVolume}
                   narrationMuted={narrationMuted}
                   showPlaceholderOverlay={!cards[previewCardIndex].generatedImageUrl && !cards[previewCardIndex].generatedVideoUrl}
+                  icePreviewId={preview?.id}
                   onPhaseChange={(phase) => {
                     if (phase === 'context') {
                       handleCardPhaseComplete();

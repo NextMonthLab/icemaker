@@ -1,0 +1,188 @@
+# Prompt (IceMaker): Add ICE Creation Wizard (alongside Injection)
+
+You are working inside the IceMaker repo. We already have **Injection** flows (ingest docs/URLs/scripts/PDFs etc.) that generate a structured ICE. Now we need a **Creation Wizard** for users who want to design an ICE from scratch, without ingesting anything, and then optionally map injected content onto the wizard blueprint later.
+
+This wizard must feel cinematic and simple (director’s chair), NOT like a long form.
+
+## Core Goal
+Create a new “Create ICE” entry experience with two clear paths:
+1) **Wizard (From Scratch)** – choose a template family, pick length + structure, style choices, then generate a blueprint ICE.
+2) **Injection (Ingest Content)** – existing flow remains, but we add an option to “apply a Wizard Blueprint” as a target structure.
+
+Both should land in the same ICE editor with a consistent internal format.
+
+## Non-negotiables
+- Wizard is **3–5 steps max**.
+- Templates are **8–12 families**, not hundreds.
+- Every wizard output is a **Blueprint** (JSON) that produces a valid ICE immediately.
+- Backwards compatible: do not break existing ICE schema.
+- No heavy new UI patterns. Reuse existing components where possible.
+- Add guardrails for cost and complexity by controlling “length” (card count).
+- Keep the UX premium and fast: each step is a decision, not data entry.
+
+---
+
+## UX Flow
+
+### Entry point
+Add a primary CTA: **Create ICE**
+Then present 2 cards:
+- **Start from Scratch (Wizard)**
+- **Ingest Content (Injection)** (existing)
+
+### Wizard Steps (suggested 4)
+**Step 1: Choose Category (Template Family)**
+Show tiles/cards with short description:
+A) Onboard + Train
+- Onboarding
+- Lesson / Training
+- Job Advert
+
+B) Sell + Showcase
+- Product Showcase
+- Menu Showcase
+- House Listing
+
+C) Engage + Collect
+- Survey / Feedback
+- Lead Magnet / Gated Download
+
+D) Story + Entertain
+- Short Film
+- Brand Story / Mini-Doc (optional if we want 9th)
+
+**Step 2: Choose Length**
+- Short (6 cards)
+- Standard (10 cards)
+- Feature (15 cards)
+
+**Step 3: Choose Structure**
+Based on the category, offer 2–3 structures max, each showing a simple “card arc” preview.
+Examples:
+
+Onboarding (structure options)
+1) “Welcome + Role + Essentials”
+2) “Culture-first onboarding”
+3) “Compliance-heavy onboarding”
+
+Product showcase
+1) “Problem → Product → Proof → CTA”
+2) “Feature-led walkthrough”
+3) “Comparison + decision guide”
+
+House listing
+1) “Tour-led”
+2) “Lifestyle-led”
+3) “Investor-led”
+
+Short film
+1) “Classic 3-act”
+2) “Mystery reveal”
+3) “Character-driven”
+
+Survey/feedback
+1) “Quick pulse”
+2) “Deep feedback”
+3) “NPS + follow-ups”
+
+**Step 4: Style + Interaction**
+Minimal choices with strong defaults:
+- Visual Style: Clean / Cinematic / Playful / Corporate
+- Voice: None / Narrator / Character
+- Interaction: None / Q&A between scenes / Guided choices
+- Title Pack Vibe: Modern / Bold / Minimal / Retro (map to existing title pack contract)
+
+Finish: **Generate ICE Blueprint**
+
+---
+
+## Engineering Requirements
+
+### 1) Wizard Blueprint Schema
+Create a blueprint JSON format that can be transformed into a normal ICE draft. Keep it simple and stable:
+- `templateFamily`
+- `length`
+- `structureId`
+- `style` (visualStyle, titlePackVibe, voiceMode, interactionMode)
+- `cards[]` with:
+  - `id`
+  - `type` (scene / info / quiz / CTA / etc.)
+  - `title`
+  - `objective`
+  - `contentPrompt` (for user fill or later AI)
+  - `suggestedAssets` (imagePrompt, videoPrompt, musicMood) OPTIONAL
+  - `interaction` (characterId, qnaRules, choices) OPTIONAL
+
+### 2) Template Library
+Implement a small “template library” as data (not hard-coded UI):
+- `templates/templateFamilies.ts` (or JSON file)
+- Each family has:
+  - label, description, icon
+  - allowed structures
+  - default arcs for 6/10/15 cards
+
+Include at minimum these template families:
+- onboarding
+- survey
+- short-film
+- menu-showcase
+- product-showcase
+- lesson
+- house-listing
+- job-advert
+(Optionally: lead-magnet as 9th)
+
+### 3) Transform: Blueprint → ICE Draft
+Implement a deterministic transformer that:
+- Converts blueprint to an ICE draft in the existing internal schema.
+- Applies defaults for:
+  - title packs
+  - safe placements
+  - card types and placeholder copy
+- Ensures the ICE opens in editor immediately with sensible placeholder content.
+
+### 4) Injection Bridge (important)
+In the Injection flow, add an optional step:
+- “Apply Wizard Blueprint” (select from existing blueprint templates OR recently created blueprint)
+This means: injection content can be mapped into the blueprint structure rather than purely auto-structuring.
+
+Implement a mapping strategy:
+- “slot” injected sections into blueprint cards by objective/type
+- if mismatch, append overflow cards at the end (or prompt user to choose mapping)
+
+### 5) UI Components
+- New page/route: `/create` (or within existing create flow)
+- Wizard components:
+  - Stepper UI (simple)
+  - Template family selection tiles
+  - Length selector
+  - Structure selector (arc preview)
+  - Style selector (few options)
+- Use existing design system and avoid large new dependencies.
+
+### 6) Analytics / Events (lightweight)
+Track:
+- wizard_started
+- wizard_completed (with templateFamily + length)
+- injection_started
+- injection_completed
+- injection_with_blueprint_used
+
+### 7) Acceptance Criteria
+- User can create a valid ICE with wizard in under 60 seconds.
+- The resulting ICE opens in editor with:
+  - correct number of cards
+  - meaningful headings/objectives
+  - consistent title sizing/placement using the title pack contract
+- Injection still works as before.
+- Injection can optionally apply blueprint mapping.
+
+---
+
+## Deliverables
+1) Code changes with file list.
+2) The template library data file.
+3) The blueprint schema + transformer implementation.
+4) A brief note for future extension: “How to add new template families safely”.
+
+Proceed to implement now.
