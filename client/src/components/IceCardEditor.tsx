@@ -49,6 +49,9 @@ interface PreviewCard {
   basePrompt?: string;
   enhancedPrompt?: string;
   preferredMediaType?: 'image' | 'video';
+  // Producer Brief prompts
+  visualPrompt?: string;
+  videoPrompt?: string;
   // Scene continuity controls
   sceneMode?: 'USE_LOCKED_SCENE' | 'OVERRIDE_SCENE' | 'NO_SCENE';
   overrideSceneDescription?: string;
@@ -138,16 +141,31 @@ export function IceCardEditor({
   const [editedTitle, setEditedTitle] = useState(card.title);
   const [editedContent, setEditedContent] = useState(card.content);
   
+  // Extract prompt text from visual/video prompts (strip IMAGE:/VIDEO: prefix if present)
+  const extractPromptText = (prompt: string | undefined): string => {
+    if (!prompt) return "";
+    // Remove IMAGE: or VIDEO: prefix and any leading whitespace
+    return prompt.replace(/^(IMAGE|VIDEO):\s*/i, "").trim();
+  };
+  
   useEffect(() => {
     setEditedTitle(card.title);
     setEditedContent(card.content);
-  }, [card.title, card.content]);
-  const [imagePrompt, setImagePrompt] = useState("");
+    // Pre-populate prompts from Producer Brief if available
+    if (card.visualPrompt) {
+      setImagePrompt(extractPromptText(card.visualPrompt));
+    }
+    if (card.videoPrompt || card.visualPrompt) {
+      setVideoPrompt(extractPromptText(card.videoPrompt) || extractPromptText(card.visualPrompt));
+    }
+  }, [card.id, card.title, card.content, card.visualPrompt, card.videoPrompt]);
+  
+  const [imagePrompt, setImagePrompt] = useState(extractPromptText(card.visualPrompt));
   const [imageLoading, setImageLoading] = useState(false);
   const [videoMode, setVideoMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [videoModel, setVideoModel] = useState("");
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
-  const [videoPrompt, setVideoPrompt] = useState("");
+  const [videoPrompt, setVideoPrompt] = useState(extractPromptText(card.videoPrompt) || extractPromptText(card.visualPrompt));
   const [referenceImageUrl, setReferenceImageUrl] = useState("");
   const [videoLoading, setVideoLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
