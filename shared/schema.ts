@@ -3810,3 +3810,30 @@ export const seedPackSchema = z.object({
 });
 
 export type SeedPack = z.infer<typeof seedPackSchema>;
+
+// ============ CONVERSATION INSIGHTS (Business tier feature) ============
+
+export const conversationInsights = pgTable("conversation_insights", {
+  id: serial("id").primaryKey(),
+  icePreviewId: text("ice_preview_id").references(() => icePreviews.id, { onDelete: "cascade" }).notNull(),
+  
+  // Insight data
+  summary: text("summary").notNull(), // High-level summary of conversations
+  topTopics: text("top_topics").array().notNull().default([]), // Most discussed topics
+  commonQuestions: text("common_questions").array().notNull().default([]), // Frequently asked questions
+  sentimentScore: integer("sentiment_score"), // -100 to 100
+  engagementInsights: text("engagement_insights"), // AI-generated engagement observations
+  actionableRecommendations: text("actionable_recommendations").array().default([]), // Suggested improvements
+  
+  // Metadata
+  conversationCount: integer("conversation_count").notNull().default(0),
+  messageCount: integer("message_count").notNull().default(0),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  validUntil: timestamp("valid_until").notNull(), // Cache expiry (e.g., 24 hours)
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertConversationInsightSchema = createInsertSchema(conversationInsights).omit({ id: true, createdAt: true });
+export type InsertConversationInsight = z.infer<typeof insertConversationInsightSchema>;
+export type ConversationInsight = typeof conversationInsights.$inferSelect;

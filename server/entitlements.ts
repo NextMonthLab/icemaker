@@ -25,6 +25,7 @@ export interface FullEntitlements {
   canUseCloudLlm: boolean;
   canViewAnalytics: boolean;
   canViewEngagement: boolean;
+  canViewConversationInsights: boolean; // Business tier only
   maxUniverses: number;
   maxCardsPerStory: number;
   monthlyVideoCredits: number;
@@ -63,6 +64,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canUseCloudLlm: false,
     canViewAnalytics: false,
     canViewEngagement: false,
+    canViewConversationInsights: false,
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,
@@ -82,6 +84,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canUseCloudLlm: true,
     canViewAnalytics: true,
     canViewEngagement: true,
+    canViewConversationInsights: false, // Pro tier: no conversation insights
     maxUniverses: -1,
     maxCardsPerStory: 50,
     monthlyVideoCredits: 0,
@@ -101,6 +104,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canUseCloudLlm: true,
     canViewAnalytics: true,
     canViewEngagement: true,
+    canViewConversationInsights: true, // Business tier: full conversation insights
     maxUniverses: -1,
     maxCardsPerStory: -1,
     monthlyVideoCredits: 50,
@@ -141,6 +145,7 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
           canUseCloudLlm: features.canUseCloudLlm ?? tierDefaults.canUseCloudLlm ?? false,
           canViewAnalytics: features.canViewAnalytics ?? tierDefaults.canViewAnalytics ?? false,
           canViewEngagement: features.canViewEngagement ?? tierDefaults.canViewEngagement ?? false,
+          canViewConversationInsights: features.canViewConversationInsights ?? tierDefaults.canViewConversationInsights ?? false,
           maxUniverses: features.maxUniverses ?? tierDefaults.maxUniverses ?? 1,
           maxCardsPerStory: features.maxCardsPerStory ?? tierDefaults.maxCardsPerStory ?? 5,
           monthlyVideoCredits: features.monthlyVideoCredits ?? tierDefaults.monthlyVideoCredits ?? 0,
@@ -172,6 +177,7 @@ function getAdminEntitlements(): FullEntitlements {
     canUseCloudLlm: true,
     canViewAnalytics: true,
     canViewEngagement: true,
+    canViewConversationInsights: true,
     maxUniverses: -1,
     maxCardsPerStory: -1,
     monthlyVideoCredits: -1,
@@ -197,6 +203,7 @@ function getCreatorFreeEntitlements(): FullEntitlements {
     canUseCloudLlm: false,
     canViewAnalytics: false,
     canViewEngagement: false,
+    canViewConversationInsights: false,
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,
@@ -222,6 +229,7 @@ function getDefaultEntitlements(): FullEntitlements {
     canUseCloudLlm: false,
     canViewAnalytics: false,
     canViewEngagement: false,
+    canViewConversationInsights: false,
     maxUniverses: 0,
     maxCardsPerStory: 0,
     monthlyVideoCredits: 0,
