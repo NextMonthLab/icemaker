@@ -64,11 +64,11 @@ export default function Login() {
 
         <div className="w-full max-w-md space-y-4 md:space-y-6 relative z-10">
             <div className="text-center space-y-1">
-                <div className="h-14 md:h-20 overflow-hidden flex items-center justify-center">
+                <div className="h-14 overflow-hidden flex items-center justify-center">
                   <img 
                     src={icemakerLogo} 
                     alt="IceMaker" 
-                    className="h-[150px] md:h-[200px] w-auto object-contain"
+                    className="h-[150px] w-auto object-contain"
                     style={{ marginTop: '-45px', marginBottom: '-45px' }}
                     data-testid="img-logo"
                   />

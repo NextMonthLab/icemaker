@@ -89,12 +89,15 @@ export default function GlobalNav({
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer" data-testid="link-global-logo">
-              <img 
-                src={icemakerLogo} 
-                alt="IceMaker" 
-                className="h-8 w-auto"
-              />
+            <div className="flex items-center cursor-pointer" data-testid="link-global-logo">
+              <div className="h-14 overflow-hidden flex items-center">
+                <img 
+                  src={icemakerLogo} 
+                  alt="IceMaker" 
+                  className="h-[150px] w-auto object-contain"
+                  style={{ marginTop: '-45px', marginBottom: '-45px' }}
+                />
+              </div>
             </div>
           </Link>
 

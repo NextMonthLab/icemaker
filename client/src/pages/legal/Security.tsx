@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Shield, Server, GitBranch, AlertTriangle, Database, Users, ExternalLink } from "lucide-react";
-
-const LOGO_URL = "/logo.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 const policyLinks = [
   { href: '/policies/information-security', label: 'Information Security Policy' },
@@ -18,7 +17,14 @@ export default function Security() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextMonth" className="h-20 cursor-pointer" style={{ clipPath: 'inset(30% 0 30% 0)' }} />
+            <div className="h-14 overflow-hidden flex items-center cursor-pointer">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
+              />
+            </div>
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer" data-testid="link-back-home">
@@ -34,7 +40,7 @@ export default function Security() {
           <Shield className="w-8 h-8 text-blue-400" />
           <h1 className="text-4xl font-bold" data-testid="heading-security">Security</h1>
         </div>
-        <p className="text-lg text-white/70 mb-4">How NextMonth protects your data and supports ISO 27001-aligned workflows.</p>
+        <p className="text-lg text-white/70 mb-4">How IceMaker protects your data and supports ISO 27001-aligned workflows.</p>
         <p className="text-white/40 text-sm mb-12">Last updated: January 2026</p>
 
         <div className="prose prose-invert prose-lg max-w-none space-y-12">
@@ -43,7 +49,7 @@ export default function Security() {
               <span className="text-blue-400">1.</span> Our Approach
             </h2>
             <p className="text-white/70 leading-relaxed mb-4">
-              Security is foundational to how we build and operate NextMonth. We follow industry best practices to protect your data and maintain trust.
+              Security is foundational to how we build and operate IceMaker. We follow industry best practices to protect your data and maintain trust.
             </p>
             <ul className="list-none space-y-3 text-white/70">
               <li className="flex items-start gap-3">

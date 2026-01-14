@@ -201,11 +201,14 @@ export function SiteIngestionLoader({ brandName, accentColor = "#8b5cf6", isComp
           className="text-center space-y-2"
         >
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/logo.png" 
-              alt="NextMonth" 
-              className="h-36 animate-pulse"
-            />
+            <div className="h-20 overflow-hidden flex items-center">
+              <img 
+                src="/icemaker-logo.png" 
+                alt="IceMaker" 
+                className="h-[200px] w-auto object-contain animate-pulse"
+                style={{ marginTop: '-60px', marginBottom: '-60px' }}
+              />
+            </div>
           </div>
           {brandName && (
             <h1 className="text-2xl font-bold text-foreground">
