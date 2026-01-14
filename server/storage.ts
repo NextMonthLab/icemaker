@@ -103,6 +103,14 @@ export interface IStorage {
   addCardMessageReaction(reaction: schema.InsertCardMessageReaction): Promise<schema.CardMessageReaction>;
   removeCardMessageReaction(messageId: number, userId: number | null, anonFingerprint: string | null): Promise<void>;
   
+  // ICE Card Messages (for text-based ICE card IDs)
+  getIceCardMessages(iceCardId: string, limit?: number): Promise<schema.IceCardMessage[]>;
+  createIceCardMessage(message: schema.InsertIceCardMessage): Promise<schema.IceCardMessage>;
+  getIceCardMessageReactions(messageId: number): Promise<schema.IceCardMessageReaction[]>;
+  addIceCardMessageReaction(reaction: schema.InsertIceCardMessageReaction): Promise<schema.IceCardMessageReaction>;
+  removeIceCardMessageReaction(messageId: number, userId: number | null, anonFingerprint: string | null): Promise<void>;
+  deleteIceCardMessagesByPreview(icePreviewId: string): Promise<void>;
+  
   // Audio Tracks
   getAudioTrack(id: number): Promise<schema.AudioTrack | undefined>;
   getAllAudioTracks(): Promise<schema.AudioTrack[]>;
@@ -888,6 +896,65 @@ export class DatabaseStorage implements IStorage {
         )
       );
     }
+  }
+  
+  // ICE Card Messages (for text-based ICE card IDs)
+  async getIceCardMessages(iceCardId: string, limit?: number): Promise<schema.IceCardMessage[]> {
+    return await db.query.iceCardMessages.findMany({
+      where: eq(schema.iceCardMessages.iceCardId, iceCardId),
+      orderBy: [desc(schema.iceCardMessages.createdAt)],
+      limit: limit || 50,
+    });
+  }
+  
+  async createIceCardMessage(message: schema.InsertIceCardMessage): Promise<schema.IceCardMessage> {
+    const [result] = await db.insert(schema.iceCardMessages).values(message).returning();
+    return result;
+  }
+  
+  async getIceCardMessageReactions(messageId: number): Promise<schema.IceCardMessageReaction[]> {
+    return await db.query.iceCardMessageReactions.findMany({
+      where: eq(schema.iceCardMessageReactions.messageId, messageId),
+    });
+  }
+  
+  async addIceCardMessageReaction(reaction: schema.InsertIceCardMessageReaction): Promise<schema.IceCardMessageReaction> {
+    const [result] = await db.insert(schema.iceCardMessageReactions).values(reaction).returning();
+    return result;
+  }
+  
+  async removeIceCardMessageReaction(messageId: number, userId: number | null, anonFingerprint: string | null): Promise<void> {
+    if (userId) {
+      await db.delete(schema.iceCardMessageReactions).where(
+        and(
+          eq(schema.iceCardMessageReactions.messageId, messageId),
+          eq(schema.iceCardMessageReactions.userId, userId)
+        )
+      );
+    } else if (anonFingerprint) {
+      await db.delete(schema.iceCardMessageReactions).where(
+        and(
+          eq(schema.iceCardMessageReactions.messageId, messageId),
+          eq(schema.iceCardMessageReactions.anonFingerprint, anonFingerprint)
+        )
+      );
+    }
+  }
+  
+  async deleteIceCardMessagesByPreview(icePreviewId: string): Promise<void> {
+    // First delete reactions for messages in this preview
+    const messages = await db.query.iceCardMessages.findMany({
+      where: eq(schema.iceCardMessages.icePreviewId, icePreviewId),
+    });
+    for (const msg of messages) {
+      await db.delete(schema.iceCardMessageReactions).where(
+        eq(schema.iceCardMessageReactions.messageId, msg.id)
+      );
+    }
+    // Then delete the messages
+    await db.delete(schema.iceCardMessages).where(
+      eq(schema.iceCardMessages.icePreviewId, icePreviewId)
+    );
   }
   
   // Audio Tracks
