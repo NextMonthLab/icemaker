@@ -214,7 +214,7 @@ export default function CreateIcePage() {
             
             <Card 
               className="cursor-pointer hover-elevate transition-all border-2 hover:border-cyan-500"
-              onClick={() => navigate("/guest-ice")}
+              onClick={() => navigate("/try")}
               data-testid="card-injection-start"
             >
               <CardHeader className="text-center pb-2">
