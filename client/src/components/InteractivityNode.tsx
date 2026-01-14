@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Send, Loader2, X, Sparkles, Plus, ChevronDown, User, Wand2, PenLine, Check, Crown } from "lucide-react";
+import { MessageCircle, Send, Loader2, X, Sparkles, Plus, ChevronDown, User, Wand2, PenLine, Check, Crown, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
@@ -47,6 +49,8 @@ export interface StoryCharacter {
   openingMessage?: string;
   systemPrompt?: string;
   knowledgeContext?: string;
+  avatar?: string;
+  avatarEnabled?: boolean;
 }
 
 interface InteractivityNodeProps {
@@ -438,6 +442,11 @@ export function AddInteractivityButton({
   const [customKnowledge, setCustomKnowledge] = useState("");
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarEnabled, setAvatarEnabled] = useState(true);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const { data: entitlements } = useQuery({
     queryKey: ["/api/me/entitlements"],
@@ -451,6 +460,30 @@ export function AddInteractivityButton({
   });
 
   const canConfigureStructuredCapture = entitlements?.canConfigureStructuredCapture ?? false;
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Avatar image must be less than 2MB");
+        return;
+      }
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = "";
+    }
+  };
 
   const handleClick = () => {
     setShowCharacterMenu(true);
@@ -473,6 +506,25 @@ export function AddInteractivityButton({
     setIsCreating(true);
     
     try {
+      let uploadedAvatarUrl: string | undefined;
+      
+      if (avatarFile && previewId) {
+        setIsUploadingAvatar(true);
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+        
+        const uploadResponse = await fetch(`/api/ice/preview/${previewId}/character-avatar`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          uploadedAvatarUrl = uploadData.url;
+        }
+        setIsUploadingAvatar(false);
+      }
+      
       const newCharacter: StoryCharacter = {
         id: `custom-${Date.now()}`,
         name: customName.trim(),
@@ -480,6 +532,8 @@ export function AddInteractivityButton({
         openingMessage: customGreeting.trim() || `Hello! I'm ${customName.trim()}. How can I help you today?`,
         systemPrompt: customPersona.trim() || undefined,
         knowledgeContext: customKnowledge.trim() || undefined,
+        avatar: uploadedAvatarUrl,
+        avatarEnabled: avatarEnabled && !!uploadedAvatarUrl,
       };
 
       if (previewId) {
@@ -510,10 +564,14 @@ export function AddInteractivityButton({
       setCustomKnowledge("");
       setCustomFields([]);
       setShowAdvancedOptions(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setAvatarEnabled(true);
     } catch (error) {
       console.error("Failed to create character:", error);
     } finally {
       setIsCreating(false);
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -635,6 +693,68 @@ export function AddInteractivityButton({
                 className="bg-slate-800 border-slate-700 text-white"
                 data-testid="input-custom-char-role"
               />
+            </div>
+            
+            <div className="space-y-3">
+              <Label className="text-sm text-slate-300">Profile Image</Label>
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  {avatarPreview ? (
+                    <div className="relative">
+                      <Avatar className="w-16 h-16 border-2 border-purple-500/30">
+                        <AvatarImage src={avatarPreview} alt="Character avatar" />
+                        <AvatarFallback className="bg-slate-800 text-slate-400">
+                          <User className="w-6 h-6" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleRemoveAvatar}
+                        className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-0"
+                        data-testid="button-remove-avatar"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="w-16 h-16 rounded-full bg-slate-800 border-2 border-dashed border-slate-600 hover:border-purple-500/50 flex items-center justify-center cursor-pointer transition-colors"
+                      data-testid="button-upload-avatar"
+                    >
+                      <Upload className="w-5 h-5 text-slate-500" />
+                    </div>
+                  )}
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    data-testid="input-avatar-file"
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <p className="text-xs text-slate-400">
+                    Upload an image for this character. Max 2MB.
+                  </p>
+                  {avatarPreview && (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="avatar-enabled"
+                        checked={avatarEnabled}
+                        onCheckedChange={setAvatarEnabled}
+                        data-testid="switch-avatar-enabled"
+                      />
+                      <Label htmlFor="avatar-enabled" className="text-xs text-slate-400">
+                        Show avatar in chat
+                      </Label>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className="space-y-2">

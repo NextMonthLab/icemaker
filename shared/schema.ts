@@ -1107,6 +1107,7 @@ export const icePreviewCharacterSchema = z.object({
   role: z.string(),
   description: z.string(),
   avatar: z.string().optional(),
+  avatarEnabled: z.boolean().optional().default(false),
   systemPrompt: z.string(),
   openingMessage: z.string(),
 });
