@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Send, Loader2, X, Sparkles, Plus, ChevronDown, User, Wand2, PenLine, Check } from "lucide-react";
+import { MessageCircle, Send, Loader2, X, Sparkles, Plus, ChevronDown, User, Wand2, PenLine, Check, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
@@ -18,6 +18,20 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { CustomFieldsEditor, CustomField } from "@/components/CustomFieldsEditor";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+
+interface Entitlements {
+  tier: string;
+  canConfigureStructuredCapture: boolean;
+  [key: string]: unknown;
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -340,6 +354,7 @@ export function AddInteractivityButton({
   previewId,
   onCharacterCreated,
 }: AddInteractivityButtonProps) {
+  const { user } = useAuth();
   const [showCharacterMenu, setShowCharacterMenu] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -348,6 +363,21 @@ export function AddInteractivityButton({
   const [customGreeting, setCustomGreeting] = useState("");
   const [customPersona, setCustomPersona] = useState("");
   const [customKnowledge, setCustomKnowledge] = useState("");
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+
+  const { data: entitlements } = useQuery({
+    queryKey: ["/api/me/entitlements"],
+    queryFn: async () => {
+      const res = await fetch("/api/me/entitlements", { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json() as Promise<Entitlements>;
+    },
+    enabled: !!user,
+    staleTime: 60000,
+  });
+
+  const canConfigureStructuredCapture = entitlements?.canConfigureStructuredCapture ?? false;
 
   const handleClick = () => {
     setShowCharacterMenu(true);
@@ -383,7 +413,10 @@ export function AddInteractivityButton({
         const response = await fetch(`/api/ice/preview/${previewId}/characters`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newCharacter),
+          body: JSON.stringify({
+            ...newCharacter,
+            customFields: customFields.length > 0 ? customFields : undefined,
+          }),
         });
         
         if (response.ok) {
@@ -402,6 +435,8 @@ export function AddInteractivityButton({
       setCustomGreeting("");
       setCustomPersona("");
       setCustomKnowledge("");
+      setCustomFields([]);
+      setShowAdvancedOptions(false);
     } catch (error) {
       console.error("Failed to create character:", error);
     } finally {
@@ -576,6 +611,31 @@ Example: Our company specializes in AI search optimization. Key services include
                 data-testid="input-custom-char-greeting"
               />
             </div>
+
+            <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full h-8 text-xs text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center gap-1"
+                  data-testid="button-toggle-advanced-options"
+                >
+                  <Crown className="w-3.5 h-3.5 text-cyan-400" />
+                  {showAdvancedOptions ? "Hide" : "Show"} Data Capture Options
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedOptions ? "rotate-180" : ""}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 border-t border-slate-700 mt-3">
+                <CustomFieldsEditor
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  canEdit={canConfigureStructuredCapture}
+                  onUpgradeClick={() => {
+                    window.open("/checkout", "_blank");
+                  }}
+                />
+              </CollapsibleContent>
+            </Collapsible>
           </div>
           
           <div className="flex gap-2 mt-6">
