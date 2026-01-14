@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, real, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, real, unique, index } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -540,6 +540,38 @@ export const cardMessageReactions = pgTable("card_message_reactions", {
 export const insertCardMessageReactionSchema = createInsertSchema(cardMessageReactions).omit({ id: true, createdAt: true });
 export type InsertCardMessageReaction = z.infer<typeof insertCardMessageReactionSchema>;
 export type CardMessageReaction = typeof cardMessageReactions.$inferSelect;
+
+// ICE Card Messages (for ICE preview cards with text-based IDs)
+export const iceCardMessages = pgTable("ice_card_messages", {
+  id: serial("id").primaryKey(),
+  iceCardId: text("ice_card_id").notNull(), // Text-based ICE card ID like "ice_xxx_card_0"
+  icePreviewId: text("ice_preview_id").notNull(), // Parent ICE preview ID
+  userId: integer("user_id").references(() => users.id), // nullable for anonymous
+  displayName: text("display_name").notNull(),
+  body: text("body").notNull(), // max 280 chars enforced at API level
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  iceCardIdIdx: index("idx_ice_card_messages_card").on(table.iceCardId),
+  icePreviewIdIdx: index("idx_ice_card_messages_preview").on(table.icePreviewId),
+}));
+
+export const insertIceCardMessageSchema = createInsertSchema(iceCardMessages).omit({ id: true, createdAt: true });
+export type InsertIceCardMessage = z.infer<typeof insertIceCardMessageSchema>;
+export type IceCardMessage = typeof iceCardMessages.$inferSelect;
+
+// ICE Card Message Reactions
+export const iceCardMessageReactions = pgTable("ice_card_message_reactions", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").references(() => iceCardMessages.id).notNull(),
+  userId: integer("user_id").references(() => users.id), // nullable for anon fingerprint
+  anonFingerprint: text("anon_fingerprint"), // for anonymous users
+  reactionType: text("reaction_type").notNull(), // "like", "love", etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertIceCardMessageReactionSchema = createInsertSchema(iceCardMessageReactions).omit({ id: true, createdAt: true });
+export type InsertIceCardMessageReaction = z.infer<typeof insertIceCardMessageReactionSchema>;
+export type IceCardMessageReaction = typeof iceCardMessageReactions.$inferSelect;
 
 // Audio Tracks (royalty-free soundtrack library)
 export const audioTracks = pgTable("audio_tracks", {
