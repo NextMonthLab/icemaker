@@ -8681,6 +8681,330 @@ Return a JSON object with:
     }
   });
 
+  // ========================================
+  // AI Character Custom Fields (Structured Data Capture)
+  // Business tier feature for capturing structured data during chat
+  // ========================================
+
+  // Get all custom fields for a character
+  app.get("/api/characters/:characterId/custom-fields", requireAuth, async (req, res) => {
+    try {
+      const characterId = parseInt(req.params.characterId);
+      if (isNaN(characterId)) {
+        return res.status(400).json({ message: "Invalid character ID" });
+      }
+
+      // Verify user owns this character via its universe
+      const character = await storage.getCharacter(characterId);
+      if (!character) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+
+      const universe = await storage.getUniverse(character.universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Universe not found" });
+      }
+
+      // Check ownership
+      const creatorProfile = await storage.getCreatorProfile(req.user!.id);
+      if (!creatorProfile && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const fields = await storage.getCharacterCustomFields(characterId);
+      res.json(fields);
+    } catch (error) {
+      console.error("Error getting custom fields:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create a new custom field (business tier only)
+  app.post("/api/characters/:characterId/custom-fields", requireAuth, async (req, res) => {
+    try {
+      const characterId = parseInt(req.params.characterId);
+      if (isNaN(characterId)) {
+        return res.status(400).json({ message: "Invalid character ID" });
+      }
+
+      // Check entitlements
+      const { getEntitlementsForUser } = await import("./entitlements");
+      const entitlements = await getEntitlementsForUser(req.user!.id);
+      if (!entitlements.canConfigureStructuredCapture) {
+        return res.status(403).json({ 
+          message: "Custom field capture requires a Business tier subscription",
+          upgradeRequired: true
+        });
+      }
+
+      // Verify ownership
+      const character = await storage.getCharacter(characterId);
+      if (!character) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+
+      const universe = await storage.getUniverse(character.universeId);
+      if (!universe) {
+        return res.status(404).json({ message: "Universe not found" });
+      }
+
+      const creatorProfile = await storage.getCreatorProfile(req.user!.id);
+      if (!creatorProfile && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const { fieldKey, label, fieldType, placeholder, required, options, description } = req.body;
+
+      if (!fieldKey || !label) {
+        return res.status(400).json({ message: "Field key and label are required" });
+      }
+
+      // Get current field count for sort order
+      const existingFields = await storage.getCharacterCustomFields(characterId);
+      const sortOrder = existingFields.length;
+
+      const field = await storage.createCustomField({
+        characterId,
+        fieldKey,
+        label,
+        fieldType: fieldType || "text",
+        placeholder,
+        required: required ?? false,
+        sortOrder,
+        options,
+        description,
+      });
+
+      res.status(201).json(field);
+    } catch (error) {
+      console.error("Error creating custom field:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update a custom field
+  app.patch("/api/characters/:characterId/custom-fields/:fieldId", requireAuth, async (req, res) => {
+    try {
+      const characterId = parseInt(req.params.characterId);
+      const fieldId = parseInt(req.params.fieldId);
+      
+      if (isNaN(characterId) || isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid IDs" });
+      }
+
+      // Check entitlements
+      const { getEntitlementsForUser } = await import("./entitlements");
+      const entitlements = await getEntitlementsForUser(req.user!.id);
+      if (!entitlements.canConfigureStructuredCapture) {
+        return res.status(403).json({ 
+          message: "Custom field capture requires a Business tier subscription",
+          upgradeRequired: true
+        });
+      }
+
+      // Verify ownership
+      const field = await storage.getCustomField(fieldId);
+      if (!field || field.characterId !== characterId) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+
+      const { label, fieldType, placeholder, required, options, description } = req.body;
+
+      const updatedField = await storage.updateCustomField(fieldId, {
+        label,
+        fieldType,
+        placeholder,
+        required,
+        options,
+        description,
+      });
+
+      res.json(updatedField);
+    } catch (error) {
+      console.error("Error updating custom field:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Delete a custom field
+  app.delete("/api/characters/:characterId/custom-fields/:fieldId", requireAuth, async (req, res) => {
+    try {
+      const characterId = parseInt(req.params.characterId);
+      const fieldId = parseInt(req.params.fieldId);
+      
+      if (isNaN(characterId) || isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid IDs" });
+      }
+
+      // Check entitlements
+      const { getEntitlementsForUser } = await import("./entitlements");
+      const entitlements = await getEntitlementsForUser(req.user!.id);
+      if (!entitlements.canConfigureStructuredCapture) {
+        return res.status(403).json({ 
+          message: "Custom field capture requires a Business tier subscription",
+          upgradeRequired: true
+        });
+      }
+
+      // Verify ownership
+      const field = await storage.getCustomField(fieldId);
+      if (!field || field.characterId !== characterId) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+
+      await storage.deleteCustomField(fieldId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting custom field:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Reorder custom fields
+  app.post("/api/characters/:characterId/custom-fields/reorder", requireAuth, async (req, res) => {
+    try {
+      const characterId = parseInt(req.params.characterId);
+      if (isNaN(characterId)) {
+        return res.status(400).json({ message: "Invalid character ID" });
+      }
+
+      const { fieldIds } = req.body;
+      if (!Array.isArray(fieldIds)) {
+        return res.status(400).json({ message: "fieldIds must be an array" });
+      }
+
+      await storage.reorderCustomFields(characterId, fieldIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering custom fields:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ========================================
+  // Field Response Capture (for chat sessions)
+  // ========================================
+
+  // Capture a field response during chat (public - works for anonymous viewers)
+  app.post("/api/ice/preview/:previewId/field-responses", async (req, res) => {
+    try {
+      const { previewId } = req.params;
+      const { fieldId, sessionId, displayName, value } = req.body;
+
+      if (!fieldId || !sessionId || value === undefined) {
+        return res.status(400).json({ message: "fieldId, sessionId, and value are required" });
+      }
+
+      // Verify preview exists
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+
+      // Verify field exists
+      const field = await storage.getCustomField(parseInt(fieldId));
+      if (!field) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+
+      const response = await storage.upsertFieldResponse({
+        icePreviewId: previewId,
+        characterId: field.characterId,
+        fieldId: parseInt(fieldId),
+        viewerSessionId: sessionId,
+        viewerDisplayName: displayName,
+        viewerUserId: req.user?.id,
+        value,
+      });
+
+      res.status(201).json(response);
+    } catch (error) {
+      console.error("Error capturing field response:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get field responses for an ICE (owner only, for analytics)
+  app.get("/api/ice/preview/:previewId/field-responses", requireAuth, async (req, res) => {
+    try {
+      const { previewId } = req.params;
+      const { sessionId } = req.query;
+
+      // Verify ownership
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+
+      if (preview.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const responses = await storage.getFieldResponses(previewId, sessionId as string | undefined);
+      res.json(responses);
+    } catch (error) {
+      console.error("Error getting field responses:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get aggregated field data for an ICE (for conversation insights)
+  app.get("/api/ice/preview/:previewId/field-aggregates", requireAuth, async (req, res) => {
+    try {
+      const { previewId } = req.params;
+
+      // Check entitlements for conversation insights
+      const { getEntitlementsForUser } = await import("./entitlements");
+      const entitlements = await getEntitlementsForUser(req.user!.id);
+      if (!entitlements.canViewConversationInsights) {
+        return res.status(403).json({ 
+          message: "Viewing field aggregates requires a Business tier subscription",
+          upgradeRequired: true
+        });
+      }
+
+      // Verify ownership
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+
+      if (preview.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const aggregates = await storage.getFieldResponseAggregates(previewId);
+      res.json(aggregates);
+    } catch (error) {
+      console.error("Error getting field aggregates:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get custom fields for an ICE (public - for chat UI to know what to capture)
+  app.get("/api/ice/preview/:previewId/custom-fields", async (req, res) => {
+    try {
+      const { previewId } = req.params;
+
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+
+      // Get the character for this ICE
+      const cardsData = preview.cardsData as any;
+      if (!cardsData?.aiCharacter?.id) {
+        return res.json([]); // No AI character configured
+      }
+
+      const fields = await storage.getCharacterCustomFields(cardsData.aiCharacter.id);
+      res.json(fields);
+    } catch (error) {
+      console.error("Error getting ICE custom fields:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Start background jobs
   startArchiveExpiredPreviewsJob(storage);
 
