@@ -6584,6 +6584,7 @@ Stay focused on the content and be helpful.`,
         title: brief.title,
         cards: previewCards,
         characters,
+        interactivityNodes, // Store nodes directly in the preview record
         tier,
         status: "active",
         expiresAt,
