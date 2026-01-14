@@ -313,6 +313,27 @@ export interface IStorage {
   getVideoExportJobsByUser(userId: number, limit?: number): Promise<schema.VideoExportJob[]>;
   updateVideoExportJob(jobId: string, data: Partial<schema.InsertVideoExportJob>): Promise<schema.VideoExportJob | undefined>;
   deleteVideoExportJob(jobId: string): Promise<void>;
+
+  // AI Character Custom Fields (structured data capture)
+  getCharacterCustomFields(characterId: number): Promise<schema.AiCharacterCustomField[]>;
+  getCustomField(id: number): Promise<schema.AiCharacterCustomField | undefined>;
+  createCustomField(data: schema.InsertAiCharacterCustomField): Promise<schema.AiCharacterCustomField>;
+  updateCustomField(id: number, data: Partial<schema.InsertAiCharacterCustomField>): Promise<schema.AiCharacterCustomField | undefined>;
+  deleteCustomField(id: number): Promise<void>;
+  reorderCustomFields(characterId: number, fieldIds: number[]): Promise<void>;
+
+  // AI Character Field Responses
+  getFieldResponses(icePreviewId: string, sessionId?: string): Promise<schema.AiCharacterFieldResponse[]>;
+  getFieldResponsesByField(fieldId: number): Promise<schema.AiCharacterFieldResponse[]>;
+  upsertFieldResponse(data: schema.InsertAiCharacterFieldResponse): Promise<schema.AiCharacterFieldResponse>;
+  getFieldResponseAggregates(icePreviewId: string): Promise<Array<{
+    fieldId: number;
+    fieldKey: string;
+    label: string;
+    fieldType: string;
+    responseCount: number;
+    values: any[];
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3621,6 +3642,137 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVideoExportJob(jobId: string): Promise<void> {
     await db.delete(schema.videoExportJobs).where(eq(schema.videoExportJobs.jobId, jobId));
+  }
+
+  // AI Character Custom Fields (structured data capture)
+  async getCharacterCustomFields(characterId: number): Promise<schema.AiCharacterCustomField[]> {
+    return await db.query.aiCharacterCustomFields.findMany({
+      where: eq(schema.aiCharacterCustomFields.characterId, characterId),
+      orderBy: [asc(schema.aiCharacterCustomFields.sortOrder)],
+    });
+  }
+
+  async getCustomField(id: number): Promise<schema.AiCharacterCustomField | undefined> {
+    return await db.query.aiCharacterCustomFields.findFirst({
+      where: eq(schema.aiCharacterCustomFields.id, id),
+    });
+  }
+
+  async createCustomField(data: schema.InsertAiCharacterCustomField): Promise<schema.AiCharacterCustomField> {
+    const [result] = await db.insert(schema.aiCharacterCustomFields).values(data).returning();
+    return result;
+  }
+
+  async updateCustomField(id: number, data: Partial<schema.InsertAiCharacterCustomField>): Promise<schema.AiCharacterCustomField | undefined> {
+    const [result] = await db.update(schema.aiCharacterCustomFields)
+      .set(data)
+      .where(eq(schema.aiCharacterCustomFields.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteCustomField(id: number): Promise<void> {
+    await db.delete(schema.aiCharacterCustomFields).where(eq(schema.aiCharacterCustomFields.id, id));
+  }
+
+  async reorderCustomFields(characterId: number, fieldIds: number[]): Promise<void> {
+    for (let i = 0; i < fieldIds.length; i++) {
+      await db.update(schema.aiCharacterCustomFields)
+        .set({ sortOrder: i })
+        .where(and(
+          eq(schema.aiCharacterCustomFields.id, fieldIds[i]),
+          eq(schema.aiCharacterCustomFields.characterId, characterId)
+        ));
+    }
+  }
+
+  // AI Character Field Responses
+  async getFieldResponses(icePreviewId: string, sessionId?: string): Promise<schema.AiCharacterFieldResponse[]> {
+    const conditions = [eq(schema.aiCharacterFieldResponses.icePreviewId, icePreviewId)];
+    if (sessionId) {
+      conditions.push(eq(schema.aiCharacterFieldResponses.viewerSessionId, sessionId));
+    }
+    return await db.query.aiCharacterFieldResponses.findMany({
+      where: and(...conditions),
+      orderBy: [desc(schema.aiCharacterFieldResponses.createdAt)],
+    });
+  }
+
+  async getFieldResponsesByField(fieldId: number): Promise<schema.AiCharacterFieldResponse[]> {
+    return await db.query.aiCharacterFieldResponses.findMany({
+      where: eq(schema.aiCharacterFieldResponses.fieldId, fieldId),
+      orderBy: [desc(schema.aiCharacterFieldResponses.createdAt)],
+    });
+  }
+
+  async upsertFieldResponse(data: schema.InsertAiCharacterFieldResponse): Promise<schema.AiCharacterFieldResponse> {
+    // Check for existing response from same session for same field
+    const existing = await db.query.aiCharacterFieldResponses.findFirst({
+      where: and(
+        eq(schema.aiCharacterFieldResponses.icePreviewId, data.icePreviewId),
+        eq(schema.aiCharacterFieldResponses.fieldId, data.fieldId),
+        eq(schema.aiCharacterFieldResponses.viewerSessionId, data.viewerSessionId)
+      ),
+    });
+
+    if (existing) {
+      const [result] = await db.update(schema.aiCharacterFieldResponses)
+        .set({ value: data.value, updatedAt: new Date() })
+        .where(eq(schema.aiCharacterFieldResponses.id, existing.id))
+        .returning();
+      return result;
+    }
+
+    const [result] = await db.insert(schema.aiCharacterFieldResponses).values(data).returning();
+    return result;
+  }
+
+  async getFieldResponseAggregates(icePreviewId: string): Promise<Array<{
+    fieldId: number;
+    fieldKey: string;
+    label: string;
+    fieldType: string;
+    responseCount: number;
+    values: any[];
+  }>> {
+    // Get all responses for this ICE
+    const responses = await db.query.aiCharacterFieldResponses.findMany({
+      where: eq(schema.aiCharacterFieldResponses.icePreviewId, icePreviewId),
+    });
+
+    if (responses.length === 0) return [];
+
+    // Get unique field IDs
+    const fieldIds = [...new Set(responses.map(r => r.fieldId))];
+    
+    // Get field definitions
+    const fields = await db.query.aiCharacterCustomFields.findMany({
+      where: inArray(schema.aiCharacterCustomFields.id, fieldIds),
+    });
+
+    // Build aggregates
+    const aggregates: Array<{
+      fieldId: number;
+      fieldKey: string;
+      label: string;
+      fieldType: string;
+      responseCount: number;
+      values: any[];
+    }> = [];
+
+    for (const field of fields) {
+      const fieldResponses = responses.filter(r => r.fieldId === field.id);
+      aggregates.push({
+        fieldId: field.id,
+        fieldKey: field.fieldKey,
+        label: field.label,
+        fieldType: field.fieldType,
+        responseCount: fieldResponses.length,
+        values: fieldResponses.map(r => r.value),
+      });
+    }
+
+    return aggregates;
   }
 }
 
