@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
-
-const LOGO_URL = "/logo.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 export default function PrivacyPolicy() {
   return (
@@ -9,7 +8,14 @@ export default function PrivacyPolicy() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextMonth" className="h-20 cursor-pointer" style={{ clipPath: 'inset(30% 0 30% 0)' }} />
+            <div className="h-14 overflow-hidden flex items-center cursor-pointer">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
+              />
+            </div>
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">
@@ -41,7 +47,7 @@ export default function PrivacyPolicy() {
               NextMonth Ltd is the data controller responsible for your personal data. If you have any questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="text-white/70 leading-relaxed mt-4">
-              Email: <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a><br />
+              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a><br />
               Address: 44 Orchard Way, Banbury, United Kingdom, OX16 0HA
             </p>
           </section>
@@ -129,7 +135,7 @@ export default function PrivacyPolicy() {
               <li><strong>Rights related to automated decision-making:</strong> Not be subject to automated decisions</li>
             </ul>
             <p className="text-white/70 leading-relaxed mt-4">
-              To exercise any of these rights, please contact us at <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a>.
+              To exercise any of these rights, please contact us at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>.
             </p>
           </section>
 
@@ -157,7 +163,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">13. Complaints</h2>
             <p className="text-white/70 leading-relaxed">
-              If you have concerns about how we handle your personal data, please contact us first at <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a>. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.
+              If you have concerns about how we handle your personal data, please contact us first at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.
             </p>
           </section>
 
@@ -171,7 +177,7 @@ export default function PrivacyPolicy() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
             </p>
           </section>
         </div>

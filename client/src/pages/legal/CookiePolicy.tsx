@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
-
-const LOGO_URL = "/logo.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 export default function CookiePolicy() {
   return (
@@ -9,7 +8,14 @@ export default function CookiePolicy() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextMonth" className="h-20 cursor-pointer" style={{ clipPath: 'inset(30% 0 30% 0)' }} />
+            <div className="h-14 overflow-hidden flex items-center cursor-pointer">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
+              />
+            </div>
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">
@@ -28,7 +34,7 @@ export default function CookiePolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">1. Introduction</h2>
             <p className="text-white/70 leading-relaxed">
-              This Cookie Policy explains how NextMonth Ltd ("we", "us", or "our"), company number 16464586, uses cookies and similar technologies when you visit the NextMonth platform. This policy should be read alongside our <Link href="/privacy" className="text-purple-400 hover:text-purple-300">Privacy Policy</Link>.
+              This Cookie Policy explains how NextMonth Ltd ("we", "us", or "our"), company number 16464586, uses cookies and similar technologies when you visit the NextMonth platform. This policy should be read alongside our <Link href="/privacy" className="text-primary hover:text-primary/80">Privacy Policy</Link>.
             </p>
           </section>
 
@@ -141,10 +147,10 @@ export default function CookiePolicy() {
               Most browsers allow you to refuse or accept cookies through their settings. The following links provide instructions for common browsers:
             </p>
             <ul className="list-disc list-inside text-white/70 space-y-2 mt-4">
-              <li><a href="https://support.google.com/chrome/answer/95647" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Google Chrome</a></li>
-              <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
-              <li><a href="https://support.apple.com/en-gb/guide/safari/sfri11471/mac" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Safari</a></li>
-              <li><a href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
+              <li><a href="https://support.google.com/chrome/answer/95647" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Google Chrome</a></li>
+              <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
+              <li><a href="https://support.apple.com/en-gb/guide/safari/sfri11471/mac" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Safari</a></li>
+              <li><a href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
             </ul>
 
             <h3 className="text-xl font-medium mb-3 mt-6 text-white/90">4.2 Opt-Out Links</h3>
@@ -152,8 +158,8 @@ export default function CookiePolicy() {
               You can opt out of certain third-party cookies using industry opt-out tools:
             </p>
             <ul className="list-disc list-inside text-white/70 space-y-2 mt-4">
-              <li><a href="https://optout.aboutads.info" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Digital Advertising Alliance</a></li>
-              <li><a href="https://www.youronlinechoices.com" className="text-purple-400 hover:text-purple-300" target="_blank" rel="noopener noreferrer">Your Online Choices (EU)</a></li>
+              <li><a href="https://optout.aboutads.info" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Digital Advertising Alliance</a></li>
+              <li><a href="https://www.youronlinechoices.com" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">Your Online Choices (EU)</a></li>
             </ul>
           </section>
 
@@ -186,7 +192,7 @@ export default function CookiePolicy() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
             </p>
           </section>
         </div>

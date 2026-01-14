@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
-
-const LOGO_URL = "/logo.png";
+import icemakerLogo from "@assets/icemaker-logo.png";
 
 export default function TermsOfService() {
   return (
@@ -9,7 +8,14 @@ export default function TermsOfService() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <img src={LOGO_URL} alt="NextMonth" className="h-20 cursor-pointer" style={{ clipPath: 'inset(30% 0 30% 0)' }} />
+            <div className="h-14 overflow-hidden flex items-center cursor-pointer">
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-[150px] w-auto object-contain"
+                style={{ marginTop: '-45px', marginBottom: '-45px' }}
+              />
+            </div>
           </Link>
           <Link href="/">
             <span className="text-white/60 hover:text-white text-sm flex items-center gap-2 cursor-pointer">
@@ -73,7 +79,7 @@ export default function TermsOfService() {
 
             <h3 className="text-xl font-medium mb-3 mt-6 text-white/90">4.3 Refunds</h3>
             <p className="text-white/70 leading-relaxed">
-              Refunds are provided at our discretion. Contact us at <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a> for refund requests.
+              Refunds are provided at our discretion. Contact us at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a> for refund requests.
             </p>
           </section>
 
@@ -195,7 +201,7 @@ export default function TermsOfService() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-purple-400 hover:text-purple-300">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
             </p>
           </section>
         </div>
