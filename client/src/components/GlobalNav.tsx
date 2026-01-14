@@ -105,7 +105,19 @@ export default function GlobalNav({
                 alt="IceMaker" 
                 className="h-24 w-auto"
                 style={{ clipPath: 'inset(35% 0 35% 0)' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling;
+                  if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                }}
               />
+              <span 
+                className="text-xl font-bold text-cyan-400 hidden items-center"
+                style={{ display: 'none' }}
+              >
+                IceMaker
+              </span>
             </div>
           </Link>
 

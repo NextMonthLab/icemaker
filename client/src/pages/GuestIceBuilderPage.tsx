@@ -1397,7 +1397,7 @@ export default function GuestIceBuilderPage() {
 
             {/* Professional Tools Bar - always visible for professional users */}
             {isProfessionalMode && (
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* Video Export Button */}
                 {exportStatus?.status === "completed" && exportStatus.outputUrl ? (
                   <a
@@ -1425,7 +1425,7 @@ export default function GuestIceBuilderPage() {
                     size="sm"
                     onClick={() => exportMutation.mutate()}
                     disabled={exportMutation.isPending || cards.length === 0}
-                    className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
+                    className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5 shrink-0 whitespace-nowrap"
                     data-testid="button-export-video"
                   >
                     {exportMutation.isPending ? (
@@ -1442,7 +1442,7 @@ export default function GuestIceBuilderPage() {
                   size="sm"
                   onClick={() => setShowPublishModal(true)}
                   disabled={cards.length === 0}
-                  className={`gap-1.5 ${
+                  className={`gap-1.5 shrink-0 whitespace-nowrap ${
                     iceVisibility === "public" 
                       ? "border-green-500/40 text-green-400 hover:bg-green-500/10" 
                       : iceVisibility === "unlisted"
@@ -1465,7 +1465,7 @@ export default function GuestIceBuilderPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowStoryStructure(true)}
-                  className="gap-1.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                  className="gap-1.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shrink-0 whitespace-nowrap"
                   data-testid="button-story-structure"
                 >
                   <Lightbulb className="w-3.5 h-3.5" />
@@ -1477,7 +1477,7 @@ export default function GuestIceBuilderPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
+                      className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5 shrink-0 whitespace-nowrap"
                       data-testid="button-open-bible"
                     >
                       <BookOpen className="w-3.5 h-3.5" />
