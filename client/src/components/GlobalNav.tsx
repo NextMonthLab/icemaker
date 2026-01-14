@@ -78,6 +78,7 @@ export default function GlobalNav({
   };
 
   const quickLinks = [
+    { href: '/discover', label: 'Discover', icon: Compass, context: 'marketing' as NavContext },
     { href: '/library', label: 'Library', icon: Sparkles, context: 'ice' as NavContext },
   ];
 

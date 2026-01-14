@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Upload, Layers, MessageCircle, Share2, Shield, Brain, Lock, Eye, CheckCircle2, FileText, Presentation, Globe, ScrollText, ChevronDown } from "lucide-react";
+import { ArrowRight, Upload, Layers, MessageCircle, Share2, Shield, Brain, Lock, Eye, CheckCircle2, FileText, Presentation, Globe, ScrollText, ChevronDown, Compass } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -118,9 +118,10 @@ export default function MarketingHome() {
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
-                <Link href="/book-demo">
-                  <Button size="lg" variant="outline" className="text-base px-8" data-testid="button-book-demo">
-                    Book a demo
+                <Link href="/discover">
+                  <Button size="lg" variant="outline" className="gap-2 text-base px-8 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" data-testid="button-browse-examples">
+                    <Compass className="w-4 h-4" />
+                    Browse Examples
                   </Button>
                 </Link>
               </div>
