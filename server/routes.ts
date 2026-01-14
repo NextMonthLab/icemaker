@@ -38,6 +38,15 @@ function getAppBaseUrl(req: any): string {
   return `${protocol}://${host}`;
 }
 
+// Format bytes to human readable string
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // OpenAI client for image generation - uses Replit AI Integrations (no API key needed)
 // Charges are billed to your Replit credits
 let _openai: OpenAI | null = null;
@@ -932,6 +941,163 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error updating tour state:", error);
       res.status(500).json({ message: "Error updating tour state" });
+    }
+  });
+
+  // ============ USAGE & QUOTA ENDPOINTS ============
+  
+  // Get current user's storage and AI usage summary
+  app.get("/api/me/usage", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+
+      // Get storage usage
+      const usedStorageBytes = profile.usedStorageBytes ?? 0;
+      const storageLimitBytes = profile.storageLimitBytes ?? 5368709120; // 5GB default
+
+      // Get AI usage for current billing period (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const aiUsageSummary = await storage.getAiUsageSummary(profile.id, thirtyDaysAgo);
+
+      // Get media asset counts
+      const mediaAssets = await storage.getMediaAssetsByProfile(profile.id, 'active');
+      const assetCounts = {
+        images: mediaAssets.filter(a => a.category === 'image').length,
+        videos: mediaAssets.filter(a => a.category === 'video').length,
+        audio: mediaAssets.filter(a => a.category === 'audio').length,
+        other: mediaAssets.filter(a => !['image', 'video', 'audio'].includes(a.category || '')).length,
+      };
+
+      res.json({
+        storage: {
+          usedBytes: usedStorageBytes,
+          limitBytes: storageLimitBytes,
+          usedPercent: Math.round((usedStorageBytes / storageLimitBytes) * 100),
+          usedFormatted: formatBytes(usedStorageBytes),
+          limitFormatted: formatBytes(storageLimitBytes),
+        },
+        assets: assetCounts,
+        aiUsage: {
+          totalCredits: aiUsageSummary.totalCredits,
+          byType: aiUsageSummary.byType,
+          billingPeriodStart: thirtyDaysAgo.toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching usage summary:", error);
+      res.status(500).json({ message: "Error fetching usage summary" });
+    }
+  });
+
+  // Get usage details for a specific ICE
+  app.get("/api/ice/:id/usage", requireAuth, async (req, res) => {
+    try {
+      const iceId = req.params.id;
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+
+      // Verify user owns this ICE
+      const ice = await storage.getIcePreview(iceId);
+      if (!ice) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      if (ice.userId !== req.user!.id && !req.user!.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get media assets for this ICE
+      const mediaAssets = await storage.getMediaAssetsByIce(iceId);
+      const totalStorageBytes = mediaAssets.reduce((sum, a) => sum + (a.fileSizeBytes ?? 0), 0);
+
+      // Get AI usage for this ICE
+      const aiUsage = await storage.getAiUsageByIce(iceId);
+      const totalAiCredits = aiUsage.reduce((sum, e) => sum + e.creditsUsed, 0);
+
+      // Group AI usage by type
+      const aiByType = aiUsage.reduce((acc, e) => {
+        if (!acc[e.usageType]) {
+          acc[e.usageType] = { credits: 0, count: 0 };
+        }
+        acc[e.usageType].credits += e.creditsUsed;
+        acc[e.usageType].count += 1;
+        return acc;
+      }, {} as Record<string, { credits: number; count: number }>);
+
+      res.json({
+        iceId,
+        storage: {
+          totalBytes: totalStorageBytes,
+          formatted: formatBytes(totalStorageBytes),
+          assetCount: mediaAssets.length,
+          assets: mediaAssets.map(a => ({
+            id: a.id,
+            fileName: a.fileName,
+            category: a.category,
+            sizeBytes: a.fileSizeBytes,
+            sizeFormatted: formatBytes(a.fileSizeBytes ?? 0),
+            status: a.status,
+            createdAt: a.createdAt,
+          })),
+        },
+        aiUsage: {
+          totalCredits: totalAiCredits,
+          byType: Object.entries(aiByType).map(([type, data]) => ({
+            usageType: type,
+            ...data,
+          })),
+          events: aiUsage.slice(0, 50).map(e => ({
+            id: e.id,
+            usageType: e.usageType,
+            creditsUsed: e.creditsUsed,
+            model: e.model,
+            createdAt: e.createdAt,
+          })),
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching ICE usage:", error);
+      res.status(500).json({ message: "Error fetching ICE usage" });
+    }
+  });
+
+  // Check storage quota before upload
+  app.post("/api/me/storage/check", requireAuth, async (req, res) => {
+    try {
+      const { sizeBytes } = req.body;
+      if (typeof sizeBytes !== 'number' || sizeBytes <= 0) {
+        return res.status(400).json({ message: "Invalid file size" });
+      }
+
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+
+      const usedBytes = profile.usedStorageBytes ?? 0;
+      const limitBytes = profile.storageLimitBytes ?? 5368709120;
+      const remainingBytes = limitBytes - usedBytes;
+
+      const canUpload = sizeBytes <= remainingBytes;
+
+      res.json({
+        canUpload,
+        usedBytes,
+        limitBytes,
+        remainingBytes,
+        requestedBytes: sizeBytes,
+        message: canUpload 
+          ? "Storage quota available"
+          : `Insufficient storage. Need ${formatBytes(sizeBytes)}, only ${formatBytes(remainingBytes)} available.`,
+      });
+    } catch (error) {
+      console.error("Error checking storage quota:", error);
+      res.status(500).json({ message: "Error checking storage quota" });
     }
   });
   
@@ -7409,6 +7575,23 @@ Stay engaging, reference story details, and help the audience understand the nar
         details: { cardId, type: 'image', assetId: newAssetId },
       });
       
+      // Log AI usage for billing tracking
+      try {
+        const profile = await storage.getCreatorProfile(user.id);
+        if (profile) {
+          await storage.logAiUsageEvent({
+            profileId: profile.id,
+            iceId: previewId,
+            usageType: 'image_gen',
+            creditsUsed: 0.04, // ~$0.04 per 1024x1536 image
+            model: 'gpt-image-1',
+            metadata: { cardId, size: '1024x1536' },
+          });
+        }
+      } catch (aiLogError) {
+        console.warn('Failed to log AI usage:', aiLogError);
+      }
+      
       res.json({
         success: true,
         imageUrl: finalImageUrl,
@@ -7517,6 +7700,27 @@ Stay engaging, reference story details, and help the audience understand the nar
         videoGenerationModel: model || "kling-v1.6-standard",
       };
       await storage.updateIcePreview(previewId, { cards });
+      
+      // Log AI usage for billing tracking (videos are expensive)
+      try {
+        const profile = await storage.getCreatorProfile(user.id);
+        if (profile) {
+          const videoDuration = duration || 5;
+          const modelUsed = model || "kling-v1.6-standard";
+          // Pricing: ~$0.15 per second for Kling
+          const videoCost = videoDuration * 0.15;
+          await storage.logAiUsageEvent({
+            profileId: profile.id,
+            iceId: previewId,
+            usageType: 'video_gen',
+            creditsUsed: videoCost,
+            model: modelUsed,
+            metadata: { cardId, duration: videoDuration, mode: mode || 'text-to-video' },
+          });
+        }
+      } catch (aiLogError) {
+        console.warn('Failed to log AI video usage:', aiLogError);
+      }
       
       console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId}`);
       
@@ -7747,6 +7951,26 @@ Stay engaging, reference story details, and help the audience understand the nar
         userAgent: successAgent,
         details: { cardId, type: 'narration' },
       });
+      
+      // Log AI usage for billing tracking
+      try {
+        const profile = await storage.getCreatorProfile(user.id);
+        if (profile) {
+          // TTS pricing: ~$0.015 per 1K characters for tts-1
+          const charCount = narrationText.length;
+          const ttsCost = (charCount / 1000) * 0.015;
+          await storage.logAiUsageEvent({
+            profileId: profile.id,
+            iceId: previewId,
+            usageType: 'audio_gen',
+            creditsUsed: ttsCost,
+            model: 'tts-1',
+            metadata: { cardId, characterCount: charCount, voice: voice || 'alloy' },
+          });
+        }
+      } catch (aiLogError) {
+        console.warn('Failed to log AI TTS usage:', aiLogError);
+      }
       
       res.json({
         success: true,

@@ -357,6 +357,27 @@ export interface IStorage {
     responseCount: number;
     values: any[];
   }>>;
+
+  // Media Assets (Storage Quota Tracking)
+  createMediaAsset(asset: schema.InsertMediaAsset): Promise<schema.MediaAsset>;
+  getMediaAsset(id: number): Promise<schema.MediaAsset | undefined>;
+  getMediaAssetByKey(fileKey: string): Promise<schema.MediaAsset | undefined>;
+  getMediaAssetsByProfile(profileId: number, status?: schema.MediaAssetStatus): Promise<schema.MediaAsset[]>;
+  getMediaAssetsByIce(iceId: string): Promise<schema.MediaAsset[]>;
+  updateMediaAssetStatus(id: number, status: schema.MediaAssetStatus): Promise<schema.MediaAsset | undefined>;
+  deleteMediaAsset(id: number): Promise<void>;
+  getOrphanedAssets(olderThanDays: number): Promise<schema.MediaAsset[]>;
+  getProfileStorageUsage(profileId: number): Promise<number>;
+  updateProfileStorageUsage(profileId: number, deltaBytes: number): Promise<schema.CreatorProfile | undefined>;
+
+  // AI Usage Events (Cost Tracking)
+  logAiUsageEvent(event: schema.InsertAiUsageEvent): Promise<schema.AiUsageEvent>;
+  getAiUsageByProfile(profileId: number, startDate?: Date): Promise<schema.AiUsageEvent[]>;
+  getAiUsageByIce(iceId: string): Promise<schema.AiUsageEvent[]>;
+  getAiUsageSummary(profileId: number, startDate?: Date): Promise<{
+    totalCredits: number;
+    byType: { usageType: string; credits: number; count: number }[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3961,6 +3982,144 @@ export class DatabaseStorage implements IStorage {
     }
 
     return aggregates;
+  }
+
+  // Media Assets (Storage Quota Tracking)
+  async createMediaAsset(asset: schema.InsertMediaAsset): Promise<schema.MediaAsset> {
+    const [result] = await db.insert(schema.mediaAssets).values(asset).returning();
+    return result;
+  }
+
+  async getMediaAsset(id: number): Promise<schema.MediaAsset | undefined> {
+    return await db.query.mediaAssets.findFirst({
+      where: eq(schema.mediaAssets.id, id),
+    });
+  }
+
+  async getMediaAssetByKey(fileKey: string): Promise<schema.MediaAsset | undefined> {
+    return await db.query.mediaAssets.findFirst({
+      where: eq(schema.mediaAssets.fileKey, fileKey),
+    });
+  }
+
+  async getMediaAssetsByProfile(profileId: number, status?: schema.MediaAssetStatus): Promise<schema.MediaAsset[]> {
+    if (status) {
+      return await db.query.mediaAssets.findMany({
+        where: and(
+          eq(schema.mediaAssets.profileId, profileId),
+          eq(schema.mediaAssets.status, status)
+        ),
+        orderBy: [desc(schema.mediaAssets.createdAt)],
+      });
+    }
+    return await db.query.mediaAssets.findMany({
+      where: eq(schema.mediaAssets.profileId, profileId),
+      orderBy: [desc(schema.mediaAssets.createdAt)],
+    });
+  }
+
+  async getMediaAssetsByIce(iceId: string): Promise<schema.MediaAsset[]> {
+    return await db.query.mediaAssets.findMany({
+      where: eq(schema.mediaAssets.iceId, iceId),
+      orderBy: [desc(schema.mediaAssets.createdAt)],
+    });
+  }
+
+  async updateMediaAssetStatus(id: number, status: schema.MediaAssetStatus): Promise<schema.MediaAsset | undefined> {
+    const [result] = await db.update(schema.mediaAssets)
+      .set({ status })
+      .where(eq(schema.mediaAssets.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteMediaAsset(id: number): Promise<void> {
+    await db.delete(schema.mediaAssets).where(eq(schema.mediaAssets.id, id));
+  }
+
+  async getOrphanedAssets(olderThanDays: number): Promise<schema.MediaAsset[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+    
+    return await db.query.mediaAssets.findMany({
+      where: and(
+        eq(schema.mediaAssets.status, 'orphan'),
+        lt(schema.mediaAssets.createdAt, cutoffDate)
+      ),
+    });
+  }
+
+  async getProfileStorageUsage(profileId: number): Promise<number> {
+    const profile = await db.query.creatorProfiles.findFirst({
+      where: eq(schema.creatorProfiles.id, profileId),
+    });
+    return profile?.usedStorageBytes ?? 0;
+  }
+
+  async updateProfileStorageUsage(profileId: number, deltaBytes: number): Promise<schema.CreatorProfile | undefined> {
+    const [result] = await db.update(schema.creatorProfiles)
+      .set({
+        usedStorageBytes: sql`${schema.creatorProfiles.usedStorageBytes} + ${deltaBytes}`,
+      })
+      .where(eq(schema.creatorProfiles.id, profileId))
+      .returning();
+    return result;
+  }
+
+  // AI Usage Events (Cost Tracking)
+  async logAiUsageEvent(event: schema.InsertAiUsageEvent): Promise<schema.AiUsageEvent> {
+    const [result] = await db.insert(schema.aiUsageEvents).values(event).returning();
+    return result;
+  }
+
+  async getAiUsageByProfile(profileId: number, startDate?: Date): Promise<schema.AiUsageEvent[]> {
+    if (startDate) {
+      return await db.query.aiUsageEvents.findMany({
+        where: and(
+          eq(schema.aiUsageEvents.profileId, profileId),
+          gte(schema.aiUsageEvents.createdAt, startDate)
+        ),
+        orderBy: [desc(schema.aiUsageEvents.createdAt)],
+      });
+    }
+    return await db.query.aiUsageEvents.findMany({
+      where: eq(schema.aiUsageEvents.profileId, profileId),
+      orderBy: [desc(schema.aiUsageEvents.createdAt)],
+    });
+  }
+
+  async getAiUsageByIce(iceId: string): Promise<schema.AiUsageEvent[]> {
+    return await db.query.aiUsageEvents.findMany({
+      where: eq(schema.aiUsageEvents.iceId, iceId),
+      orderBy: [desc(schema.aiUsageEvents.createdAt)],
+    });
+  }
+
+  async getAiUsageSummary(profileId: number, startDate?: Date): Promise<{
+    totalCredits: number;
+    byType: { usageType: string; credits: number; count: number }[];
+  }> {
+    const events = startDate 
+      ? await this.getAiUsageByProfile(profileId, startDate)
+      : await this.getAiUsageByProfile(profileId);
+
+    const totalCredits = events.reduce((sum, e) => sum + e.creditsUsed, 0);
+    
+    const byTypeMap = new Map<string, { credits: number; count: number }>();
+    for (const event of events) {
+      const existing = byTypeMap.get(event.usageType) || { credits: 0, count: 0 };
+      byTypeMap.set(event.usageType, {
+        credits: existing.credits + event.creditsUsed,
+        count: existing.count + 1,
+      });
+    }
+
+    const byType = Array.from(byTypeMap.entries()).map(([usageType, data]) => ({
+      usageType,
+      ...data,
+    }));
+
+    return { totalCredits, byType };
   }
 }
 
