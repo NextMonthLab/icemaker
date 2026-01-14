@@ -5834,6 +5834,32 @@ Stay engaging, reference story details, and help the audience understand the nar
         return res.status(400).json({ message: "Blueprint and draft are required" });
       }
       
+      // Validate blueprint structure
+      if (!blueprint.templateFamily || !blueprint.structureId || !blueprint.length) {
+        return res.status(400).json({ message: "Invalid blueprint: missing required fields" });
+      }
+      
+      // Validate draft cards
+      if (!draft.cards || !Array.isArray(draft.cards) || draft.cards.length === 0) {
+        return res.status(400).json({ message: "Invalid draft: must have at least one card" });
+      }
+      
+      // Limit card count
+      if (draft.cards.length > 20) {
+        return res.status(400).json({ message: "Too many cards (max 20)" });
+      }
+      
+      // Sanitize card content (limit sizes)
+      const sanitizedCards = draft.cards.slice(0, 20).map((card: any, i: number) => ({
+        id: card.id || `card_${i}`,
+        title: String(card.title || '').slice(0, 200),
+        content: String(card.content || '').slice(0, 5000),
+        order: i,
+        sceneId: card.sceneId || `scene_${i}`,
+      }));
+      
+      const sanitizedTitle = String(draft.title || 'New ICE').slice(0, 200);
+      
       const userIp = req.ip || req.socket.remoteAddress || "unknown";
       
       // Rate limiting by IP
@@ -5845,45 +5871,36 @@ Stay engaging, reference story details, and help the audience understand the nar
       // Generate unique preview ID
       const previewId = `ice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Transform blueprint cards to ICE preview cards
-      const previewCards = draft.cards.map((card: any, index: number) => ({
-        id: card.id || `card_${index}`,
-        title: card.title,
-        content: card.content,
-        order: index,
-        sceneId: card.sceneId || `scene_${index}`,
-      }));
-      
       // Create a default narrator character for wizard-created ICEs
       const defaultCharacter = {
         id: "guide",
         name: "Experience Guide",
         role: "Guide",
         description: "Your guide through this experience.",
-        systemPrompt: `You are a helpful guide for this ${blueprint.templateFamily} experience titled "${draft.title}".
+        systemPrompt: `You are a helpful guide for this ${String(blueprint.templateFamily).slice(0, 50)} experience titled "${sanitizedTitle}".
 Help users understand and explore the content in an engaging way.
 Stay focused on the content and be helpful.`,
-        openingMessage: `Welcome to ${draft.title}! I'm here to help you explore this experience. What would you like to know?`,
+        openingMessage: `Welcome to ${sanitizedTitle}! I'm here to help you explore this experience. What would you like to know?`,
       };
       
       // Set expiry
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
       
-      // Save to database
+      // Save to database with sanitized values
       const savedPreview = await storage.createIcePreview({
         id: previewId,
         ownerIp: userIp,
         ownerUserId: req.user?.id || null,
         sourceType: "wizard" as any,
         sourceValue: JSON.stringify({
-          templateFamily: blueprint.templateFamily,
-          structureId: blueprint.structureId,
-          length: blueprint.length,
+          templateFamily: String(blueprint.templateFamily).slice(0, 50),
+          structureId: String(blueprint.structureId).slice(0, 50),
+          length: String(blueprint.length).slice(0, 20),
           style: blueprint.style,
         }),
-        title: draft.title,
-        cards: previewCards,
+        title: sanitizedTitle,
+        cards: sanitizedCards,
         characters: [defaultCharacter],
         tier: blueprint.length === "short" ? "short" : blueprint.length === "feature" ? "long" : "medium",
         status: "active",

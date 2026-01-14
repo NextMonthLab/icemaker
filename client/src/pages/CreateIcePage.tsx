@@ -490,11 +490,15 @@ export default function CreateIcePage() {
                   size="lg"
                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
                   onClick={handleGenerateBlueprint}
-                  disabled={!state.templateFamily || !state.structureId}
+                  disabled={!state.templateFamily || !state.structureId || createIceMutation.isPending}
                   data-testid="button-generate-ice"
                 >
-                  <Wand2 className="w-5 h-5 mr-2" />
-                  Generate ICE Blueprint
+                  {createIceMutation.isPending ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  ) : (
+                    <Wand2 className="w-5 h-5 mr-2" />
+                  )}
+                  {createIceMutation.isPending ? "Creating..." : "Generate ICE Blueprint"}
                 </Button>
               </div>
             </div>
