@@ -1,0 +1,70 @@
+## Replit Prompt (RoClaires): Smooth IceMaker Card Transitions (Quick Win Polish)
+
+Goal
+There is a slight mismatch between:
+1) when the card image/video finishes loading,
+2) the fade/transition between cards,
+3) the title/text rendering/animating.
+
+This creates a tiny “stutter” or desync that the eye catches. We want card transitions to feel seamless and cinematic.
+
+Scope
+Quick win only. Do NOT add new features, flows, or big refactors. Focus on orchestration and timing.
+
+Deliverables
+
+A) Single Orchestration State: “Card Ready”
+Introduce a single derived state that represents the moment a new card is truly ready to transition in.
+
+Definition (conceptual):
+- Card has mounted/layout is stable
+- Title/text is ready (rendered/measured if needed)
+- Media is ready:
+  - Image: loaded (or at least decoded) enough to display without popping
+  - Video: metadata loaded + first frame ready (or equivalent “can play” signal)
+
+Create:
+- isCardReady = isMounted && isTitleReady && isMediaReady
+
+Only begin the “enter” animation when isCardReady becomes true.
+
+B) Transition as a Unit (not separate elements)
+Right now it likely feels like background fades, then title appears, then media catches up.
+Wrap the whole visible card content (media + overlays + title) in one animated container and animate that container (opacity + subtle transform) so the card arrives as a single cohesive unit.
+
+C) Preload / Decode Media (lightweight)
+Where possible, prefetch the next card’s primary asset just ahead of the transition to reduce late loads:
+- Images: use browser decode() or equivalent to avoid pop-in
+- Videos: load metadata / poster / first frame readiness before transition
+
+Do not introduce heavy caching logic. Keep it minimal and safe.
+
+D) Timing + Easing Consistency
+Standardise:
+- one duration value for card enter/exit
+- one easing curve used everywhere
+- ensure title animation is not running independently ahead/behind the card container
+If we need a micro-delay, add a tiny intentional delay (e.g. 50–120ms) AFTER isCardReady before starting the enter animation to align perception.
+
+E) Loading Placeholder Rules (avoid flicker)
+If media isn’t ready yet, do not partially animate the card in.
+Either:
+- keep the old card visible until new card is ready, then transition
+OR
+- show a consistent placeholder skeleton inside the new card but do not fade the card content in piece-by-piece.
+The goal is “one arrival moment”.
+
+F) No New UI Settings (yet)
+Do NOT add user-selectable transition types in the UI in this pass.
+However, structure the code so a future internal “transitionPreset” could exist (even if only one preset is used today).
+
+Acceptance Criteria
+1) When switching cards, the new card’s media + title appear together in a single smooth motion.
+2) No noticeable stutter/pop where the title appears before media or vice versa.
+3) Videos do not flash black frames or swap posters mid-transition.
+4) Existing behaviour remains unchanged if media is already cached/instant; only smoother.
+
+Notes / Guidance
+- Keep changes contained to the ICE player / card renderer components.
+- Prefer small, readable changes: a single orchestrator state + unified animation wrapper.
+- If you find separate animations for title/media, consolidate so the parent controls the reveal.
