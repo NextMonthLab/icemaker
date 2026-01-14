@@ -13,7 +13,8 @@ export type EntitlementKey =
   | 'canUploadAudio'
   | 'canViewAnalytics'
   | 'canViewEngagement'
-  | 'canViewConversationInsights';
+  | 'canViewConversationInsights'
+  | 'canConfigureStructuredCapture';
 
 export interface FullEntitlements {
   canCreateStory: boolean;
@@ -27,6 +28,7 @@ export interface FullEntitlements {
   canViewAnalytics: boolean;
   canViewEngagement: boolean;
   canViewConversationInsights: boolean; // Business tier only
+  canConfigureStructuredCapture: boolean; // Business tier only - custom fields for data capture
   maxUniverses: number;
   maxCardsPerStory: number;
   monthlyVideoCredits: number;
@@ -66,6 +68,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canViewAnalytics: false,
     canViewEngagement: false,
     canViewConversationInsights: false,
+    canConfigureStructuredCapture: false,
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,
@@ -86,6 +89,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canViewAnalytics: true,
     canViewEngagement: true,
     canViewConversationInsights: false, // Pro tier: no conversation insights
+    canConfigureStructuredCapture: false, // Pro tier: no structured data capture
     maxUniverses: -1,
     maxCardsPerStory: 50,
     monthlyVideoCredits: 0,
@@ -106,6 +110,7 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
     canViewAnalytics: true,
     canViewEngagement: true,
     canViewConversationInsights: true, // Business tier: full conversation insights
+    canConfigureStructuredCapture: true, // Business tier: structured data capture
     maxUniverses: -1,
     maxCardsPerStory: -1,
     monthlyVideoCredits: 50,
@@ -147,6 +152,7 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
           canViewAnalytics: features.canViewAnalytics ?? tierDefaults.canViewAnalytics ?? false,
           canViewEngagement: features.canViewEngagement ?? tierDefaults.canViewEngagement ?? false,
           canViewConversationInsights: features.canViewConversationInsights ?? tierDefaults.canViewConversationInsights ?? false,
+          canConfigureStructuredCapture: features.canConfigureStructuredCapture ?? tierDefaults.canConfigureStructuredCapture ?? false,
           maxUniverses: features.maxUniverses ?? tierDefaults.maxUniverses ?? 1,
           maxCardsPerStory: features.maxCardsPerStory ?? tierDefaults.maxCardsPerStory ?? 5,
           monthlyVideoCredits: features.monthlyVideoCredits ?? tierDefaults.monthlyVideoCredits ?? 0,
@@ -179,6 +185,7 @@ function getAdminEntitlements(): FullEntitlements {
     canViewAnalytics: true,
     canViewEngagement: true,
     canViewConversationInsights: true,
+    canConfigureStructuredCapture: true,
     maxUniverses: -1,
     maxCardsPerStory: -1,
     monthlyVideoCredits: -1,
@@ -205,6 +212,7 @@ function getCreatorFreeEntitlements(): FullEntitlements {
     canViewAnalytics: false,
     canViewEngagement: false,
     canViewConversationInsights: false,
+    canConfigureStructuredCapture: false,
     maxUniverses: 1,
     maxCardsPerStory: 5,
     monthlyVideoCredits: 0,
@@ -231,6 +239,7 @@ function getDefaultEntitlements(): FullEntitlements {
     canViewAnalytics: false,
     canViewEngagement: false,
     canViewConversationInsights: false,
+    canConfigureStructuredCapture: false,
     maxUniverses: 0,
     maxCardsPerStory: 0,
     monthlyVideoCredits: 0,
@@ -262,6 +271,7 @@ export async function requireEntitlement(
     canViewAnalytics: 'canViewAnalytics',
     canViewEngagement: 'canViewEngagement',
     canViewConversationInsights: 'canViewConversationInsights',
+    canConfigureStructuredCapture: 'canConfigureStructuredCapture',
   };
   
   const entitlementKey = keyMap[key];
