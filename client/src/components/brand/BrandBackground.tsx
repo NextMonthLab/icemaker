@@ -44,7 +44,7 @@ export function BrandBackground({
 
   // Default values
   const overlayOpacity = brandImage?.overlayOpacity ?? (variant === "hero" ? 0.7 : 0.9);
-  const blurPx = brandImage?.blurPx ?? (variant === "hero" ? 8 : 20);
+  const blurPx = brandImage?.blurPx ?? (variant === "hero" ? 2 : 8);
   const shouldPreload = brandImage?.preload ?? false;
 
   // Preload image if configured
