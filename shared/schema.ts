@@ -42,6 +42,44 @@ export const insertCreatorProfileSchema = createInsertSchema(creatorProfiles).om
 export type InsertCreatorProfile = z.infer<typeof insertCreatorProfileSchema>;
 export type CreatorProfile = typeof creatorProfiles.$inferSelect;
 
+// Creator profile social links (multiple links per profile)
+export const creatorProfileLinks = pgTable("creator_profile_links", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").references(() => creatorProfiles.id).notNull(),
+  label: text("label").notNull(), // e.g., "Twitter", "LinkedIn", "Website"
+  url: text("url").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCreatorProfileLinkSchema = createInsertSchema(creatorProfileLinks).omit({ id: true, createdAt: true });
+export type InsertCreatorProfileLink = z.infer<typeof insertCreatorProfileLinkSchema>;
+export type CreatorProfileLink = typeof creatorProfileLinks.$inferSelect;
+
+// Creator follows (social following system)
+export const creatorFollows = pgTable("creator_follows", {
+  id: serial("id").primaryKey(),
+  followerProfileId: integer("follower_profile_id").references(() => creatorProfiles.id).notNull(),
+  followedProfileId: integer("followed_profile_id").references(() => creatorProfiles.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCreatorFollowSchema = createInsertSchema(creatorFollows).omit({ id: true, createdAt: true });
+export type InsertCreatorFollow = z.infer<typeof insertCreatorFollowSchema>;
+export type CreatorFollow = typeof creatorFollows.$inferSelect;
+
+// ICE likes (users can like ICE previews)
+export const iceLikes = pgTable("ice_likes", {
+  id: serial("id").primaryKey(),
+  profileId: integer("profile_id").references(() => creatorProfiles.id).notNull(),
+  iceId: text("ice_id").notNull(), // References ice_previews.id (text)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertIceLikeSchema = createInsertSchema(iceLikes).omit({ id: true, createdAt: true });
+export type InsertIceLike = z.infer<typeof insertIceLikeSchema>;
+export type IceLike = typeof iceLikes.$inferSelect;
+
 // Universe ownership mapping (which creator owns which universes)
 export const universeCreators = pgTable("universe_creators", {
   id: serial("id").primaryKey(),
