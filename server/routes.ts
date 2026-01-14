@@ -628,6 +628,58 @@ export async function registerRoutes(
     }
   });
   
+  // Upload creator profile avatar
+  app.post("/api/me/creator-profile/avatar", requireAuth, upload.single("avatar"), async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const file = req.file;
+      if (file.size > 2 * 1024 * 1024) {
+        return res.status(400).json({ message: "File too large. Maximum size is 2MB" });
+      }
+      
+      const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type. Allowed: PNG, JPEG, WebP" });
+      }
+      
+      const ext = file.mimetype.split("/")[1];
+      const filename = `creator-avatar-${profile.id}-${Date.now()}.${ext}`;
+      
+      let avatarUrl: string;
+      
+      if (process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID) {
+        const { Client } = await import("@replit/object-storage");
+        const client = new Client();
+        const objectPath = `public/creator-avatars/${filename}`;
+        await client.uploadFromBytes(objectPath, file.buffer);
+        avatarUrl = `/objects/${objectPath}`;
+      } else {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const dir = path.join(process.cwd(), "uploads", "creator-avatars");
+        await fs.mkdir(dir, { recursive: true });
+        const filePath = path.join(dir, filename);
+        await fs.writeFile(filePath, file.buffer);
+        avatarUrl = `/uploads/creator-avatars/${filename}`;
+      }
+      
+      await storage.updateCreatorProfile(req.user!.id, { avatarUrl });
+      
+      res.json({ avatarUrl });
+    } catch (error) {
+      console.error("Error uploading creator avatar:", error);
+      res.status(500).json({ message: "Error uploading avatar" });
+    }
+  });
+  
   // Follow a creator
   app.post("/api/creators/:profileId/follow", requireAuth, async (req, res) => {
     try {
