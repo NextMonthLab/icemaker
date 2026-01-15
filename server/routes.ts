@@ -7518,6 +7518,10 @@ Provide a JSON response with:
         narrationVolume: preview.narrationVolume,
         // Caption Engine settings
         captionSettings: preview.captionSettings,
+        // Logo branding settings
+        logoEnabled: preview.logoEnabled,
+        logoUrl: preview.logoUrl,
+        logoPosition: preview.logoPosition,
         // Additional settings
         projectBible: preview.projectBible,
         previewAccessToken: preview.previewAccessToken,
