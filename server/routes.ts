@@ -112,20 +112,37 @@ export async function registerRoutes(
   
   // Trust proxy for secure cookies behind TLS-terminating proxies (Render, Replit, etc.)
   const isProduction = process.env.NODE_ENV === "production";
+  console.log('[session-config] NODE_ENV:', process.env.NODE_ENV);
+  console.log('[session-config] isProduction:', isProduction);
+  console.log('[session-config] DATABASE_URL exists:', !!process.env.DATABASE_URL);
+
   if (isProduction) {
     app.set("trust proxy", 1);
   }
 
   // Session middleware with PostgreSQL store for persistence across restarts
   // Create a dedicated pool for session store (with SSL for Render)
+  const sslConfig = isProduction ? { rejectUnauthorized: false } : undefined;
+  console.log('[session-config] SSL config:', sslConfig ? 'ENABLED' : 'DISABLED');
+
   const sessionPool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    ssl: sslConfig,
   });
 
   // Log session store errors for debugging
   sessionPool.on('error', (err) => {
     console.error('[session-store] Pool error:', err.message);
+  });
+
+  // Test the connection
+  sessionPool.connect((err, client, release) => {
+    if (err) {
+      console.error('[session-store] Failed to connect to database:', err.message);
+    } else {
+      console.log('[session-store] Successfully connected to database');
+      if (client) release();
+    }
   });
 
   const PgStore = connectPgSimple(session);
