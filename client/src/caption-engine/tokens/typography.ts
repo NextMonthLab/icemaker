@@ -10,28 +10,28 @@ export interface TypographyToken {
 export const typographyTokens = {
   sans: {
     fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: 600,
-    lineHeight: 1.3,
+    lineHeight: 1.25,
     letterSpacing: 0,
   },
   serif: {
     fontFamily: "Georgia, 'Times New Roman', serif",
-    fontSize: 44,
+    fontSize: 52,
     fontWeight: 500,
-    lineHeight: 1.4,
+    lineHeight: 1.3,
     letterSpacing: 0.5,
   },
   mono: {
     fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
-    fontSize: 40,
+    fontSize: 48,
     fontWeight: 500,
-    lineHeight: 1.3,
+    lineHeight: 1.25,
     letterSpacing: 0,
   },
   impact: {
     fontFamily: "'Bebas Neue', Impact, sans-serif",
-    fontSize: 56,
+    fontSize: 64,
     fontWeight: 700,
     lineHeight: 1.1,
     letterSpacing: 2,
@@ -39,9 +39,9 @@ export const typographyTokens = {
   },
   display: {
     fontFamily: "'Poppins', 'Montserrat', sans-serif",
-    fontSize: 52,
+    fontSize: 60,
     fontWeight: 700,
-    lineHeight: 1.2,
+    lineHeight: 1.15,
     letterSpacing: -0.5,
   },
 } satisfies Record<string, TypographyToken>;

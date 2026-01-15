@@ -2,7 +2,7 @@ import { composeLines } from './composeLines';
 import { getCanvasContext, checkLinesFit } from './measurer';
 
 export interface FitSettings {
-  maxLines: 1 | 2 | 3 | 4 | 5;
+  maxLines: 1 | 2 | 3 | 4 | 5 | 6;
   panelMaxWidthPercent: number;
   baseFontSize: number;
   minFontSize: number;

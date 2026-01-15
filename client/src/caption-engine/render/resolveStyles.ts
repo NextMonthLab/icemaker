@@ -119,17 +119,17 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     : computedBaseFontSize;
   
   // Raised minimum font sizes for better readability
-  // Fullscreen: 32px min (was 24), Non-fullscreen: 24px min (was 16)
+  // Fullscreen: 36px min, Non-fullscreen: 28px min
   const minFontSizeRaw = isParagraphMode 
-    ? (fullScreen ? 24 : 18) 
-    : (fullScreen ? 32 : 24);
+    ? (fullScreen ? 28 : 22) 
+    : (fullScreen ? 36 : 28);
   const minFontSize = minFontSizeRaw * fontSizeMultiplier;
   const containerWidth = layout?.containerWidthPx || 375;
   const lineHeight = isParagraphMode ? 1.15 : 1.1;
   
-  // Allow more lines for long captions - 4 lines default, 5 for paragraph mode
+  // Allow more lines for long captions - 5 lines default, 6 for paragraph mode
   // This lets long captions wrap more before shrinking font
-  const maxLines = isParagraphMode ? 5 : 4;
+  const maxLines = isParagraphMode ? 6 : 5;
 
   const fitSettings: FitSettings = {
     maxLines,
