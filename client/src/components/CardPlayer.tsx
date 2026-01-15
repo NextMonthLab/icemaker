@@ -406,55 +406,56 @@ export default function CardPlayer({
     }
   }, [hasNarration, audioDuration]);
 
-  // Calculate cumulative word-weighted timing for captions
-  // This ensures captions sync proportionally to their word count
-  const captionTimingBoundaries = useMemo(() => {
+  // Calculate cumulative time boundaries (in seconds) for each caption
+  // Based on word count proportions relative to total audio duration
+  const captionTimeBoundaries = useMemo(() => {
     const captions = card.captions || [];
-    if (captions.length === 0) return [];
+    if (captions.length === 0 || !audioDuration || audioDuration <= 0) return [];
     
-    // Count words in each caption
+    // Count words in each caption (minimum 1 word per caption)
     const wordCounts = captions.map(c => 
-      (c || '').split(/\s+/).filter(w => w.length > 0).length || 1
+      Math.max(1, (c || '').split(/\s+/).filter(w => w.length > 0).length)
     );
     const totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
     
-    // Calculate cumulative timing boundaries (0 to 1)
+    // Calculate cumulative end times in seconds
     const boundaries: number[] = [];
-    let cumulative = 0;
+    let cumulativeTime = 0;
     for (const count of wordCounts) {
-      cumulative += count / totalWords;
-      boundaries.push(cumulative);
+      const captionDuration = (count / totalWords) * audioDuration;
+      cumulativeTime += captionDuration;
+      boundaries.push(cumulativeTime);
     }
     return boundaries;
-  }, [card.captions]);
+  }, [card.captions, audioDuration]);
   
   // Sync captions with audio progress when narration is playing
-  // Uses word-count weighted timing for accurate sync
+  // Uses direct time comparison for accurate sync
   useEffect(() => {
     if (!hasNarration || !audioDuration || audioDuration <= 0) return;
     if (!isPlaying || phase !== "cinematic") return;
     
     const captionCount = card.captions.length;
-    if (captionCount === 0 || captionTimingBoundaries.length === 0) return;
+    if (captionCount === 0 || captionTimeBoundaries.length === 0) return;
     
-    // Calculate progress as percentage (0 to 1)
-    const progressPercent = audioProgress / audioDuration;
-    
-    // Find which caption we should be on based on weighted timing
+    // Find which caption should be active based on current audio time
     let targetIndex = 0;
-    for (let i = 0; i < captionTimingBoundaries.length; i++) {
-      if (progressPercent < captionTimingBoundaries[i]) {
+    for (let i = 0; i < captionTimeBoundaries.length; i++) {
+      if (audioProgress < captionTimeBoundaries[i]) {
         targetIndex = i;
         break;
       }
-      targetIndex = i;
+      // If we've passed all boundaries, stay on last caption
+      if (i === captionTimeBoundaries.length - 1) {
+        targetIndex = i;
+      }
     }
     
     // Only update if the target index changed
-    if (targetIndex >= 0 && targetIndex !== captionIndex) {
+    if (targetIndex !== captionIndex) {
       setCaptionIndex(targetIndex);
     }
-  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex, captionTimingBoundaries]);
+  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex, captionTimeBoundaries]);
   
   // For cards without narration, use text-based timing
   useEffect(() => {
@@ -861,7 +862,7 @@ export default function CardPlayer({
                           const captionText = card.captions[captionIndex];
                           
                           // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
-                          // Uses fixedSizeMode for consistent sizing across all captions
+                          // Uses deckTargetFontSize for consistent sizing while still fitting to prevent overflow
                           const styles = resolveStyles({
                             presetId: captionState?.presetId || 'clean_white',
                             fullScreen,
@@ -870,8 +871,7 @@ export default function CardPlayer({
                             headlineText: captionText,
                             layoutMode: 'title',
                             fontSize: captionState?.fontSize || 'medium',
-                            globalScaleFactor: deckMeasurement.globalScaleFactor,
-                            fixedSizeMode: true, // Consistent font size across all captions
+                            deckTargetFontSize: deckMeasurement.smallestFontSize, // Consistent sizing across deck
                             layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
                           });
                           

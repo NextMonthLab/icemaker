@@ -19,8 +19,9 @@ export interface ResolveStylesInput {
   layoutMode?: CaptionLayoutMode;
   fontSize?: CaptionFontSize;
   globalScaleFactor?: number;
-  // When true, skip per-caption fitting and use fixed font size for consistent sizing across deck
-  fixedSizeMode?: boolean;
+  // Deck-level target font size from measureCaptionSet - ensures consistent sizing
+  // while still running fitTextToBox to prevent overflow
+  deckTargetFontSize?: number;
   layout?: {
     containerWidthPx: number;
   };
@@ -58,7 +59,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     layoutMode = "title",
     fontSize = "medium",
     globalScaleFactor = 1,
-    fixedSizeMode = false,
+    deckTargetFontSize,
     layout,
   } = input;
   
@@ -105,8 +106,13 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const isParagraphMode = layoutMode === 'paragraph';
   const baseTypographySize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
   const baseFontSizeRaw = isParagraphMode ? baseTypographySize * 0.85 : baseTypographySize;
-  // Apply font size multiplier and global scale factor for deck-level consistency
-  const baseFontSize = baseFontSizeRaw * fontSizeMultiplier * globalScaleFactor;
+  
+  // Use deck-level target font size if provided (from measureCaptionSet.smallestFontSize)
+  // This ensures consistent sizing across all captions while still fitting to prevent overflow
+  // Falls back to computed base font size with multipliers
+  const baseFontSize = deckTargetFontSize 
+    ? deckTargetFontSize 
+    : baseFontSizeRaw * fontSizeMultiplier * globalScaleFactor;
   const minFontSizeRaw = isParagraphMode 
     ? (fullScreen ? 18 : 12) 
     : (fullScreen ? 24 : 16);
@@ -133,23 +139,11 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     const composedLines = composeTitleLines(headlineText, { layoutMode });
     const composedText = composedLines.join('\n');
     
-    // In fixedSizeMode, skip per-caption fitting and use consistent font size
-    // This ensures all captions in a deck have the same size regardless of word count
-    if (fixedSizeMode) {
-      fitResult = {
-        lines: composedLines,
-        fontSize: baseFontSize,
-        lineCount: composedLines.length,
-        panelWidth: containerWidth * 0.92,
-        fitted: true,
-        warning: null,
-        iterations: 0,
-        overflowLog: [],
-      };
-    } else {
-      fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
-      fitResult.lines = composedLines;
-    }
+    // Always run fitTextToBox to ensure text fits within container
+    // When deckTargetFontSize is provided, baseFontSize is already the smallest from the deck,
+    // so fitting will only shrink further if this specific caption still doesn't fit
+    fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
+    fitResult.lines = composedLines;
   } else {
     fitResult = {
       lines: [''],
