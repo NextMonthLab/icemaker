@@ -388,30 +388,32 @@ export default function CardPlayer({
     }
   }, [hasNarration, audioDuration]);
 
+  // Sync captions with audio progress when narration is playing
+  // This ensures captions stay perfectly in sync with audio playback
   useEffect(() => {
+    if (!hasNarration || !audioDuration || audioDuration <= 0) return;
     if (!isPlaying || phase !== "cinematic") return;
     
-    // If we have narration, wait for audio metadata before running any timers
-    // The handleAudioEnded callback will control the phase transition
-    if (hasNarration) {
-      if (audioDuration > 0) {
-        // Advance captions in sync with audio duration
-        const perCaptionDuration = (audioDuration * 1000) / Math.max(card.captions.length, 1);
-        const captionInterval = setInterval(() => {
-          setCaptionIndex((prev) => {
-            const next = prev + 1;
-            if (next >= card.captions.length) {
-              return prev; // Audio end will trigger context phase
-            }
-            return next;
-          });
-        }, perCaptionDuration);
-        
-        return () => clearInterval(captionInterval);
-      }
-      // Still waiting for audio metadata - don't start any timers yet
-      return;
+    const captionCount = card.captions.length;
+    if (captionCount === 0) return;
+    
+    // Calculate which caption should be shown based on audio progress
+    const perCaptionDuration = audioDuration / captionCount;
+    const targetIndex = Math.min(
+      Math.floor(audioProgress / perCaptionDuration),
+      captionCount - 1
+    );
+    
+    // Only update if the target index changed
+    if (targetIndex >= 0 && targetIndex !== captionIndex) {
+      setCaptionIndex(targetIndex);
     }
+  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex]);
+  
+  // For cards without narration, use text-based timing
+  useEffect(() => {
+    if (!isPlaying || phase !== "cinematic") return;
+    if (hasNarration) return; // Handled by audio sync above
     
     // No narration - use smart text-based timing
     const currentCaption = card.captions[captionIndex] || "";
@@ -429,7 +431,7 @@ export default function CardPlayer({
     }, duration);
 
     return () => clearTimeout(timeout);
-  }, [isPlaying, card.captions, phase, captionIndex, calculateCaptionDuration, hasNarration, audioDuration]);
+  }, [isPlaying, card.captions, phase, captionIndex, calculateCaptionDuration, hasNarration]);
 
   // Auto-advance after swipe hint (only for non-narration cards)
   useEffect(() => {
