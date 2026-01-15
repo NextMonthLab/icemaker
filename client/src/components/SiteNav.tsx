@@ -149,6 +149,12 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
                     )}
                   </div>
                   <DropdownMenuItem asChild>
+                    <Link href="/launchpad" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-launchpad">
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Launchpad
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-profile">
                       <User className="w-4 h-4 mr-2" />
                       My Account
