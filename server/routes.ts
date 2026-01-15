@@ -5922,8 +5922,7 @@ Output only the narration paragraph, nothing else.`;
       // Get presigned upload URL from object storage
       const { ObjectStorageService } = await import("./replit_integrations/object_storage");
       const objectStorage = new ObjectStorageService();
-      const uploadURL = await objectStorage.getObjectEntityUploadURL();
-      const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+      const { uploadURL, objectPath } = await objectStorage.getObjectEntityUploadURLWithPath();
       
       res.json({
         uploadURL,
