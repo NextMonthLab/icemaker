@@ -130,17 +130,40 @@ export async function registerRoutes(
     ssl: sslConfig,
   });
 
-  // Log session store errors for debugging
+  // Log session store errors for debugging (capture full error object)
   sessionPool.on('error', (err) => {
-    console.error('[session-store] Pool error:', err.message);
+    console.error('[session-store] Pool error:', err);
+    if (err && err.stack) console.error('[session-store] Pool error stack:', err.stack);
   });
 
-  // Test the connection
-  sessionPool.connect((err, client, release) => {
+  // Test the connection and verify session table
+  sessionPool.connect(async (err, client, release) => {
     if (err) {
-      console.error('[session-store] Failed to connect to database:', err.message);
+      console.error('[session-store] Failed to connect to database:', err);
+      if (err.stack) console.error('[session-store] Connection error stack:', err.stack);
     } else {
       console.log('[session-store] Successfully connected to database');
+      
+      // Verify/create session table manually to avoid silent failures
+      try {
+        if (client) {
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS "public"."session" (
+              "sid" varchar NOT NULL COLLATE "default",
+              "sess" json NOT NULL,
+              "expire" timestamp(6) NOT NULL,
+              CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+            ) WITH (OIDS=FALSE);
+          `);
+          await client.query(`
+            CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "public"."session" ("expire");
+          `);
+          console.log('[session-store] Session table verified/created successfully');
+        }
+      } catch (tableErr: any) {
+        console.error('[session-store] Failed to create session table:', tableErr);
+      }
+      
       if (client) release();
     }
   });
@@ -153,8 +176,14 @@ export async function registerRoutes(
         schemaName: 'public',        // Explicit schema
         tableName: 'session',
         createTableIfMissing: true,
-        errorLog: (err: Error) => {
-          console.error('[session-store] Error:', err.message);
+        errorLog: (err: any) => {
+          // Capture full error details - err can be string, Error, or object
+          if (err instanceof Error) {
+            console.error('[session-store] Error:', err.message);
+            if (err.stack) console.error('[session-store] Error stack:', err.stack);
+          } else {
+            console.error('[session-store] Error (raw):', JSON.stringify(err, null, 2));
+          }
         },
       }),
       secret: process.env.SESSION_SECRET || "storyflix-secret-change-in-production",
@@ -402,33 +431,74 @@ export async function registerRoutes(
         isAdmin: false,
       });
       
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Error logging in" });
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('[auth] Register login error:', loginErr);
+          if (!res.headersSent) {
+            return res.status(500).json({ message: "Error logging in after registration" });
+          }
+          return;
         }
-        const { password: _, ...userWithoutPassword } = user;
-        res.json({ user: userWithoutPassword });
+        // Explicitly save session to catch session store errors
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('[auth] Register session save error:', saveErr);
+            if (!res.headersSent) {
+              return res.status(500).json({ message: "Error saving session" });
+            }
+            return;
+          }
+          if (!res.headersSent) {
+            const { password: _, ...userWithoutPassword } = user;
+            res.json({ user: userWithoutPassword });
+          }
+        });
       });
     } catch (error) {
       console.error("Register error:", error);
-      res.status(500).json({ message: "Error creating user" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Error creating user" });
+      }
     }
   });
   
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
-        return res.status(500).json({ message: "Error logging in" });
+        console.error('[auth] Login passport error:', err);
+        if (!res.headersSent) {
+          return res.status(500).json({ message: "Error logging in" });
+        }
+        return;
       }
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        if (!res.headersSent) {
+          return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        }
+        return;
       }
       req.login(user, (loginErr) => {
         if (loginErr) {
-          return res.status(500).json({ message: "Error logging in" });
+          console.error('[auth] Login session error:', loginErr);
+          if (!res.headersSent) {
+            return res.status(500).json({ message: "Error logging in" });
+          }
+          return;
         }
-        const { password: _, ...userWithoutPassword } = user;
-        res.json({ user: userWithoutPassword });
+        // Explicitly save session to catch session store errors
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('[auth] Session save error:', saveErr);
+            if (!res.headersSent) {
+              return res.status(500).json({ message: "Error saving session" });
+            }
+            return;
+          }
+          if (!res.headersSent) {
+            const { password: _, ...userWithoutPassword } = user;
+            res.json({ user: userWithoutPassword });
+          }
+        });
       });
     })(req, res, next);
   });

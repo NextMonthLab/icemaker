@@ -1,0 +1,47 @@
+[GET]
+icemaker.app/ clientIP="34.143.162.30" requestID="" responseTimeMS=0 responseBytes=137 userAgent="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+[GET]
+www.icemaker.app/ clientIP="34.143.162.30" requestID="b1ca9151-1b75-4306" responseTimeMS=24 responseBytes=1114 userAgent="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+[GET]
+icemaker.app/wordpress/ clientIP="34.143.162.30" requestID="" responseTimeMS=0 responseBytes=157 userAgent="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+[GET]
+www.icemaker.app/wordpress/ clientIP="34.143.162.30" requestID="e746df8c-ef6d-428d" responseTimeMS=3 responseBytes=1114 userAgent="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+[session-store] Error: undefined
+[session-store] Error: undefined
+[session-store] Error: undefined
+[GET]
+www.icemaker.app/assets/index-BfvB6nf4.css clientIP="86.133.77.159" requestID="efbf0557-7b6b-41ad" responseTimeMS=11 responseBytes=30087 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/ clientIP="86.133.77.159" requestID="8f27063e-a30c-4cb6" responseTimeMS=5 responseBytes=1114 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/auth/me clientIP="86.133.77.159" requestID="ae6d613b-5e5a-45a1" responseTimeMS=4 responseBytes=306 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/favicon.png clientIP="86.133.77.159" requestID="a3d82ad0-f77a-42e5" responseTimeMS=3 responseBytes=1458 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/auth/me clientIP="86.133.77.159" requestID="07c3b80d-c629-411d" responseTimeMS=2 responseBytes=306 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/universes clientIP="86.133.77.159" requestID="2c9a0816-a387-4c6e" responseTimeMS=6 responseBytes=178 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/universes clientIP="86.133.77.159" requestID="1ea7eb02-4f97-4540" responseTimeMS=11 responseBytes=276 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/index-DpyzXS6E.js clientIP="86.133.77.159" requestID="39227ec3-6483-46a0" responseTimeMS=83 responseBytes=433004 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+6:05:56 PM [express] GET /api/auth/me 401 in 0ms :: {"message":"Not authenticated"}
+6:05:56 PM [express] GET /api/universes 200 in 10ms :: []
+6:05:56 PM [express] GET /api/auth/me 401 in 0ms :: {"message":"Not authenticated"}
+6:05:56 PM [express] GET /api/universes 304 in 3ms :: []
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="86.133.77.159" requestID="c32edc1f-9cae-472e" responseTimeMS=818 responseBytes=2253116 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[POST]
+www.icemaker.app/api/auth/login clientIP="86.133.77.159" requestID="93be9455-ba11-4689" responseTimeMS=91 responseBytes=500 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+6:06:10 PM [express] POST /api/auth/login 500 in 88ms :: {"message":"Error logging in"}
+Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+    at ServerResponse.setHeader (node:_http_outgoing:642:11)
+    at It.set.It.header (/opt/render/project/src/dist/index.cjs:53:25168)
+    at It.send (/opt/render/project/src/dist/index.cjs:53:20699)
+    at It.json (/opt/render/project/src/dist/index.cjs:53:21830)
+    at e.json (/opt/render/project/src/dist/index.cjs:745:33223)
+    at /opt/render/project/src/dist/index.cjs:745:33553
+    at Ol.handle_error (/opt/render/project/src/dist/index.cjs:38:3066)
+    at $ (/opt/render/project/src/dist/index.cjs:38:8366)
+    at /opt/render/project/src/dist/index.cjs:38:7984
+    at Co.process_params (/opt/render/project/src/dist/index.cjs:38:8506)
