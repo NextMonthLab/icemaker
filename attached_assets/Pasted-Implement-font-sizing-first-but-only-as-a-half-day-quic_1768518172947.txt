@@ -1,0 +1,71 @@
+Implement font sizing first, but only as a half-day quick win. Then go straight into forced alignment immediately after, behind a feature flag.
+
+Reason: font sizing is a pure UX fix you can validate instantly. Forced alignment touches the pipeline, storage, and player logic. You want the UI stable before you start judging whether “sync feels right”.
+
+That said, don’t delay the alignment design. Do it as two clean commits:
+
+⸻
+
+Step order I’d ship
+
+Step 1 (Now): Font sizing improvements (fast, visible)
+	•	Max lines: 4 by default, allow 5 for long captions
+	•	Per-caption fitting (no deck-wide scaling)
+	•	Fit by height and width
+	•	Cache per-caption fit results (avoid recalcing every render)
+
+Pass condition: your longest caption fits without making every other caption tiny.
+
+⸻
+
+Step 2 (Immediately after): Forced alignment (feature-flagged)
+
+Add a flag like captionTimingMode: "heuristic" | "aligned".
+
+A) Data model
+Store per caption:
+	•	startMs
+	•	endMs
+	•	timingSource: "whisper" | "heuristic"
+	•	Optional: confidence or matchScore
+Also store for debugging:
+	•	alignmentTranscript (the timestamped transcript or word list)
+	•	alignmentVersion
+
+B) Pipeline
+After TTS:
+	1.	Upload or pass audio to Whisper
+	2.	Get word-level (or segment-level) timestamps
+	3.	Align words to caption segments
+	4.	Write startMs/endMs per caption
+	5.	Player reads timings if present, otherwise falls back to heuristic
+
+C) Player logic
+At time tMs:
+	•	Find the active caption by timestamps (simple range check)
+	•	No more “audioProgress / duration” guessing when aligned timings exist
+
+Pass condition: caption changes track spoken sentences naturally, including pauses.
+
+⸻
+
+Why this order is sane
+	•	If you implement alignment first, you will still hate the experience because long captions will look cramped or microscopic. You’ll misdiagnose it as “timing feels off”.
+	•	If you implement font sizing first, you can actually evaluate sync quality properly when alignment lands.
+
+⸻
+
+One important implementation note (so you don’t get bitten)
+
+Whisper gives you timestamps for what it heard, not your exact punctuation. Your alignment step needs a tolerant matcher:
+	•	normalise text: lowercase, remove punctuation, collapse whitespace
+	•	align by word sequence with fuzzy matching (handle “we’re” vs “we are”, “two” vs “2”)
+	•	if a caption fails to match, fall back to heuristic for that caption only (do not break the whole ICE)
+
+⸻
+
+My call
+
+Do the font sizing improvements first, then implement forced alignment right after with a feature flag and fallback. That gives you a premium feel quickly, and a safe path to perfect sync.
+
+If you want, I’ll write the Claude Code prompt for Step 2 that spells out: exact schema changes, where to hook the Whisper call, how to store timings, and a robust alignment algorithm (with fallback rules).
