@@ -19,6 +19,8 @@ export interface ResolveStylesInput {
   layoutMode?: CaptionLayoutMode;
   fontSize?: CaptionFontSize;
   globalScaleFactor?: number;
+  // When true, skip per-caption fitting and use fixed font size for consistent sizing across deck
+  fixedSizeMode?: boolean;
   layout?: {
     containerWidthPx: number;
   };
@@ -56,6 +58,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     layoutMode = "title",
     fontSize = "medium",
     globalScaleFactor = 1,
+    fixedSizeMode = false,
     layout,
   } = input;
   
@@ -129,8 +132,24 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   if (headlineText && headlineText.trim()) {
     const composedLines = composeTitleLines(headlineText, { layoutMode });
     const composedText = composedLines.join('\n');
-    fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
-    fitResult.lines = composedLines;
+    
+    // In fixedSizeMode, skip per-caption fitting and use consistent font size
+    // This ensures all captions in a deck have the same size regardless of word count
+    if (fixedSizeMode) {
+      fitResult = {
+        lines: composedLines,
+        fontSize: baseFontSize,
+        lineCount: composedLines.length,
+        panelWidth: containerWidth * 0.92,
+        fitted: true,
+        warning: null,
+        iterations: 0,
+        overflowLog: [],
+      };
+    } else {
+      fitResult = fitTextToBox(composedText, containerWidth, fitSettings);
+      fitResult.lines = composedLines;
+    }
   } else {
     fitResult = {
       lines: [''],

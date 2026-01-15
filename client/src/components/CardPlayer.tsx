@@ -406,27 +406,55 @@ export default function CardPlayer({
     }
   }, [hasNarration, audioDuration]);
 
+  // Calculate cumulative word-weighted timing for captions
+  // This ensures captions sync proportionally to their word count
+  const captionTimingBoundaries = useMemo(() => {
+    const captions = card.captions || [];
+    if (captions.length === 0) return [];
+    
+    // Count words in each caption
+    const wordCounts = captions.map(c => 
+      (c || '').split(/\s+/).filter(w => w.length > 0).length || 1
+    );
+    const totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
+    
+    // Calculate cumulative timing boundaries (0 to 1)
+    const boundaries: number[] = [];
+    let cumulative = 0;
+    for (const count of wordCounts) {
+      cumulative += count / totalWords;
+      boundaries.push(cumulative);
+    }
+    return boundaries;
+  }, [card.captions]);
+  
   // Sync captions with audio progress when narration is playing
-  // This ensures captions stay perfectly in sync with audio playback
+  // Uses word-count weighted timing for accurate sync
   useEffect(() => {
     if (!hasNarration || !audioDuration || audioDuration <= 0) return;
     if (!isPlaying || phase !== "cinematic") return;
     
     const captionCount = card.captions.length;
-    if (captionCount === 0) return;
+    if (captionCount === 0 || captionTimingBoundaries.length === 0) return;
     
-    // Calculate which caption should be shown based on audio progress
-    const perCaptionDuration = audioDuration / captionCount;
-    const targetIndex = Math.min(
-      Math.floor(audioProgress / perCaptionDuration),
-      captionCount - 1
-    );
+    // Calculate progress as percentage (0 to 1)
+    const progressPercent = audioProgress / audioDuration;
+    
+    // Find which caption we should be on based on weighted timing
+    let targetIndex = 0;
+    for (let i = 0; i < captionTimingBoundaries.length; i++) {
+      if (progressPercent < captionTimingBoundaries[i]) {
+        targetIndex = i;
+        break;
+      }
+      targetIndex = i;
+    }
     
     // Only update if the target index changed
     if (targetIndex >= 0 && targetIndex !== captionIndex) {
       setCaptionIndex(targetIndex);
     }
-  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex]);
+  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex, captionTimingBoundaries]);
   
   // For cards without narration, use text-based timing
   useEffect(() => {
@@ -833,7 +861,7 @@ export default function CardPlayer({
                           const captionText = card.captions[captionIndex];
                           
                           // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
-                          // Uses deck-level globalScaleFactor for consistent sizing across all captions
+                          // Uses fixedSizeMode for consistent sizing across all captions
                           const styles = resolveStyles({
                             presetId: captionState?.presetId || 'clean_white',
                             fullScreen,
@@ -843,6 +871,7 @@ export default function CardPlayer({
                             layoutMode: 'title',
                             fontSize: captionState?.fontSize || 'medium',
                             globalScaleFactor: deckMeasurement.globalScaleFactor,
+                            fixedSizeMode: true, // Consistent font size across all captions
                             layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
                           });
                           
