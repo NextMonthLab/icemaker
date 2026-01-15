@@ -148,11 +148,13 @@ export default function Pricing() {
     if (plan.ctaHref === "/book-demo") {
       return plan.ctaHref;
     }
-    // If logged in, go to checkout; otherwise login with return URL
+    // If logged in, go to launchpad to start creating
+    // (Subscription billing happens during ICE checkout flow)
     if (user) {
-      return `/checkout?plan=${plan.name.toLowerCase()}`;
+      return "/launchpad";
     }
-    return `/login?returnUrl=${encodeURIComponent(`/checkout?plan=${plan.name.toLowerCase()}`)}`;
+    // Not logged in - go to login, then redirect to launchpad
+    return "/login?returnUrl=/launchpad";
   };
   
   return (
