@@ -59,9 +59,9 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     layout,
   } = input;
   
-  // Font size multipliers: small = 0.75x, medium = 1x, large = 1.25x
+  // Font size multipliers: small = 0.9x, medium = 1.1x, large = 1.35x
   // globalScaleFactor ensures consistency across all captions in a deck
-  const fontSizeMultiplier = fontSize === 'small' ? 0.75 : fontSize === 'large' ? 1.25 : 1;
+  const fontSizeMultiplier = fontSize === 'small' ? 0.9 : fontSize === 'large' ? 1.35 : 1.1;
 
   const preset = captionPresets[presetId] || captionPresets.clean_white;
   const typography = typographyTokens[preset.typography] || typographyTokens.sans;

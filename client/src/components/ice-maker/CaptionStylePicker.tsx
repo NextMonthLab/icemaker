@@ -62,9 +62,9 @@ const positionOptions: { id: CaptionPosition; name: string; icon: React.ReactNod
 ];
 
 const fontSizeOptions: { id: CaptionFontSize; name: string; scale: string }[] = [
-  { id: "small", name: "Small", scale: "0.75x" },
-  { id: "medium", name: "Medium", scale: "1x" },
-  { id: "large", name: "Large", scale: "1.25x" },
+  { id: "small", name: "Small", scale: "0.9x" },
+  { id: "medium", name: "Medium", scale: "1.1x" },
+  { id: "large", name: "Large", scale: "1.35x" },
 ];
 
 const karaokeStyleOptions: { id: KaraokeStyleId; name: string; icon: React.ReactNode; description: string }[] = [
