@@ -108,9 +108,15 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const baseFontSizeRaw = isParagraphMode ? baseTypographySize * 0.85 : baseTypographySize;
   
   // Per-caption fitting: each caption fits independently with its own font size
-  // No deck-wide scaling - only the long captions shrink, short ones stay large
+  // When deckTargetFontSize is provided, use it as the base to ensure consistency
   // Apply user's fontSize preference via fontSizeMultiplier
-  const baseFontSize = baseFontSizeRaw * fontSizeMultiplier;
+  const computedBaseFontSize = baseFontSizeRaw * fontSizeMultiplier;
+  
+  // If deck-level target is provided, use the smaller of the two
+  // This ensures all captions use the same size (determined by longest caption)
+  const baseFontSize = deckTargetFontSize 
+    ? Math.min(computedBaseFontSize, deckTargetFontSize) 
+    : computedBaseFontSize;
   
   // Raised minimum font sizes for better readability
   // Fullscreen: 32px min (was 24), Non-fullscreen: 24px min (was 16)

@@ -150,12 +150,34 @@ export default function CardPlayer({
     viewportScale: fullScreen ? 0.5 : 0.4,
   });
   
-  // Pre-calculate styles for all captions (cached to avoid recalc every render frame)
-  // Each caption fits independently - long ones shrink, short ones stay large
+  // Pre-calculate styles for all captions with deck-level font consistency
+  // First pass: compute individual font sizes, then use minimum for all
   const captionStylesCache = useMemo(() => {
     const captions = card.captions || [];
     const cache: Record<number, ReturnType<typeof resolveStyles>> = {};
     
+    if (captions.length === 0) return cache;
+    
+    // First pass: compute font sizes for each caption independently
+    const individualSizes: number[] = [];
+    for (let i = 0; i < captions.length; i++) {
+      const result = resolveStyles({
+        presetId: captionState?.presetId || 'clean_white',
+        fullScreen,
+        karaokeEnabled: captionState?.karaokeEnabled,
+        karaokeStyle: captionState?.karaokeStyle,
+        headlineText: captions[i],
+        layoutMode: 'title',
+        fontSize: captionState?.fontSize || 'medium',
+        layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
+      });
+      individualSizes.push(result.headlineFontSizePx);
+    }
+    
+    // Find minimum font size (determined by longest caption)
+    const deckTargetFontSize = Math.min(...individualSizes);
+    
+    // Second pass: apply uniform font size to all captions
     for (let i = 0; i < captions.length; i++) {
       cache[i] = resolveStyles({
         presetId: captionState?.presetId || 'clean_white',
@@ -166,6 +188,7 @@ export default function CardPlayer({
         layoutMode: 'title',
         fontSize: captionState?.fontSize || 'medium',
         layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
+        deckTargetFontSize,
       });
     }
     
