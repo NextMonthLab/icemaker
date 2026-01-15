@@ -529,12 +529,12 @@ export default function GuestIceBuilderPage() {
   
   // Save music and style settings when they change (debounced)
   const settingsSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const initialLoadRef = useRef(true);
+  const previewLoadedRef = useRef(false);
+  const skipNextSaveRef = useRef(true); // Skip until preview data is loaded
   
   useEffect(() => {
-    // Skip saving on initial load
-    if (initialLoadRef.current) {
-      initialLoadRef.current = false;
+    // Skip saving until preview data has been loaded and hydrated
+    if (skipNextSaveRef.current) {
       return;
     }
     
@@ -683,6 +683,12 @@ export default function GuestIceBuilderPage() {
       if (existingPreview.logoPosition) {
         setLogoPosition(existingPreview.logoPosition);
       }
+      
+      // Enable saving after a short delay to ensure all state is hydrated
+      setTimeout(() => {
+        skipNextSaveRef.current = false;
+      }, 1000);
+      
       // Load publish state
       if (existingPreview.visibility) {
         setIceVisibility(existingPreview.visibility);
