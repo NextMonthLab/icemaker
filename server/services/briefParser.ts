@@ -290,13 +290,39 @@ export class ProducerBriefParser {
           const cardIdMatch = cells[0].match(/(\d+)\.(\d+)/);
           if (cardIdMatch) {
             const cardIndex = parseInt(cardIdMatch[2]);
+            const rawVisual = cells[2] || '';
+            
+            // Parse IMAGE: vs VIDEO: prefix from visual column
+            let visualPrompt: string | undefined;
+            let videoPrompt: string | undefined;
+            
+            if (rawVisual) {
+              const trimmedVisual = rawVisual.trim();
+              // Check for VIDEO: prefix (with optional duration like "VIDEO (5s):" or "VIDEO (3s loop):")
+              // Using [\s\S] instead of . with 's' flag for ES2015 compatibility
+              const videoMatch = trimmedVisual.match(/^VIDEO\s*(?:\([^)]*\))?[:\s]+([\s\S]+)/i);
+              if (videoMatch) {
+                videoPrompt = videoMatch[1].trim();
+              } else {
+                // Check for IMAGE: prefix
+                const imageMatch = trimmedVisual.match(/^IMAGE[:\s]+([\s\S]+)/i);
+                if (imageMatch) {
+                  visualPrompt = imageMatch[1].trim();
+                } else {
+                  // No prefix - treat as image prompt by default
+                  visualPrompt = trimmedVisual;
+                }
+              }
+            }
+            
             cards.push({
               stageNumber: stageNum,
               stageName,
               cardIndex,
               cardId: cells[0],
               content: cells[1] || '',
-              visualPrompt: cells[2] || undefined,
+              visualPrompt,
+              videoPrompt,
               isCheckpoint: false,
             });
           }
