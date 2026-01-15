@@ -8,7 +8,6 @@ import MessageBoard from "@/components/MessageBoard";
 import type { CaptionState } from "@/caption-engine/schemas";
 import { resolveStyles } from "@/caption-engine/render/resolveStyles";
 import { ScaleToFitCaption } from "@/components/ScaleToFitCaption";
-import { measureCaptionSet } from "@/caption-engine/layout/fit";
 
 function useIsTabletLandscape() {
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
@@ -151,28 +150,27 @@ export default function CardPlayer({
     viewportScale: fullScreen ? 0.5 : 0.4,
   });
   
-  // Deck-level caption measurement for consistent sizing across all captions
-  // Computes the global scale factor based on the longest caption
-  const deckMeasurement = useMemo(() => {
-    const fontSize = captionState?.fontSize || 'medium';
-    const fontSizeMultiplier = fontSize === 'small' ? 0.8 : fontSize === 'large' ? 1.3 : 1;
-    // Increased base font sizes for better readability
-    const baseFontSize = (fullScreen ? 72 : 56) * fontSizeMultiplier;
-    const minFontSize = (fullScreen ? 36 : 28) * fontSizeMultiplier;
+  // Pre-calculate styles for all captions (cached to avoid recalc every render frame)
+  // Each caption fits independently - long ones shrink, short ones stay large
+  const captionStylesCache = useMemo(() => {
+    const captions = card.captions || [];
+    const cache: Record<number, ReturnType<typeof resolveStyles>> = {};
     
-    return measureCaptionSet({
-      captions: card.captions || [],
-      containerWidthPx: captionGeometry.availableCaptionWidth,
-      baseFontSize,
-      minFontSize,
-      maxLines: 3,
-      padding: 16,
-      lineHeight: 1.1,
-      fontFamily: 'Inter, sans-serif',
-      fontWeight: 700,
-      layoutMode: 'title',
-    });
-  }, [card.captions, captionGeometry.availableCaptionWidth, captionState?.fontSize, fullScreen]);
+    for (let i = 0; i < captions.length; i++) {
+      cache[i] = resolveStyles({
+        presetId: captionState?.presetId || 'clean_white',
+        fullScreen,
+        karaokeEnabled: captionState?.karaokeEnabled,
+        karaokeStyle: captionState?.karaokeStyle,
+        headlineText: captions[i],
+        layoutMode: 'title',
+        fontSize: captionState?.fontSize || 'medium',
+        layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
+      });
+    }
+    
+    return cache;
+  }, [card.captions, captionGeometry.availableCaptionWidth, captionState?.presetId, captionState?.fontSize, captionState?.karaokeEnabled, captionState?.karaokeStyle, fullScreen]);
 
   const getActiveMedia = () => {
     if (card.mediaAssets?.length && card.selectedMediaAssetId) {
@@ -855,25 +853,10 @@ export default function CardPlayer({
                         maxWidth: captionGeometry.availableCaptionWidth,
                       }}
                     >
-                      {captionIndex < card.captions.length ? (
+                      {captionIndex < card.captions.length && captionStylesCache[captionIndex] ? (
                         (() => {
-                          const captionText = card.captions[captionIndex];
-                          
-                          // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
-                          // Per-caption fitting: each caption fits independently
-                          // Long captions shrink as needed, short ones stay large
-                          const styles = resolveStyles({
-                            presetId: captionState?.presetId || 'clean_white',
-                            fullScreen,
-                            karaokeEnabled: captionState?.karaokeEnabled,
-                            karaokeStyle: captionState?.karaokeStyle,
-                            headlineText: captionText,
-                            layoutMode: 'title',
-                            fontSize: captionState?.fontSize || 'medium',
-                            // No deckTargetFontSize - per-caption fitting
-                            layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
-                          });
-                          
+                          // Use cached styles (pre-calculated in useMemo)
+                          const styles = captionStylesCache[captionIndex];
                           const showCaptionDebug = new URLSearchParams(window.location.search).get('captionDebug') === '1';
                           
                           return (
