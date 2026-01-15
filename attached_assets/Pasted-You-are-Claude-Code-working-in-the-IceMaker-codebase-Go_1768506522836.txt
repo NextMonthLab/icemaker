@@ -1,0 +1,96 @@
+You are Claude Code working in the IceMaker codebase.
+
+Goal
+Implement plan-based gating for AI video generation models so users are not choosing confusing model names and cannot use premium engines on cheaper plans. Default behaviour should be “Auto (Best for your plan)”. Power users on eligible plans can optionally switch engines via an Advanced toggle.
+
+Non-negotiables
+1) Enforce gating on the SERVER, not only the UI.
+2) Keep the current providers working (Kling 1.6 Standard/Pro, Minimax Video, Haiper Video 2).
+3) Preserve current generation flow and UI styling as much as possible; minimise scope creep.
+4) Add clear upgrade messaging if a user attempts a locked engine.
+5) Add telemetry/logging so we can see which engine is used, by plan.
+
+Definitions
+- “Engine” = user-facing label (Standard / Advanced / Studio-grade) mapped to a provider model.
+- “Model” = underlying provider choice (e.g. Kling 1.6 Pro).
+- “Auto” = server selects best allowed model for plan + duration.
+
+Plan → Allowed models (implement as config so we can adjust later)
+Starter (or Free/Individual if that exists):
+- Allowed: Kling 1.6 Standard
+- Disallow: Kling 1.6 Pro, Minimax Video, Haiper Video 2
+
+Pro (Creator):
+- Allowed: Kling 1.6 Standard, Kling 1.6 Pro
+- Disallow: Minimax Video, Haiper Video 2
+
+Business/Studio (highest tier):
+- Allowed: Kling 1.6 Standard, Kling 1.6 Pro, Minimax Video, Haiper Video 2
+
+If plan names differ in code, map these rules to the existing tier identifiers.
+
+UX requirements
+A) Replace the current “Model” dropdown with:
+   - Primary selector: Engine (Auto / Standard / Advanced / Studio-grade)
+   - Default: Auto
+B) Show the underlying model in small helper text (e.g. “Powered by Kling 1.6 Pro”) once selected.
+C) Add an “Advanced” toggle that reveals a secondary “Provider model” dropdown ONLY for plans that allow >1 provider (Pro+).
+   - Starter users never see provider choice.
+D) If a user on a lower plan tries to select a locked option, show an upsell modal or inline callout:
+   - Title: “Unlock Studio-grade video”
+   - Body: “Upgrade to access higher realism, smoother motion, and priority rendering.”
+   - CTA: “Upgrade” (wired to existing upgrade route) + “Not now”
+E) If “Auto” is selected, hide provider details and just show “Best for your plan”.
+
+Backend requirements
+1) Create a single source of truth for plan gating (e.g. server/config/videoEngines.ts):
+   - function getAllowedVideoModels(planTier): VideoModel[]
+   - function resolveAutoVideoModel(planTier, duration, mode, maybePreference): VideoModel
+2) Update the video generation endpoint so that:
+   - It accepts requestedEngine or requestedModel (optional).
+   - It validates requestedModel is allowed for the user’s plan.
+   - If not allowed, return HTTP 403 with a structured error code like VIDEO_MODEL_NOT_ALLOWED and include:
+        { allowedEngines, upgradeRequired: true, suggestedTier }
+   - If engine=Auto or no model provided, resolve the model server-side.
+3) Never rely on any client-provided “plan” field; derive from authenticated user/session.
+4) Add logging/telemetry for each generation request:
+   - userId (or anonymised), planTier, resolvedModel, duration, provider, success/failure, estimatedCost if available.
+   - If cost estimation exists in code, include it; otherwise add a placeholder and TODO.
+
+Front-end integration details
+- Find where the current AI Video UI is implemented (likely in an ICE editor card panel, “AI Video” tab).
+- Replace model dropdown with Engine selector + Advanced toggle + optional provider dropdown.
+- Ensure the UI can render “locked” choices with a small lock icon and an “Upgrade” hint.
+- When server returns VIDEO_MODEL_NOT_ALLOWED:
+   - show the upsell UI and do NOT retry automatically
+   - keep the user’s selection but mark it locked
+
+Acceptance tests / checks
+- Starter user:
+   - Sees only Engine selector (Auto/Standard) and cannot access Pro/Studio engines
+   - Any attempt to call endpoint with Kling Pro/Minimax/Haiper returns 403 VIDEO_MODEL_NOT_ALLOWED
+- Pro user:
+   - Can use Kling Standard/Pro, sees Advanced toggle (if you choose), but cannot use Minimax/Haiper
+- Business/Studio user:
+   - Can access all engines and providers
+- Auto selection works for all tiers and always picks an allowed model
+- UI does not display raw model names as primary labels
+- Logs show resolved model + plan tier for each generation
+
+Implementation steps
+1) Locate current tier/plan system and where it is stored on the server.
+2) Implement server config + gating + auto resolver.
+3) Update video generation route to validate and resolve.
+4) Update UI components accordingly.
+5) Add structured error handling and upsell UI.
+6) Add minimal tests (unit or integration) for gating logic if test harness exists.
+7) Run lint/build and ensure no regressions.
+
+Deliverables
+- Code changes implementing plan-based engine gating + auto selection
+- Updated UI with Engine selector and optional advanced provider choice
+- Server-side enforcement + structured errors
+- Basic logging/telemetry for engine usage
+- Short note in a CHANGELOG or relevant docs describing the new behaviour
+
+Proceed now.

@@ -17,6 +17,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { VideoEngineSelector, type VideoEngineConfig, type VideoEngine, type VideoModel } from "@/components/ui/VideoEngineSelector";
+import { VideoUpsellModal } from "@/components/ui/VideoUpsellModal";
 
 interface MediaAsset {
   id: string;
@@ -163,6 +165,7 @@ export function IceCardEditor({
   const [imagePrompt, setImagePrompt] = useState(extractPromptText(card.visualPrompt));
   const [imageLoading, setImageLoading] = useState(false);
   const [videoMode, setVideoMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
+  const [videoEngine, setVideoEngine] = useState("auto");
   const [videoModel, setVideoModel] = useState("");
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
   const [videoPrompt, setVideoPrompt] = useState(extractPromptText(card.videoPrompt) || extractPromptText(card.visualPrompt));
@@ -175,6 +178,8 @@ export function IceCardEditor({
   const [videoStatus, setVideoStatus] = useState<string | null>(null);
   const [videoGenElapsed, setVideoGenElapsed] = useState(0);
   const [videoGenStartTime, setVideoGenStartTime] = useState<number | null>(null);
+  const [showVideoUpsell, setShowVideoUpsell] = useState(false);
+  const [upsellTier, setUpsellTier] = useState("pro");
   
   const [narrationEnabled, setNarrationEnabled] = useState(false);
   const [narrationText, setNarrationText] = useState(card.content || "");
@@ -212,10 +217,23 @@ export function IceCardEditor({
   });
   
   useEffect(() => {
+    if (videoConfig?.defaultEngine && !videoEngine) {
+      setVideoEngine(videoConfig.defaultEngine);
+    }
     if (videoConfig?.models?.length > 0 && !videoModel) {
       setVideoModel(videoConfig.models[0].id);
     }
-  }, [videoConfig, videoModel]);
+  }, [videoConfig, videoEngine, videoModel]);
+  
+  const handleLockedEngineClick = (engine: VideoEngine) => {
+    setUpsellTier(engine.requiredTier || 'pro');
+    setShowVideoUpsell(true);
+  };
+  
+  const handleLockedModelClick = (model: VideoModel) => {
+    setUpsellTier(model.requiredTier || 'pro');
+    setShowVideoUpsell(true);
+  };
   
   useEffect(() => {
     if (videoStatus === "processing" || videoStatus === "pending") {
@@ -462,6 +480,7 @@ export function IceCardEditor({
         credentials: "include",
         body: JSON.stringify({
           mode: videoMode,
+          engine: videoEngine,
           model: videoModel,
           duration: videoDuration,
           prompt: effectivePrompt,
@@ -471,8 +490,11 @@ export function IceCardEditor({
       
       if (!res.ok) {
         const err = await res.json();
-        if (err.upgradeRequired) {
-          onUpgradeClick();
+        if (err.errorCode === 'VIDEO_MODEL_NOT_ALLOWED' || err.upgradeRequired) {
+          setUpsellTier(err.suggestedTier || 'pro');
+          setShowVideoUpsell(true);
+          setVideoLoading(false);
+          setVideoStatus(null);
           return;
         }
         throw new Error(err.message || "Failed to generate video");
@@ -1213,7 +1235,7 @@ export function IceCardEditor({
                     </div>
                   ) : (
                     <>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <Label className="text-slate-300">Mode</Label>
                           <Select value={videoMode} onValueChange={(v) => setVideoMode(v as any)}>
@@ -1223,20 +1245,6 @@ export function IceCardEditor({
                             <SelectContent>
                               <SelectItem value="text-to-video">Text to Video</SelectItem>
                               <SelectItem value="image-to-video">Image to Video</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label className="text-slate-300">Model</Label>
-                          <Select value={videoModel} onValueChange={setVideoModel}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {videoConfig?.models?.map((m: any) => (
-                                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -1254,6 +1262,16 @@ export function IceCardEditor({
                           </Select>
                         </div>
                       </div>
+                      
+                      <VideoEngineSelector
+                        config={videoConfig as VideoEngineConfig}
+                        selectedEngine={videoEngine}
+                        selectedModel={videoModel}
+                        onEngineChange={setVideoEngine}
+                        onModelChange={setVideoModel}
+                        onLockedEngineClick={handleLockedEngineClick}
+                        onLockedModelClick={handleLockedModelClick}
+                      />
                       
                       {videoMode === "image-to-video" && (
                         <div className="space-y-2">
@@ -1633,6 +1651,14 @@ export function IceCardEditor({
           </motion.div>
         )}
       </AnimatePresence>
+      
+      <VideoUpsellModal
+        open={showVideoUpsell}
+        onOpenChange={setShowVideoUpsell}
+        requiredTier={upsellTier}
+        featureName={upsellTier === 'business' ? "Studio-grade video" : "Advanced video"}
+        onUpgrade={onUpgradeClick}
+      />
     </div>
   );
 }

@@ -5670,28 +5670,42 @@ Output only the narration paragraph, nothing else.`;
 
   // ============ VIDEO GENERATION ROUTES ============
   
-  // Check video providers configuration
+  // Check video providers configuration with plan-based gating
   app.get("/api/video/config", async (req, res) => {
     try {
-      const { isKlingConfigured, getKlingModels, isReplicateConfigured, getReplicateModels } = await import("./video");
+      const { isReplicateConfigured } = await import("./video");
+      const { getVideoEngineClientConfig } = await import("./config/videoEngines");
       
-      const models: any[] = [];
-      const providers: string[] = [];
+      // Determine user's plan tier based on entitlements (works for all user roles)
+      let planTier: 'free' | 'pro' | 'business' | 'admin' = 'free';
       
-      if (isReplicateConfigured()) {
-        providers.push("replicate");
-        models.push(...getReplicateModels());
+      if (req.isAuthenticated() && req.user) {
+        const user = req.user as schema.User;
+        if (user.isAdmin || user.role === 'admin') {
+          planTier = 'admin';
+        } else {
+          // Use entitlements for all authenticated users (not just creators)
+          const entitlements = await getFullEntitlements(user.id);
+          const planNameLower = entitlements.planName.toLowerCase();
+          if (planNameLower.includes('business') || planNameLower.includes('enterprise') ||
+              planNameLower === 'admin') {
+            planTier = 'business';
+          } else if (planNameLower.includes('pro') || planNameLower.includes('creator') ||
+                     planNameLower.includes('premium')) {
+            planTier = 'pro';
+          } else if (entitlements.canGenerateVideos) {
+            // If user has video generation but plan name doesn't match, default to pro
+            planTier = 'pro';
+          }
+        }
       }
       
-      if (isKlingConfigured()) {
-        providers.push("kling");
-        models.push(...getKlingModels().map(m => ({ ...m, provider: "kling" })));
-      }
+      const engineConfig = getVideoEngineClientConfig(planTier);
       
       res.json({
-        configured: providers.length > 0,
-        providers,
-        models,
+        configured: isReplicateConfigured(),
+        providers: isReplicateConfigured() ? ['replicate'] : [],
+        ...engineConfig,
       });
     } catch (error) {
       console.error("Error checking video config:", error);
@@ -8115,23 +8129,61 @@ Stay engaging, reference story details, and help the audience understand the nar
       });
       
       // Get video settings from request
-      const { model, duration } = req.body;
+      const { model, duration, engine } = req.body;
       const basePrompt = prompt || `Cinematic scene: ${card.title}. ${card.content}`;
       // Enhance prompt to ensure no text is rendered in the video
       const videoPrompt = `${basePrompt}. IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this video. Pure visual imagery only.`;
       
-      // Import video generation functions
+      // Import video generation functions and gating
       const { isReplicateConfigured, startReplicateVideoAsync } = await import("./video");
+      const { validateVideoRequest } = await import("./config/videoEngines");
       
       if (!isReplicateConfigured()) {
         return res.status(503).json({ message: "Video generation not configured" });
       }
       
+      // Determine user's plan tier for video model gating (consistent with /api/video/config)
+      let planTier: 'free' | 'pro' | 'business' | 'admin' = 'free';
+      if (user.isAdmin || user.role === 'admin') {
+        planTier = 'admin';
+      } else {
+        const planNameLower = entitlements.planName.toLowerCase();
+        if (planNameLower.includes('business') || planNameLower.includes('enterprise') ||
+            planNameLower === 'admin') {
+          planTier = 'business';
+        } else if (planNameLower.includes('pro') || planNameLower.includes('creator') ||
+                   planNameLower.includes('premium')) {
+          planTier = 'pro';
+        } else if (entitlements.canGenerateVideos) {
+          // If user has video generation but plan name doesn't match, default to pro
+          planTier = 'pro';
+        }
+      }
+      
+      // Validate and resolve video model based on plan
+      const gatingResult = validateVideoRequest(planTier, engine, model, duration, mode);
+      
+      if (!gatingResult.allowed) {
+        console.log(`[Video Gating] Denied: user=${user.id}, planTier=${planTier}, requestedModel=${model}, requestedEngine=${engine}, reason=${gatingResult.reason}`);
+        // Use 400 for unknown values (upgradeRequired=false), 403 for locked features (upgradeRequired=true)
+        const statusCode = gatingResult.upgradeRequired ? 403 : 400;
+        return res.status(statusCode).json({
+          message: gatingResult.reason,
+          errorCode: gatingResult.upgradeRequired ? 'VIDEO_MODEL_NOT_ALLOWED' : 'INVALID_VIDEO_MODEL',
+          upgradeRequired: gatingResult.upgradeRequired || false,
+          suggestedTier: gatingResult.suggestedTier,
+          allowedEngines: gatingResult.allowedEngines,
+        });
+      }
+      
+      const resolvedModel = gatingResult.resolvedModel;
+      console.log(`[Video Gating] Allowed: user=${user.id}, planTier=${planTier}, resolvedModel=${resolvedModel}, engine=${engine || 'auto'}`);
+      
       // Start async video generation
       const result = await startReplicateVideoAsync({
         prompt: videoPrompt,
         imageUrl: mode === "image-to-video" ? sourceImageUrl : undefined,
-        model: model || "kling-v1.6-standard",
+        model: resolvedModel,
         duration: duration || 5,
         aspectRatio: "9:16",
         negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
@@ -8145,7 +8197,7 @@ Stay engaging, reference story details, and help the audience understand the nar
         videoGenerationStatus: "processing",
         videoGenerationMode: mode || "text-to-video",
         videoGenerationPrompt: videoPrompt.substring(0, 500), // Store for asset metadata
-        videoGenerationModel: model || "kling-v1.6-standard",
+        videoGenerationModel: resolvedModel,
       };
       await storage.updateIcePreview(previewId, { cards });
       
@@ -8154,23 +8206,32 @@ Stay engaging, reference story details, and help the audience understand the nar
         const profile = await storage.getCreatorProfile(user.id);
         if (profile) {
           const videoDuration = duration || 5;
-          const modelUsed = model || "kling-v1.6-standard";
-          // Pricing: ~$0.15 per second for Kling
-          const videoCost = videoDuration * 0.15;
+          // Get cost from video models config
+          const { VIDEO_MODELS } = await import("./config/videoEngines");
+          const modelConfig = VIDEO_MODELS[resolvedModel as keyof typeof VIDEO_MODELS];
+          const videoCost = modelConfig ? modelConfig.costPer5s * (videoDuration / 5) : videoDuration * 0.15;
+          
           await storage.logAiUsageEvent({
             profileId: profile.id,
             iceId: previewId,
             usageType: 'video_gen',
             creditsUsed: videoCost,
-            model: modelUsed,
-            metadata: { cardId, duration: videoDuration, mode: mode || 'text-to-video' },
+            model: resolvedModel,
+            metadata: { 
+              cardId, 
+              duration: videoDuration, 
+              mode: mode || 'text-to-video',
+              engine: engine || 'auto',
+              planTier,
+              estimatedCost: videoCost,
+            },
           });
         }
       } catch (aiLogError) {
         console.warn('Failed to log AI video usage:', aiLogError);
       }
       
-      console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId}`);
+      console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId}, model=${resolvedModel}, planTier=${planTier}`);
       
       res.json({
         success: true,
@@ -8178,6 +8239,8 @@ Stay engaging, reference story details, and help the audience understand the nar
         status: "processing",
         predictionId: result.predictionId,
         cardId,
+        resolvedModel,
+        engine: engine || 'auto',
       });
     } catch (error: any) {
       console.error("Error generating ICE preview card video:", error);
