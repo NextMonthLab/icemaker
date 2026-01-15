@@ -407,24 +407,18 @@ export default function CardPlayer({
   }, [hasNarration, audioDuration]);
 
   // Calculate cumulative time boundaries (in seconds) for each caption
-  // Based on word count proportions relative to total audio duration
+  // Use equal time slices for more predictable sync with TTS narration
   const captionTimeBoundaries = useMemo(() => {
     const captions = card.captions || [];
     if (captions.length === 0 || !audioDuration || audioDuration <= 0) return [];
     
-    // Count words in each caption (minimum 1 word per caption)
-    const wordCounts = captions.map(c => 
-      Math.max(1, (c || '').split(/\s+/).filter(w => w.length > 0).length)
-    );
-    const totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
+    // Equal time per caption - more predictable for TTS narration
+    const perCaptionDuration = audioDuration / captions.length;
     
     // Calculate cumulative end times in seconds
     const boundaries: number[] = [];
-    let cumulativeTime = 0;
-    for (const count of wordCounts) {
-      const captionDuration = (count / totalWords) * audioDuration;
-      cumulativeTime += captionDuration;
-      boundaries.push(cumulativeTime);
+    for (let i = 0; i < captions.length; i++) {
+      boundaries.push((i + 1) * perCaptionDuration);
     }
     return boundaries;
   }, [card.captions, audioDuration]);
@@ -862,7 +856,9 @@ export default function CardPlayer({
                           const captionText = card.captions[captionIndex];
                           
                           // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
-                          // Uses deckTargetFontSize for consistent sizing while still fitting to prevent overflow
+                          // Uses deckTargetFontSize (baseFontSize * globalScaleFactor) for consistent sizing
+                          // globalScaleFactor is clamped at 85% to prevent extreme shrinking
+                          const deckTargetFontSize = deckMeasurement.baseFontSize * deckMeasurement.globalScaleFactor;
                           const styles = resolveStyles({
                             presetId: captionState?.presetId || 'clean_white',
                             fullScreen,
@@ -871,7 +867,7 @@ export default function CardPlayer({
                             headlineText: captionText,
                             layoutMode: 'title',
                             fontSize: captionState?.fontSize || 'medium',
-                            deckTargetFontSize: deckMeasurement.smallestFontSize, // Consistent sizing across deck
+                            deckTargetFontSize, // Consistent sizing - clamped at 85% of base
                             layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
                           });
                           
