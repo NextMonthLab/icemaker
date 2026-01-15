@@ -404,47 +404,58 @@ export default function CardPlayer({
     }
   }, [hasNarration, audioDuration]);
 
-  // Calculate cumulative time boundaries (in seconds) for each caption
+  // Calculate caption time ranges (start/end in seconds) for each caption
   // Priority: 1) Use explicit timing data if available, 2) Fall back to equal time slices
-  const captionTimeBoundaries = useMemo(() => {
+  const captionTimeRanges = useMemo(() => {
     const captions = card.captions || [];
     if (captions.length === 0 || !audioDuration || audioDuration <= 0) return [];
     
     // Use aligned timing data if available (Phase 2 - Forced Alignment)
     const timings = card.captionTimings;
     if (timings && timings.length === captions.length) {
-      // Return end times in seconds for boundary checks
-      return timings.map(t => t.endMs / 1000);
+      return timings.map(t => ({
+        start: t.startMs / 1000,
+        end: t.endMs / 1000,
+      }));
     }
     
-    // Fallback: Equal time per caption
+    // Fallback: Equal time per caption (no gaps)
     const perCaptionDuration = audioDuration / captions.length;
-    const boundaries: number[] = [];
-    for (let i = 0; i < captions.length; i++) {
-      boundaries.push((i + 1) * perCaptionDuration);
-    }
-    return boundaries;
+    return captions.map((_, i) => ({
+      start: i * perCaptionDuration,
+      end: (i + 1) * perCaptionDuration,
+    }));
   }, [card.captions, card.captionTimings, audioDuration]);
   
   // Sync captions with audio progress when narration is playing
-  // Uses direct time comparison for accurate sync
+  // Gap behavior: hold previous caption until next one starts (avoids "captions vanished" feeling)
   useEffect(() => {
     if (!hasNarration || !audioDuration || audioDuration <= 0) return;
     if (!isPlaying || phase !== "cinematic") return;
     
     const captionCount = card.captions.length;
-    if (captionCount === 0 || captionTimeBoundaries.length === 0) return;
+    if (captionCount === 0 || captionTimeRanges.length === 0) return;
     
     // Find which caption should be active based on current audio time
-    let targetIndex = 0;
-    for (let i = 0; i < captionTimeBoundaries.length; i++) {
-      if (audioProgress < captionTimeBoundaries[i]) {
+    // Gap behavior: hold previous caption during gaps between captions
+    let targetIndex = captionIndex;
+    
+    for (let i = 0; i < captionTimeRanges.length; i++) {
+      const range = captionTimeRanges[i];
+      // If we're within this caption's range, show it
+      if (audioProgress >= range.start && audioProgress < range.end) {
         targetIndex = i;
         break;
       }
-      // If we've passed all boundaries, stay on last caption
-      if (i === captionTimeBoundaries.length - 1) {
-        targetIndex = i;
+      // If we're past this caption but before the next one starts (gap),
+      // hold the current caption (don't change targetIndex)
+      if (audioProgress >= range.end) {
+        const nextRange = captionTimeRanges[i + 1];
+        if (!nextRange || audioProgress < nextRange.start) {
+          // In a gap - hold this caption
+          targetIndex = i;
+          break;
+        }
       }
     }
     
@@ -452,7 +463,7 @@ export default function CardPlayer({
     if (targetIndex !== captionIndex) {
       setCaptionIndex(targetIndex);
     }
-  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex, captionTimeBoundaries]);
+  }, [hasNarration, audioDuration, audioProgress, isPlaying, phase, card.captions.length, captionIndex, captionTimeRanges]);
   
   // For cards without narration, use text-based timing
   useEffect(() => {

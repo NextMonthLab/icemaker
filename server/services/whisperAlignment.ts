@@ -105,12 +105,14 @@ export async function transcribeAudio(audioUrl: string): Promise<AlignmentTransc
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
     const audioFile = new File([audioBlob], 'narration.mp3', { type: 'audio/mp3' });
     
-    // Call Whisper API with word-level timestamps
+    // Call Whisper API with both word + segment timestamps
+    // Segment is free/cheap, word adds latency but gives precision
+    // Having both allows fallback to segment-level if word-level looks weird
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
       response_format: 'verbose_json',
-      timestamp_granularities: ['word'],
+      timestamp_granularities: ['word', 'segment'],
     });
     
     // Extract words with timestamps

@@ -36,6 +36,7 @@ Key architectural decisions and features include:
 -   **Orbit Seed Pack (CPAC)**: JSON format for seeding Industry Orbits with products, entities, communities, and tiles, managed via an admin panel.
 -   **Orbit → ICE Flywheel**: Enables admins and influencers to convert Orbit insights into shareable ICE content drafts.
 -   **Caption Engine**: Remotion-based caption system for ICE content with token-driven design, various presets, safe area profiles for social media, phrase grouping, karaoke highlighting, word-level timing, and a fit-to-box layout engine.
+-   **Caption Forced Alignment**: Whisper API-based word-level timestamp extraction for precise caption sync. Features fuzzy word matching with contraction expansion, per-caption fallback on low confidence, and "hold previous caption" gap behavior. Enabled via `CAPTION_ALIGNMENT_ENABLED=true` and `captionTimingMode='aligned'` per ICE.
 -   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring Orbit system health.
 -   **Media Cost Guardrails**: Strictly enforced economic constraints on video (5-second cap, no HD) and images (1024x1024, ~$0.04/image) to preserve profitability.
 -   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
