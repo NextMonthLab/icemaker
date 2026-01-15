@@ -4981,7 +4981,10 @@ export async function registerRoutes(
       const { priceId, planName, previewId, mediaOptions, outputChoice, interactivityNodeCount, expansionScope, devBypass } = req.body;
       
       // DEV BYPASS: Skip Stripe and directly upgrade the user (for testing)
-      if (devBypass === true) {
+      // Only allowed in development environment (Replit) to prevent production abuse
+      // Render sets NODE_ENV=production so this won't trigger there
+      const isReplitDev = process.env.NODE_ENV === 'development' && process.env.REPL_ID;
+      if (devBypass === true && isReplitDev) {
         const targetPlanName = planName || "pro"; // Default to pro if no plan specified
         const plan = await storage.getPlanByName(targetPlanName);
         if (!plan) {
@@ -5019,7 +5022,17 @@ export async function registerRoutes(
       }
       
       const { getUncachableStripeClient, getStripePublishableKey } = await import("./stripeClient");
-      const stripe = await getUncachableStripeClient();
+      
+      let stripe: Awaited<ReturnType<typeof getUncachableStripeClient>>;
+      try {
+        stripe = await getUncachableStripeClient();
+      } catch (stripeError: any) {
+        console.error("[checkout] Stripe not configured:", stripeError.message);
+        return res.status(503).json({
+          message: "Payment processing is temporarily unavailable. Please try again later.",
+          error: "STRIPE_NOT_CONFIGURED",
+        });
+      }
       
       const plan = await storage.getPlanByName(planName);
       if (!plan) {

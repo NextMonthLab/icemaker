@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Zap, Building2 } from "lucide-react";
+import { Check, Sparkles, Zap, Building2, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api";
-import type { Plan, PlanFeatures } from "@shared/schema";
+import type { Plan, PlanFeatures, User } from "@shared/schema";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -34,6 +35,19 @@ const planColors: Record<string, string> = {
 
 export function UpgradeModal({ open, onOpenChange, feature, reason }: UpgradeModalProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+  
+  // Fetch current user to check authentication
+  const { data: user } = useQuery<User | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: async () => {
+      const response = await fetch("/api/auth/me", { credentials: "include" });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    staleTime: 30000,
+  });
   
   const { data: plans } = useQuery({
     queryKey: ["plans"],
@@ -44,10 +58,24 @@ export function UpgradeModal({ open, onOpenChange, feature, reason }: UpgradeMod
     },
   });
   
+  const handleLoginRedirect = () => {
+    // Close modal and redirect to login
+    onOpenChange(false);
+    setLocation("/login?redirect=/create");
+  };
+  
   const handleUpgrade = async (plan: Plan) => {
     if (plan.name === "free" || !plan.stripePriceIdMonthly) return;
     
+    // Check if user is authenticated
+    if (!user) {
+      handleLoginRedirect();
+      return;
+    }
+    
     setLoading(plan.name);
+    setError(null);
+    
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -55,26 +83,35 @@ export function UpgradeModal({ open, onOpenChange, feature, reason }: UpgradeMod
         body: JSON.stringify({
           priceId: plan.stripePriceIdMonthly,
           planName: plan.name,
-          devBypass: true, // DEV: Skip Stripe checkout
         }),
         credentials: "include",
       });
       
-      if (!response.ok) throw new Error("Failed to create checkout session");
-      
-      const data = await response.json();
-      
-      // DEV BYPASS: Handle direct upgrade
-      if (data.devBypass && data.success) {
-        window.location.href = data.redirectUrl || '/dashboard';
+      if (response.status === 401) {
+        // Not authenticated - redirect to login
+        handleLoginRedirect();
         return;
       }
       
-      if (data.url) {
-        window.location.href = data.url;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create checkout session");
       }
-    } catch (error) {
-      console.error("Upgrade error:", error);
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else if (data.message) {
+        // Handle server messages (e.g., Stripe not configured)
+        setError(data.message);
+      } else {
+        setError("Checkout session could not be created. Please try again later.");
+      }
+    } catch (err: any) {
+      console.error("Upgrade error:", err);
+      setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -124,6 +161,37 @@ export function UpgradeModal({ open, onOpenChange, feature, reason }: UpgradeMod
             {reason || "Upgrade to access premium features and take your stories further."}
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Error message display */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30 mt-4">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-destructive font-medium">{error}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Please try again or contact support if the issue persists.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Login prompt for unauthenticated users */}
+        {!user && (
+          <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/30 mt-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Sign in to upgrade</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Create an account or sign in to access premium plans.
+                </p>
+              </div>
+            </div>
+            <Button onClick={handleLoginRedirect} size="sm" data-testid="button-login-to-upgrade">
+              Sign In
+            </Button>
+          </div>
+        )}
         
         <div className="grid md:grid-cols-3 gap-4 mt-6">
           {plans?.map((plan) => {
