@@ -61,9 +61,11 @@ export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillCol
     case "panel":
       return {
         ...baseContainerStyles,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        padding: "20px 28px",
-        borderRadius: "16px",
+        backgroundColor: "rgba(0, 0, 0, 0.55)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        padding: "16px 24px",
+        borderRadius: "12px",
       };
     case "pill":
       return {
