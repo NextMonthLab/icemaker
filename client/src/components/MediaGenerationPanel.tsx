@@ -1,21 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Image, 
-  Video, 
-  Loader2, 
-  Lock, 
+import { Switch } from "@/components/ui/switch";
+import {
+  Image,
+  Video,
+  Loader2,
+  Lock,
   Sparkles,
   Wand2,
   Music,
   Mic,
-  ChevronRight
+  ChevronRight,
+  Settings2
 } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface MediaGenerationPanelProps {
   previewId: string;
@@ -83,6 +93,29 @@ export function MediaGenerationPanel({
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(currentImageUrl || null);
 
+  // Video engine selection state
+  const [selectedEngine, setSelectedEngine] = useState<string>("auto");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [upgradeDialogInfo, setUpgradeDialogInfo] = useState<{
+    title: string;
+    message: string;
+    suggestedTier?: string;
+  } | null>(null);
+
+  // Fetch video configuration to get available engines and models
+  const { data: videoConfig } = useQuery({
+    queryKey: ["video-config"],
+    queryFn: async () => {
+      const res = await fetch("/api/video/config", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch video config");
+      return res.json();
+    },
+  });
+
   const generateImageMutation = useMutation({
     mutationFn: async () => {
       setIsGeneratingImage(true);
@@ -120,13 +153,27 @@ export function MediaGenerationPanel({
           mode: videoMode,
           prompt: `${cardTitle}. ${cardContent}`,
           sourceImageUrl: generatedImageUrl,
+          engine: selectedEngine,
+          model: showAdvanced ? selectedModel : undefined,
         }),
       });
+
+      const data = await res.json();
+
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to generate video");
+        // Handle VIDEO_MODEL_NOT_ALLOWED error with upgrade dialog
+        if (data.error === "VIDEO_MODEL_NOT_ALLOWED") {
+          setUpgradeDialogInfo({
+            title: "Unlock Studio-grade Video",
+            message: data.message || "This video engine requires a higher plan tier.",
+            suggestedTier: data.suggestedTier,
+          });
+          setShowUpgradeDialog(true);
+          throw new Error(data.message || "Model not allowed");
+        }
+        throw new Error(data.message || "Failed to generate video");
       }
-      return res.json();
+      return data;
     },
     onSuccess: () => {
       onMediaGenerated?.();
@@ -221,6 +268,91 @@ export function MediaGenerationPanel({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-slate-400">Quality</Label>
+                <Select value={selectedEngine} onValueChange={setSelectedEngine}>
+                  <SelectTrigger className="bg-slate-900 border-slate-700 text-white" data-testid="select-video-engine">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videoConfig?.engines?.map((engine: any) => (
+                      <SelectItem
+                        key={engine.engine}
+                        value={engine.engine}
+                        disabled={engine.locked}
+                      >
+                        <div className="flex items-center gap-2">
+                          {engine.locked && <Lock className="w-3 h-3" />}
+                          {engine.displayName}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedEngine === "auto" && (
+                  <p className="text-xs text-slate-500">Best for your plan</p>
+                )}
+                {selectedEngine !== "auto" && videoConfig?.videoModels && (
+                  <p className="text-xs text-slate-500">
+                    Powered by{" "}
+                    {videoConfig.videoModels.find(
+                      (m: any) =>
+                        videoConfig.engines
+                          .find((e: any) => e.engine === selectedEngine)
+                          ?.models?.includes(m.model)
+                    )?.displayName || "quality model"}
+                  </p>
+                )}
+              </div>
+
+              {videoConfig?.allowedModels && videoConfig.allowedModels.length > 1 && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Switch
+                    id="advanced-mode"
+                    checked={showAdvanced}
+                    onCheckedChange={setShowAdvanced}
+                    className="data-[state=checked]:bg-cyan-600"
+                  />
+                  <Label htmlFor="advanced-mode" className="text-xs text-slate-400 cursor-pointer">
+                    <div className="flex items-center gap-1">
+                      <Settings2 className="w-3 h-3" />
+                      Advanced
+                    </div>
+                  </Label>
+                </div>
+              )}
+
+              {showAdvanced && videoConfig?.videoModels && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-slate-400">Provider Model</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="bg-slate-900 border-slate-700 text-white" data-testid="select-video-model">
+                      <SelectValue placeholder="Auto-select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {videoConfig.videoModels.map((model: any) => (
+                        <SelectItem
+                          key={model.model}
+                          value={model.model}
+                          disabled={model.locked}
+                        >
+                          <div className="flex items-center justify-between gap-2 w-full">
+                            <div className="flex items-center gap-2">
+                              {model.locked && <Lock className="w-3 h-3" />}
+                              {model.displayName}
+                            </div>
+                            <span className="text-xs text-slate-500">
+                              ${model.costPer5s}/5s
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <Button
                 onClick={() => generateVideoMutation.mutate()}
                 disabled={isGeneratingVideo || (videoMode === "image-to-video" && !generatedImageUrl)}
@@ -299,6 +431,60 @@ export function MediaGenerationPanel({
           </CardContent>
         </Card>
       </div>
+
+      {/* Upgrade Dialog for Locked Engines */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5 text-cyan-400" />
+              {upgradeDialogInfo?.title || "Upgrade Required"}
+            </DialogTitle>
+            <DialogDescription className="text-slate-300">
+              {upgradeDialogInfo?.message ||
+                "This feature requires a higher plan tier."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-slate-800 p-4 rounded-lg space-y-2">
+              <h4 className="font-medium text-sm text-slate-200">Upgrade Benefits:</h4>
+              <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
+                <li>Higher realism and quality</li>
+                <li>Smoother motion and transitions</li>
+                <li>Priority rendering</li>
+                <li>Access to all video models</li>
+              </ul>
+            </div>
+            {upgradeDialogInfo?.suggestedTier && (
+              <p className="text-sm text-slate-400">
+                Suggested plan:{" "}
+                <span className="font-medium text-cyan-400 capitalize">
+                  {upgradeDialogInfo.suggestedTier}
+                </span>
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradeDialog(false)}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Not now
+            </Button>
+            <Button
+              onClick={() => {
+                setShowUpgradeDialog(false);
+                onUpgradeClick();
+              }}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
+            >
+              Upgrade Now
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

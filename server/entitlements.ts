@@ -34,6 +34,7 @@ export interface FullEntitlements {
   monthlyVideoCredits: number;
   monthlyVoiceCredits: number;
   planName: string;
+  planTier: 'free' | 'pro' | 'business' | 'starter'; // Normalized tier for gating logic
   isAdmin: boolean;
   isCreator: boolean;
   // Active Ice hosting model
@@ -158,6 +159,7 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
           monthlyVideoCredits: features.monthlyVideoCredits ?? tierDefaults.monthlyVideoCredits ?? 0,
           monthlyVoiceCredits: features.monthlyVoiceCredits ?? tierDefaults.monthlyVoiceCredits ?? 0,
           planName: plan.displayName,
+          planTier: tierSlug as 'free' | 'pro' | 'business' | 'starter',
           isAdmin: false,
           isCreator: true,
           activeIceLimit: features.activeIceLimit ?? tierDefaults.activeIceLimit ?? 0,
@@ -191,6 +193,7 @@ function getAdminEntitlements(): FullEntitlements {
     monthlyVideoCredits: -1,
     monthlyVoiceCredits: -1,
     planName: 'Admin',
+    planTier: 'business', // Admins get full business access
     isAdmin: true,
     isCreator: true,
     activeIceLimit: -1,
@@ -218,6 +221,7 @@ function getCreatorFreeEntitlements(): FullEntitlements {
     monthlyVideoCredits: 0,
     monthlyVoiceCredits: 0,
     planName: 'Free',
+    planTier: 'free',
     isAdmin: false,
     isCreator: true,
     activeIceLimit: 0,
@@ -245,6 +249,7 @@ function getDefaultEntitlements(): FullEntitlements {
     monthlyVideoCredits: 0,
     monthlyVoiceCredits: 0,
     planName: 'Viewer',
+    planTier: 'free',
     isAdmin: false,
     isCreator: false,
     activeIceLimit: 0,

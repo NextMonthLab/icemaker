@@ -5587,24 +5587,74 @@ Output only the narration paragraph, nothing else.`;
   app.get("/api/video/config", async (req, res) => {
     try {
       const { isKlingConfigured, getKlingModels, isReplicateConfigured, getReplicateModels } = await import("./video");
-      
+      const {
+        VIDEO_ENGINES,
+        VIDEO_MODELS,
+        getAllowedVideoModels,
+        getAllowedVideoEngines,
+      } = await import("./config/videoEngines");
+
       const models: any[] = [];
       const providers: string[] = [];
-      
+
       if (isReplicateConfigured()) {
         providers.push("replicate");
         models.push(...getReplicateModels());
       }
-      
+
       if (isKlingConfigured()) {
         providers.push("kling");
         models.push(...getKlingModels().map(m => ({ ...m, provider: "kling" })));
       }
-      
+
+      // Get user plan tier if authenticated
+      let userPlanTier: 'free' | 'pro' | 'business' | 'starter' = 'free';
+      let allowedModels: string[] = [];
+      let allowedEngines: string[] = [];
+
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const user = req.user as schema.User;
+        const entitlements = await getFullEntitlements(user.id);
+        userPlanTier = entitlements.planTier;
+        allowedModels = getAllowedVideoModels(userPlanTier);
+        allowedEngines = getAllowedVideoEngines(userPlanTier);
+      } else {
+        // Default to free tier for unauthenticated users
+        allowedModels = getAllowedVideoModels('free');
+        allowedEngines = getAllowedVideoEngines('free');
+      }
+
+      // Add lock status to engines
+      const engines = Object.entries(VIDEO_ENGINES).map(([key, config]) => ({
+        engine: key,
+        displayName: config.displayName,
+        description: config.description,
+        minPlanTier: config.minPlanTier,
+        locked: !allowedEngines.includes(key as any),
+        costMultiplier: config.costMultiplier,
+      }));
+
+      // Add lock status and details to models
+      const modelsWithDetails = Object.entries(VIDEO_MODELS).map(([key, config]) => ({
+        model: key,
+        displayName: config.displayName,
+        description: config.description,
+        provider: config.provider,
+        minPlanTier: config.minPlanTier,
+        locked: !allowedModels.includes(key),
+        costPer5s: config.costPer5s,
+        supportedDurations: config.supportedDurations,
+      }));
+
       res.json({
         configured: providers.length > 0,
         providers,
-        models,
+        models, // Legacy format
+        engines,
+        videoModels: modelsWithDetails,
+        userPlanTier,
+        allowedModels,
+        allowedEngines,
       });
     } catch (error) {
       console.error("Error checking video config:", error);
@@ -7962,16 +8012,16 @@ Stay engaging, reference story details, and help the audience understand the nar
     try {
       const { previewId, cardId } = req.params;
       const { mode, prompt, sourceImageUrl } = req.body;
-      
+
       const preview = await storage.getIcePreview(previewId);
       if (!preview) {
         return res.status(404).json({ message: "Preview not found" });
       }
-      
+
       // Check write permission using policy function
       const user = req.user as schema.User;
       const policy = canWriteIcePreview(user, preview);
-      
+
       if (!policy.allowed) {
         const { userIp, userAgent } = extractRequestInfo(req);
         await logAuditEvent('permission.denied', 'ice_preview', preview.id, {
@@ -7984,7 +8034,7 @@ Stay engaging, reference story details, and help the audience understand the nar
         });
         return res.status(policy.statusCode).json({ message: policy.reason || "Not authorized to edit this preview" });
       }
-      
+
       // Check entitlements
       const entitlements = await getFullEntitlements(user.id);
       if (!entitlements.canGenerateVideos) {
@@ -7997,19 +8047,19 @@ Stay engaging, reference story details, and help the audience understand the nar
           success: false,
           errorCode: '403',
         });
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: "Video generation requires a Business subscription",
           upgradeRequired: true,
         });
       }
-      
+
       // Find the card
       const cards = preview.cards as any[];
       const card = cards.find(c => c.id === cardId);
       if (!card) {
         return res.status(404).json({ message: "Card not found" });
       }
-      
+
       // Log start of video generation
       const { userIp, userAgent } = extractRequestInfo(req);
       await logAuditEvent('media.generation_started', 'ice_preview', preview.id, {
@@ -8018,71 +8068,123 @@ Stay engaging, reference story details, and help the audience understand the nar
         userAgent,
         details: { cardId, type: 'video', mode },
       });
-      
+
+      // Import video engine gating functions
+      const {
+        resolveAutoVideoModel,
+        isModelAllowedForPlan,
+        getAllowedVideoModels,
+        getAllowedVideoEngines,
+        getSuggestedUpgradeTier,
+        estimateVideoCost,
+        getModelForEngine,
+        VIDEO_MODELS,
+      } = await import("./config/videoEngines");
+
       // Get video settings from request
-      const { model, duration } = req.body;
+      const { engine, model, duration = 5 } = req.body;
+      const requestedEngine = engine || 'auto';
+      const requestedModel = model;
+
+      // Get user's plan tier for gating
+      const userPlanTier = entitlements.planTier;
+
+      // Resolve the actual model to use based on engine or explicit model
+      let resolvedModel: string;
+
+      if (requestedModel) {
+        // User requested a specific model - validate it's allowed
+        if (!isModelAllowedForPlan(requestedModel, userPlanTier)) {
+          const allowedModels = getAllowedVideoModels(userPlanTier);
+          const allowedEngines = getAllowedVideoEngines(userPlanTier);
+          const suggestedTier = getSuggestedUpgradeTier(requestedModel);
+
+          return res.status(403).json({
+            error: 'VIDEO_MODEL_NOT_ALLOWED',
+            message: `The ${VIDEO_MODELS[requestedModel]?.displayName || requestedModel} model requires a ${suggestedTier} plan`,
+            upgradeRequired: true,
+            suggestedTier,
+            allowedModels,
+            allowedEngines,
+            requestedModel,
+            currentPlan: userPlanTier,
+          });
+        }
+        resolvedModel = requestedModel;
+      } else {
+        // Use engine-based selection (auto, standard, advanced, studio)
+        resolvedModel = getModelForEngine(requestedEngine, userPlanTier, duration);
+      }
+
       const basePrompt = prompt || `Cinematic scene: ${card.title}. ${card.content}`;
       // Enhance prompt to ensure no text is rendered in the video
       const videoPrompt = `${basePrompt}. IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this video. Pure visual imagery only.`;
-      
+
       // Import video generation functions
       const { isReplicateConfigured, startReplicateVideoAsync } = await import("./video");
-      
+
       if (!isReplicateConfigured()) {
         return res.status(503).json({ message: "Video generation not configured" });
       }
-      
-      // Start async video generation
+
+      // Start async video generation with resolved model
       const result = await startReplicateVideoAsync({
         prompt: videoPrompt,
         imageUrl: mode === "image-to-video" ? sourceImageUrl : undefined,
-        model: model || "kling-v1.6-standard",
-        duration: duration || 5,
+        model: resolvedModel,
+        duration: duration,
         aspectRatio: "9:16",
         negativePrompt: "blurry, low quality, distorted, watermark, text, words, letters, titles, captions, typography, writing",
       });
-      
+
       // Update the card with the prediction ID and track prompt used
       const cardIndex = cards.findIndex(c => c.id === cardId);
-      cards[cardIndex] = { 
-        ...card, 
+      cards[cardIndex] = {
+        ...card,
         videoPredictionId: result.predictionId,
         videoGenerationStatus: "processing",
         videoGenerationMode: mode || "text-to-video",
         videoGenerationPrompt: videoPrompt.substring(0, 500), // Store for asset metadata
-        videoGenerationModel: model || "kling-v1.6-standard",
+        videoGenerationModel: resolvedModel,
+        videoGenerationEngine: requestedEngine, // Store the engine selection
       };
       await storage.updateIcePreview(previewId, { cards });
-      
-      // Log AI usage for billing tracking (videos are expensive)
+
+      // Log AI usage for billing tracking with accurate cost estimation
       try {
         const profile = await storage.getCreatorProfile(user.id);
         if (profile) {
-          const videoDuration = duration || 5;
-          const modelUsed = model || "kling-v1.6-standard";
-          // Pricing: ~$0.15 per second for Kling
-          const videoCost = videoDuration * 0.15;
+          const estimatedCost = estimateVideoCost(resolvedModel, duration);
           await storage.logAiUsageEvent({
             profileId: profile.id,
             iceId: previewId,
             usageType: 'video_gen',
-            creditsUsed: videoCost,
-            model: modelUsed,
-            metadata: { cardId, duration: videoDuration, mode: mode || 'text-to-video' },
+            creditsUsed: estimatedCost,
+            model: resolvedModel,
+            metadata: {
+              cardId,
+              duration,
+              mode: mode || 'text-to-video',
+              engine: requestedEngine,
+              planTier: userPlanTier,
+              estimatedCost,
+            },
           });
         }
       } catch (aiLogError) {
         console.warn('Failed to log AI video usage:', aiLogError);
       }
-      
-      console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId}`);
-      
+
+      console.log(`[ICE Video] Started prediction ${result.predictionId} for card ${cardId} using ${resolvedModel} (engine: ${requestedEngine}, plan: ${userPlanTier})`);
+
       res.json({
         success: true,
         message: "Video generation started",
         status: "processing",
         predictionId: result.predictionId,
         cardId,
+        resolvedModel,
+        engine: requestedEngine,
       });
     } catch (error: any) {
       console.error("Error generating ICE preview card video:", error);
