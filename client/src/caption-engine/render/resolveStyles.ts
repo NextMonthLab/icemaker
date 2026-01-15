@@ -107,21 +107,23 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const baseTypographySize = fullScreen ? typography.fontSize : typography.fontSize * 0.7;
   const baseFontSizeRaw = isParagraphMode ? baseTypographySize * 0.85 : baseTypographySize;
   
-  // Use deck-level target font size if provided (from measureCaptionSet.smallestFontSize)
-  // This ensures consistent sizing across all captions while still fitting to prevent overflow
-  // Falls back to computed base font size with multipliers
-  const baseFontSize = deckTargetFontSize 
-    ? deckTargetFontSize 
-    : baseFontSizeRaw * fontSizeMultiplier * globalScaleFactor;
+  // Per-caption fitting: each caption fits independently with its own font size
+  // No deck-wide scaling - only the long captions shrink, short ones stay large
+  // Apply user's fontSize preference via fontSizeMultiplier
+  const baseFontSize = baseFontSizeRaw * fontSizeMultiplier;
+  
+  // Raised minimum font sizes for better readability
+  // Fullscreen: 32px min (was 24), Non-fullscreen: 24px min (was 16)
   const minFontSizeRaw = isParagraphMode 
-    ? (fullScreen ? 18 : 12) 
-    : (fullScreen ? 24 : 16);
-  // Min font only scales with user's fontSize choice, NOT global factor
-  // This allows long captions to shrink as needed while short ones stay at base size
+    ? (fullScreen ? 24 : 18) 
+    : (fullScreen ? 32 : 24);
   const minFontSize = minFontSizeRaw * fontSizeMultiplier;
   const containerWidth = layout?.containerWidthPx || 375;
   const lineHeight = isParagraphMode ? 1.15 : 1.1;
-  const maxLines = isParagraphMode ? 5 : 3;
+  
+  // Allow more lines for long captions - 4 lines default, 5 for paragraph mode
+  // This lets long captions wrap more before shrinking font
+  const maxLines = isParagraphMode ? 5 : 4;
 
   const fitSettings: FitSettings = {
     maxLines,

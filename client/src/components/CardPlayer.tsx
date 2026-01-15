@@ -407,15 +407,19 @@ export default function CardPlayer({
   }, [hasNarration, audioDuration]);
 
   // Calculate cumulative time boundaries (in seconds) for each caption
-  // Use equal time slices for more predictable sync with TTS narration
+  // Priority: 1) Use explicit timing data if available, 2) Fall back to equal time slices
   const captionTimeBoundaries = useMemo(() => {
     const captions = card.captions || [];
     if (captions.length === 0 || !audioDuration || audioDuration <= 0) return [];
     
-    // Equal time per caption - more predictable for TTS narration
-    const perCaptionDuration = audioDuration / captions.length;
+    // TODO: Check for captionTimings data (Phase 2 - when TTS provides timing)
+    // const timings = card.captionTimings;
+    // if (timings && timings.length === captions.length) {
+    //   return timings.map(t => t.endMs / 1000);
+    // }
     
-    // Calculate cumulative end times in seconds
+    // Fallback: Equal time per caption
+    const perCaptionDuration = audioDuration / captions.length;
     const boundaries: number[] = [];
     for (let i = 0; i < captions.length; i++) {
       boundaries.push((i + 1) * perCaptionDuration);
@@ -856,9 +860,8 @@ export default function CardPlayer({
                           const captionText = card.captions[captionIndex];
                           
                           // CRITICAL: Fit in COMPOSITION space (972px), not viewport space
-                          // Uses deckTargetFontSize (baseFontSize * globalScaleFactor) for consistent sizing
-                          // globalScaleFactor is clamped at 85% to prevent extreme shrinking
-                          const deckTargetFontSize = deckMeasurement.baseFontSize * deckMeasurement.globalScaleFactor;
+                          // Per-caption fitting: each caption fits independently
+                          // Long captions shrink as needed, short ones stay large
                           const styles = resolveStyles({
                             presetId: captionState?.presetId || 'clean_white',
                             fullScreen,
@@ -867,7 +870,7 @@ export default function CardPlayer({
                             headlineText: captionText,
                             layoutMode: 'title',
                             fontSize: captionState?.fontSize || 'medium',
-                            deckTargetFontSize, // Consistent sizing - clamped at 85% of base
+                            // No deckTargetFontSize - per-caption fitting
                             layout: { containerWidthPx: captionGeometry.availableCaptionWidth },
                           });
                           

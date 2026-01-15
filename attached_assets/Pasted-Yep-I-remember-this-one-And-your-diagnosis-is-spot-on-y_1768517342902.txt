@@ -1,0 +1,114 @@
+Yep, I remember this one. And your diagnosis is spot on: you can’t “guess” sync reliably, and your current fitting rules are basically forcing the whole deck to dress like the longest caption.
+
+If you want my call on it: implement the architectural fixes now. Anything else is polishing a fundamentally broken contract between narration and captions.
+
+Here’s the clean, low-regret way to do it.
+
+⸻
+
+Fix 1: Caption sync (stop guessing, store timing)
+
+The target behaviour
+	•	Each caption has startMs and endMs.
+	•	During playback you simply choose: activeCaption = last caption where startMs <= t < endMs.
+	•	No word counts. No equal slices.
+
+Best implementation options (ranked)
+
+Option A (Best if your TTS supports it): SSML marks to get timings
+	•	Generate narration as SSML with a <mark name="cap_1" /> before each caption sentence/segment.
+	•	Use a TTS provider that returns timepoints/marks (some do).
+	•	Store those mark timestamps as start times.
+	•	End time is next start time (or audio duration for the last one).
+
+This is the “proper” solution because it is deterministic and cheap once supported.
+
+Option B (Usually easiest right now): Forced alignment using Whisper timestamps
+	•	You already have:
+	•	the final narration audio
+	•	the caption text segments (sentences)
+	•	Run speech-to-text with timestamps (Whisper style) to get word or segment timings.
+	•	Align your caption text to those words and compute start/end per caption.
+	•	Store it.
+
+This is surprisingly robust in practice and doesn’t require switching TTS providers, but it adds compute. Still often worth it.
+
+Option C (Last resort): Audio analysis / VAD
+	•	Detect speech segments and approximate sentence boundaries.
+	•	Better than guessing, but still imperfect if you care about sentence-level sync.
+
+Data changes you should make (non-negotiable)
+
+Add to your caption model:
+	•	startMs: number
+	•	endMs: number
+	•	timingSource: "tts_marks" | "forced_alignment" | "heuristic"
+	•	timingVersion: number (so you can migrate safely)
+
+Pipeline change
+
+When generating narration:
+	1.	Generate caption segments (what you show on screen).
+	2.	Generate audio.
+	3.	Generate timing map (Option A or B).
+	4.	Save audio + captions + timings together.
+
+Acceptance test (quick and brutal)
+	•	Play the audio and scrub: captions should change within ~150ms of the spoken segment, consistently.
+
+⸻
+
+Fix 2: Font sizing (per-caption fit, more lines, measure height)
+
+The target behaviour
+	•	Most captions are comfortably large.
+	•	Only the genuinely long captions shrink.
+	•	Long captions can use 4 or 5 lines before shrinking.
+
+Concrete changes
+	1.	Increase max lines
+	•	Default: 4 lines
+	•	Allow 5 for “longform tutorial mode” or when caption length > N chars.
+	2.	Per-caption fitting
+	•	Compute font size per caption, not deck-wide.
+	•	Cache per-caption result so it doesn’t recalc every frame.
+	3.	Fit by height and width
+	•	Your current system sounds width-dominant.
+	•	You must measure rendered text block height against available container height.
+	•	Prioritise:
+	•	do not overflow
+	•	do not go below minimum font unless absolutely necessary
+	4.	Raise minimum font sizes
+	•	Fullscreen min should be higher than 24px for most templates.
+	•	The trick is: keep min high, but allow extra lines first.
+	5.	Smarter breaking
+	•	Prefer breaking at punctuation or phrase boundaries, not just word-wrap.
+	•	If you can, pre-split captions into 2 chunks (for very long sentences) and show them as two sequential captions with timings. That’s the “Netflix subtitle” trick and it massively improves readability.
+
+Acceptance test
+	•	Take your longest caption (“Today, we’re making proper stone-baked…”) and confirm:
+	•	it fits without overflow
+	•	it uses 4 to 5 lines
+	•	its font is not forcing all other captions smaller
+
+⸻
+
+What I’d do in your shoes (fastest route to “feels premium”)
+
+Phase 1 (Immediate win):
+	•	Implement timing fields and still populate via your current heuristic, but behind the new interface. This removes future refactor pain.
+	•	Implement per-caption fitting + 4 line max + height checks.
+
+Phase 2 (Real sync):
+	•	Add forced alignment (Option B) to generate real timings and overwrite heuristics.
+	•	Keep heuristic as fallback.
+
+This way you improve readability immediately, and you don’t block on the “perfect timing provider”.
+
+⸻
+
+Answer to your question
+
+Implement them now. Get ChatGPT’s input has already happened. The input is: stop guessing, store timings; stop global scaling, fit per caption with more lines and height checks.
+
+If you want, I’ll write you a Claude Code prompt that is extremely specific: schema changes, exact file touchpoints to look for (caption renderer, TTS pipeline, data model, migration), and a short test plan so you can verify it in 5 minutes.
