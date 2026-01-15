@@ -36,6 +36,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Share2 } from "lucide-react";
 import { PublishModal } from "@/components/PublishModal";
 import type { ContentVisibility } from "@shared/schema";
+import { BuilderActionsSidebar } from "@/components/ice-maker/BuilderActionsSidebar";
+import { BuilderPreviewDrawer } from "@/components/ice-maker/BuilderPreviewDrawer";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -386,6 +388,11 @@ export default function GuestIceBuilderPage() {
   const [logoPosition, setLogoPosition] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("top-right");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Desktop sidebar and preview drawer state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showPreviewDrawer, setShowPreviewDrawer] = useState(false);
+  const [previewDrawerCardIndex, setPreviewDrawerCardIndex] = useState<number | null>(null);
   
   const handleManualNav = (newIndex: number) => {
     setActivePreviewNodeIndex(null);
@@ -1490,7 +1497,9 @@ export default function GuestIceBuilderPage() {
             </CardContent>
           </UiCard>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="lg:grid lg:grid-cols-[1fr_400px] lg:gap-6">
+            {/* Main content column */}
+            <div className="space-y-4 sm:space-y-6">
             {/* Mobile-optimized header */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
@@ -1535,6 +1544,20 @@ export default function GuestIceBuilderPage() {
                 >
                   <Play className="w-4 h-4" />
                   <span className="hidden xs:inline">Play</span>
+                </Button>
+                {/* Desktop-only quick preview button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPreviewDrawerCardIndex(0);
+                    setShowPreviewDrawer(true);
+                  }}
+                  className="hidden lg:flex gap-1.5"
+                  data-testid="button-preview-drawer"
+                >
+                  <Eye className="w-4 h-4" />
+                  Preview
                 </Button>
                 <Button
                   variant="outline"
@@ -1699,9 +1722,9 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
-            {/* Bulk AI Generation Panel - neutral surface, only for professional users */}
+            {/* Bulk AI Generation Panel - neutral surface, only for professional users, hidden on desktop (in sidebar) */}
             {isProfessionalMode && entitlements && (cardsNeedingImages.length > 0 || cardsNeedingVideos.length > 0) && (
-              <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4">
+              <div className="lg:hidden bg-white/[0.03] border border-white/10 rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium text-white flex items-center gap-2">
@@ -1762,8 +1785,8 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
-            {/* Music Panel */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
+            {/* Music Panel - hidden on desktop (in sidebar) */}
+            <div className="lg:hidden bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Music Selector */}
                 <div className="flex-1">
@@ -1883,8 +1906,8 @@ export default function GuestIceBuilderPage() {
               </div>
             </div>
 
-            {/* Logo Branding Panel */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
+            {/* Logo Branding Panel - hidden on desktop (in sidebar) */}
+            <div className="lg:hidden bg-white/[0.03] border border-white/10 rounded-lg p-4 mb-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Logo Upload Section */}
                 <div className="flex-1">
@@ -1984,8 +2007,8 @@ export default function GuestIceBuilderPage() {
               </div>
             </div>
 
-            {/* Advanced Caption Settings */}
-            <Collapsible open={showCaptionSettings} onOpenChange={setShowCaptionSettings} className="mb-4">
+            {/* Advanced Caption Settings - hidden on desktop (in sidebar) */}
+            <Collapsible open={showCaptionSettings} onOpenChange={setShowCaptionSettings} className="lg:hidden mb-4">
               <CollapsibleTrigger asChild>
                 <button 
                   className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/10 rounded-lg hover:bg-white/[0.05] transition-colors"
@@ -2131,7 +2154,8 @@ export default function GuestIceBuilderPage() {
             {!isProfessionalMode && (
               <UiCard className="bg-white/[0.03] border-white/10 border-dashed">
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Unlock Premium Features</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 lg:hidden">Unlock Premium Features</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 hidden lg:block">Unlock Premium</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div className="flex flex-col items-center text-center p-3 rounded-lg bg-white/5">
                       <Image className="w-6 h-6 text-cyan-400 mb-2" />
@@ -2192,9 +2216,75 @@ export default function GuestIceBuilderPage() {
                 </CardContent>
               </UiCard>
             )}
+            </div>
+            
+            {/* Desktop sidebar - hidden on mobile, visible on lg+ */}
+            <div className="hidden lg:block">
+              <BuilderActionsSidebar
+                isCollapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                isProfessionalMode={isProfessionalMode || false}
+                musicTracks={MUSIC_TRACKS}
+                musicTrackUrl={musicTrackUrl}
+                setMusicTrackUrl={setMusicTrackUrl}
+                musicEnabled={musicEnabled}
+                setMusicEnabled={setMusicEnabled}
+                musicVolume={musicVolume}
+                setMusicVolume={setMusicVolume}
+                isPreviewingMusic={isPreviewingMusic}
+                toggleMusicPreview={toggleMusicPreview}
+                narrationVolume={narrationVolume}
+                setNarrationVolume={setNarrationVolume}
+                logoUrl={logoUrl}
+                setLogoUrl={setLogoUrl}
+                logoEnabled={logoEnabled}
+                setLogoEnabled={setLogoEnabled}
+                logoPosition={logoPosition}
+                setLogoPosition={setLogoPosition}
+                isUploadingLogo={isUploadingLogo}
+                handleLogoUpload={handleLogoUpload}
+                logoInputRef={logoInputRef}
+                user={user}
+                captionState={captionState}
+                setCaptionState={setCaptionState}
+                cardsNeedingImages={cardsNeedingImages}
+                cardsNeedingVideos={cardsNeedingVideos}
+                entitlements={entitlements}
+                bulkGeneratingImages={bulkGeneratingImages}
+                bulkGeneratingVideos={bulkGeneratingVideos}
+                bulkProgress={bulkProgress}
+                setShowBulkImageConfirm={setShowBulkImageConfirm}
+                setShowBulkVideoConfirm={setShowBulkVideoConfirm}
+                exportStatus={exportStatus}
+                exportMutation={exportMutation}
+                cardsLength={cards.length}
+                iceVisibility={iceVisibility}
+                setShowPublishModal={setShowPublishModal}
+                setShowStoryStructure={setShowStoryStructure}
+                showBiblePanel={showBiblePanel}
+                setShowBiblePanel={setShowBiblePanel}
+                projectBible={projectBible}
+              />
+            </div>
           </div>
         )}
       </div>
+      
+      {/* Desktop Preview Drawer */}
+      <BuilderPreviewDrawer
+        isOpen={showPreviewDrawer}
+        onClose={() => setShowPreviewDrawer(false)}
+        selectedCard={previewDrawerCardIndex !== null ? cards[previewDrawerCardIndex] : null}
+        cardIndex={previewDrawerCardIndex || 0}
+        totalCards={cards.length}
+        onPlayPreview={() => {
+          if (previewDrawerCardIndex !== null) {
+            setPreviewCardIndex(previewDrawerCardIndex);
+            setShowPreviewModal(true);
+            setShowPreviewDrawer(false);
+          }
+        }}
+      />
 
       {/* Full-screen Preview Modal - Uses real CardPlayer */}
       {showPreviewModal && (

@@ -50,6 +50,7 @@ Key architectural decisions and features include:
 -   **Producer Brief Mode**: Enables professional producers to upload structured specification documents (.docx, .txt, .md) that auto-create ICEs with exact specifications, including card counts, AI characters, interactivity checkpoints, and visual direction.
 -   **Enterprise Custom Branding Page**: Sales and education page at `/enterprise/custom-branding` for enterprise custom branding services, featuring various branding options and an enquiry form.
 -   **Scene Lock System**: Enables visual continuity across ICE cards through a locked scene configuration in Project Bible, with granular lock flags for environment, camera, lighting, and background elements, and card-level override options.
+-   **Desktop Builder Layout**: Responsive 2-column layout for GuestIceBuilderPage with BuilderActionsSidebar (collapsible sidebar for actions like AI media, music, logo, captions, export, publish) visible on desktop (lg+), BuilderPreviewDrawer (slide-in preview with card media), and stacked panels hidden on desktop.
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

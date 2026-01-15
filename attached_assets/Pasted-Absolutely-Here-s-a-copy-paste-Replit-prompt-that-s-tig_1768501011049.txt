@@ -1,0 +1,108 @@
+Absolutely. Here’s a copy/paste Replit prompt that’s tight, MVP-safe, and very explicit about “desktop-only enhancements” without breaking mobile.
+
+⸻
+
+Replit Prompt: Desktop Enhancements for IceMaker Builder Page (Sidebar + Preview Drawer)
+
+Context
+We have a page in IceMaker that currently uses a mobile-first stacked layout (actions + cards list). The mobile UX is good and must remain unchanged. On desktop (laptop/large screens) we want to improve usability by adding:
+	1.	A desktop-only sticky right sidebar for key Actions (Generate AI Media, Music/Narration, Branding, Advanced Captions, Export/Share).
+	2.	A Preview drawer (desktop-only) that can slide in/out and show the selected card preview without forcing a full redesign.
+
+We must implement this as progressive enhancement only. No major refactor. The existing stacked layout remains the primary structure, especially on mobile.
+
+Non-negotiables
+	•	Do not break or redesign mobile layout.
+	•	Desktop enhancements should activate only from a breakpoint (e.g. lg / min-width: 1024px).
+	•	Keep changes isolated to the Builder page components (avoid touching unrelated routes).
+	•	Do not change API behaviour or server logic. UI-only.
+	•	If any existing components are reused (music controls, branding upload, caption settings), move them into shared components only if it’s low-risk. Otherwise, duplicate minimal UI wrappers and reuse the same underlying components.
+
+⸻
+
+Goal UX (Desktop)
+
+Layout
+	•	Main content remains a central column with the ICE title + actions header + cards list (as today).
+	•	Add a right sidebar that is:
+	•	Visible on desktop only
+	•	position: sticky; top: <headerHeight> so it stays visible as user scrolls cards
+	•	Collapsible (toggle button). Default state: expanded.
+	•	Width: ~360–420px (responsive), never shrinking the main column too much.
+
+Sidebar Contents (Actions)
+
+In the sidebar, include these sections in this order:
+	1.	Generate AI Media (existing section / button(s))
+	2.	Background Music + Narration sliders
+	3.	Logo Branding upload
+	4.	Advanced Caption Settings (collapsed by default is fine)
+	5.	Export Video / Share / Story Tips / Project Bible (existing tabs/actions can be placed as buttons or links)
+
+Important: On desktop, these actions should be available persistently in the sidebar, but they should still exist in the stacked flow for smaller screens.
+
+⸻
+
+Preview Drawer (Desktop-only)
+
+Behaviour
+	•	Add a “Preview” button near the top (desktop only) and/or a small floating button.
+	•	Preview opens a drawer from the right edge (overlaying or pushing the sidebar depending on simplest implementation).
+	•	Drawer shows:
+	•	Selected card number/title
+	•	Media preview (image/video if available, otherwise placeholder)
+	•	Caption preview (whatever the system uses)
+	•	Drawer must be closeable.
+	•	If no card is selected yet, show “Select a card to preview”.
+
+Selection source
+	•	When user clicks a card in the list (already used for editing), set selectedCardId in state.
+	•	Preview drawer reads from the same selected state.
+	•	Do not introduce complex syncing. Keep it simple.
+
+⸻
+
+Implementation Guidance
+	1.	Identify the Builder page component (the page that contains the stacked actions + cards list).
+	2.	Introduce a responsive layout wrapper:
+	•	Mobile: current stack
+	•	Desktop: grid with grid-template-columns: 1fr 400px (main + sidebar)
+	3.	Build BuilderActionsSidebar component:
+	•	Receives the existing action components/props
+	•	Sticky container
+	•	Collapse toggle (persist collapsed state in localStorage is optional, not required)
+	4.	Build BuilderPreviewDrawer component:
+	•	Controlled via isPreviewOpen and selectedCard
+	•	Desktop-only render
+	•	Use existing preview components if already exist; otherwise, implement minimal preview UI without new backend work.
+	5.	Ensure the existing stacked action blocks are still rendered on mobile and optionally hidden on desktop to avoid duplication. Preferred:
+	•	On desktop, hide stacked actions and show them in sidebar.
+	•	On mobile, show stacked actions and hide sidebar/drawer.
+	6.	Keep styling consistent with current dark UI:
+	•	Use existing design tokens / Tailwind classes
+	•	Don’t introduce new colour themes
+	•	Keep shadows and rounded corners consistent
+
+⸻
+
+Acceptance Criteria
+	•	Mobile view looks identical to current behaviour.
+	•	Desktop view shows:
+	•	Cards list in main column
+	•	Sticky right sidebar with the actions
+	•	Preview drawer that opens/closes and displays selected card preview
+	•	No console errors, no broken navigation.
+	•	All existing actions still work as before.
+
+⸻
+
+Output required
+	•	Implement the UI changes.
+	•	Provide a short summary of:
+	•	Which files changed
+	•	Where the sidebar and preview drawer are implemented
+	•	How to test desktop vs mobile quickly (breakpoint guidance)
+
+⸻
+
+If you need to make assumptions about header height for sticky top offset, use a sensible default and match the existing top nav height.
