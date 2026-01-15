@@ -101,20 +101,6 @@ export default function GlobalNav({
             </div>
           </Link>
 
-          {showBreadcrumb && breadcrumbLabel && (
-            <div className="hidden sm:flex items-center gap-2 text-muted-foreground/60">
-              <span>/</span>
-              {breadcrumbHref ? (
-                <Link href={breadcrumbHref}>
-                  <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    {breadcrumbLabel}
-                  </span>
-                </Link>
-              ) : (
-                <span className="text-sm text-muted-foreground">{breadcrumbLabel}</span>
-              )}
-            </div>
-          )}
         </div>
 
         {!minimal && (
