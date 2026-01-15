@@ -61,18 +61,18 @@ const MUSIC_TRACKS = [
   { id: "none", name: "No Music", url: null, category: null },
   // Cinematic & Epic
   { id: "crown-falling-star", name: "Crown of the Falling Star", url: crownOfTheFallingStar, category: "cinematic" },
-  { id: "orbital-drift", name: "Orbital Drift", url: orbitalDrift, category: "cinematic" },
   { id: "vanishing-footsteps", name: "Vanishing Footsteps", url: vanishingFootsteps, category: "cinematic" },
   // Chill & Ambient
+  { id: "orbital-drift", name: "Orbital Drift", url: orbitalDrift, category: "chill" },
   { id: "midnight-coffee", name: "Midnight Coffee Cup", url: midnightCoffeeCup, category: "chill" },
   { id: "soft-steps", name: "Soft Steps, Clear Steps", url: softStepsClearSteps, category: "chill" },
   { id: "sunday-repeat", name: "Sunday On Repeat", url: sundayOnRepeat, category: "chill" },
   // Vlog & Upbeat
   { id: "quarterly-sunrise", name: "Quarterly Sunrise", url: quarterlySunrise, category: "vlog" },
   { id: "everyday-good", name: "Everyday Feels So Good", url: everydayFeelsSoGood, category: "vlog" },
-  { id: "runway-nowhere", name: "Runway to Nowhere", url: runwayToNowhere, category: "vlog" },
   // Pop & Modern
   { id: "midnight-quest", name: "Midnight Side Quest", url: midnightSideQuest, category: "pop" },
+  { id: "runway-nowhere", name: "Runway to Nowhere", url: runwayToNowhere, category: "pop" },
 ];
 
 interface PreviewCard {
