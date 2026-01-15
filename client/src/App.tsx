@@ -53,7 +53,6 @@ import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import Experience from "@/pages/Experience";
 import ExportPage from "@/pages/ExportPage";
-import Journal from "@/pages/Journal";
 import BecomeCreator from "@/pages/BecomeCreator";
 import PublishedIcePage from "@/pages/PublishedIcePage";
 import DiscoverPage from "@/pages/DiscoverPage";
@@ -78,7 +77,6 @@ const ProtectedLibrary = withAuth(Library);
 const ProtectedToday = withAuth(Today);
 const ProtectedCatchUp = withAuth(CatchUp);
 const ProtectedChat = withAuth(Chat);
-const ProtectedJournal = withAuth(Journal);
 const ProtectedProfile = withAuth(Profile);
 const ProtectedBecomeCreator = withAuth(BecomeCreator);
 const ProtectedAdmin = withAuth(Admin);
@@ -158,7 +156,6 @@ function Router() {
       <Route path="/card/:id" component={ProtectedToday} />
       <Route path="/catch-up" component={ProtectedCatchUp} />
       <Route path="/chat" component={ProtectedChat} />
-      <Route path="/journal" component={ProtectedJournal} />
       <Route path="/story/:slug" component={Experience} />
       <Route path="/creator/:slug" component={CreatorProfile} />
       <Route path="/become-creator" component={ProtectedBecomeCreator} />
