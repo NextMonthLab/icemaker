@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Zap, Crown, Star, Building2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -6,6 +6,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { cn } from "@/lib/utils";
 import { BrandBackground } from "@/components/brand/BrandBackground";
+import { useAuth } from "@/lib/auth";
 
 const pricingPlans = [
   {
@@ -138,6 +139,22 @@ const faqs = [
 ];
 
 export default function Pricing() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  // Determine the correct href for pricing buttons based on auth state
+  const getPlanHref = (plan: typeof pricingPlans[0]) => {
+    // Book demo always goes to the same place
+    if (plan.ctaHref === "/book-demo") {
+      return plan.ctaHref;
+    }
+    // If logged in, go to checkout; otherwise login with return URL
+    if (user) {
+      return `/checkout?plan=${plan.name.toLowerCase()}`;
+    }
+    return `/login?returnUrl=${encodeURIComponent(`/checkout?plan=${plan.name.toLowerCase()}`)}`;
+  };
+  
   return (
     <div className="min-h-screen bg-black text-white">
       <MarketingHeader />
@@ -242,7 +259,7 @@ export default function Pricing() {
                     </div>
                   </div>
 
-                  <Link href={plan.ctaHref}>
+                  <Link href={getPlanHref(plan)}>
                     <Button 
                       className={cn(
                         "w-full",
