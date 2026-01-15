@@ -84,9 +84,9 @@ export default function Login() {
                       {isRegister ? "Create Your Account" : "Sign In"}
                     </CardTitle>
                     <CardDescription className="text-center text-xs md:text-sm">
-                        {isRegister 
-                          ? "Get started with IceMaker and Orbit" 
-                          : "Access your IceMaker projects and Orbit dashboard"
+                        {isRegister
+                          ? "Get started with IceMaker"
+                          : "Access your IceMaker projects"
                         }
                     </CardDescription>
                 </CardHeader>
