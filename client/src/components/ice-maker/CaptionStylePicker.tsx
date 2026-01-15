@@ -146,7 +146,7 @@ function PresetCard({
         "relative flex flex-col items-center justify-center p-3 rounded-lg border transition-all",
         "bg-zinc-900/50 hover:bg-zinc-800/50",
         isSelected 
-          ? "border-pink-500 ring-1 ring-pink-500/50" 
+          ? "border-cyan-500 ring-1 ring-cyan-500/50" 
           : "border-zinc-700 hover:border-zinc-600"
       )}
     >
@@ -257,8 +257,8 @@ export function CaptionStylePicker({
           <div className="space-y-5">
             <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-pink-400" />
+                <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
@@ -302,7 +302,7 @@ export function CaptionStylePicker({
                         "flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all",
                         "bg-zinc-900/50 hover:bg-zinc-800/50",
                         captionState.karaokeStyle === option.id
-                          ? "border-pink-500 ring-1 ring-pink-500/50"
+                          ? "border-cyan-500 ring-1 ring-cyan-500/50"
                           : "border-zinc-700 hover:border-zinc-600"
                       )}
                     >
@@ -330,7 +330,7 @@ export function CaptionStylePicker({
                     data-testid={`animation-${option.id}`}
                     className={cn(
                       "text-xs",
-                      captionState.animationId === option.id && "bg-pink-600 hover:bg-pink-700"
+                      captionState.animationId === option.id && "bg-cyan-600 hover:bg-cyan-700"
                     )}
                   >
                     {option.icon}
@@ -358,7 +358,7 @@ export function CaptionStylePicker({
                       "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
                       "bg-zinc-900/50 hover:bg-zinc-800/50",
                       (captionState.position || 'bottom') === option.id
-                        ? "border-pink-500 ring-1 ring-pink-500/50"
+                        ? "border-cyan-500 ring-1 ring-cyan-500/50"
                         : "border-zinc-700 hover:border-zinc-600"
                     )}
                   >
@@ -383,7 +383,7 @@ export function CaptionStylePicker({
                       "flex flex-col items-center gap-1 p-3 rounded-lg border transition-all",
                       "bg-zinc-900/50 hover:bg-zinc-800/50",
                       (captionState.fontSize || 'medium') === option.id
-                        ? "border-pink-500 ring-1 ring-pink-500/50"
+                        ? "border-cyan-500 ring-1 ring-cyan-500/50"
                         : "border-zinc-700 hover:border-zinc-600"
                     )}
                   >
@@ -417,7 +417,7 @@ export function CaptionStylePicker({
                       "flex flex-col items-start p-3 rounded-lg border transition-all text-left",
                       "bg-zinc-900/50 hover:bg-zinc-800/50",
                       captionState.safeAreaProfileId === option.id
-                        ? "border-pink-500 ring-1 ring-pink-500/50"
+                        ? "border-cyan-500 ring-1 ring-cyan-500/50"
                         : "border-zinc-700 hover:border-zinc-600"
                     )}
                   >
