@@ -16,12 +16,23 @@ export interface MediaAsset {
   model?: string;
 }
 
+// Caption timing for forced alignment (Phase 2)
+export type CaptionTimingSource = 'whisper' | 'heuristic' | 'none';
+
+export interface CaptionTiming {
+  startMs: number;
+  endMs: number;
+  timingSource: CaptionTimingSource;
+  matchScore?: number; // 0-1 confidence from alignment
+}
+
 export interface Card {
   id: string | number;
   dayIndex?: number; // Optional - removed from display per "bin Day 1/2/3" directive
   title: string;
   image: string;
   captions: string[];
+  captionTimings?: CaptionTiming[]; // Per-caption timing data (Phase 2)
   sceneText: string;
   recapText: string;
   publishDate: string;

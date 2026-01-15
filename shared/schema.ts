@@ -1013,6 +1013,34 @@ export type TransformationJob = typeof transformationJobs.$inferSelect;
 
 export type IcePreviewStatus = 'active' | 'promoted' | 'expired';
 export type IcePreviewSourceType = 'url' | 'text' | 'file' | 'wizard';
+
+// Caption Alignment Types (Phase 2 - Forced Alignment)
+export type CaptionTimingMode = 'heuristic' | 'aligned';
+export type CaptionTimingSource = 'whisper' | 'heuristic' | 'none';
+export type AlignmentStatus = 'pending' | 'complete' | 'failed' | 'partial';
+
+export interface AlignedWord {
+  w: string;
+  startMs: number;
+  endMs: number;
+}
+
+export interface AlignmentTranscript {
+  provider: 'openai_whisper';
+  model: string;
+  createdAt: string;
+  words: AlignedWord[];
+  segments?: { text: string; startMs: number; endMs: number }[];
+}
+
+export interface CaptionTiming {
+  startMs: number;
+  endMs: number;
+  timingSource: CaptionTimingSource;
+  timingVersion: number;
+  matchScore?: number; // 0-1 confidence from alignment
+  alignmentMethod?: 'word' | 'segment';
+}
 export type IcePreviewTier = 'short' | 'medium' | 'long';
 export type IceContentType = 'script' | 'article' | 'document' | 'unknown';
 export type IceFidelityMode = 'script_exact' | 'interpretive';
@@ -1067,6 +1095,16 @@ export const iceMediaAssetSchema = z.object({
 
 export type IceMediaAsset = z.infer<typeof iceMediaAssetSchema>;
 
+// Caption timing schema for forced alignment
+export const captionTimingSchema = z.object({
+  startMs: z.number(),
+  endMs: z.number(),
+  timingSource: z.enum(['whisper', 'heuristic', 'none']),
+  timingVersion: z.number().default(1),
+  matchScore: z.number().optional(),
+  alignmentMethod: z.enum(['word', 'segment']).optional(),
+});
+
 export const icePreviewCardSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -1085,6 +1123,9 @@ export const icePreviewCardSchema = z.object({
   videoGenerationStatus: z.string().optional(),
   videoPredictionId: z.string().optional(),
   narrationAudioUrl: z.string().optional(),
+  
+  // Caption timing (Phase 2 - Forced Alignment)
+  captionTimings: z.array(captionTimingSchema).optional(), // Per-caption timing data
   
   // Prompt enhancement settings
   enhancePromptEnabled: z.boolean().optional(), // Whether to use enhanced prompts
@@ -1289,6 +1330,11 @@ export const icePreviews = pgTable("ice_previews", {
     karaokeEnabled?: boolean;
     karaokeStyle?: string;
   }>(),
+  
+  // Caption Alignment settings (Phase 2 - Forced Alignment)
+  captionTimingMode: text("caption_timing_mode").$type<CaptionTimingMode>().default("heuristic"),
+  alignmentTranscript: jsonb("alignment_transcript").$type<AlignmentTranscript>(),
+  alignmentStatus: text("alignment_status").$type<AlignmentStatus>(),
   
   // Access control
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted

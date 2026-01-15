@@ -1,0 +1,231 @@
+# ICE Maker – Phase 2: Forced Alignment for Caption Timing (Whisper)
+
+## Goal
+Stop guessing caption timing. After TTS narration is generated, run Whisper transcription with timestamps, align words back to caption text, and store per-caption start/end timings. Player should use stored timings when available and fall back to heuristic when alignment is missing or low confidence.
+
+Must be feature-flagged so we can turn it on per ICE or globally.
+
+---
+
+## 1) Data / Schema Changes
+
+### A) Caption timing fields
+Where captions are stored (DB table, JSON column, or card model), add these fields per caption segment:
+
+- startMs: number | null
+- endMs: number | null
+- timingSource: "whisper" | "heuristic" | "none"   (default "none")
+- timingVersion: number (default 1)
+
+Optional but strongly recommended:
+- matchScore: number | null  (0..1)
+- alignmentMethod: "word" | "segment" | null
+
+### B) Store transcript for debugging
+Store alignment transcript output at the ICE level (preferred) or per card.
+
+- alignmentTranscript: object | null
+  - provider: "openai_whisper"
+  - createdAt: ISO string
+  - model: string (e.g. "whisper-1" or equivalent)
+  - words: Array<{ w: string; startMs: number; endMs: number }>
+  - segments: Array<{ text: string; startMs: number; endMs: number }>
+- alignmentStatus: "pending" | "complete" | "failed" | "partial" (optional)
+
+### Migration / Back-compat
+- Existing ICEs should load fine with startMs/endMs absent.
+- Player must treat missing timings as heuristic mode.
+
+---
+
+## 2) Feature Flag & Config
+
+### A) Server side
+Add config:
+- CAPTION_ALIGNMENT_ENABLED (boolean)
+- CAPTION_ALIGNMENT_DEFAULT_MODE = "heuristic" | "aligned" (optional)
+
+### B) ICE-level setting
+Add to ICE metadata:
+- captionTimingMode: "heuristic" | "aligned"
+Default should be "heuristic" until we verify.
+
+Also allow per-card override if that exists in your architecture, but not required.
+
+---
+
+## 3) Where to Hook Whisper Call
+
+Find the narration pipeline that generates TTS audio for a card / stage / ICE.
+Immediately after TTS completes (and audio is stored / accessible):
+
+1) If CAPTION_ALIGNMENT_ENABLED is false → skip.
+2) If ICE.captionTimingMode !== "aligned" → skip.
+3) Otherwise:
+   - Call Whisper transcription on the final audio file
+   - Get word-level timestamps (preferred). If only segment-level is available, use segments.
+
+Important: Do NOT block the whole ICE generation if Whisper fails.
+- Wrap alignment in try/catch.
+- On failure: store alignmentStatus="failed" and keep heuristic.
+
+---
+
+## 4) Whisper API Call Requirements
+
+Use OpenAI Whisper transcription with timestamps.
+Implementation notes:
+- Provide audio file (mp3/wav)
+- Request verbose JSON / timestamps if supported
+- Extract either:
+  A) word-level timestamps (best)
+  B) segment-level timestamps (acceptable fallback)
+
+Normalize output into a standard internal shape:
+
+type AlignedWord = { w: string; startMs: number; endMs: number }
+type AlignmentTranscript = {
+  provider: "openai_whisper",
+  model: string,
+  createdAt: string,
+  words: AlignedWord[],
+  segments?: { text: string; startMs: number; endMs: number }[]
+}
+
+Store this transcript on the ICE or card for debugging.
+
+---
+
+## 5) Alignment Algorithm (Fuzzy Word Matching)
+
+We need to map caption segments to time ranges in the transcript.
+
+### Inputs
+- captions: array of caption strings (the exact strings shown on screen)
+- transcriptWords: array of words with start/end timestamps
+
+### Step A: Normalise text
+Create a normalisation function used for BOTH caption text and transcript words.
+
+Rules:
+- lowercase
+- strip punctuation
+- convert fancy apostrophes to normal '
+- collapse whitespace
+- convert common contractions to consistent tokens:
+  - "we're" -> "were" OR "we are" (choose one strategy; I recommend splitting to tokens ["we","are"] if possible)
+- convert numbers:
+  - "2" <-> "two" (basic mapping for 0-20 is enough)
+- remove filler tokens optionally: "um", "uh" (only from transcript)
+
+Tokenise captions into word tokens:
+- captionTokens[i] = string[] for caption i
+
+Tokenise transcript into tokens:
+- transcriptTokens = words[] already, but normalise each .w
+
+### Step B: Sequential greedy alignment with tolerance
+Because narration follows caption order, we align sequentially from start to end.
+
+Maintain pointer p into transcriptWords.
+For each caption i:
+1) Attempt to find a window in transcriptWords starting at >= p that matches the captionTokens[i].
+2) Use fuzzy matching:
+   - allow up to 20% token mismatch (missing/extra) for short captions
+   - allow small skips in transcript for hesitations
+3) Scoring:
+   - score = matchedTokens / captionTokensCount
+   - accept if score >= 0.75 (tuneable)
+4) If accepted:
+   - startMs = startMs of first matched word
+   - endMs = endMs of last matched word
+   - set timingSource="whisper", matchScore=score
+   - set p = index after last matched word
+5) If not accepted:
+   - mark this caption as unaligned: timingSource="heuristic"
+   - do NOT move pointer too far; maybe advance slightly to avoid infinite loops (e.g. p += 1)
+
+### Step C: Pause handling
+Whisper naturally includes pauses by gaps between words. We want caption end time to be last word end, not including the pause.
+That’s fine. The next caption start will naturally be later.
+In the player, the gap between endMs and next startMs can be treated as:
+- keep previous caption visible until next starts (recommended)
+OR
+- hide captions during gap (optional style setting)
+
+Pick default: keep previous caption visible.
+
+### Segment-level fallback
+If word-level timestamps are unavailable:
+- Align using segments:
+  - Find best matching segment text window for each caption
+  - startMs/endMs from segment
+Less accurate but still better than guessing.
+
+---
+
+## 6) Fallback Rules (Robustness)
+
+1) If Whisper call fails → keep heuristic for all captions, store alignmentStatus="failed".
+2) If transcript exists but a caption fails matching:
+   - That caption uses heuristic timings only
+   - Others still use aligned timings
+3) If fewer than 60% captions align successfully:
+   - Set alignmentStatus="partial"
+   - Keep aligned timings for those that matched, heuristic for rest
+4) If 0 captions align:
+   - alignmentStatus="failed"
+5) Always keep original caption text. Do not rewrite captions to match transcript.
+
+---
+
+## 7) Player Changes (Using Timings)
+
+In the caption renderer / player logic:
+
+If ICE.captionTimingMode === "aligned" AND captions have startMs/endMs:
+- Determine activeCaptionIndex by timestamps:
+  - current = last caption where startMs <= tMs
+  - if tMs > endMs and next caption has not started:
+     - keep current caption visible (gap hold)
+- Do NOT compute index from duration ratio in aligned mode.
+
+If aligned data missing:
+- Use existing heuristic method.
+
+Make sure this logic is deterministic and does not cause flicker.
+
+---
+
+## 8) Testing Plan
+
+### Unit tests for alignment
+- Simple captions that match exactly
+- Captions with punctuation differences
+- Captions with contractions differences ("we're" vs "we are")
+- Captions with number words ("two" vs "2")
+- Captions where Whisper adds filler words
+
+### Manual tests
+- Generate an ICE with 8-12 captions
+- Enable aligned mode
+- Verify captions switch at the right spoken moments
+- Scrub timeline; captions should line up consistently
+- Confirm fallback works when you intentionally corrupt caption text
+
+### Debug UI (optional but helpful)
+Add a dev-only panel:
+- show matchScore per caption
+- show startMs/endMs
+- show alignmentStatus
+
+---
+
+## 9) Deliverables
+- Schema updated
+- Alignment pipeline integrated after TTS
+- Stored timings per caption
+- Feature flag + ICE setting to enable
+- Player reads aligned timings when present
+- Tests passing
+- No breaking changes to existing ICEs
