@@ -2364,7 +2364,7 @@ export default function GuestIceBuilderPage() {
                     videoGenerationStatus: cards[previewCardIndex].videoGenerationStatus || (cards[previewCardIndex].generatedVideoUrl ? "completed" : undefined),
                     mediaAssets: (cards[previewCardIndex] as any).mediaAssets,
                     selectedMediaAssetId: (cards[previewCardIndex] as any).selectedMediaAssetId,
-                    captions: cards[previewCardIndex].content.split('. ').filter(s => s.trim()).slice(0, 3),
+                    captions: cards[previewCardIndex].content.split('. ').filter(s => s.trim()),
                     captionTimings: (cards[previewCardIndex] as any).captionTimings,
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,

@@ -8479,8 +8479,8 @@ Stay engaging, reference story details, and help the audience understand the nar
           } else if (card.captions && Array.isArray(card.captions)) {
             captions = card.captions;
           } else if (card.content) {
-            // Fallback: split content the same way frontend does
-            captions = card.content.split('. ').filter((s: string) => s.trim()).slice(0, 3);
+            // Fallback: split content the same way frontend does (all sentences)
+            captions = card.content.split('. ').filter((s: string) => s.trim());
           }
           
           if (captions.length > 0) {
