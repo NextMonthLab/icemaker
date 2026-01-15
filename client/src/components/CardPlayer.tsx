@@ -697,18 +697,18 @@ export default function CardPlayer({
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none" />
 
-            {/* Logo Overlay - positioned above caption area */}
+            {/* Logo Overlay - positioned to avoid controls and captions */}
             {logoEnabled && logoUrl && (
               <div 
-                className={`absolute z-30 pointer-events-none ${
-                  logoPosition === "top-left" ? "top-4 left-4" :
-                  logoPosition === "top-right" ? "top-4 right-4" :
+                className={`absolute z-20 pointer-events-none ${
+                  logoPosition === "top-left" ? "top-16 left-4" :
+                  logoPosition === "top-right" ? "top-16 right-4" :
                   logoPosition === "bottom-left" ? "bottom-44 left-4" :
                   "bottom-44 right-4"
                 }`}
                 data-testid="logo-overlay"
               >
-                <div className="w-20 h-20 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden flex items-center justify-center p-2">
+                <div className="w-16 h-16 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden flex items-center justify-center p-1.5">
                   <img 
                     src={logoUrl} 
                     alt="Logo" 
