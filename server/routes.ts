@@ -6128,8 +6128,17 @@ Output only the narration paragraph, nothing else.`;
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      res.setHeader("Content-Type", objectFile.contentType || "application/octet-stream");
-      res.send(Buffer.from(objectFile.content));
+      
+      // Download the file content from GCS
+      const [content] = await objectFile.download();
+      
+      // Get metadata for content type
+      const [metadata] = await objectFile.getMetadata();
+      const contentType = metadata.contentType || "application/octet-stream";
+      
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+      res.send(content);
     } catch (error) {
       console.error("Error fetching object:", error);
       res.status(404).json({ message: "Object not found" });
