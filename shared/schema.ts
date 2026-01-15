@@ -1017,7 +1017,7 @@ export type IcePreviewSourceType = 'url' | 'text' | 'file' | 'wizard';
 // Caption Alignment Types (Phase 2 - Forced Alignment)
 export type CaptionTimingMode = 'heuristic' | 'aligned';
 export type CaptionTimingSource = 'whisper' | 'heuristic' | 'none';
-export type AlignmentStatus = 'pending' | 'complete' | 'failed' | 'partial';
+export type CaptionAlignmentStatus = 'pending' | 'complete' | 'failed' | 'partial';
 
 export interface AlignedWord {
   w: string;
@@ -1334,7 +1334,7 @@ export const icePreviews = pgTable("ice_previews", {
   // Caption Alignment settings (Phase 2 - Forced Alignment)
   captionTimingMode: text("caption_timing_mode").$type<CaptionTimingMode>().default("heuristic"),
   alignmentTranscript: jsonb("alignment_transcript").$type<AlignmentTranscript>(),
-  alignmentStatus: text("alignment_status").$type<AlignmentStatus>(),
+  alignmentStatus: text("alignment_status").$type<CaptionAlignmentStatus>(),
   
   // Access control
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted

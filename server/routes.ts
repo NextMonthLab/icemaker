@@ -8464,7 +8464,29 @@ Stay engaging, reference story details, and help the audience understand the nar
       const audioUrl = await objectStorage.uploadBuffer(result.audioBuffer, fileName, result.contentType, "ice-narration");
       
       // Update the card with the generated audio URL
-      cards[cardIndex] = { ...card, narrationAudioUrl: audioUrl };
+      let updatedCard = { ...card, narrationAudioUrl: audioUrl };
+      
+      // Phase 2: Forced Alignment - align captions to audio if enabled
+      const { isAlignmentEnabled, alignCardCaptions } = await import("./services/whisperAlignment");
+      if (isAlignmentEnabled() && preview.captionTimingMode === 'aligned') {
+        try {
+          // Get captions from card content (split by sentence)
+          const captions = card.content?.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim()) || [];
+          
+          // Get audio duration from result if available, otherwise estimate
+          const audioDurationMs = result.durationSeconds ? result.durationSeconds * 1000 : (narrationText.length / 15) * 1000;
+          
+          const alignment = await alignCardCaptions(captions, audioUrl, audioDurationMs);
+          if (alignment) {
+            updatedCard.captionTimings = alignment.timings;
+            console.log(`[ICE] Caption alignment complete: ${alignment.alignedCount}/${alignment.totalCount} aligned`);
+          }
+        } catch (alignError) {
+          console.warn('[ICE] Caption alignment failed (continuing without):', alignError);
+        }
+      }
+      
+      cards[cardIndex] = updatedCard;
       await storage.updateIcePreview(previewId, { cards });
       
       // Log successful generation

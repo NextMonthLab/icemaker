@@ -410,11 +410,12 @@ export default function CardPlayer({
     const captions = card.captions || [];
     if (captions.length === 0 || !audioDuration || audioDuration <= 0) return [];
     
-    // TODO: Check for captionTimings data (Phase 2 - when TTS provides timing)
-    // const timings = card.captionTimings;
-    // if (timings && timings.length === captions.length) {
-    //   return timings.map(t => t.endMs / 1000);
-    // }
+    // Use aligned timing data if available (Phase 2 - Forced Alignment)
+    const timings = card.captionTimings;
+    if (timings && timings.length === captions.length) {
+      // Return end times in seconds for boundary checks
+      return timings.map(t => t.endMs / 1000);
+    }
     
     // Fallback: Equal time per caption
     const perCaptionDuration = audioDuration / captions.length;
@@ -423,7 +424,7 @@ export default function CardPlayer({
       boundaries.push((i + 1) * perCaptionDuration);
     }
     return boundaries;
-  }, [card.captions, audioDuration]);
+  }, [card.captions, card.captionTimings, audioDuration]);
   
   // Sync captions with audio progress when narration is playing
   // Uses direct time comparison for accurate sync
