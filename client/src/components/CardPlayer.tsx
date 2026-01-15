@@ -592,7 +592,7 @@ export default function CardPlayer({
                 }`}
                 data-testid="logo-overlay"
               >
-                <div className="w-12 h-12 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden flex items-center justify-center p-1">
+                <div className="w-24 h-24 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden flex items-center justify-center p-2">
                   <img 
                     src={logoUrl} 
                     alt="Logo" 
