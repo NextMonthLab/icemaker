@@ -232,13 +232,20 @@ export default function CardPlayer({
     }
   }, [card.id, autoplay, hasVideo]);
 
-  // Update narration volume - use useLayoutEffect for immediate application
-  // and include card.id to re-apply when card changes
-  React.useLayoutEffect(() => {
+  // Update narration volume - use regular effect with more frequent checks
+  // This ensures volume changes take effect even while audio is playing
+  useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = narrationVolume / 100;
     }
-  }, [narrationVolume, card.id]);
+  }, [narrationVolume]);
+  
+  // Also sync volume on card change
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = narrationVolume / 100;
+    }
+  }, [card.id, narrationVolume]);
   
   const toggleMediaType = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
