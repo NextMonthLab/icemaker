@@ -1614,7 +1614,7 @@ export default function GuestIceBuilderPage() {
 
             {/* Professional Tools Bar - always visible for professional users */}
             {isProfessionalMode && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-3 border-b border-white/10 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* Video Export Button */}
                 {exportStatus?.status === "completed" && exportStatus.outputUrl ? (
                   <a
