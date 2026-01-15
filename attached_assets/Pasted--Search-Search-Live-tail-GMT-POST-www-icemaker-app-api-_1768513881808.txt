@@ -1,0 +1,62 @@
+
+Search
+Search
+
+Live tail
+GMT
+
+
+
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image clientIP="86.133.77.159" requestID="e47184a6-39fb-4ac1" responseTimeMS=1084 responseBytes=309 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    at t.generate (/opt/render/project/src/dist/index.cjs:78:76046)
+    at je.makeStatusError (/opt/render/project/src/dist/index.cjs:100:1174)
+    at je.makeRequest (/opt/render/project/src/dist/index.cjs:100:4492)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:729:4257 {
+  status: 403,
+  headers: Headers {
+    date: 'Thu, 15 Jan 2026 21:47:42 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'openai-version': '2020-10-01',
+    'openai-organization': 'user-olkedic5drgtge7d7yduk7ar',
+    'openai-project': 'proj_S8PqdvYOopV8XwrzNjqI9m5h',
+    'x-request-id': 'req_1f4c471f903a491ca6c8575d8c51d127',
+    'openai-processing-ms': '260',
+    'x-envoy-upstream-service-time': '263',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=YGBBspGeijOdGd_QiMiHJVYt1HUTgi09s6ZP4eC8dCg-1768513662-1.0.1.1-NUwD0P._UkMiVMR6LoZT0dhQvrzdw3m0QlG0v23EniVB8CTc5PhETaB4PIjJNs57v_xwaTT6UNZvPdTMX93_GhJXHEiKdYMaTwOZRBGl_jk; path=/; expires=Thu, 15-Jan-26 22:17:42 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=VSNC.hry1laA5VoJeEg9I.uCZduYs8fEeRwjrUVCAUw-1768513662890-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '9be892b31ab91bed-PDX',
+    'content-encoding': 'br',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_1f4c471f903a491ca6c8575d8c51d127',
+  error: {
+    message: 'Your organization must be verified to use the model `gpt-image-1`. Please go to: https://platform.openai.com/settings/organization/general and click on Verify Organization. If you just verified, it can take up to 15 minutes for access to propagate.',
+    type: 'invalid_request_error',
+    param: null,
+    code: null
+  },
+  code: null,
+  param: null,
+  type: 'invalid_request_error'
+}
+9:47:42 PM [express] POST /api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image 500 in 1076ms :: {"message":"Error generating image"}
+[Video Gating] Allowed: user=3, planTier=admin, resolvedModel=kling-v1.6-standard, engine=auto
+[Replicate] Starting async video generation with model: kwaivgi/kling-v1.6-standard
+[Replicate] Prompt: Bird’s eye view looking straight down at a rustic wooden preparation board, mise en place arrangemen...
+[Replicate] Creating prediction with input: {
+  "prompt": "Bird’s eye view looking straight down at a rustic wooden preparation board, mise en place arrangement of pizza dough ingredients: small ceramic bowl of white flour (500g) piled in centre, glass measuring jug with warm water, tiny bowl of dried yeast granules, small dish of coarse sea salt, glass bottle of golden olive oil, scattered flour dust on wooden surface, warm golden-hour lighting from side, professional food photography, shallow depth of field, rustic Italian farmhouse kit
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-video clientIP="86.133.77.159" requestID="cc47dfd8-cc41-4f82" responseTimeMS=620 responseBytes=416 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[Replicate] Prediction created: 8yf6syv2r5rmt0cvrehs95hm8g, status: starting
+[ICE Video] Started prediction 8yf6syv2r5rmt0cvrehs95hm8g for card card_0, model=kling-v1.6-standard, planTier=admin
+9:50:23 PM [express] POST /api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-video 200 in 617ms :: {"success":true,"message":"Video generation started","status":"processing","predictionId":"8yf6syv2r5rmt0cvrehs95hm8g","cardId":"card_0","resolvedModel":"kling-v1.6-standard","engine":"auto"}
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards/card_0/narration/generate clientIP="86.133.77.159" requestID="60c6fdfd-0e8a-4afc" responseTimeMS=34 responseBytes=317 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+9:50:37 PM [express] POST /api/ice/preview/ice_1768513354516_ch98re/cards/card_0/narration/generate 503 in 27ms :: {"message":"Object storage not configured"}
