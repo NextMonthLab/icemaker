@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { ChevronLeft, ChevronRight, Music, Mic, Image, Upload, Wand2, Video, Download, Loader2, Globe, Lock, Share2, Lightbulb, BookOpen, X, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell";
 import type { CaptionState } from "@/caption-engine/schemas";
@@ -106,8 +103,6 @@ export function BuilderActionsSidebar({
   setShowBiblePanel,
   projectBible,
 }: BuilderActionsSidebarProps) {
-  const [showCaptionSettings, setShowCaptionSettings] = useState(false);
-
   if (isCollapsed) {
     return (
       <div className="sticky top-20 h-fit">
@@ -463,31 +458,19 @@ export function BuilderActionsSidebar({
         </div>
       </div>
 
-      <Collapsible open={showCaptionSettings} onOpenChange={setShowCaptionSettings}>
-        <CollapsibleTrigger asChild>
-          <button 
-            className="w-full flex items-center justify-between px-3 py-2.5 bg-white/[0.03] border border-white/10 rounded-lg hover:bg-white/[0.05] transition-colors"
-            data-testid="sidebar-toggle-captions"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-white">Caption Settings</span>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-white/60 transition-transform ${showCaptionSettings ? "rotate-180" : ""}`} />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-2">
-          <div className="bg-white/[0.03] border border-white/10 rounded-lg p-3">
-            <CaptionStylePicker
-              captionState={captionState}
-              onStateChange={setCaptionState}
-            />
-            <div className="mt-3 pt-2 border-t border-white/5">
-              <EnterpriseBrandingUpsell context="captions" variant="compact" />
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <div className="bg-white/[0.03] border border-white/10 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span className="text-sm font-medium text-white">Caption Settings</span>
+        </div>
+        <CaptionStylePicker
+          captionState={captionState}
+          onStateChange={setCaptionState}
+        />
+        <div className="mt-3 pt-2 border-t border-white/5">
+          <EnterpriseBrandingUpsell context="captions" variant="compact" />
+        </div>
+      </div>
     </div>
   );
 }
