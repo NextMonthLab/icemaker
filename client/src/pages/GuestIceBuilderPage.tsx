@@ -38,6 +38,16 @@ import { PublishModal } from "@/components/PublishModal";
 import type { ContentVisibility } from "@shared/schema";
 import { BuilderActionsSidebar } from "@/components/ice-maker/BuilderActionsSidebar";
 import { BuilderPreviewDrawer } from "@/components/ice-maker/BuilderPreviewDrawer";
+import crownOfTheFallingStar from "@assets/Crown_of_the_Falling_Star_1768503662594.mp3";
+import orbitalDrift from "@assets/Orbital_Drift_1768503662592.mp3";
+import vanishingFootsteps from "@assets/Vanishing_Footsteps_1768503662595.mp3";
+import midnightCoffeeCup from "@assets/Midnight_Coffee_Cup_1768503662592.mp3";
+import softStepsClearSteps from "@assets/Soft_Steps,_Clear_Steps_1768503662595.mp3";
+import sundayOnRepeat from "@assets/Sunday_On_Repeat_1768503662596.mp3";
+import midnightSideQuest from "@assets/Midnight_Side_Quest_1768503662593.mp3";
+import quarterlySunrise from "@assets/Quarterly_Sunrise_1768503662596.mp3";
+import everydayFeelsSoGood from "@assets/Everyday_Feels_So_Good_1768503662596.mp3";
+import runwayToNowhere from "@assets/Runway_to_Nowhere_1768503662596.mp3";
 
 const CREATION_STAGES = [
   { id: "fetch", label: "Fetching your content", duration: 1500 },
@@ -50,26 +60,19 @@ const CREATION_STAGES = [
 const MUSIC_TRACKS = [
   { id: "none", name: "No Music", url: null, category: null },
   // Cinematic & Epic
-  { id: "cinematic", name: "Cinematic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", category: "cinematic" },
-  { id: "epic", name: "Epic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", category: "cinematic" },
-  { id: "dramatic", name: "Dramatic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3", category: "cinematic" },
+  { id: "crown-falling-star", name: "Crown of the Falling Star", url: crownOfTheFallingStar, category: "cinematic" },
+  { id: "orbital-drift", name: "Orbital Drift", url: orbitalDrift, category: "cinematic" },
+  { id: "vanishing-footsteps", name: "Vanishing Footsteps", url: vanishingFootsteps, category: "cinematic" },
   // Chill & Ambient
-  { id: "ambient", name: "Ambient", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", category: "chill" },
-  { id: "chill-lofi", name: "Chill Lo-Fi", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", category: "chill" },
-  { id: "relaxed", name: "Relaxed", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", category: "chill" },
-  { id: "mellow", name: "Mellow", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", category: "chill" },
-  { id: "dreamy", name: "Dreamy", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3", category: "chill" },
+  { id: "midnight-coffee", name: "Midnight Coffee Cup", url: midnightCoffeeCup, category: "chill" },
+  { id: "soft-steps", name: "Soft Steps, Clear Steps", url: softStepsClearSteps, category: "chill" },
+  { id: "sunday-repeat", name: "Sunday On Repeat", url: sundayOnRepeat, category: "chill" },
   // Vlog & Upbeat
-  { id: "vlog-upbeat", name: "Vlog Upbeat", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", category: "vlog" },
-  { id: "vlog-travel", name: "Vlog Travel", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", category: "vlog" },
-  { id: "vlog-lifestyle", name: "Vlog Lifestyle", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3", category: "vlog" },
-  { id: "vlog-adventure", name: "Vlog Adventure", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3", category: "vlog" },
+  { id: "quarterly-sunrise", name: "Quarterly Sunrise", url: quarterlySunrise, category: "vlog" },
+  { id: "everyday-good", name: "Everyday Feels So Good", url: everydayFeelsSoGood, category: "vlog" },
+  { id: "runway-nowhere", name: "Runway to Nowhere", url: runwayToNowhere, category: "vlog" },
   // Pop & Modern
-  { id: "emotional", name: "Emotional", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", category: "pop" },
-  { id: "pop-modern", name: "Pop Modern", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", category: "pop" },
-  { id: "pop-bright", name: "Pop Bright", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", category: "pop" },
-  { id: "pop-feel-good", name: "Pop Feel Good", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3", category: "pop" },
-  { id: "pop-energetic", name: "Pop Energetic", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3", category: "pop" },
+  { id: "midnight-quest", name: "Midnight Side Quest", url: midnightSideQuest, category: "pop" },
 ];
 
 interface PreviewCard {
