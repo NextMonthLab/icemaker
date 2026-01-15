@@ -155,9 +155,10 @@ export default function CardPlayer({
   // Computes the global scale factor based on the longest caption
   const deckMeasurement = useMemo(() => {
     const fontSize = captionState?.fontSize || 'medium';
-    const fontSizeMultiplier = fontSize === 'small' ? 0.75 : fontSize === 'large' ? 1.25 : 1;
-    const baseFontSize = (fullScreen ? 48 : 48 * 0.7) * fontSizeMultiplier;
-    const minFontSize = (fullScreen ? 24 : 16) * fontSizeMultiplier;
+    const fontSizeMultiplier = fontSize === 'small' ? 0.8 : fontSize === 'large' ? 1.3 : 1;
+    // Increased base font sizes for better readability
+    const baseFontSize = (fullScreen ? 72 : 56) * fontSizeMultiplier;
+    const minFontSize = (fullScreen ? 36 : 28) * fontSizeMultiplier;
     
     return measureCaptionSet({
       captions: card.captions || [],
@@ -286,6 +287,23 @@ export default function CardPlayer({
       setAudioProgress(audioRef.current.currentTime);
     }
   }, []);
+  
+  // Use requestAnimationFrame for smoother caption sync with audio
+  // The timeupdate event only fires ~4 times/second, which causes visible lag
+  useEffect(() => {
+    if (!hasNarration || !isAudioPlaying) return;
+    
+    let animationId: number;
+    const updateProgress = () => {
+      if (audioRef.current && !audioRef.current.paused) {
+        setAudioProgress(audioRef.current.currentTime);
+        animationId = requestAnimationFrame(updateProgress);
+      }
+    };
+    
+    animationId = requestAnimationFrame(updateProgress);
+    return () => cancelAnimationFrame(animationId);
+  }, [hasNarration, isAudioPlaying]);
   
   const handleAudioLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
