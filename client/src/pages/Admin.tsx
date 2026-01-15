@@ -49,9 +49,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type AdminTab = 'overview' | 'users' | 'industry-orbits' | 'all-orbits' | 'content';
+type AdminTab = 'overview' | 'users' | 'content';
 
-function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void }) {
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function AdminOverview() {
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: () => api.getAdminStats(),
@@ -84,19 +92,15 @@ function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void
           </CardContent>
         </Card>
         
-        <Card 
-          className="bg-card border-border cursor-pointer hover:border-purple-500/50 transition-colors"
-          onClick={onNavigateToOrbits}
-          data-testid="card-total-orbits"
-        >
+        <Card className="bg-card border-border" data-testid="card-total-ices">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-purple-500" />
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                <Video className="w-5 h-5 text-cyan-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats?.totalOrbits || 0}</p>
-                <p className="text-xs text-muted-foreground">Total Orbits</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalIces || 0}</p>
+                <p className="text-xs text-muted-foreground">Total ICEs</p>
               </div>
             </div>
           </CardContent>
@@ -106,11 +110,11 @@ function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-500" />
+                <Globe className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats?.totalVisits30d || 0}</p>
-                <p className="text-xs text-muted-foreground">Visits (30d)</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.publishedIces || 0}</p>
+                <p className="text-xs text-muted-foreground">Published ICEs</p>
               </div>
             </div>
           </CardContent>
@@ -119,12 +123,12 @@ function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-pink-500" />
+              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <PhotoIcon className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats?.totalConversations30d || 0}</p>
-                <p className="text-xs text-muted-foreground">Conversations (30d)</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalMediaAssets || 0}</p>
+                <p className="text-xs text-muted-foreground">Media Assets</p>
               </div>
             </div>
           </CardContent>
@@ -138,7 +142,7 @@ function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {stats?.usersByRole?.map(({ role, count }) => (
+              {stats?.usersByRole?.map(({ role, count }: { role: string; count: number }) => (
                 <div key={role} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground capitalize">{role}</span>
                   <span className="text-sm font-medium text-foreground">{count}</span>
@@ -150,119 +154,21 @@ function AdminOverview({ onNavigateToOrbits }: { onNavigateToOrbits?: () => void
         
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground text-sm font-medium">Orbit Types</CardTitle>
+            <CardTitle className="text-foreground text-sm font-medium">Platform Storage</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Industry Orbits</span>
-                <span className="text-sm font-medium text-foreground">{stats?.industryOrbits || 0}</span>
+                <span className="text-sm text-muted-foreground">Total Storage Used</span>
+                <span className="text-sm font-medium text-foreground">{formatBytes(stats?.totalStorageBytes || 0)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Business Orbits</span>
-                <span className="text-sm font-medium text-foreground">{stats?.standardOrbits || 0}</span>
+                <span className="text-sm text-muted-foreground">Media Files</span>
+                <span className="text-sm font-medium text-foreground">{stats?.totalMediaAssets || 0}</span>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
-  );
-}
-
-function AdminAllOrbits() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const { data: orbits, isLoading } = useQuery({
-    queryKey: ["admin-all-orbits"],
-    queryFn: () => api.getAdminAllOrbits(),
-  });
-
-  const filteredOrbits = orbits?.filter(orbit => 
-    orbit.businessSlug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    orbit.businessName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Input
-          placeholder="Search orbits..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-          data-testid="input-search-orbits"
-        />
-        <span className="text-sm text-muted-foreground">
-          {filteredOrbits?.length || 0} orbits
-        </span>
-      </div>
-
-      <div className="grid gap-3">
-        {filteredOrbits?.map((orbit) => (
-          <Card key={orbit.businessSlug} className="bg-card border-border hover:border-purple-500/30 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-medium text-foreground">{orbit.businessName}</h3>
-                    {orbit.orbitType === 'industry' && (
-                      <span className="px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400">Industry</span>
-                    )}
-                    {orbit.generationStatus === 'ready' && (
-                      <span className="px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400">Ready</span>
-                    )}
-                    {orbit.generationStatus === 'generating' && (
-                      <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">Generating</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{orbit.businessSlug}</p>
-                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {orbit.visits30d} visits
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MessageCircle className="w-3 h-3" />
-                      {orbit.conversations30d} chats
-                    </span>
-                    {orbit.planTier && (
-                      <span className="capitalize">{orbit.planTier}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
-                  <Link href={`/orbit/${orbit.businessSlug}`}>
-                    <Button variant="outline" size="sm" className="gap-1" data-testid={`button-view-orbit-${orbit.businessSlug}`}>
-                      <Globe className="w-3 h-3" />
-                      View
-                    </Button>
-                  </Link>
-                  {orbit.sourceUrl && (
-                    <a href={orbit.sourceUrl} target="_blank" rel="noopener noreferrer">
-                      <Button variant="ghost" size="sm" className="gap-1" data-testid={`button-source-${orbit.businessSlug}`}>
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {filteredOrbits?.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No orbits found matching your search.
-          </div>
-        )}
       </div>
     </div>
   );
@@ -437,86 +343,6 @@ function AdminUsers() {
                     <p className="text-foreground text-sm font-medium">{user.iceCount || '—'}</p>
                     <p className="text-[10px] text-muted-foreground/50">ICEs</p>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AdminIndustryOrbits() {
-  const { data: orbits, isLoading } = useQuery({
-    queryKey: ["admin-industry-orbits"],
-    queryFn: () => api.getAdminIndustryOrbits(),
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!orbits || orbits.length === 0) {
-    return (
-      <Card className="bg-card border-border">
-        <CardContent className="py-12 text-center">
-          <Layers className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-          <p className="text-muted-foreground">No industry orbits found</p>
-          <Link href="/admin/cpac">
-            <Button className="mt-4" variant="outline">
-              Create Industry Orbit
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Industry Orbits</h3>
-        <Link href="/admin/cpac">
-          <Button variant="outline" size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Manage CPAC
-          </Button>
-        </Link>
-      </div>
-      
-      <div className="grid gap-4">
-        {orbits.map(orbit => (
-          <Card key={orbit.id} className="bg-card border-border">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                    <Globe className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">{orbit.businessSlug}</h4>
-                    <p className="text-xs text-muted-foreground">
-                      {orbit.generationStatus === 'ready' ? 'Active' : orbit.generationStatus}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link href={`/orbit/${orbit.businessSlug}`}>
-                    <Button variant="ghost" size="sm">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      View
-                    </Button>
-                  </Link>
-                  <Link href="/admin/industry-assets">
-                    <Button variant="outline" size="sm">
-                      Assets
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </CardContent>
@@ -929,35 +755,19 @@ export default function Admin() {
                 <Users className="w-4 h-4 mr-2" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="all-orbits" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-all-orbits">
-                <Globe className="w-4 h-4 mr-2" />
-                All Orbits
-              </TabsTrigger>
-              <TabsTrigger value="industry-orbits" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-industry">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Industry Orbits
-              </TabsTrigger>
               <TabsTrigger value="content" className="data-[state=active]:bg-muted text-sm px-3" data-testid="tab-content">
                 <Layers className="w-4 h-4 mr-2" />
-                Content
+                ICE Content
               </TabsTrigger>
             </TabsList>
           </div>
           
           <TabsContent value="overview">
-            <AdminOverview onNavigateToOrbits={() => setActiveTab('all-orbits')} />
+            <AdminOverview />
           </TabsContent>
           
           <TabsContent value="users">
             <AdminUsers />
-          </TabsContent>
-          
-          <TabsContent value="all-orbits">
-            <AdminAllOrbits />
-          </TabsContent>
-          
-          <TabsContent value="industry-orbits">
-            <AdminIndustryOrbits />
           </TabsContent>
           
           <TabsContent value="content">

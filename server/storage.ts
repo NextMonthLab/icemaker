@@ -24,6 +24,10 @@ export interface IStorage {
   getPlatformMetrics(): Promise<{
     totalUsers: number;
     usersByRole: { role: string; count: number }[];
+    totalIces: number;
+    publishedIces: number;
+    totalMediaAssets: number;
+    totalStorageBytes: number;
   }>;
   
   // Creator Profiles
@@ -426,6 +430,10 @@ export class DatabaseStorage implements IStorage {
   async getPlatformMetrics(): Promise<{
     totalUsers: number;
     usersByRole: { role: string; count: number }[];
+    totalIces: number;
+    publishedIces: number;
+    totalMediaAssets: number;
+    totalStorageBytes: number;
   }> {
     // Count users
     const allUsers = await db.query.users.findMany();
@@ -439,9 +447,26 @@ export class DatabaseStorage implements IStorage {
     });
     const usersByRole = Object.entries(roleCounts).map(([role, count]) => ({ role, count }));
     
+    // Count ICEs
+    const allIces = await db.query.icePreviews.findMany();
+    const totalIces = allIces.length;
+    const publishedIces = allIces.filter(ice => ice.visibility === 'public').length;
+    
+    // Count media assets and storage
+    const mediaResult = await db.select({
+      count: sql<number>`count(*)::int`,
+      totalBytes: sql<number>`coalesce(sum(file_size_bytes), 0)::bigint`,
+    }).from(schema.mediaAssets);
+    const totalMediaAssets = mediaResult[0]?.count ?? 0;
+    const totalStorageBytes = Number(mediaResult[0]?.totalBytes ?? 0);
+    
     return {
       totalUsers,
       usersByRole,
+      totalIces,
+      publishedIces,
+      totalMediaAssets,
+      totalStorageBytes,
     };
   }
   

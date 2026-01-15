@@ -1,0 +1,127 @@
+[GET]
+www.icemaker.app/api/audio clientIP="86.133.77.159" requestID="ca53f392-5a79-4bd6" responseTimeMS=31 responseBytes=178 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/universes clientIP="86.133.77.159" requestID="aa9795de-16b0-4bf5" responseTimeMS=9 responseBytes=178 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="86.133.77.159" requestID="e6975489-0839-421c" responseTimeMS=39 responseBytes=2253116 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/admin/stats clientIP="86.133.77.159" requestID="bea13bc5-1d73-431a" responseTimeMS=8 responseBytes=179 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/universes clientIP="86.133.77.159" requestID="a3b91e16-9b91-41fd" responseTimeMS=6 responseBytes=178 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/ice/my-previews clientIP="86.133.77.159" requestID="e0e8bcc4-6f0c-43c0" responseTimeMS=76 responseBytes=4908 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/plans clientIP="86.133.77.159" requestID="784f3021-d7fc-472f" responseTimeMS=8 responseBytes=178 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/me/entitlements clientIP="86.133.77.159" requestID="dd685672-74f3-4465" responseTimeMS=6 responseBytes=180 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768510794418_8zgskr clientIP="86.133.77.159" requestID="7a05a794-c3e4-4ffa" responseTimeMS=10 responseBytes=181 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/auth/me clientIP="86.133.77.159" requestID="6f0383f5-8220-424e" responseTimeMS=6 responseBytes=179 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/video/config clientIP="86.133.77.159" requestID="6d6fc47c-bf29-4907" responseTimeMS=5 responseBytes=180 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/tts/voices clientIP="86.133.77.159" requestID="51b3de75-6fbd-4c56" responseTimeMS=4 responseBytes=180 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768510794418_8zgskr/settings clientIP="86.133.77.159" requestID="62dc005a-c139-4cd4" responseTimeMS=11 responseBytes=291 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768510794418_8zgskr/cards clientIP="86.133.77.159" requestID="427942a6-c528-4133" responseTimeMS=13 responseBytes=3998 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[POST]
+www.icemaker.app/api/ice/preview/brief clientIP="86.133.77.159" requestID="fc360a96-824d-43ee" responseTimeMS=177 responseBytes=8007 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re clientIP="86.133.77.159" requestID="cc166a03-f95f-47f3" responseTimeMS=10 responseBytes=8250 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards clientIP="86.133.77.159" requestID="31088480-b340-44b7" responseTimeMS=21 responseBytes=3999 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/settings clientIP="86.133.77.159" requestID="24a3844e-1879-4bbd" responseTimeMS=10 responseBytes=291 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible/generate clientIP="86.133.77.159" requestID="2fb8ab6b-6ebd-4cb9" responseTimeMS=12253 responseBytes=1289 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="e9faa52f-b97e-4b99" responseTimeMS=14 responseBytes=1317 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="ee1718de-f0ad-4d5a" responseTimeMS=50 responseBytes=1335 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="b2e85939-ab08-488e" responseTimeMS=117 responseBytes=1582 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="8a11e7bf-8437-46ae" responseTimeMS=89 responseBytes=1619 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="81149d7d-7331-4647" responseTimeMS=548 responseBytes=1812 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/bible clientIP="86.133.77.159" requestID="6286428a-a2f1-4f28" responseTimeMS=76 responseBytes=1937 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+  status: 403,
+  headers: Headers {
+    date: 'Thu, 15 Jan 2026 21:47:17 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'openai-version': '2020-10-01',
+    'openai-organization': 'user-olkedic5drgtge7d7yduk7ar',
+    'openai-project': 'proj_S8PqdvYOopV8XwrzNjqI9m5h',
+    'x-request-id': 'req_4bc4a7058f394e389f2d7d322564d7c9',
+    'openai-processing-ms': '310',
+    'x-envoy-upstream-service-time': '313',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=Oj36jJ9R42fL22ny0TmGzkcsbGhYMz0O12S3F8wBtOk-1768513637-1.0.1.1-p1nmT7e6L2eg_skQ8jGVp.55YQKgahXygoXfpq1wL_Yca6vnvvPOx1Yy5xyh8oRonVIgnMQlL4Ob1lCTF0ApSRnCNdMV0H2S_QZ45hENLhI; path=/; expires=Thu, 15-Jan-26 22:17:17 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=558LmDAmvnwZfIkMcgwKTb_HJOJfFi2OUv6qlMN3_KQ-1768513637692-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '9be89214faea4b01-PDX',
+    'content-encoding': 'br',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_4bc4a7058f394e389f2d7d322564d7c9',
+  error: {
+    message: 'Your organization must be verified to use the model `gpt-image-1`. Please go to: https://platform.openai.com/settings/organization/general and click on Verify Organization. If you just verified, it can take up to 15 minutes for access to propagate.',
+    type: 'invalid_request_error',
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image clientIP="86.133.77.159" requestID="c2aeeb05-d5a3-446c" responseTimeMS=1153 responseBytes=309 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    param: null,
+    code: null
+  },
+  code: null,
+  param: null,
+  type: 'invalid_request_error'
+}
+9:47:17 PM [express] POST /api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image 500 in 1150ms :: {"message":"Error generating image"}
+[ICE] Generating image for preview ice_1768513354516_ch98re, card card_0
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image clientIP="86.133.77.159" requestID="e47184a6-39fb-4ac1" responseTimeMS=1084 responseBytes=309 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+Error generating ICE preview card image: Pc [Error]: 403 Your organization must be verified to use the model `gpt-image-1`. Please go to: https://platform.openai.com/settings/organization/general and click on Verify Organization. If you just verified, it can take up to 15 minutes for access to propagate.
+    at t.generate (/opt/render/project/src/dist/index.cjs:78:76046)
+    at je.makeStatusError (/opt/render/project/src/dist/index.cjs:100:1174)
+    at je.makeRequest (/opt/render/project/src/dist/index.cjs:100:4492)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:729:4257 {
+  status: 403,
+  headers: Headers {
+    date: 'Thu, 15 Jan 2026 21:47:42 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'openai-version': '2020-10-01',
+    'openai-organization': 'user-olkedic5drgtge7d7yduk7ar',
+    'openai-project': 'proj_S8PqdvYOopV8XwrzNjqI9m5h',
+    'x-request-id': 'req_1f4c471f903a491ca6c8575d8c51d127',
+    'openai-processing-ms': '260',
+    'x-envoy-upstream-service-time': '263',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=YGBBspGeijOdGd_QiMiHJVYt1HUTgi09s6ZP4eC8dCg-1768513662-1.0.1.1-NUwD0P._UkMiVMR6LoZT0dhQvrzdw3m0QlG0v23EniVB8CTc5PhETaB4PIjJNs57v_xwaTT6UNZvPdTMX93_GhJXHEiKdYMaTwOZRBGl_jk; path=/; expires=Thu, 15-Jan-26 22:17:42 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=VSNC.hry1laA5VoJeEg9I.uCZduYs8fEeRwjrUVCAUw-1768513662890-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '9be892b31ab91bed-PDX',
+    'content-encoding': 'br',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_1f4c471f903a491ca6c8575d8c51d127',
+  error: {
+    message: 'Your organization must be verified to use the model `gpt-image-1`. Please go to: https://platform.openai.com/settings/organization/general and click on Verify Organization. If you just verified, it can take up to 15 minutes for access to propagate.',
+    type: 'invalid_request_error',
+    param: null,
+    code: null
+  },
+  code: null,
+  param: null,
+  type: 'invalid_request_error'
+}
+9:47:42 PM [express] POST /api/ice/preview/ice_1768513354516_ch98re/cards/card_0/generate-image 500 in 1076ms :: {"message":"Error generating image"}
