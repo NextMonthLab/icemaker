@@ -6,6 +6,7 @@ import * as schema from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import pg from "pg";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import multer from "multer";
@@ -114,15 +115,30 @@ export async function registerRoutes(
   if (isProduction) {
     app.set("trust proxy", 1);
   }
-  
+
   // Session middleware with PostgreSQL store for persistence across restarts
+  // Create a dedicated pool for session store (with SSL for Render)
+  const sessionPool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+  });
+
+  // Log session store errors for debugging
+  sessionPool.on('error', (err) => {
+    console.error('[session-store] Pool error:', err.message);
+  });
+
   const PgStore = connectPgSimple(session);
   app.use(
     session({
       store: new PgStore({
-        conString: process.env.DATABASE_URL,
+        pool: sessionPool,           // Use pool instead of conString for SSL support
+        schemaName: 'public',        // Explicit schema
         tableName: 'session',
         createTableIfMissing: true,
+        errorLog: (err: Error) => {
+          console.error('[session-store] Error:', err.message);
+        },
       }),
       secret: process.env.SESSION_SECRET || "storyflix-secret-change-in-production",
       resave: false,
