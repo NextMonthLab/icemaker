@@ -8470,16 +8470,30 @@ Stay engaging, reference story details, and help the audience understand the nar
       const { isAlignmentEnabled, alignCardCaptions } = await import("./services/whisperAlignment");
       if (isAlignmentEnabled() && preview.captionTimingMode === 'aligned') {
         try {
-          // Get captions from card content (split by sentence)
-          const captions = card.content?.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim()) || [];
+          // Get captions - use same logic as frontend for consistency
+          // Frontend uses: content.split('. ').filter(s => s.trim()).slice(0, 3)
+          let captions: string[] = [];
+          if (card.captionsJson && Array.isArray(card.captionsJson)) {
+            // If captionsJson exists, use it
+            captions = card.captionsJson.map((c: any) => typeof c === 'string' ? c : (c.text || ''));
+          } else if (card.captions && Array.isArray(card.captions)) {
+            captions = card.captions;
+          } else if (card.content) {
+            // Fallback: split content the same way frontend does
+            captions = card.content.split('. ').filter((s: string) => s.trim()).slice(0, 3);
+          }
           
-          // Get audio duration from result if available, otherwise estimate
-          const audioDurationMs = result.durationSeconds ? result.durationSeconds * 1000 : (narrationText.length / 15) * 1000;
-          
-          const alignment = await alignCardCaptions(captions, audioUrl, audioDurationMs);
-          if (alignment) {
-            updatedCard.captionTimings = alignment.timings;
-            console.log(`[ICE] Caption alignment complete: ${alignment.alignedCount}/${alignment.totalCount} aligned`);
+          if (captions.length > 0) {
+            // Get audio duration from result if available, otherwise estimate
+            const audioDurationMs = result.durationSeconds ? result.durationSeconds * 1000 : (narrationText.length / 15) * 1000;
+            
+            const alignment = await alignCardCaptions(captions, audioUrl, audioDurationMs);
+            if (alignment) {
+              updatedCard.captionTimings = alignment.timings;
+              console.log(`[ICE] Caption alignment complete: ${alignment.alignedCount}/${alignment.totalCount} captions aligned`);
+            }
+          } else {
+            console.log('[ICE] No captions found for alignment');
           }
         } catch (alignError) {
           console.warn('[ICE] Caption alignment failed (continuing without):', alignError);

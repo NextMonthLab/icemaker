@@ -2365,6 +2365,7 @@ export default function GuestIceBuilderPage() {
                     mediaAssets: (cards[previewCardIndex] as any).mediaAssets,
                     selectedMediaAssetId: (cards[previewCardIndex] as any).selectedMediaAssetId,
                     captions: cards[previewCardIndex].content.split('. ').filter(s => s.trim()).slice(0, 3),
+                    captionTimings: (cards[previewCardIndex] as any).captionTimings,
                     sceneText: cards[previewCardIndex].content,
                     recapText: cards[previewCardIndex].title,
                     publishDate: new Date().toISOString(),
