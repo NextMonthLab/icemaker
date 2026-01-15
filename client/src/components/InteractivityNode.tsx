@@ -227,16 +227,16 @@ export function InteractivityNode({
         animate={{ opacity: 1, scale: 1 }}
         className="flex items-center justify-center py-2"
       >
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-full">
-          <MessageCircle className="w-3.5 h-3.5 text-purple-400" />
-          <span className="text-xs text-purple-300">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-cyan-900/40 to-cyan-800/40 border border-cyan-500/30 rounded-full">
+          <MessageCircle className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-xs text-cyan-300">
             {displayName !== "Story Character" ? `Talk to ${displayName}` : "AI Interaction"}
           </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={onActivate}
-            className="h-6 px-2 text-xs text-purple-300 hover:text-white hover:bg-purple-500/20"
+            className="h-6 px-2 text-xs text-cyan-300"
             data-testid={`button-activate-node-${nodeId}`}
           >
             <Sparkles className="w-3 h-3 mr-1" />
@@ -263,18 +263,18 @@ export function InteractivityNode({
       exit={{ opacity: 0, height: 0 }}
       className="my-3"
     >
-      <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-purple-500/20">
+      <div className="bg-gradient-to-r from-cyan-900/30 to-cyan-800/30 border border-cyan-500/30 rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-cyan-500/20">
           <div className="flex items-center gap-2">
             {currentCharacter?.avatarEnabled && currentCharacter?.avatar ? (
-              <Avatar className="w-7 h-7 border border-purple-500/30">
+              <Avatar className="w-7 h-7 border border-cyan-500/30">
                 <AvatarImage src={currentCharacter.avatar} alt={currentCharacter.name} />
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500">
+                <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-cyan-400">
                   <User className="w-3.5 h-3.5 text-white" />
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-400 flex items-center justify-center">
                 <User className="w-3.5 h-3.5 text-white" />
               </div>
             )}
@@ -285,24 +285,24 @@ export function InteractivityNode({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-auto py-0.5 px-2 text-left hover:bg-purple-500/20"
+                    className="h-auto py-0.5 px-2 text-left"
                     data-testid={`button-character-select-${nodeId}`}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium text-purple-200">{displayName}</span>
+                      <span className="text-sm font-medium text-cyan-200">{displayName}</span>
                       {displayRole && (
-                        <span className="text-[10px] text-purple-400/70">{displayRole}</span>
+                        <span className="text-[10px] text-cyan-400/70">{displayRole}</span>
                       )}
                     </div>
-                    <ChevronDown className="w-3 h-3 ml-1 text-purple-400" />
+                    <ChevronDown className="w-3 h-3 ml-1 text-cyan-400" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-slate-900 border-purple-500/30">
+                <DropdownMenuContent className="bg-slate-900 border-cyan-500/30">
                   {characters.map((char) => (
                     <DropdownMenuItem
                       key={char.id}
                       onClick={() => handleCharacterChange(char.id)}
-                      className={`cursor-pointer ${char.id === currentCharacter?.id ? 'bg-purple-500/20' : ''}`}
+                      className={`cursor-pointer ${char.id === currentCharacter?.id ? 'bg-cyan-500/20' : ''}`}
                       data-testid={`menu-character-${char.id}`}
                     >
                       <div className="flex flex-col">
@@ -315,9 +315,9 @@ export function InteractivityNode({
               </DropdownMenu>
             ) : (
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-purple-200">{displayName}</span>
+                <span className="text-sm font-medium text-cyan-200">{displayName}</span>
                 {displayRole && (
-                  <span className="text-[10px] text-purple-400/70">{displayRole}</span>
+                  <span className="text-[10px] text-cyan-400/70">{displayRole}</span>
                 )}
               </div>
             )}
@@ -352,7 +352,7 @@ export function InteractivityNode({
                 <div
                   className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
                     msg.role === "user"
-                      ? "bg-purple-600 text-white"
+                      ? "bg-cyan-600 text-white"
                       : "bg-slate-800 text-slate-200"
                   }`}
                 >
@@ -391,7 +391,7 @@ export function InteractivityNode({
           )}
         </div>
 
-        <div className="p-3 border-t border-purple-500/20">
+        <div className="p-3 border-t border-cyan-500/20">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -411,7 +411,7 @@ export function InteractivityNode({
               type="submit"
               size="sm"
               disabled={!input.trim() || isLoading}
-              className="h-9 px-3 bg-purple-600 hover:bg-purple-700"
+              className="h-9 px-3 bg-cyan-600 hover:bg-cyan-700"
               data-testid={`button-send-node-message-${nodeId}`}
             >
               <Send className="w-4 h-4" />
@@ -722,10 +722,10 @@ export function AddInteractivityButton({
         setShowCreateDialog(open);
         if (!open) setEditingCharacterId(null);
       }}>
-        <DialogContent className="bg-slate-900 border-purple-500/30 max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-slate-900 border-cyan-500/30 max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <PenLine className="w-5 h-5 text-purple-400" />
+              <PenLine className="w-5 h-5 text-cyan-400" />
               {editingCharacterId ? "Edit Character" : "Create Custom Character"}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
@@ -766,7 +766,7 @@ export function AddInteractivityButton({
                 <div className="relative">
                   {avatarPreview ? (
                     <div className="relative">
-                      <Avatar className="w-16 h-16 border-2 border-purple-500/30">
+                      <Avatar className="w-16 h-16 border-2 border-cyan-500/30">
                         <AvatarImage src={avatarPreview} alt="Character avatar" />
                         <AvatarFallback className="bg-slate-800 text-slate-400">
                           <User className="w-6 h-6" />
@@ -786,7 +786,7 @@ export function AddInteractivityButton({
                   ) : (
                     <div 
                       onClick={() => avatarInputRef.current?.click()}
-                      className="w-16 h-16 rounded-full bg-slate-800 border-2 border-dashed border-slate-600 hover:border-purple-500/50 flex items-center justify-center cursor-pointer transition-colors"
+                      className="w-16 h-16 rounded-full bg-slate-800 border-2 border-dashed border-slate-600 hover:border-cyan-500/50 flex items-center justify-center cursor-pointer transition-colors"
                       data-testid="button-upload-avatar"
                     >
                       <Upload className="w-5 h-5 text-slate-500" />
@@ -825,7 +825,7 @@ export function AddInteractivityButton({
             <div className="space-y-2">
               <Label htmlFor="char-persona" className="text-sm text-slate-300">
                 Persona & Instructions
-                <span className="text-purple-400 ml-1">(Recommended)</span>
+                <span className="text-cyan-400 ml-1">(Recommended)</span>
               </Label>
               <Textarea
                 id="char-persona"
@@ -843,7 +843,7 @@ Example: You are a friendly AI search expert who explains complex topics in simp
             <div className="space-y-2">
               <Label htmlFor="char-knowledge" className="text-sm text-slate-300">
                 Knowledge Base
-                <span className="text-purple-400 ml-1">(Recommended)</span>
+                <span className="text-cyan-400 ml-1">(Recommended)</span>
               </Label>
               <Textarea
                 id="char-knowledge"
@@ -908,7 +908,7 @@ Example: Our company specializes in AI search optimization. Key services include
             <Button
               onClick={handleSaveCustomCharacter}
               disabled={!customName.trim() || isCreating}
-              className="flex-1 bg-purple-600 hover:bg-purple-700"
+              className="flex-1 bg-cyan-600 hover:bg-cyan-700"
               data-testid="button-save-custom-char"
             >
               {isCreating ? (
