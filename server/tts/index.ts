@@ -1,19 +1,44 @@
 import { OpenAITTSProvider } from "./openaiProvider";
+import { ElevenLabsTTSProvider } from "./elevenlabsProvider";
 import type { TTSProvider, Voice, SynthesisResult } from "./provider";
 
 export type { Voice, SynthesisResult, TTSProvider };
 
-let provider: TTSProvider | null = null;
+let openaiProvider: TTSProvider | null = null;
+let elevenlabsProvider: TTSProvider | null = null;
 
-export function getTTSProvider(): TTSProvider {
-  if (!provider) {
-    provider = new OpenAITTSProvider();
+function getOpenAIProvider(): TTSProvider {
+  if (!openaiProvider) {
+    openaiProvider = new OpenAITTSProvider();
   }
-  return provider;
+  return openaiProvider;
+}
+
+function getElevenLabsProvider(): TTSProvider {
+  if (!elevenlabsProvider) {
+    elevenlabsProvider = new ElevenLabsTTSProvider();
+  }
+  return elevenlabsProvider;
+}
+
+function isElevenLabsVoice(voiceId: string): boolean {
+  return voiceId.startsWith("eleven_");
 }
 
 export function listVoices(): Voice[] {
-  return getTTSProvider().listVoices();
+  const voices: Voice[] = [];
+  
+  const openai = getOpenAIProvider();
+  if (openai.isConfigured()) {
+    voices.push(...openai.listVoices());
+  }
+  
+  const elevenlabs = getElevenLabsProvider();
+  if (elevenlabs.isConfigured()) {
+    voices.push(...elevenlabs.listVoices());
+  }
+  
+  return voices;
 }
 
 export async function synthesiseSpeech(options: {
@@ -21,11 +46,23 @@ export async function synthesiseSpeech(options: {
   voice: string;
   speed?: number;
 }): Promise<SynthesisResult> {
-  return getTTSProvider().synthesiseSpeech(options);
+  if (isElevenLabsVoice(options.voice)) {
+    const provider = getElevenLabsProvider();
+    if (!provider.isConfigured()) {
+      throw new Error("ElevenLabs TTS not configured");
+    }
+    return provider.synthesiseSpeech(options);
+  }
+  
+  const provider = getOpenAIProvider();
+  if (!provider.isConfigured()) {
+    throw new Error("OpenAI TTS not configured");
+  }
+  return provider.synthesiseSpeech(options);
 }
 
 export function isTTSConfigured(): boolean {
-  return getTTSProvider().isConfigured();
+  return getOpenAIProvider().isConfigured() || getElevenLabsProvider().isConfigured();
 }
 
 export const MAX_NARRATION_TEXT_LENGTH = 3000;
