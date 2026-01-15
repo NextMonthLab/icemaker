@@ -10,6 +10,7 @@ export interface FitSettings {
   lineHeight: number;
   fontFamily?: string;
   fontWeight?: number;
+  maxHeightPx?: number; // Optional height constraint
 }
 
 export interface FitResult {
@@ -90,12 +91,20 @@ function tryFit(
       settings.fontWeight
     );
     
-    if (fits) {
-      overflowLog.push(`OK ${fontSize}px fits (${Math.round(maxWidth)}px <= ${Math.round(availableWidth)}px)`);
+    // Check height constraint if provided
+    const textBlockHeight = lines.length * fontSize * settings.lineHeight;
+    const heightFits = !settings.maxHeightPx || textBlockHeight <= settings.maxHeightPx;
+    
+    if (fits && heightFits) {
+      overflowLog.push(`OK ${fontSize}px fits (W:${Math.round(maxWidth)}px<=>${Math.round(availableWidth)}px, H:${Math.round(textBlockHeight)}px)`);
       return { lines, fontSize };
     }
     
-    overflowLog.push(`X ${fontSize}px overflow (${Math.round(maxWidth)}px > ${Math.round(availableWidth)}px)`);
+    if (!fits) {
+      overflowLog.push(`X ${fontSize}px width overflow (${Math.round(maxWidth)}px > ${Math.round(availableWidth)}px)`);
+    } else if (!heightFits) {
+      overflowLog.push(`X ${fontSize}px height overflow (${Math.round(textBlockHeight)}px > ${settings.maxHeightPx}px)`);
+    }
     fontSize -= 2;
   }
   
