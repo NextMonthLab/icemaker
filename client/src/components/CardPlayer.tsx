@@ -419,12 +419,50 @@ export default function CardPlayer({
       }));
     }
     
-    // Fallback: Equal time per caption (no gaps)
-    const perCaptionDuration = audioDuration / captions.length;
-    return captions.map((_, i) => ({
-      start: i * perCaptionDuration,
-      end: (i + 1) * perCaptionDuration,
-    }));
+    // Fallback: Word-weighted time distribution (longer sentences get more time)
+    // Count words in each caption
+    const wordCounts = captions.map(c => c.split(/\s+/).filter(w => w.length > 0).length);
+    const totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
+    
+    if (totalWords === 0) {
+      // Edge case: no words, use equal distribution
+      const perCaptionDuration = audioDuration / captions.length;
+      return captions.map((_, i) => ({
+        start: i * perCaptionDuration,
+        end: (i + 1) * perCaptionDuration,
+      }));
+    }
+    
+    // Distribute time proportionally to word count, with min 1.5s per caption
+    const minDuration = 1.5;
+    const ranges: { start: number; end: number }[] = [];
+    let currentTime = 0;
+    
+    for (let i = 0; i < captions.length; i++) {
+      const proportion = wordCounts[i] / totalWords;
+      let duration = audioDuration * proportion;
+      // Clamp to minimum duration
+      duration = Math.max(duration, minDuration);
+      ranges.push({
+        start: currentTime,
+        end: currentTime + duration,
+      });
+      currentTime += duration;
+    }
+    
+    // Normalize if we exceeded audio duration due to min clamps
+    if (currentTime > audioDuration && ranges.length > 0) {
+      const scale = audioDuration / currentTime;
+      let runningTime = 0;
+      for (const range of ranges) {
+        const duration = (range.end - range.start) * scale;
+        range.start = runningTime;
+        range.end = runningTime + duration;
+        runningTime += duration;
+      }
+    }
+    
+    return ranges;
   }, [card.captions, card.captionTimings, audioDuration]);
   
   // Sync captions with audio progress when narration is playing

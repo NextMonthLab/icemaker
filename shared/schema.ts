@@ -1332,7 +1332,7 @@ export const icePreviews = pgTable("ice_previews", {
   }>(),
   
   // Caption Alignment settings (Phase 2 - Forced Alignment)
-  captionTimingMode: text("caption_timing_mode").$type<CaptionTimingMode>().default("heuristic"),
+  captionTimingMode: text("caption_timing_mode").$type<CaptionTimingMode>().default("aligned"),
   alignmentTranscript: jsonb("alignment_transcript").$type<AlignmentTranscript>(),
   alignmentStatus: text("alignment_status").$type<CaptionAlignmentStatus>(),
   
