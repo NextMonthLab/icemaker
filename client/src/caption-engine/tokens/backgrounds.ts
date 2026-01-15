@@ -49,12 +49,13 @@ import type { CSSProperties } from "react";
 export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillColor?: string }): CSSProperties {
   const baseContainerStyles: CSSProperties = {
     display: "inline-block",
-    maxWidth: "92%",
+    maxWidth: "95%",
     textAlign: "center",
     whiteSpace: "normal",
-    wordBreak: "keep-all",
-    overflowWrap: "normal",
+    wordBreak: "break-word",
+    overflowWrap: "break-word",
     hyphens: "none",
+    boxSizing: "border-box",
   };
 
   switch (tokenId) {
