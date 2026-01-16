@@ -10716,6 +10716,87 @@ Return a JSON object with:
     }
   });
 
+  // Demo request contact form endpoint
+  app.post("/api/contact/demo-request", async (req, res) => {
+    try {
+      const { name, email, company, message } = req.body;
+
+      if (!name || !email) {
+        return res.status(400).json({ message: "Name and email are required" });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Log the demo request
+      console.log("[Demo Request] New demo request received:", {
+        name,
+        email,
+        company: company || "Not provided",
+        message: message || "No message",
+        timestamp: new Date().toISOString(),
+        ip: req.ip || req.socket.remoteAddress,
+      });
+
+      // Store in database for tracking
+      try {
+        await db.insert(schema.iceLeads).values({
+          iceId: "demo_requests", // Special identifier for demo requests
+          email,
+          name,
+          visitorIp: req.ip || req.socket.remoteAddress || null,
+          userAgent: req.get("user-agent") || null,
+          referrer: company ? `Company: ${company} | Message: ${message || 'None'}` : message || null,
+        });
+      } catch (dbError) {
+        console.error("[Demo Request] Failed to store in database:", dbError);
+        // Continue anyway - we logged it
+      }
+
+      // Send notification email via Resend if configured
+      if (process.env.RESEND_API_KEY) {
+        try {
+          const { Resend } = await import("resend");
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          
+          await resend.emails.send({
+            from: "IceMaker <notifications@icemaker.app>",
+            to: ["hello@icemaker.app"],
+            subject: `Demo Request from ${name}${company ? ` (${company})` : ''}`,
+            html: `
+              <h2>New Demo Request</h2>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Company:</strong> ${company || 'Not provided'}</p>
+              <p><strong>Message:</strong></p>
+              <p>${message || 'No message provided'}</p>
+              <hr />
+              <p style="color: #666; font-size: 12px;">
+                Submitted at ${new Date().toISOString()}<br />
+                IP: ${req.ip || req.socket.remoteAddress || 'Unknown'}
+              </p>
+            `,
+          });
+          console.log("[Demo Request] Notification email sent successfully");
+        } catch (emailError) {
+          console.error("[Demo Request] Failed to send notification email:", emailError);
+          // Continue anyway - we have the data logged
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Demo request received. We'll be in touch within 24 hours." 
+      });
+    } catch (error) {
+      console.error("Error processing demo request:", error);
+      res.status(500).json({ message: "Failed to submit request" });
+    }
+  });
+
   // Enterprise branding enquiry endpoint
   app.post("/api/enterprise/branding-enquiry", async (req, res) => {
     try {
