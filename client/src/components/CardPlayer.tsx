@@ -296,6 +296,14 @@ export default function CardPlayer({
     }
   }, [phase, isPlaying, showVideo, hasVideo]);
   
+  // Video ref callback to start playback when video element mounts
+  const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (el && phase === "cinematic" && isPlaying && showVideo && hasVideo) {
+      el.play().catch(() => {});
+    }
+  }, [phase, isPlaying, showVideo, hasVideo]);
+  
   const toggleAudioPlayback = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -613,7 +621,7 @@ export default function CardPlayer({
             >
               {showVideo && hasVideo ? (
                 <video
-                  ref={videoRef}
+                  ref={setVideoRef}
                   src={activeMedia.videoUrl!}
                   loop
                   muted
@@ -739,7 +747,7 @@ export default function CardPlayer({
                     )}
                   </button>
                 )}
-                {hasNarration && (
+                {(hasNarration || (showVideo && hasVideo)) && (
                   <div className="flex items-center gap-1">
                     <button
                       onClick={toggleAudioPlayback}
@@ -752,7 +760,7 @@ export default function CardPlayer({
                         <Play className="w-4 h-4 text-white/70" />
                       )}
                     </button>
-                    {narrationMuted && (
+                    {hasNarration && narrationMuted && (
                       <div className="p-2 bg-black/30 rounded-full backdrop-blur-sm">
                         <VolumeX className="w-4 h-4 text-white/40" />
                       </div>
