@@ -1,0 +1,18 @@
+GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_1/video/status clientIP="86.133.77.159" requestID="642539ad-bbb2-4eef" responseTimeMS=599 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_2/video/status clientIP="86.133.77.159" requestID="2f9038d3-a40c-4396" responseTimeMS=691 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_4/video/status clientIP="86.133.77.159" requestID="7d9791f3-981a-47d4" responseTimeMS=692 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+11:04:05 PM [express] GET /api/ice/preview/ice_1768604204133_ghjj18/cards/card_3/video/status 304 in 6ms :: {"status":"none"}
+11:04:05 PM [express] GET /api/ice/preview/ice_1768604204133_ghjj18/cards/card_4/video/status 304 in 5ms :: {"status":"none"}
+11:04:05 PM [express] GET /api/ice/preview/ice_1768604204133_ghjj18/cards/card_1/video/status 304 in 6ms :: {"status":"none"}
+11:04:05 PM [express] GET /api/ice/preview/ice_1768604204133_ghjj18/cards/card_2/video/status 304 in 8ms :: {"status":"none"}
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_3/video/status clientIP="86.133.77.159" requestID="0034d0c2-3fcb-4641" responseTimeMS=8 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_4/video/status clientIP="86.133.77.159" requestID="57df94d1-66e1-4d5a" responseTimeMS=6 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133_ghjj18/cards/card_2/video/status clientIP="86.133.77.159" requestID="7f81cee2-bbe9-42d3" responseTimeMS=15 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768604204133
