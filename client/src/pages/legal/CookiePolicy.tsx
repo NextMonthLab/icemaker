@@ -192,7 +192,7 @@ export default function CookiePolicy() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a>
             </p>
           </section>
         </div>

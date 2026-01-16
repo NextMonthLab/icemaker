@@ -79,7 +79,7 @@ export default function TermsOfService() {
 
             <h3 className="text-xl font-medium mb-3 mt-6 text-white/90">4.3 Refunds</h3>
             <p className="text-white/70 leading-relaxed">
-              Refunds are provided at our discretion. Contact us at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a> for refund requests.
+              Refunds are provided at our discretion. Contact us at <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a> for refund requests.
             </p>
           </section>
 
@@ -201,7 +201,7 @@ export default function TermsOfService() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a>
             </p>
           </section>
         </div>

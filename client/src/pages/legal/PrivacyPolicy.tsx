@@ -47,7 +47,7 @@ export default function PrivacyPolicy() {
               NextMonth Ltd is the data controller responsible for your personal data. If you have any questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="text-white/70 leading-relaxed mt-4">
-              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a><br />
+              Email: <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a><br />
               Address: 44 Orchard Way, Banbury, United Kingdom, OX16 0HA
             </p>
           </section>
@@ -135,7 +135,7 @@ export default function PrivacyPolicy() {
               <li><strong>Rights related to automated decision-making:</strong> Not be subject to automated decisions</li>
             </ul>
             <p className="text-white/70 leading-relaxed mt-4">
-              To exercise any of these rights, please contact us at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>.
+              To exercise any of these rights, please contact us at <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a>.
             </p>
           </section>
 
@@ -163,7 +163,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-white">13. Complaints</h2>
             <p className="text-white/70 leading-relaxed">
-              If you have concerns about how we handle your personal data, please contact us first at <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.
+              If you have concerns about how we handle your personal data, please contact us first at <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a>. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-primary hover:text-primary/80" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.
             </p>
           </section>
 
@@ -177,7 +177,7 @@ export default function PrivacyPolicy() {
               44 Orchard Way<br />
               Banbury, United Kingdom<br />
               OX16 0HA<br />
-              Email: <a href="mailto:hello@nextmonth.io" className="text-primary hover:text-primary/80">hello@nextmonth.io</a>
+              Email: <a href="mailto:hello@icemaker.app" className="text-primary hover:text-primary/80">hello@icemaker.app</a>
             </p>
           </section>
         </div>
