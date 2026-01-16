@@ -3565,33 +3565,52 @@ export async function registerRoutes(
         throw new Error("Generated image is too small, may be corrupt");
       }
       
-      // Ensure uploads directory exists
-      const uploadsDir = path.join(process.cwd(), "uploads", "generated");
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      
-      // Delete old generated image if it exists
-      if (card.generatedImageUrl) {
-        const oldFilename = card.generatedImageUrl.replace('/uploads/generated/', '');
-        const oldFilepath = path.join(uploadsDir, oldFilename);
-        if (fs.existsSync(oldFilepath)) {
-          try {
-            fs.unlinkSync(oldFilepath);
-            console.log(`Deleted old image: ${oldFilepath}`);
-          } catch (e) {
-            console.warn(`Could not delete old image: ${oldFilepath}`);
-          }
-        }
-      }
-      
       // Save with unique filename
       const filename = `card-${cardId}-${Date.now()}.png`;
-      const filepath = path.join(uploadsDir, filename);
-      fs.writeFileSync(filepath, imageBuffer);
+      let generatedImageUrl: string;
       
-      // Update card with generated image path
-      const generatedImageUrl = `/uploads/generated/${filename}`;
+      // Check if R2 is configured (production)
+      const { isObjectStorageConfigured, putObject, deleteObject } = await import("./storage/objectStore");
+      if (isObjectStorageConfigured()) {
+        // Delete old generated image from R2 if it exists
+        if (card.generatedImageUrl && card.generatedImageUrl.includes('r2.dev')) {
+          try {
+            const oldKey = card.generatedImageUrl.split('/').slice(-2).join('/');
+            await deleteObject(`uploads/generated/${oldKey}`);
+            console.log(`Deleted old image from R2: ${oldKey}`);
+          } catch (e) {
+            console.warn(`Could not delete old R2 image`);
+          }
+        }
+        
+        const key = `uploads/generated/${filename}`;
+        generatedImageUrl = await putObject(key, imageBuffer, "image/png");
+        console.log(`[Card] Saved image to R2: ${generatedImageUrl}`);
+      } else {
+        // Fallback to local filesystem (development)
+        const uploadsDir = path.join(process.cwd(), "uploads", "generated");
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        
+        // Delete old generated image if it exists
+        if (card.generatedImageUrl) {
+          const oldFilename = card.generatedImageUrl.replace('/uploads/generated/', '');
+          const oldFilepath = path.join(uploadsDir, oldFilename);
+          if (fs.existsSync(oldFilepath)) {
+            try {
+              fs.unlinkSync(oldFilepath);
+              console.log(`Deleted old image: ${oldFilepath}`);
+            } catch (e) {
+              console.warn(`Could not delete old image: ${oldFilepath}`);
+            }
+          }
+        }
+        
+        const filepath = path.join(uploadsDir, filename);
+        fs.writeFileSync(filepath, imageBuffer);
+        generatedImageUrl = `/uploads/generated/${filename}`;
+      }
       await storage.updateCard(cardId, {
         generatedImageUrl,
         imageGenerated: true,
@@ -8418,17 +8437,25 @@ Stay engaging, reference story details, and help the audience understand the nar
       let finalImageUrl: string;
       
       if (base64Image) {
-        // Save to uploads folder
-        const uploadsDir = path.join(process.cwd(), "uploads", "ice-generated");
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        
+        const imageBuffer = Buffer.from(base64Image, "base64");
         const filename = `ice-${previewId}-${cardId}-${Date.now()}.png`;
-        const filepath = path.join(uploadsDir, filename);
-        fs.writeFileSync(filepath, Buffer.from(base64Image, "base64"));
         
-        finalImageUrl = `/uploads/ice-generated/${filename}`;
+        // Check if R2 is configured (production)
+        const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
+        if (isObjectStorageConfigured()) {
+          const key = `uploads/ice-generated/${filename}`;
+          finalImageUrl = await putObject(key, imageBuffer, "image/png");
+          console.log(`[ICE] Saved image to R2: ${finalImageUrl}`);
+        } else {
+          // Fallback to local filesystem (development)
+          const uploadsDir = path.join(process.cwd(), "uploads", "ice-generated");
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+          const filepath = path.join(uploadsDir, filename);
+          fs.writeFileSync(filepath, imageBuffer);
+          finalImageUrl = `/uploads/ice-generated/${filename}`;
+        }
       } else if (imageUrl) {
         finalImageUrl = imageUrl;
       } else {
