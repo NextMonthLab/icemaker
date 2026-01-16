@@ -24,7 +24,7 @@ export interface FitResult {
   overflowLog: string[];
 }
 
-const SAFETY_MARGIN_PERCENT = 0.08;
+const SAFETY_MARGIN_PERCENT = 0.15;
 
 export const DEFAULT_SETTINGS: FitSettings = {
   maxLines: 3,

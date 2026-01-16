@@ -19,11 +19,22 @@ export function measureLineWidth(
   text: string,
   fontSize: number,
   fontFamily: string = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-  fontWeight: number = 700
+  fontWeight: number = 700,
+  letterSpacingEm: number = -0.02
 ): number {
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   const metrics = ctx.measureText(text);
-  return metrics.width;
+  
+  // Account for letter-spacing: each character gap adds letterSpacingEm * fontSize
+  // For negative letter-spacing, this reduces width slightly but we want conservative measurement
+  // Use absolute value to always add safety margin for rendering differences
+  const charCount = text.length;
+  const letterSpacingAdjustment = Math.abs(letterSpacingEm) * fontSize * Math.max(0, charCount - 1);
+  
+  // Add padding for potential browser rendering differences (font hinting, subpixel rendering)
+  const browserRenderingBuffer = fontSize * 0.08;
+  
+  return metrics.width + letterSpacingAdjustment + browserRenderingBuffer;
 }
 
 export function checkLinesFit(
