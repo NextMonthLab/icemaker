@@ -116,6 +116,10 @@ export class ProducerBriefParser {
 
   private extractSceneLock(): BriefSceneLock | undefined {
     const section = this.extractSection("Scene Lock");
+    console.log('[brief-parser] Scene Lock section found:', section ? 'yes' : 'no');
+    if (section) {
+      console.log('[brief-parser] Scene Lock content:', section.substring(0, 200));
+    }
     if (!section) return undefined;
 
     const result: BriefSceneLock = { enabled: true };
@@ -514,9 +518,24 @@ export class ProducerBriefParser {
   }
 
   private extractSection(sectionName: string): string | null {
-    const pattern = new RegExp(`(?:^|\\n)#+?\\s*\\d*\\.?\\s*${sectionName}[\\s\\S]*?(?=\\n#+\\s*\\d|$)`, 'i');
-    const match = this.rawText.match(pattern);
-    return match ? match[0] : null;
+    // Try multiple patterns to match different header formats
+    const patterns = [
+      // Markdown headers: ## Scene Lock, ### 2. Scene Lock, etc.
+      new RegExp(`(?:^|\\n)#+\\s*\\d*\\.?\\s*${sectionName}[\\s\\S]*?(?=\\n#+\\s*\\d|\\n#+\\s*[A-Z]|$)`, 'i'),
+      // Plain text headers: Scene Lock (on its own line, followed by content)
+      new RegExp(`(?:^|\\n)\\d*\\.?\\s*${sectionName}\\s*(?:\\n|:)([\\s\\S]*?)(?=\\n\\d*\\.?\\s*(?:Visual Direction|AI Character|Stage \\d|Overview|$))`, 'i'),
+      // Bold headers or colon-terminated: **Scene Lock** or Scene Lock:
+      new RegExp(`(?:^|\\n)(?:\\*\\*)?${sectionName}(?:\\*\\*)?\\s*:?\\s*\\n([\\s\\S]*?)(?=\\n(?:\\*\\*)?(?:Visual Direction|AI Character|Stage \\d|Overview)|$)`, 'i'),
+    ];
+
+    for (const pattern of patterns) {
+      const match = this.rawText.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+    
+    return null;
   }
 }
 
