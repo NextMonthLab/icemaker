@@ -8,6 +8,7 @@ import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, V
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
+import type { CaptionState } from "@/caption-engine/schemas";
 import GlobalNav from "@/components/GlobalNav";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +21,7 @@ interface ReadyCardPlayerProps {
   narrationMuted: boolean;
   narrationVolume: number;
   icePreviewId?: string;
+  captionState?: CaptionState;
   onReady: () => void;
 }
 
@@ -54,24 +56,32 @@ function VisibleCardPlayer({
   narrationMuted, 
   narrationVolume, 
   icePreviewId,
+  captionState,
 }: Omit<ReadyCardPlayerProps, 'onReady'>) {
+  // Use pre-parsed captions if available, otherwise split content into sentences
+  const captions = card.captions && card.captions.length > 0 
+    ? card.captions 
+    : card.content.split('. ').filter(s => s.trim()).map(s => s.endsWith('.') ? s : s + '.');
+  
   return (
     <CardPlayer
       card={{
         id: card.id,
         title: card.title,
         image: card.generatedImageUrl || "/placeholder-dark.jpg",
-        captions: [card.content],
+        captions,
         sceneText: card.content,
         recapText: card.title,
         publishDate: new Date().toISOString(),
         dayIndex: cardIndex,
         narrationAudioUrl: card.narrationAudioUrl,
         generatedVideoUrl: card.generatedVideoUrl,
+        captionTimings: card.captionTimings,
       }}
       narrationMuted={narrationMuted}
       narrationVolume={narrationVolume}
       icePreviewId={icePreviewId}
+      captionState={captionState}
     />
   );
 }
@@ -86,6 +96,8 @@ interface PreviewCard {
   narrationAudioUrl?: string;
   mediaAssets?: any[];
   selectedMediaAssetId?: string;
+  captions?: string[]; // Pre-parsed captions if available
+  captionTimings?: any[]; // Timing data for captions
 }
 
 interface InteractivityNodeData {
@@ -443,6 +455,7 @@ export default function PublishedIcePage() {
                 narrationMuted={narrationMuted}
                 narrationVolume={ice?.narrationVolume || 100}
                 icePreviewId={ice?.id}
+                captionState={ice?.captionSettings as CaptionState | undefined}
               />
             </motion.div>
           </AnimatePresence>
