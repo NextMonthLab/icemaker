@@ -26,9 +26,9 @@ export interface GroupingConfig {
 }
 
 export const defaultGroupingConfig: GroupingConfig = {
-  maxCharsPerLine: 32,
+  maxCharsPerLine: 24,
   maxLinesPerGroup: 2,
-  maxWordsPerGroup: 8,
+  maxWordsPerGroup: 5,
   minPauseForBreakMs: 300,
   preferBreakOnPunctuation: true,
 };
