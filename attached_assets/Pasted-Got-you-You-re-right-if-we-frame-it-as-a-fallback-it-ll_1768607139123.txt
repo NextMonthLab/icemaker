@@ -1,0 +1,121 @@
+Got you. You’re right: if we frame it as a “fallback”, it’ll get treated like an edge-case. What you actually want is a first-class cinematic feature: Video Cutaway Continuation.
+
+Here’s a standalone prompt you can paste into Replit.
+
+⸻
+
+Replit Prompt: Implement “Cinematic Continuation” as a Core Feature (Not a Fallback)
+
+Context
+We’ve fixed 10-second video generation, but we still need a premium, intentional solution for when narration/dialogue duration exceeds the generated video duration (which will be common). We do not want looping video. We do not want “dead air” visuals. We want a deliberate cinematic technique that makes the experience feel directed.
+
+Feature Name (use this framing in code + UI)
+
+Cinematic Continuation (Cutaway Still)
+A purposeful cut from motion to a context-aware still image while narration continues.
+
+⸻
+
+1) Behaviour Requirements (Hard Rules)
+
+A) Never loop video to fill time
+	•	The generated video plays once.
+	•	No repeating the same clip.
+
+B) When narration continues beyond video end, transition to a continuation still
+	•	If narrationDuration > videoDuration then:
+	1.	Play video for videoDuration
+	2.	Auto-transition (crossfade or clean cut) to continuation still
+	3.	Continue audio narration over the still until narration ends
+
+C) This is default ON
+	•	It’s not a contingency.
+	•	Assume it will be used frequently.
+	•	Users shouldn’t need to “discover” it.
+
+⸻
+
+2) Continuation Still Generation (How to create the image)
+
+Inputs (must be used)
+	•	The video prompt that generated the clip (primary visual context)
+	•	The remaining dialogue/narration text after the video ends (primary narrative context)
+	•	Optional: card title / section title / ICE style preset
+
+Output goal
+
+A still image that feels like a motivated cutaway:
+	•	Same scene/world
+	•	More specific framing
+	•	Often a detail shot that matches what’s being talked about
+
+Prompting rules (to improve quality)
+	•	Prefer: objects, hands, environment, close-ups, inserts
+	•	Avoid: frozen faces as the default continuation (unless explicitly needed)
+	•	Keep continuity: lighting/time of day/style should match the video prompt
+	•	Style should match the ICE visual style (cinematic, documentary, rustic, etc.)
+
+Examples of good continuation patterns
+	•	Wide shot (video) → close-up of key object (still)
+	•	Character speaking (video) → desk notes / book / tool / product detail (still)
+	•	Exterior establishing (video) → interior detail / signage / texture (still)
+
+⸻
+
+3) UI / Settings (Keep it simple but real)
+
+Default UX
+	•	If user selects video for a card, Cinematic Continuation is automatically enabled.
+
+Optional toggle (advanced)
+	•	Add a simple toggle in the card media settings:
+	•	✅ “Cinematic Continuation (Cutaway Still)”
+	•	Description: “After the video ends, we cut to a context-aware still so narration stays visually engaging.”
+
+Visual transition
+	•	Implement a subtle crossfade (e.g., 200–400ms) from last video frame → still image, if feasible.
+	•	If not feasible, a clean cut is acceptable for MVP.
+
+⸻
+
+4) Implementation Notes (So it actually gets done)
+
+Timing logic
+	•	We need a reliable narrationDurationSeconds per card (already exists or can be estimated from TTS metadata).
+	•	We need videoDurationSeconds (known: 5/10/etc based on generation).
+
+Asset handling
+	•	Store continuation still as a first-class asset on the card, e.g.:
+	•	card.media.video
+	•	card.media.continuationImage
+	•	Ensure exports/rendering include the continuation still section automatically when needed.
+
+Rendering/export behaviour
+	•	Timeline for a single card becomes:
+	•	Segment 1: video + audio (0 → videoDuration)
+	•	Segment 2: continuation still + audio (videoDuration → narrationDuration)
+	•	If narrationDuration <= videoDuration: continuation still is not shown (but can still be generated optionally if user wants).
+
+⸻
+
+5) Acceptance Criteria (So we can test fast)
+	1.	If narration is 18s and video is 10s:
+	•	Video plays once (10s)
+	•	Still shows for remaining 8s
+	•	Audio runs continuously for full 18s
+	•	No looping
+	2.	Continuation still visually matches the scene and references the remaining dialogue.
+	3.	Feature is on by default and feels intentional in UI copy (not called “fallback”).
+
+⸻
+
+Outcome goal
+iSmaker outputs should feel directed and premium: motion to detail cutaways, no repetition, no “filler”. This should be a signature part of the product experience.
+
+⸻
+
+If you want to really brand it (and you probably should), two name options that feel product-y:
+	•	Cutaway Mode
+	•	Cinematic Continuation
+
+“Fallback” can get in the bin with the other shameful MVP words.
