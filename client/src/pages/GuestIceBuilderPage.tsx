@@ -15,6 +15,7 @@ import GlobalNav from "@/components/GlobalNav";
 import { VisibilityBadge } from "@/components/VisibilityBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import CardPlayer from "@/components/CardPlayer";
 import type { Card } from "@/lib/mockData";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -409,6 +410,7 @@ export default function GuestIceBuilderPage() {
   const [activePreviewNodeIndex, setActivePreviewNodeIndex] = useState<number | null>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showExportComingSoon, setShowExportComingSoon] = useState(false);
+  const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   
@@ -1721,13 +1723,7 @@ export default function GuestIceBuilderPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setPreview(null);
-                    setCards([]);
-                    setUrlValue("");
-                    setTextValue("");
-                    setSelectedFile(null);
-                  }}
+                  onClick={() => setShowStartOverConfirm(true)}
                   className="flex-1 sm:flex-none"
                   data-testid="button-start-over"
                 >
@@ -2768,6 +2764,37 @@ export default function GuestIceBuilderPage() {
         feature="AI Media Generation"
         reason="Unlock AI-powered image and video generation, character interactions, voiceover narration, and more."
       />
+      
+      {/* Start Over Confirmation Dialog */}
+      <AlertDialog open={showStartOverConfirm} onOpenChange={setShowStartOverConfirm}>
+        <AlertDialogContent className="bg-slate-900 border-cyan-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Start Over?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              This will clear all your story cards, generated media, and edits. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setPreview(null);
+                setCards([]);
+                setUrlValue("");
+                setTextValue("");
+                setSelectedFile(null);
+                setShowStartOverConfirm(false);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white border-0"
+              data-testid="button-confirm-start-over"
+            >
+              Yes, Start Over
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Export Coming Soon Modal */}
       <Dialog open={showExportComingSoon} onOpenChange={setShowExportComingSoon}>

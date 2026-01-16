@@ -1,0 +1,95 @@
+Absolutely. This is a good moment to be very explicit with Replit, because what you’re describing is not a “nice to have” — it’s a trust issue between UI and output. If we say 10 seconds, it must be 10 seconds, or we clearly explain why not.
+
+Below is a clean, authoritative Replit prompt you can paste straight in. It explains the problem, the required behaviour, and the acceptable fallback — without over-engineering.
+
+⸻
+
+Prompt for Replit (iSmaker / Video Generation Logic)
+
+Context
+In iSmaker, users can currently select a target video duration (e.g. 5s, 10s). However, regardless of selection, the system is only generating ~5-second video clips, and when longer narration exists, the same clip is being looped multiple times. This creates a visibly repetitive and low-quality result.
+
+We need to address this at two levels:
+(1) Correct duration handling, and
+(2) A deliberate, cinematic fallback when true duration cannot be achieved.
+
+⸻
+
+1. Duration Accuracy (Primary Requirement)
+	•	If the user selects 10 seconds, the system must attempt to generate a single, continuous 10-second video.
+	•	Please audit the video generation pipeline and confirm:
+	•	Whether the selected duration value is being passed to the video generation model.
+	•	Whether the model or endpoint supports variable durations (e.g. 10s vs 5s).
+	•	If the model does support 10-second output:
+	•	Ensure the correct parameter is sent.
+	•	Ensure no hard-coded defaults are overriding the user selection.
+
+Important:
+We should not present a 10-second option in the UI unless the system is genuinely attempting to generate a 10-second clip.
+
+⸻
+
+2. No Video Looping (Hard Rule)
+	•	Do not loop or repeat a short video clip to fill time.
+	•	Repeating identical motion is visually jarring and breaks narrative immersion.
+
+If a video ends before the associated dialogue finishes, the system should transition deliberately, not loop.
+
+⸻
+
+3. Cinematic Continuation Fallback (Secondary Requirement)
+
+If the model is limited to shorter clips (e.g. 5 seconds), or if longer generation fails:
+	•	The video should play once only.
+	•	After the video ends, automatically generate a context-aware continuation image (still image).
+
+Continuation image generation rules:
+	•	Use the original video prompt as context.
+	•	Analyse the remaining dialogue for that card.
+	•	Generate a still image that:
+	•	Advances the narrative visually
+	•	Focuses on objects, environment details, or scene elements mentioned in the dialogue
+	•	Feels like a cinematic cutaway (e.g. wide shot → close-up)
+
+Example:
+	•	Video: “Sir Isaac Newton in his study by a window”
+	•	Remaining dialogue mentions a book
+	•	Continuation image: “Close-up of a leather-bound scientific book on a wooden desk, candlelit, 17th-century study”
+
+This image should persist on screen while the remaining dialogue is narrated.
+
+⸻
+
+4. UX Alignment
+	•	If true 10-second videos are supported and working → keep the 10s option.
+	•	If not → either:
+	•	Fix the pipeline so duration is honoured, or
+	•	Clearly adjust the UI to reflect actual behaviour and rely on the cinematic continuation pattern.
+
+The key requirement is honesty and visual quality.
+The system must never appear to “fake” duration through looping.
+
+⸻
+
+Outcome Goal
+iSmaker videos should feel intentional and cinematic:
+	•	One continuous video where possible
+	•	One video + motivated still image where necessary
+	•	No repetition, no filler, no visible hacks
+
+⸻
+
+Straight talk, Rob
+
+This prompt does three important things:
+	1.	It forces Replit to audit the pipeline, not guess
+	2.	It gives them a clear success condition (10 seconds means 10 seconds)
+	3.	It gives them a safe, elegant fallback that protects quality even if the model is limited
+
+You’re setting a professional bar here — not blaming the tech, just refusing to ship something that feels broken.
+
+If you want, next we can:
+	•	Add acceptance criteria (so you can test it quickly)
+	•	Or write a UI microcopy update that explains this beautifully to users without mentioning limitations
+
+This is the right call.
