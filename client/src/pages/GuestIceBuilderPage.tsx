@@ -2499,7 +2499,13 @@ export default function GuestIceBuilderPage() {
           <AnimatePresence>
             {activePreviewNodeIndex !== null && (() => {
               const activeNode = interactivityNodes.find(n => n.afterCardIndex === activePreviewNodeIndex);
-              const character = preview?.characters?.find(c => c.id === activeNode?.selectedCharacterId) || preview?.characters?.[0];
+              // Prefer selected character, then primary/brief character, then first character
+              let character = preview?.characters?.find(c => c.id === activeNode?.selectedCharacterId);
+              if (!character && preview?.characters) {
+                character = preview.characters.find(c => (c as any).isPrimary)
+                  || preview.characters.find(c => (c as any).source === 'brief')
+                  || preview.characters[0];
+              }
               
               return (
                 <motion.div

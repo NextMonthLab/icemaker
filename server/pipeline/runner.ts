@@ -342,7 +342,16 @@ ${text.substring(0, 15000)}`;
           name: brandName,
           role: "Brand",
           description: `${brandName} - ${ctx.themeStatement || 'A trusted business'}`,
+          source: 'brief', // Character extracted from brief content
+          isPrimary: true, // Primary brand character
         }];
+      } else {
+        // Tag all extracted characters as from brief, first one is primary
+        parsed.characters = parsed.characters.map((c: any, idx: number) => ({
+          ...c,
+          source: 'brief',
+          isPrimary: idx === 0, // First character is the primary one
+        }));
       }
 
       ctx.characters = parsed.characters || [];
@@ -377,7 +386,14 @@ Return a JSON object with these fields:
       const response = await callAI(systemPrompt, userPrompt, true, "stage3_extractWorld_story");
       const parsed = JSON.parse(response);
 
-      ctx.characters = parsed.characters || [];
+      // Tag all extracted characters as from brief, first one is primary
+      const taggedCharacters = (parsed.characters || []).map((c: any, idx: number) => ({
+        ...c,
+        source: 'brief', // Character extracted from story content
+        isPrimary: idx === 0, // First character is the protagonist/primary
+      }));
+
+      ctx.characters = taggedCharacters;
       ctx.locations = parsed.locations || [];
       ctx.worldRules = parsed.world_rules || ["Grounded in reality"];
 

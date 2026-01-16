@@ -6728,12 +6728,13 @@ Guidelines:
         const charParsed = JSON.parse(charCompletion.choices[0].message.content || "{}");
         const rawChars = charParsed.characters || [];
         
-        storyCharacters = rawChars.slice(0, 4).map((c: any) => ({
+        storyCharacters = rawChars.slice(0, 4).map((c: any, idx: number) => ({
           id: c.id || `char_${Math.random().toString(36).slice(2, 6)}`,
           name: c.name || "Story Guide",
           role: c.role || "Narrator",
           description: c.description || "A guide to this story.",
           avatar: undefined,
+          avatarEnabled: false,
           systemPrompt: `You are ${c.name}, ${c.role}. ${c.description}
 
 CONTEXT: This is part of an interactive story experience titled "${sourceTitle}".
@@ -6754,6 +6755,8 @@ STRICT RULES:
 - Never reference "cards" or "the story" directly - you ARE in the story
 - Never use phrases like "as a character" or "in this story"`,
           openingMessage: c.openingMessage || `Hello, I'm ${c.name}. What would you like to know?`,
+          source: 'brief' as const, // AI-generated from content
+          isPrimary: idx === 0, // First character is primary
         }));
       } catch (charError) {
         console.error("Error generating characters:", charError);
@@ -6763,6 +6766,7 @@ STRICT RULES:
           name: "Story Guide",
           role: "Narrator",
           description: "Your guide through this experience.",
+          avatarEnabled: false,
           systemPrompt: `You are a knowledgeable narrator guiding someone through the story "${sourceTitle}".
 
 STORY CARDS:
@@ -6770,6 +6774,8 @@ ${cardsSummary}
 
 Stay engaging, reference story details, and help the audience understand the narrative.`,
           openingMessage: "Welcome to this story. What would you like to explore?",
+          source: 'system' as const, // Fallback character
+          isPrimary: true,
         }];
       }
       
@@ -6859,10 +6865,13 @@ Stay engaging, reference story details, and help the audience understand the nar
         name: "Experience Guide",
         role: "Guide",
         description: "Your guide through this experience.",
+        avatarEnabled: false,
         systemPrompt: `You are a helpful guide for this ${String(blueprint.templateFamily).slice(0, 50)} experience titled "${sanitizedTitle}".
 Help users understand and explore the content in an engaging way.
 Stay focused on the content and be helpful.`,
         openingMessage: `Welcome to ${sanitizedTitle}! I'm here to help you explore this experience. What would you like to know?`,
+        source: 'system' as const, // Default wizard character
+        isPrimary: true, // This is the main narrator
       };
       
       // Set expiry
@@ -7116,7 +7125,7 @@ Stay focused on the content and be helpful.`,
           }
         }
         
-        // Create base character
+        // Create base character from brief - this is the PRIMARY character
         characters.push({
           id: char.name.toLowerCase().replace(/[^a-z0-9]/g, "_") || "character",
           name: char.name,
@@ -7125,6 +7134,8 @@ Stay focused on the content and be helpful.`,
           systemPrompt,
           openingMessage: `Hi! I'm ${char.name}. I'm here to help you through this experience. What would you like to know?`,
           stageContexts: char.stageContexts, // Pass stage-specific context
+          source: 'brief' as const, // Character came from producer brief
+          isPrimary: true, // Primary narrator character
         });
       } else {
         // Fallback character
@@ -7135,6 +7146,8 @@ Stay focused on the content and be helpful.`,
           description: "Your guide through this experience.",
           systemPrompt: `You are a helpful guide for "${brief.title}". Help users understand and explore the content.`,
           openingMessage: `Welcome to ${brief.title}! I'm here to help you. What would you like to know?`,
+          source: 'system' as const, // System-generated fallback
+          isPrimary: true,
         });
       }
       
@@ -7503,12 +7516,13 @@ Guidelines:
         const charParsed = JSON.parse(charCompletion.choices[0].message.content || "{}");
         const rawChars = charParsed.characters || [];
         
-        storyCharacters = rawChars.slice(0, 4).map((c: any) => ({
+        storyCharacters = rawChars.slice(0, 4).map((c: any, idx: number) => ({
           id: c.id || `char_${Math.random().toString(36).slice(2, 6)}`,
           name: c.name || "Story Guide",
           role: c.role || "Narrator",
           description: c.description || "A guide to this story.",
           avatar: undefined,
+          avatarEnabled: false,
           systemPrompt: `You are ${c.name}, ${c.role}. ${c.description}
 
 CONTEXT: This is part of an interactive story experience titled "${sourceTitle}".
@@ -7529,6 +7543,8 @@ STRICT RULES:
 - Never reference "cards" or "the story" directly - you ARE in the story
 - Never use phrases like "as a character" or "in this story"`,
           openingMessage: c.openingMessage || `Hello, I'm ${c.name}. What would you like to know?`,
+          source: 'brief' as const, // AI-generated from file content
+          isPrimary: idx === 0, // First character is primary
         }));
       } catch (charError) {
         console.error("Error generating characters:", charError);
@@ -7537,6 +7553,7 @@ STRICT RULES:
           name: "Story Guide",
           role: "Narrator",
           description: "Your guide through this experience.",
+          avatarEnabled: false,
           systemPrompt: `You are a knowledgeable narrator guiding someone through the story "${sourceTitle}".
 
 STORY CARDS:
@@ -7544,6 +7561,8 @@ ${cardsSummary}
 
 Stay engaging, reference story details, and help the audience understand the narrative.`,
           openingMessage: "Welcome to this story. What would you like to explore?",
+          source: 'system' as const, // Fallback character
+          isPrimary: true,
         }];
       }
       
@@ -7994,7 +8013,7 @@ Provide a JSON response with:
       // Get avatar settings from request
       const { avatar, avatarEnabled } = req.body;
       
-      // Create new character
+      // Create new character - marked as custom (user-created)
       const newCharacter: schema.IcePreviewCharacter = {
         id: `custom-${Date.now()}`,
         name: name.trim(),
@@ -8004,6 +8023,8 @@ Provide a JSON response with:
         openingMessage: openingMessage || `Hello! I'm ${name}. How can I help you today?`,
         avatar: avatar || undefined,
         avatarEnabled: avatarEnabled === true,
+        source: 'custom', // User-created character
+        isPrimary: false, // Custom characters are not primary by default
       };
       
       // Add to existing characters
@@ -8220,6 +8241,7 @@ Provide a JSON response with:
           name: "Story Guide",
           role: "Narrator",
           description: "Your guide through this experience.",
+          avatarEnabled: false,
           systemPrompt: `You are a knowledgeable narrator guiding someone through the story "${preview.title}".
 
 STORY CARDS:
@@ -8227,6 +8249,8 @@ ${cardsSummary}
 
 Stay engaging, reference story details, and help the audience understand the narrative.`,
           openingMessage: "Welcome to this story. What would you like to explore?",
+          source: 'system' as const,
+          isPrimary: true,
         };
       }
       

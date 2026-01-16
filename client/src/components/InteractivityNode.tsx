@@ -52,6 +52,9 @@ export interface StoryCharacter {
   knowledgeContext?: string;
   avatar?: string;
   avatarEnabled?: boolean;
+  // Source tracking for character guardrails
+  source?: 'brief' | 'custom' | 'system';
+  isPrimary?: boolean;
 }
 
 interface InteractivityNodeProps {
@@ -109,7 +112,14 @@ export function InteractivityNode({
   }, [captureFields, messages.length, captureSubmitted, showCaptureForm]);
 
   useEffect(() => {
-    const char = characters.find(c => c.id === selectedCharacterId) || characters[0];
+    // Find character by ID, or fall back to primary/brief character, then first character
+    let char = characters.find(c => c.id === selectedCharacterId);
+    if (!char) {
+      // Prefer primary character, then brief characters, then any character
+      char = characters.find(c => c.isPrimary) 
+        || characters.find(c => c.source === 'brief')
+        || characters[0];
+    }
     if (char && (!currentCharacter || char.id !== currentCharacter.id)) {
       setCurrentCharacter(char);
       setMessages([{
@@ -662,20 +672,39 @@ export function AddInteractivityButton({
               <>
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-3 h-3 text-cyan-400" />
-                  <span className="text-xs text-slate-400">AI-Generated Characters</span>
+                  <span className="text-xs text-slate-400">Available Characters</span>
                 </div>
                 <div className="space-y-2 mb-3">
-                  {characters.map((char) => (
+                  {/* Sort: brief/primary characters first, then custom */}
+                  {[...characters].sort((a, b) => {
+                    // Primary brief characters first
+                    if (a.isPrimary && !b.isPrimary) return -1;
+                    if (!a.isPrimary && b.isPrimary) return 1;
+                    // Then brief characters
+                    if (a.source === 'brief' && b.source !== 'brief') return -1;
+                    if (a.source !== 'brief' && b.source === 'brief') return 1;
+                    return 0;
+                  }).map((char) => (
                     <div key={char.id} className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleCharacterSelect(char.id)}
-                        className="flex-1 h-auto py-2.5 px-3 text-xs justify-start border-cyan-500/20 text-cyan-100 hover:bg-cyan-500/10 hover:border-cyan-500/40 hover:text-white"
+                        className={`flex-1 h-auto py-2.5 px-3 text-xs justify-start border-cyan-500/20 text-cyan-100 hover:bg-cyan-500/10 hover:border-cyan-500/40 hover:text-white ${
+                          char.source === 'brief' ? 'ring-1 ring-cyan-500/30' : ''
+                        }`}
                         data-testid={`button-select-char-${char.id}-after-${afterCardIndex}`}
                       >
                         <User className="w-3.5 h-3.5 mr-2 text-cyan-400" />
                         <span className="truncate">{char.name}</span>
+                        {char.source === 'brief' && (
+                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 shrink-0">
+                            From brief
+                          </span>
+                        )}
+                        {char.isPrimary && char.source !== 'brief' && (
+                          <Crown className="w-3 h-3 ml-1 text-amber-400 shrink-0" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"

@@ -1292,6 +1292,10 @@ export const projectBibleSchema = z.object({
 
 export type ProjectBible = z.infer<typeof projectBibleSchema>;
 
+// Character source tracking - prevents auto-replacement of brief characters
+export const characterSourceEnum = z.enum(['brief', 'custom', 'system']);
+export type CharacterSource = z.infer<typeof characterSourceEnum>;
+
 export const icePreviewCharacterSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -1301,6 +1305,9 @@ export const icePreviewCharacterSchema = z.object({
   avatarEnabled: z.boolean().optional().default(false),
   systemPrompt: z.string(),
   openingMessage: z.string(),
+  // NEW: Track where this character came from
+  source: characterSourceEnum.default('custom'), // 'brief' = from project brief, 'custom' = user-created, 'system' = fallback
+  isPrimary: z.boolean().default(false), // True for the main narrator/guide character
 });
 
 export type IcePreviewCharacter = z.infer<typeof icePreviewCharacterSchema>;
