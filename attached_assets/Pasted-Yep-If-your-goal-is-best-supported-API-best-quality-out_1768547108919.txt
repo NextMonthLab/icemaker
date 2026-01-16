@@ -1,0 +1,108 @@
+Yep. If your goal is best supported API + best quality output, then for the “Guest Appearance” use-case you described, I’d steer you to HeyGen as the default integration, with an abstraction layer so you can swap to D-ID later if needed.
+
+Why HeyGen as default:
+	•	Their docs are very complete and actively updated (V2 video generate endpoints, avatar video endpoints, plus a Streaming API if you ever want real-time later).  ￼
+	•	D-ID is also solid and API-first, but HeyGen tends to be the “polished output” choice in practice, and you explicitly want quality here.  ￼
+
+Now, here’s a ready-to-paste Replit prompt that makes it obvious in the UI that this is a different card type and manifests differently.
+
+⸻
+
+Replit prompt (paste as-is)
+
+Context: We are adding a new card type to IceMaker called a “Guest Appearance” card. This is not the AI Character and not the Narrator. It must be clearly labelled, visually distinct, and treated as an optional production cutaway. The purpose is to add “full video production” flavour via short cameo segments such as testimonials, experts, engineers, interviewees, founders, customers.
+
+Goals
+	1.	Add a new card type: Guest Appearance (a cameo/talking-head insert).
+	2.	Make it extremely clear in the UI and preview that this is a different type of card.
+	3.	Integrate an avatar-video provider via API with best quality and strongest support, using HeyGen as the default provider.
+	4.	Ensure no continuity confusion:
+	•	Guest Appearance voice is never the same as Narrator voice by default.
+	•	Guest Appearance is never the same as the AI Character persona.
+	5.	Keep it modular and provider-agnostic so we can add D-ID later without refactoring.
+
+UX and product rules
+	•	In the card add menu, show a distinct option:
+	•	“Guest Appearance (Cameo)”
+	•	Subtitle: “Short cutaway from an expert, customer, engineer, testimonial, interviewee. Not your narrator.”
+	•	In the card list / timeline, show a badge and icon:
+	•	Badge text: “GUEST”
+	•	Category tag: Testimonial | Expert | Engineer | Interviewee | Founder | Customer | Other
+	•	In the viewer, render this card with a clearly different “framing”:
+	•	A small top label: “Guest appearance”
+	•	Optional lower-third nameplate (like TV): “Name, Role, Company”
+	•	Distinct background style from normal cards (subtle but clear)
+	•	Guest Appearance cards should be optional and skippable like any other card.
+
+Card schema changes
+
+Extend the ICE card model to support:
+	•	type: "standard" | "guest"
+	•	For guest cards:
+	•	guestCategory (enum)
+	•	guestName
+	•	guestRole
+	•	guestCompany
+	•	guestHeadshotUrl (image used for the avatar)
+	•	guestScript (text they will say)
+	•	guestVoiceId (provider voice id) OR guestAudioUrl (optional)
+	•	guestVideoUrl (generated result)
+	•	guestProvider: "heygen" | "did" (default "heygen")
+	•	guestStatus: "idle" | "generating" | "ready" | "failed"
+	•	guestError (string)
+	•	Do not alter existing narration or AI character schema other than adding the card type.
+
+Backend implementation
+
+Create a provider abstraction:
+	•	server/avatar/providers/IAvatarProvider.ts
+	•	generateGuestVideo(input): Promise<{ providerJobId, status }>
+	•	getGuestVideoStatus(providerJobId): Promise<{ status, videoUrl? }>
+	•	Implement HeyGenProvider using HeyGen V2 video generation endpoints.  ￼
+	•	Add DidProvider stub (no implementation yet, just interface compatibility) referencing D-ID talks endpoint shape for later.  ￼
+
+Add API routes:
+	•	POST /api/guest-video/generate
+	•	Validates the card is type guest
+	•	Validates required fields
+	•	Starts generation with provider
+	•	Stores providerJobId and sets guestStatus="generating"
+	•	GET /api/guest-video/status?cardId=...
+	•	Polls provider
+	•	When ready, saves guestVideoUrl and sets guestStatus="ready"
+
+Add env vars:
+	•	HEYGEN_API_KEY
+	•	(later) DID_API_KEY
+
+Cost and guardrails
+	•	Hard limit: guest cards are capped per ICE by plan tier (use existing plan logic if available).
+	•	Hard limit: default guest video duration should be short (eg 6 to 10 seconds) to keep costs predictable.
+	•	Add UI messaging: “Guest appearances are short cameo clips. Use sparingly for best impact.”
+
+Frontend changes
+	•	Card creation UI:
+	•	Add “Guest Appearance (Cameo)” to the card type selector.
+	•	Guest fields appear only for guest type.
+	•	Provide category presets and examples.
+	•	Card preview:
+	•	If guestStatus="ready", show generated video in-card.
+	•	If generating, show progress UI with spinner and text: “Generating guest cameo…”
+	•	If failed, show error state and retry button.
+	•	Viewer:
+	•	Guest card shows the video with a “Guest appearance” label and lower-third overlay.
+	•	Standard cards remain unchanged.
+
+Behavioural constraints (must enforce)
+	•	Guest Appearance must never automatically use the narrator voice.
+	•	Guest Appearance must never be presented as “the AI character”.
+	•	The UI copy must explicitly say it is a “guest cameo” and not the narrator.
+
+Done means
+	•	I can create a guest card, enter headshot + script + labels, click generate, and the card produces a playable avatar cameo video.
+	•	It is visually and semantically distinct from standard cards.
+	•	Existing ICEs and standard cards are not broken.
+
+⸻
+
+If you want me to tighten this even further, I can also give you the exact naming that will land best with businesses (so it feels premium, not gimmicky). My top pick is “Guest Cameo” rather than “Avatar”, because “avatar” instantly drags people back into the Synthesia comparison.

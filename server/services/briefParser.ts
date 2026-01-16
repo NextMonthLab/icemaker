@@ -291,63 +291,32 @@ export class ProducerBriefParser {
     let foundTables = false;
     let skippedRows = 0;
     
-    // Find all card tables in the document
-    const tablePattern = /\|[^\n]*(?:Card|ID)[^\n]*\|[^\n]*Content[^\n]*\|[^\n]*(?:Visual|Prompt)[^\n]*\|([\s\S]*?)(?=\n\n[A-Z]|\n#+|AI\s+(?:Chef\s+)?Checkpoint|$)/gi;
+    // More flexible table detection - find any markdown table with at least 3 columns
+    // Pattern 1: Tables with header row containing Card/ID keywords
+    const strictTablePattern = /\|[^\n]*(?:Card|ID)[^\n]*\|[^\n]*(?:Content|Script|Text|Caption)[^\n]*\|[^\n]*(?:Visual|Prompt|Image|Video)[^\n]*\|([\s\S]*?)(?=\n\n[A-Z]|\n#+|AI\s+(?:Chef\s+)?Checkpoint|$)/gi;
+    
+    // Pattern 2: Any markdown table with 3+ columns (flexible fallback)
+    const flexibleTablePattern = /(\|[^\n|]+\|[^\n|]+\|[^\n|]+\|[^\n]*\n)(\|[\s:-]+\|[\s:-]+\|[\s:-]+\|[^\n]*\n)((?:\|[^\n]+\n?)+)/g;
+    
     let tableMatch: RegExpExecArray | null;
     
-    while ((tableMatch = tablePattern.exec(this.rawText)) !== null) {
+    // Try strict pattern first
+    while ((tableMatch = strictTablePattern.exec(this.rawText)) !== null) {
       foundTables = true;
       const tableContent = tableMatch[1];
-      const rows = tableContent.split('\n').filter(row => row.includes('|') && !row.match(/^[\s|:-]+$/));
+      this.parseTableRows(tableContent, stageMap, (count) => { skippedRows += count; });
+    }
+    
+    // If no tables found with strict pattern, try flexible pattern
+    if (!foundTables) {
+      while ((tableMatch = flexibleTablePattern.exec(this.rawText)) !== null) {
+        foundTables = true;
+        const tableContent = tableMatch[3]; // Just the data rows
+        this.parseTableRows(tableContent, stageMap, (count) => { skippedRows += count; });
+      }
       
-      for (const row of rows) {
-        const cells = row.split('|').map(c => c.trim()).filter(c => c);
-        if (cells.length >= 2) {
-          const cardIdMatch = cells[0].match(/(\d+)\.(\d+)/);
-          if (cardIdMatch) {
-            const stageNum = parseInt(cardIdMatch[1]);
-            const cardIndex = parseInt(cardIdMatch[2]);
-            const rawVisual = cells[2] || '';
-            
-            // Parse IMAGE: vs VIDEO: prefix from visual column
-            let visualPrompt: string | undefined;
-            let videoPrompt: string | undefined;
-            
-            if (rawVisual) {
-              const trimmedVisual = rawVisual.trim();
-              const videoMatch = trimmedVisual.match(/^VIDEO\s*(?:\([^)]*\))?[:\s]+([\s\S]+)/i);
-              if (videoMatch) {
-                videoPrompt = videoMatch[1].trim();
-              } else {
-                const imageMatch = trimmedVisual.match(/^IMAGE[:\s]+([\s\S]+)/i);
-                if (imageMatch) {
-                  visualPrompt = imageMatch[1].trim();
-                } else {
-                  visualPrompt = trimmedVisual;
-                }
-              }
-            }
-            
-            const card: BriefCard = {
-              stageNumber: stageNum,
-              stageName: `Stage ${stageNum}`,
-              cardIndex,
-              cardId: cells[0],
-              content: cells[1] || '',
-              visualPrompt,
-              videoPrompt,
-              isCheckpoint: false,
-            };
-            
-            if (!stageMap.has(stageNum)) {
-              stageMap.set(stageNum, []);
-            }
-            stageMap.get(stageNum)!.push(card);
-          } else {
-            // Card ID doesn't match expected format (e.g., "1.1")
-            skippedRows++;
-          }
-        }
+      if (foundTables && stageMap.size === 0) {
+        this.warnings.push("Tables found but couldn't detect card IDs. Expected headers: Card | Content | Visual Prompt");
       }
     }
     
@@ -357,6 +326,14 @@ export class ProducerBriefParser {
     }
     if (skippedRows > 0) {
       this.warnings.push(`Skipped ${skippedRows} table row(s) with missing or malformed card IDs (expected format: '1.1', '2.3')`);
+    }
+    
+    // Check if there are any pipe characters (potential tables) but we didn't detect any
+    if (!foundTables && this.rawText.includes('|')) {
+      const pipeLineCount = (this.rawText.match(/\|.*\|/g) || []).length;
+      if (pipeLineCount >= 3) {
+        this.warnings.push(`Found ${pipeLineCount} lines with pipe characters that may be tables, but couldn't parse them. Use markdown table format with 'Card | Content | Visual Prompt' headers.`);
+      }
     }
     
     // Convert map to sorted array of stages
@@ -387,6 +364,68 @@ export class ProducerBriefParser {
     }
     
     return stages;
+  }
+
+  private parseTableRows(
+    tableContent: string, 
+    stageMap: Map<number, BriefCard[]>, 
+    onSkipped: (count: number) => void
+  ): void {
+    const rows = tableContent.split('\n').filter(row => row.includes('|') && !row.match(/^[\s|:-]+$/));
+    let skipped = 0;
+    
+    for (const row of rows) {
+      const cells = row.split('|').map(c => c.trim()).filter(c => c);
+      if (cells.length >= 2) {
+        const cardIdMatch = cells[0].match(/(\d+)\.(\d+)/);
+        if (cardIdMatch) {
+          const stageNum = parseInt(cardIdMatch[1]);
+          const cardIndex = parseInt(cardIdMatch[2]);
+          const rawVisual = cells[2] || '';
+          
+          // Parse IMAGE: vs VIDEO: prefix from visual column
+          let visualPrompt: string | undefined;
+          let videoPrompt: string | undefined;
+          
+          if (rawVisual) {
+            const trimmedVisual = rawVisual.trim();
+            const videoMatch = trimmedVisual.match(/^VIDEO\s*(?:\([^)]*\))?[:\s]+([\s\S]+)/i);
+            if (videoMatch) {
+              videoPrompt = videoMatch[1].trim();
+            } else {
+              const imageMatch = trimmedVisual.match(/^IMAGE[:\s]+([\s\S]+)/i);
+              if (imageMatch) {
+                visualPrompt = imageMatch[1].trim();
+              } else {
+                visualPrompt = trimmedVisual;
+              }
+            }
+          }
+          
+          const card: BriefCard = {
+            stageNumber: stageNum,
+            stageName: `Stage ${stageNum}`,
+            cardIndex,
+            cardId: cells[0],
+            content: cells[1] || '',
+            visualPrompt,
+            videoPrompt,
+            isCheckpoint: false,
+          };
+          
+          if (!stageMap.has(stageNum)) {
+            stageMap.set(stageNum, []);
+          }
+          stageMap.get(stageNum)!.push(card);
+        } else {
+          skipped++;
+        }
+      }
+    }
+    
+    if (skipped > 0) {
+      onSkipped(skipped);
+    }
   }
 
   private extractCardsFromStage(stageContent: string, stageNum: number, stageName: string): BriefCard[] {
