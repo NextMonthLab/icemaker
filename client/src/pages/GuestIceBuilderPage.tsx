@@ -2322,19 +2322,37 @@ export default function GuestIceBuilderPage() {
               <ChevronLeft className="w-5 h-5" />
             </Button>
             
-            <div className="flex gap-1.5">
-              {cards.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleManualNav(idx)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    idx === previewCardIndex
-                      ? 'bg-blue-500 w-4'
-                      : 'bg-white/30 hover:bg-white/50'
-                  }`}
-                  data-testid={`button-preview-dot-${idx}`}
-                />
-              ))}
+            {/* Card counter with dropdown for quick navigation */}
+            <div className="relative group">
+              <button 
+                className="text-white/80 hover:text-white text-sm font-medium px-3 py-1 rounded hover:bg-white/10 transition-colors min-w-[80px]"
+                data-testid="button-card-counter"
+              >
+                {previewCardIndex + 1} / {cards.length}
+              </button>
+              
+              {/* Dropdown for jumping to any card */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block">
+                <div className="bg-black/90 backdrop-blur rounded-lg p-2 max-h-64 overflow-y-auto shadow-xl border border-white/10">
+                  <div className="grid gap-1" style={{ gridTemplateColumns: cards.length > 20 ? 'repeat(5, 1fr)' : cards.length > 10 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)' }}>
+                    {cards.map((card, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleManualNav(idx)}
+                        className={`w-8 h-8 rounded text-xs font-medium transition-all ${
+                          idx === previewCardIndex
+                            ? 'bg-cyan-500 text-white'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                        }`}
+                        title={card.title || `Card ${idx + 1}`}
+                        data-testid={`button-jump-card-${idx}`}
+                      >
+                        {idx + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             
             <Button
