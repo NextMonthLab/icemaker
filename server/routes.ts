@@ -6365,15 +6365,21 @@ Output only the narration paragraph, nothing else.`;
         });
       }
       
-      // Get presigned upload URL
-      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
-      const objectStorage = new ObjectStorageService();
-      const uploadURL = await objectStorage.getObjectEntityUploadURL();
-      const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+      // Get presigned upload URL from R2
+      const { isObjectStorageConfigured, getPresignedUploadUrl } = await import("./storage/objectStore");
+      
+      if (!isObjectStorageConfigured()) {
+        return res.status(503).json({ message: "Object storage not configured" });
+      }
+      
+      const ext = name.split('.').pop() || 'bin';
+      const key = `card-media/${cardId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      const { uploadURL, objectPath, publicUrl } = await getPresignedUploadUrl(key, contentType);
       
       res.json({
         uploadURL,
         objectPath,
+        publicUrl,
         metadata: { name, size, contentType, mediaType },
       });
     } catch (error) {
@@ -6471,10 +6477,14 @@ Output only the narration paragraph, nothing else.`;
     }
   });
   
-  // Serve uploaded objects from storage
-  const objectStorageService = new ObjectStorageService();
+  // Serve uploaded objects from Replit storage (legacy route - only works in Replit environment)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {
+      const objectStorageService = new ObjectStorageService();
+      if (!objectStorageService.isConfigured()) {
+        return res.status(404).json({ message: "Legacy object storage not available" });
+      }
+      
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
       // Download the file content from GCS
@@ -8088,29 +8098,37 @@ Provide a JSON response with:
       }
       
       try {
-        // Upload to object storage
-        const objectStorage = new ObjectStorageService();
-        const uploadURL = await objectStorage.getObjectEntityUploadURL();
-        const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+        // Upload to R2 object storage
+        const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
         
-        // Upload the file to the presigned URL
-        const uploadResponse = await fetch(uploadURL, {
-          method: "PUT",
-          headers: {
-            "Content-Type": req.file.mimetype,
-          },
-          body: req.file.buffer,
-        });
-        
-        if (!uploadResponse.ok) {
-          throw new Error("Failed to upload to object storage");
+        if (isObjectStorageConfigured()) {
+          const ext = req.file.mimetype.split("/")[1] || "png";
+          const key = `character-avatars/${previewId}/${Date.now()}.${ext}`;
+          const avatarUrl = await putObject(key, req.file.buffer, req.file.mimetype);
+          
+          res.json({
+            success: true,
+            url: avatarUrl,
+          });
+        } else {
+          // Fallback: Save to local filesystem
+          const avatarDir = path.join(process.cwd(), "uploads", "avatars");
+          if (!fs.existsSync(avatarDir)) {
+            fs.mkdirSync(avatarDir, { recursive: true });
+          }
+          
+          const ext = req.file.mimetype.split("/")[1] || "png";
+          const filename = `char-${previewId}-${Date.now()}.${ext}`;
+          const filePath = path.join(avatarDir, filename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          
+          const localUrl = `/uploads/avatars/${filename}`;
+          
+          res.json({
+            success: true,
+            url: localUrl,
+          });
         }
-        
-        // Return the public URL (objectPath already starts with /objects/)
-        res.json({
-          success: true,
-          url: objectPath,
-        });
       } catch (storageError) {
         console.error("Object storage upload failed:", storageError);
         
@@ -8830,14 +8848,13 @@ Stay engaging, reference story details, and help the audience understand the nar
       }
       
       const { isTTSConfigured, synthesiseSpeech, validateNarrationText } = await import("./tts");
-      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
+      const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
       
       if (!isTTSConfigured()) {
         return res.status(503).json({ message: "TTS not configured: OPENAI_API_KEY is missing" });
       }
       
-      const objectStorage = new ObjectStorageService();
-      if (!objectStorage.isConfigured()) {
+      if (!isObjectStorageConfigured()) {
         return res.status(503).json({ message: "Object storage not configured" });
       }
       
@@ -8854,9 +8871,9 @@ Stay engaging, reference story details, and help the audience understand the nar
         speed: speed || 1.0,
       });
       
-      // Save to Replit object storage
-      const fileName = `ice-narration-${previewId}-${cardId}-${Date.now()}.mp3`;
-      const audioUrl = await objectStorage.uploadBuffer(result.audioBuffer, fileName, result.contentType, "ice-narration");
+      // Save to R2 object storage
+      const fileName = `ice-narration/${previewId}/${cardId}/${Date.now()}.mp3`;
+      const audioUrl = await putObject(fileName, result.audioBuffer, result.contentType);
       
       // Update the card with the generated audio URL
       let updatedCard = { ...card, narrationAudioUrl: audioUrl };
