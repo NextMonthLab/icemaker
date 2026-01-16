@@ -46,10 +46,37 @@ function getCardDuration(card: CardData): number {
   return card.duration || CARD_DURATION;
 }
 
+function resolveAbsoluteUrl(url: string): string {
+  if (!url) return url;
+  
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  
+  let baseUrl: string;
+  if (process.env.PUBLIC_URL) {
+    baseUrl = process.env.PUBLIC_URL;
+  } else if (process.env.REPLIT_DEV_DOMAIN) {
+    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  } else if (process.env.RENDER_EXTERNAL_URL) {
+    baseUrl = process.env.RENDER_EXTERNAL_URL;
+  } else {
+    baseUrl = "http://localhost:5000";
+  }
+  
+  const cleanBase = baseUrl.replace(/\/$/, "");
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  
+  return `${cleanBase}${cleanPath}`;
+}
+
 async function downloadFile(url: string, destPath: string): Promise<void> {
-  const response = await fetch(url);
+  const absoluteUrl = resolveAbsoluteUrl(url);
+  console.log(`[Export] Downloading: ${absoluteUrl}`);
+  
+  const response = await fetch(absoluteUrl);
   if (!response.ok) {
-    throw new Error(`Failed to download ${url}: ${response.status}`);
+    throw new Error(`Failed to download ${absoluteUrl}: ${response.status}`);
   }
   const buffer = await response.arrayBuffer();
   await fs.promises.writeFile(destPath, Buffer.from(buffer));
