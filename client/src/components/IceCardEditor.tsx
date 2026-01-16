@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
-  ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical
+  ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
+  User
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,20 @@ interface MediaAsset {
   model?: string;
 }
 
+type GuestCategory = 'testimonial' | 'expert' | 'engineer' | 'interviewee' | 'founder' | 'customer' | 'other';
+type GuestStatus = 'idle' | 'generating' | 'ready' | 'failed';
+type GuestProvider = 'heygen' | 'did';
+
+const GUEST_CATEGORY_LABELS: Record<GuestCategory, string> = {
+  testimonial: 'Testimonial',
+  expert: 'Expert',
+  engineer: 'Engineer',
+  interviewee: 'Interviewee',
+  founder: 'Founder',
+  customer: 'Customer',
+  other: 'Other',
+};
+
 interface PreviewCard {
   id: string;
   title: string;
@@ -59,6 +74,22 @@ interface PreviewCard {
   overrideSceneDescription?: string;
   overrideCameraAngle?: string;
   overrideLighting?: string;
+  // Guest card fields
+  cardType?: 'standard' | 'guest';
+  guestCategory?: GuestCategory;
+  guestName?: string;
+  guestRole?: string;
+  guestCompany?: string;
+  guestHeadshotUrl?: string;
+  guestScript?: string;
+  guestVoiceId?: string;
+  guestAudioUrl?: string;
+  guestVideoUrl?: string;
+  guestProvider?: GuestProvider;
+  guestProviderJobId?: string;
+  guestStatus?: GuestStatus;
+  guestError?: string;
+  guestDurationSeconds?: number;
 }
 
 interface Entitlements {
@@ -111,6 +142,351 @@ function LockedOverlay({
         <Crown className="w-4 h-4" />
         Upgrade to Unlock
       </Button>
+    </div>
+  );
+}
+
+interface GuestCardEditorProps {
+  card: PreviewCard;
+  previewId: string;
+  onCardUpdate: (cardId: string, updates: Partial<PreviewCard>) => void;
+  onCardSave: (cardId: string, updates: Partial<PreviewCard>) => void;
+}
+
+function GuestCardEditor({ card, previewId, onCardUpdate, onCardSave }: GuestCardEditorProps) {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
+  const headshotInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingHeadshot, setIsUploadingHeadshot] = useState(false);
+  
+  const handleFieldChange = (field: keyof PreviewCard, value: string) => {
+    onCardUpdate(card.id, { [field]: value });
+  };
+  
+  const handleFieldBlur = (field: keyof PreviewCard, value: string) => {
+    onCardSave(card.id, { [field]: value });
+  };
+  
+  const handleCategoryChange = (category: GuestCategory) => {
+    onCardUpdate(card.id, { guestCategory: category });
+    onCardSave(card.id, { guestCategory: category });
+  };
+  
+  const handleHeadshotUpload = async (file: File) => {
+    setIsUploadingHeadshot(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("iceId", previewId);
+      
+      const res = await fetch("/api/ice/upload-media", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!res.ok) throw new Error("Upload failed");
+      
+      const data = await res.json();
+      const url = data.url || data.fileUrl;
+      
+      onCardUpdate(card.id, { guestHeadshotUrl: url });
+      onCardSave(card.id, { guestHeadshotUrl: url });
+      
+      toast({ title: "Headshot uploaded", description: "Your guest headshot is ready." });
+    } catch (error) {
+      toast({ title: "Upload failed", description: "Could not upload headshot.", variant: "destructive" });
+    } finally {
+      setIsUploadingHeadshot(false);
+    }
+  };
+  
+  const handleGenerateVideo = async () => {
+    if (!card.guestScript?.trim()) {
+      toast({ title: "Script required", description: "Please enter the text for your guest to say.", variant: "destructive" });
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    try {
+      const res = await fetch("/api/guest-video/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ iceId: previewId, cardId: card.id }),
+        credentials: "include",
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Generation failed");
+      }
+      
+      toast({ title: "Generating cameo", description: "Your guest video is being created. This may take 1-2 minutes." });
+      
+      const interval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/guest-video/status?iceId=${previewId}&cardId=${card.id}`, {
+            credentials: "include",
+          });
+          const statusData = await statusRes.json();
+          
+          if (statusData.status === 'ready') {
+            clearInterval(interval);
+            setPollInterval(null);
+            setIsGenerating(false);
+            onCardUpdate(card.id, { 
+              guestStatus: 'ready', 
+              guestVideoUrl: statusData.videoUrl,
+              guestDurationSeconds: statusData.durationSeconds 
+            });
+            toast({ title: "Cameo ready!", description: "Your guest video has been generated." });
+          } else if (statusData.status === 'failed') {
+            clearInterval(interval);
+            setPollInterval(null);
+            setIsGenerating(false);
+            onCardUpdate(card.id, { guestStatus: 'failed', guestError: statusData.error });
+            toast({ title: "Generation failed", description: statusData.error || "Could not generate video.", variant: "destructive" });
+          }
+        } catch {
+          // Polling error, continue
+        }
+      }, 5000);
+      
+      setPollInterval(interval);
+      
+    } catch (error) {
+      setIsGenerating(false);
+      toast({ 
+        title: "Generation failed", 
+        description: error instanceof Error ? error.message : "Could not start video generation.", 
+        variant: "destructive" 
+      });
+    }
+  };
+  
+  useEffect(() => {
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [pollInterval]);
+  
+  const guestStatus = card.guestStatus || 'idle';
+  
+  return (
+    <div className="space-y-4">
+      <div className="bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
+        <div className="flex items-start gap-2">
+          <User className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-amber-200">Guest Appearance (Cameo)</p>
+            <p className="text-xs text-amber-300/60 mt-0.5">
+              Short cutaway from an expert, customer, engineer, testimonial, interviewee, founder. Not your narrator.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div>
+            <Label className="text-slate-300 text-sm">Category</Label>
+            <Select 
+              value={card.guestCategory || 'expert'} 
+              onValueChange={(v) => handleCategoryChange(v as GuestCategory)}
+            >
+              <SelectTrigger className="bg-slate-800 border-slate-700 mt-1" data-testid="select-guest-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(GUEST_CATEGORY_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label className="text-slate-300 text-sm">Name</Label>
+            <Input
+              value={card.guestName || ''}
+              onChange={(e) => handleFieldChange('guestName', e.target.value)}
+              onBlur={(e) => handleFieldBlur('guestName', e.target.value)}
+              placeholder="e.g., Sarah Chen"
+              className="bg-slate-800 border-slate-700 mt-1"
+              data-testid="input-guest-name"
+            />
+          </div>
+          
+          <div>
+            <Label className="text-slate-300 text-sm">Role</Label>
+            <Input
+              value={card.guestRole || ''}
+              onChange={(e) => handleFieldChange('guestRole', e.target.value)}
+              onBlur={(e) => handleFieldBlur('guestRole', e.target.value)}
+              placeholder="e.g., Head of Engineering"
+              className="bg-slate-800 border-slate-700 mt-1"
+              data-testid="input-guest-role"
+            />
+          </div>
+          
+          <div>
+            <Label className="text-slate-300 text-sm">Company</Label>
+            <Input
+              value={card.guestCompany || ''}
+              onChange={(e) => handleFieldChange('guestCompany', e.target.value)}
+              onBlur={(e) => handleFieldBlur('guestCompany', e.target.value)}
+              placeholder="e.g., Acme Corp"
+              className="bg-slate-800 border-slate-700 mt-1"
+              data-testid="input-guest-company"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          <div>
+            <Label className="text-slate-300 text-sm">Headshot Photo</Label>
+            <div className="mt-1 flex items-center gap-3">
+              {card.guestHeadshotUrl ? (
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-700">
+                  <img 
+                    src={card.guestHeadshotUrl} 
+                    alt="Guest headshot" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <button
+                    onClick={() => {
+                      onCardUpdate(card.id, { guestHeadshotUrl: undefined });
+                      onCardSave(card.id, { guestHeadshotUrl: undefined });
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center"
+                    data-testid="button-remove-headshot"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => headshotInputRef.current?.click()}
+                  disabled={isUploadingHeadshot}
+                  className="w-20 h-20 rounded-lg bg-slate-800 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center gap-1 hover:border-amber-500/50 transition-colors"
+                  data-testid="button-upload-headshot"
+                >
+                  {isUploadingHeadshot ? (
+                    <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-slate-500" />
+                      <span className="text-[10px] text-slate-500">Upload</span>
+                    </>
+                  )}
+                </button>
+              )}
+              <input
+                ref={headshotInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleHeadshotUpload(file);
+                  e.target.value = "";
+                }}
+                className="hidden"
+                data-testid="input-headshot-file"
+              />
+              <div className="text-xs text-slate-500">
+                <p>Upload a clear headshot</p>
+                <p>for the AI avatar</p>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <Label className="text-slate-300 text-sm">Script (what they will say)</Label>
+            <Textarea
+              value={card.guestScript || ''}
+              onChange={(e) => handleFieldChange('guestScript', e.target.value)}
+              onBlur={(e) => handleFieldBlur('guestScript', e.target.value)}
+              placeholder="Enter the text your guest will speak. Keep it short (6-10 seconds) for best results."
+              className="bg-slate-800 border-slate-700 mt-1 min-h-[100px]"
+              data-testid="textarea-guest-script"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Keep scripts short (6-10 seconds) for best impact and cost efficiency.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="border-t border-slate-700 pt-4">
+        {guestStatus === 'ready' && card.guestVideoUrl ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-green-400">
+              <Check className="w-4 h-4" />
+              <span className="text-sm font-medium">Guest cameo video ready</span>
+              {card.guestDurationSeconds && (
+                <span className="text-xs text-slate-500">({card.guestDurationSeconds}s)</span>
+              )}
+            </div>
+            <div className="aspect-video bg-black rounded-lg overflow-hidden max-w-sm">
+              <video 
+                src={card.guestVideoUrl} 
+                controls 
+                className="w-full h-full"
+                data-testid="video-guest-preview"
+              />
+            </div>
+            <Button
+              onClick={handleGenerateVideo}
+              variant="outline"
+              size="sm"
+              disabled={isGenerating}
+              className="border-amber-500/30 text-amber-300"
+              data-testid="button-regenerate-guest"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Regenerate
+            </Button>
+          </div>
+        ) : guestStatus === 'generating' || isGenerating ? (
+          <div className="flex items-center gap-3 text-amber-300">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <div>
+              <p className="text-sm font-medium">Generating guest cameo...</p>
+              <p className="text-xs text-slate-500">This typically takes 1-2 minutes</p>
+            </div>
+          </div>
+        ) : guestStatus === 'failed' ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-red-400">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">Generation failed: {card.guestError || 'Unknown error'}</span>
+            </div>
+            <Button
+              onClick={handleGenerateVideo}
+              variant="outline"
+              size="sm"
+              className="border-amber-500/30 text-amber-300"
+              data-testid="button-retry-guest"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleGenerateVideo}
+            disabled={!card.guestScript?.trim() || isGenerating}
+            className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+            data-testid="button-generate-guest"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate Guest Cameo
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -705,23 +1081,54 @@ export function IceCardEditor({
     e.target.value = "";
   };
   
+  const isGuestCard = card.cardType === 'guest';
+  
   return (
-    <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-900/80">
+    <div className={`border rounded-lg overflow-hidden ${
+      isGuestCard 
+        ? "border-amber-500/40 bg-amber-950/20" 
+        : "border-slate-700 bg-slate-900/80"
+    }`}>
       <div 
         className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${
-          isExpanded ? "bg-cyan-900/30 border-b border-cyan-500/30" : "hover:bg-slate-800/50"
+          isExpanded 
+            ? isGuestCard 
+              ? "bg-amber-900/30 border-b border-amber-500/30" 
+              : "bg-cyan-900/30 border-b border-cyan-500/30"
+            : "hover:bg-slate-800/50"
         }`}
         onClick={onToggleExpand}
         data-testid={`card-editor-header-${cardIndex}`}
       >
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-mono text-sm ${
-          isExpanded ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400"
+          isGuestCard
+            ? isExpanded ? "bg-amber-600 text-white" : "bg-amber-800 text-amber-200"
+            : isExpanded ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400"
         }`}>
-          {String(cardIndex + 1).padStart(2, '0')}
+          {isGuestCard ? <User className="w-5 h-5" /> : String(cardIndex + 1).padStart(2, '0')}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white truncate">{card.title || "Untitled Card"}</h3>
-          <p className="text-sm text-slate-400 truncate">{card.content?.slice(0, 60) || "No content"}...</p>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-white truncate">{card.title || (isGuestCard ? "Guest Cameo" : "Untitled Card")}</h3>
+            {isGuestCard && (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 rounded">
+                GUEST
+              </span>
+            )}
+            {isGuestCard && card.guestCategory && (
+              <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-slate-700 text-slate-300 rounded">
+                {GUEST_CATEGORY_LABELS[card.guestCategory] || card.guestCategory}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-slate-400 truncate">
+            {isGuestCard 
+              ? card.guestName 
+                ? `${card.guestName}${card.guestRole ? `, ${card.guestRole}` : ''}${card.guestCompany ? ` • ${card.guestCompany}` : ''}`
+                : "Short cutaway from an expert, customer, or testimonial"
+              : `${card.content?.slice(0, 60) || "No content"}...`
+            }
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {card.generatedImageUrl && (
@@ -737,6 +1144,21 @@ export function IceCardEditor({
           {card.narrationAudioUrl && (
             <div className="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center" title="Has narration">
               <Mic className="w-3 h-3 text-cyan-400" />
+            </div>
+          )}
+          {isGuestCard && card.guestStatus === 'ready' && card.guestVideoUrl && (
+            <div className="w-6 h-6 rounded bg-amber-500/20 flex items-center justify-center" title="Guest video ready">
+              <Check className="w-3 h-3 text-amber-400" />
+            </div>
+          )}
+          {isGuestCard && card.guestStatus === 'generating' && (
+            <div className="w-6 h-6 rounded bg-amber-500/20 flex items-center justify-center" title="Generating guest video">
+              <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />
+            </div>
+          )}
+          {isGuestCard && card.guestStatus === 'failed' && (
+            <div className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center" title={card.guestError || "Generation failed"}>
+              <AlertCircle className="w-3 h-3 text-red-400" />
             </div>
           )}
           
@@ -794,6 +1216,16 @@ export function IceCardEditor({
             transition={{ duration: 0.2 }}
           >
             <div className="p-4 space-y-4">
+              {/* Guest Card Editor - Different UI for guest cameo cards */}
+              {isGuestCard ? (
+                <GuestCardEditor 
+                  card={card} 
+                  previewId={previewId}
+                  onCardUpdate={onCardUpdate}
+                  onCardSave={onCardSave}
+                />
+              ) : (
+              <>
               <div className="flex gap-2 border-b border-slate-700 pb-2 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("content")}
@@ -1647,6 +2079,8 @@ export function IceCardEditor({
                 onChange={handleVideoFileChange}
                 data-testid="input-upload-video"
               />
+              </>
+              )}
             </div>
           </motion.div>
         )}

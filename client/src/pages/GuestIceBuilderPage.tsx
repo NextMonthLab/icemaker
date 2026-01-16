@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -75,6 +75,10 @@ const MUSIC_TRACKS = [
   { id: "runway-nowhere", name: "Runway to Nowhere", url: runwayToNowhere, category: "pop" },
 ];
 
+type GuestCategory = 'testimonial' | 'expert' | 'engineer' | 'interviewee' | 'founder' | 'customer' | 'other';
+type GuestStatus = 'idle' | 'generating' | 'ready' | 'failed';
+type GuestProvider = 'heygen' | 'did';
+
 interface PreviewCard {
   id: string;
   title: string;
@@ -85,6 +89,21 @@ interface PreviewCard {
   narrationAudioUrl?: string;
   videoGenerated?: boolean;
   videoGenerationStatus?: string;
+  cardType?: 'standard' | 'guest';
+  guestCategory?: GuestCategory;
+  guestName?: string;
+  guestRole?: string;
+  guestCompany?: string;
+  guestHeadshotUrl?: string;
+  guestScript?: string;
+  guestVoiceId?: string;
+  guestAudioUrl?: string;
+  guestVideoUrl?: string;
+  guestProvider?: GuestProvider;
+  guestProviderJobId?: string;
+  guestStatus?: GuestStatus;
+  guestError?: string;
+  guestDurationSeconds?: number;
 }
 
 interface InsightOrigin {
@@ -1157,7 +1176,7 @@ export default function GuestIceBuilderPage() {
       title: `Card ${cards.length + 1}`,
       content: "Add your content here...",
       order: cards.length,
-      imageUrl: undefined,
+      cardType: 'standard',
       generatedImageUrl: undefined,
       generatedVideoUrl: undefined,
     };
@@ -1166,6 +1185,33 @@ export default function GuestIceBuilderPage() {
     cardsRef.current = newCards;
     performSave();
     toast({ title: "Card added", description: "New card added to your experience." });
+  };
+  
+  // Add a new guest cameo card
+  const handleAddGuestCard = () => {
+    const newCardId = `guest_${Date.now()}`;
+    const newCard: PreviewCard = {
+      id: newCardId,
+      title: `Guest Cameo ${cards.filter(c => c.cardType === 'guest').length + 1}`,
+      content: "",
+      order: cards.length,
+      cardType: 'guest',
+      guestCategory: 'expert',
+      guestName: "",
+      guestRole: "",
+      guestCompany: "",
+      guestScript: "",
+      guestProvider: 'heygen',
+      guestStatus: 'idle',
+    };
+    const newCards = [...cards, newCard];
+    setCards(newCards);
+    cardsRef.current = newCards;
+    performSave();
+    toast({ 
+      title: "Guest Cameo added", 
+      description: "Add a short cameo from an expert, customer, or testimonial. Not your narrator." 
+    });
   };
 
   // Delete a card
@@ -2165,16 +2211,30 @@ export default function GuestIceBuilderPage() {
                 );
               })}
               
-              {/* Add New Card button */}
-              <Button
-                variant="outline"
-                onClick={handleAddCard}
-                className="w-full mt-4 border-dashed border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 hover:text-white hover:border-cyan-500/50"
-                data-testid="button-add-new-card"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Card
-              </Button>
+              {/* Add New Card buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleAddCard}
+                  className="flex-1 border-dashed border-cyan-500/30 text-cyan-300"
+                  data-testid="button-add-new-card"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Card
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleAddGuestCard}
+                  className="flex-1 border-dashed border-amber-500/30 text-amber-300"
+                  data-testid="button-add-guest-cameo"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Guest Cameo
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Guest cameos are short cutaway clips from experts, customers, or testimonials. Not your narrator.
+              </p>
             </div>
 
             {/* Unlock Premium Features - only show for non-Pro users */}
