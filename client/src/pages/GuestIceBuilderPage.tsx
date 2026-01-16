@@ -1659,7 +1659,7 @@ export default function GuestIceBuilderPage() {
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md">
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
                     <div className="text-xs">
-                      <span className="text-white">{exportStatus.progress}%</span>
+                      <span className="text-white">{Math.round(exportStatus.progress)}%</span>
                       <span className="text-white/50 ml-1">{exportStatus.currentStep}</span>
                     </div>
                   </div>

@@ -205,7 +205,7 @@ export function BuilderActionsSidebar({
             ) : exportStatus && exportStatus.status !== "failed" ? (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                <span className="text-xs text-white">{exportStatus.progress}%</span>
+                <span className="text-xs text-white">{Math.round(exportStatus.progress)}%</span>
               </div>
             ) : (
               <Button
