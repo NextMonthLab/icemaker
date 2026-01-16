@@ -23,6 +23,7 @@ import {
   AlertCircle,
   QrCode,
   Download,
+  Code,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,12 @@ export function PublishModal({
   const [leadGatePrompt, setLeadGatePrompt] = useState(initialLeadGatePrompt || "");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [showQrCode, setShowQrCode] = useState(false);
+  const [showEmbedCode, setShowEmbedCode] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
+  
+  const embedCode = shareUrl 
+    ? `<iframe src="${shareUrl}?embed=true" width="360" height="640" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="border-radius: 16px; overflow: hidden;"></iframe>`
+    : null;
 
   useEffect(() => {
     if (shareUrl) {
@@ -178,6 +185,23 @@ export function PublishModal({
         variant: "destructive",
         title: "Failed to copy",
         description: "Please copy the link manually",
+      });
+    }
+  };
+
+  const handleCopyEmbed = async () => {
+    if (!embedCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 2000);
+      toast({ title: "Embed code copied to clipboard" });
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Failed to copy",
+        description: "Please copy the code manually",
       });
     }
   };
@@ -389,6 +413,65 @@ export function PublishModal({
                               <Download className="w-3 h-3" />
                               <span>Download QR Code</span>
                             </a>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {embedCode && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3"
+                    >
+                      <button
+                        onClick={() => setShowEmbedCode(!showEmbedCode)}
+                        className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                        data-testid="button-toggle-embed"
+                      >
+                        <Code className="w-4 h-4" />
+                        <span>{showEmbedCode ? "Hide Embed Code" : "Embed on Website"}</span>
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showEmbedCode && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-3"
+                          >
+                            <div className="relative">
+                              <pre className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap break-all">
+                                {embedCode}
+                              </pre>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCopyEmbed}
+                                className="absolute top-2 right-2 h-7 px-2 text-xs"
+                                data-testid="button-copy-embed"
+                              >
+                                {embedCopied ? (
+                                  <>
+                                    <Check className="w-3 h-3 mr-1 text-green-400" />
+                                    Copied
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3 mr-1" />
+                                    Copy
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              Paste this code into your website's HTML to embed your ICE.
+                            </p>
                           </motion.div>
                         )}
                       </AnimatePresence>
