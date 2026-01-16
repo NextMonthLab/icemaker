@@ -588,6 +588,7 @@ export default function CardPlayer({
 
   return (
     <div 
+      ref={captionRegionRef}
       className={containerClass}
       style={{ 
         backgroundColor: bgColor,
@@ -731,7 +732,7 @@ export default function CardPlayer({
               </div>
             )}
 
-            <div className="absolute top-4 left-4 right-4 flex items-center justify-end z-30 pointer-events-auto">
+            <div className="absolute top-3 left-3 right-3 pr-1 flex items-center justify-end z-30 pointer-events-auto">
               <div className="flex items-center gap-2">
                 {hasBothMediaTypes && (
                   <button
