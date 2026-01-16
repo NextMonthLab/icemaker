@@ -55,6 +55,18 @@ export const briefVisualDirectionSchema = z.object({
 
 export type BriefVisualDirection = z.infer<typeof briefVisualDirectionSchema>;
 
+// Scene Lock configuration for visual continuity across all cards
+export const briefSceneLockSchema = z.object({
+  sceneName: z.string().optional(),
+  setDescription: z.string().optional(),
+  cameraAngle: z.string().optional(),
+  framingNotes: z.string().optional(),
+  lightingNotes: z.string().optional(),
+  enabled: z.boolean().default(true),
+});
+
+export type BriefSceneLock = z.infer<typeof briefSceneLockSchema>;
+
 export const producerBriefSchema = z.object({
   title: z.string(),
   format: z.string().optional(),
@@ -62,6 +74,7 @@ export const producerBriefSchema = z.object({
   estimatedDuration: z.string().optional(),
   visualStyle: z.string().optional(),
   visualDirection: briefVisualDirectionSchema.optional(),
+  sceneLock: briefSceneLockSchema.optional(),
   aiCharacter: briefAiCharacterSchema.optional(),
   stages: z.array(briefStageSchema),
   totalCardCount: z.number(),

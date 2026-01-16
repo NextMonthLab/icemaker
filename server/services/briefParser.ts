@@ -4,6 +4,7 @@ import {
   BriefCard, 
   BriefAiCharacter,
   BriefVisualDirection,
+  BriefSceneLock,
   ParsedProducerBrief,
   PRODUCER_BRIEF_MARKERS 
 } from "@shared/producerBrief";
@@ -22,6 +23,7 @@ export class ProducerBriefParser {
       const title = this.extractTitle();
       const overview = this.extractOverview();
       const visualDirection = this.extractVisualDirection();
+      const sceneLock = this.extractSceneLock();
       const aiCharacter = this.extractAiCharacter();
       const stages = this.extractStages();
       const totalCardCount = stages.reduce((sum, s) => sum + s.cards.length, 0);
@@ -33,6 +35,7 @@ export class ProducerBriefParser {
         estimatedDuration: overview.estimatedDuration,
         visualStyle: overview.visualStyle,
         visualDirection,
+        sceneLock,
         aiCharacter,
         stages,
         totalCardCount,
@@ -107,6 +110,30 @@ export class ProducerBriefParser {
 
     const basePromptMatch = section.match(/Base\s+Style\s+Prompt[^:]*[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
     if (basePromptMatch) result.baseStylePrompt = basePromptMatch[1].trim();
+
+    return result;
+  }
+
+  private extractSceneLock(): BriefSceneLock | undefined {
+    const section = this.extractSection("Scene Lock");
+    if (!section) return undefined;
+
+    const result: BriefSceneLock = { enabled: true };
+
+    const nameMatch = section.match(/Scene\s+Name[:\s]*([^\n]+)/i);
+    if (nameMatch) result.sceneName = nameMatch[1].trim();
+
+    const setMatch = section.match(/Set\s+Description[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
+    if (setMatch) result.setDescription = setMatch[1].trim();
+
+    const cameraMatch = section.match(/Camera\s+(?:Angle)?[:\s]*([^\n]+)/i);
+    if (cameraMatch) result.cameraAngle = cameraMatch[1].trim();
+
+    const framingMatch = section.match(/Framing\s+(?:Notes)?[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
+    if (framingMatch) result.framingNotes = framingMatch[1].trim();
+
+    const lightingMatch = section.match(/Lighting\s+(?:Notes)?[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
+    if (lightingMatch) result.lightingNotes = lightingMatch[1].trim();
 
     return result;
   }

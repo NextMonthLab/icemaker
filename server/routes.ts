@@ -7206,6 +7206,41 @@ Stay focused on the content and be helpful.`,
       if (brief.totalCardCount > 15) tier = "long";
       else if (brief.totalCardCount > 8) tier = "medium";
       
+      // Build projectBible with sceneLock from brief if provided
+      let projectBible: any = undefined;
+      if (brief.sceneLock) {
+        projectBible = {
+          versionId: `bible_${Date.now()}`,
+          version: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          sceneLock: {
+            enabled: brief.sceneLock.enabled !== false,
+            lockedScene: {
+              sceneName: brief.sceneLock.sceneName || 'Default Scene',
+              setDescription: brief.sceneLock.setDescription,
+              cameraAngle: brief.sceneLock.cameraAngle,
+              framingNotes: brief.sceneLock.framingNotes,
+              lightingNotes: brief.sceneLock.lightingNotes,
+            },
+            lockFlags: {
+              environment: true,
+              camera: true,
+              lighting: true,
+              elements: false, // Allow per-card element variations
+            },
+          },
+          characters: characters.map(c => ({
+            id: c.id,
+            name: c.name,
+            role: c.role,
+            description: c.description,
+            isPrimary: c.isPrimary,
+          })),
+          visualDirection: brief.visualDirection,
+        };
+      }
+      
       // Save to database
       const savedPreview = await storage.createIcePreview({
         id: previewId,
@@ -7227,6 +7262,7 @@ Stay focused on the content and be helpful.`,
           estimatedDuration: brief.estimatedDuration,
           interactivityNodes,
         } as any,
+        projectBible,
         title: brief.title,
         cards: previewCards,
         characters,

@@ -33,6 +33,19 @@ const SAMPLE_BRIEF_TEMPLATE = `# Experience Overview
 Ice Title: My Interactive Experience
 Format: 3-stage tutorial with AI guide
 
+## Scene Lock
+Scene Name: Modern Learning Studio
+Set Description: Clean, minimalist workspace with natural light, plants, and warm wood accents
+Camera Angle: Eye level, slightly angled
+Framing Notes: Subject centered, background softly blurred
+Lighting Notes: Soft natural daylight from left, warm fill light
+
+## Visual Direction
+Overall Aesthetic: Modern, clean, approachable
+Camera Perspective: Eye-level close-ups and medium shots
+Lighting and Colour: Warm natural lighting with soft shadows
+Base Style Prompt: Professional cinematic quality, 8K, detailed
+
 ## AI Character
 Name: Guide
 Personality: Warm, encouraging, knowledgeable
@@ -726,7 +739,8 @@ Personality: Warm, encouraging
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Use card tables with Card | Content | Visual Prompt columns</li>
                     <li>• Card IDs like "1.1", "2.3" auto-group into stages</li>
-                    <li>• Optional: Add "Stage 1: Name" headers for custom stage names</li>
+                    <li>• Use "IMAGE:" or "VIDEO:" prefix in Visual Prompt for media type</li>
+                    <li>• Add "Scene Lock" section for consistent visuals across cards</li>
                     <li>• Include "AI Character" section for auto-character creation</li>
                     <li>• Mark "AI Checkpoint" for interactivity at stage ends</li>
                   </ul>
