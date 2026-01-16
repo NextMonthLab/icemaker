@@ -88,7 +88,7 @@ export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillCol
       return {
         ...baseContainerStyles,
         background: "linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(59, 130, 246, 0.85))",
-        padding: "22px 34px",
+        padding: "16px 24px",
         borderRadius: "16px",
       };
     case "none":
