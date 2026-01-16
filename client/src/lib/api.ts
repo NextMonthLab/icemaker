@@ -360,8 +360,21 @@ class ApiClient {
     createdAt: string;
     orbitCount: number;
     iceCount: number;
+    freePassExpiresAt: string | null;
+    hasFreePass: boolean;
   }>> {
     return this.request("/admin/users");
+  }
+  
+  async grantFreePass(userId: number, days: number | null): Promise<{
+    success: boolean;
+    freePassExpiresAt: string | null;
+    message: string;
+  }> {
+    return this.request(`/admin/users/${userId}/free-pass`, {
+      method: "POST",
+      body: JSON.stringify({ days }),
+    });
   }
   
   async getAdminIndustryOrbits(): Promise<any[]> {

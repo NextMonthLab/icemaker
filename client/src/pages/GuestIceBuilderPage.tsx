@@ -38,6 +38,7 @@ import { PublishModal } from "@/components/PublishModal";
 import type { ContentVisibility } from "@shared/schema";
 import { BuilderActionsSidebar } from "@/components/ice-maker/BuilderActionsSidebar";
 import { BuilderPreviewDrawer } from "@/components/ice-maker/BuilderPreviewDrawer";
+import { FreePassBanner } from "@/components/FreePassBanner";
 import crownOfTheFallingStar from "@assets/Crown_of_the_Falling_Star_1768503662594.mp3";
 import orbitalDrift from "@assets/Orbital_Drift_1768503662592.mp3";
 import vanishingFootsteps from "@assets/Vanishing_Footsteps_1768503662595.mp3";
@@ -1421,6 +1422,14 @@ export default function GuestIceBuilderPage() {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <GlobalNav context="ice" showBreadcrumb breadcrumbLabel="ICE Maker" />
+      
+      {/* Free Pass Banner */}
+      {user?.freePassExpiresAt && new Date(user.freePassExpiresAt) > new Date() && (
+        <div className="container mx-auto px-4 pt-4 max-w-4xl">
+          <FreePassBanner expiresAt={user.freePassExpiresAt} />
+        </div>
+      )}
+      
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
         {/* Compact header - only show for creation mode */}
         {!preview && (

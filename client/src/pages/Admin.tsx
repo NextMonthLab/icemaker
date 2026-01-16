@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, ImageIcon, CheckCircle, Trash2, Settings, Image as PhotoIcon, Clapperboard, ExternalLink, Music, Wand2, User, MoreHorizontal, Globe, MessageCircle, TrendingUp, Layers, ArrowLeft, Shield, Crown, Sparkles } from "lucide-react";
+import { BarChart3, Calendar, Plus, Users, Video, Upload, ChevronDown, PenSquare, Loader2, Eye, ImageIcon, CheckCircle, Trash2, Settings, Image as PhotoIcon, Clapperboard, ExternalLink, Music, Wand2, User, MoreHorizontal, Globe, MessageCircle, TrendingUp, Layers, ArrowLeft, Shield, Crown, Sparkles, Gift, Clock, X } from "lucide-react";
 import GlobalNav from "@/components/GlobalNav";
 import {
   Select,
@@ -176,15 +176,37 @@ function AdminOverview() {
 
 function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => api.getAdminUsers(),
+  });
+  
+  const grantFreePassMutation = useMutation({
+    mutationFn: ({ userId, days }: { userId: number; days: number | null }) => 
+      api.grantFreePass(userId, days),
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update free pass",
+        variant: "destructive",
+      });
+    },
   });
 
   const filteredUsers = users?.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   );
+  
+  const usersWithFreePass = users?.filter(u => u.hasFreePass)?.length || 0;
 
   if (isLoading) {
     return (
@@ -242,6 +264,17 @@ function AdminUsers() {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-2">
+              <Gift className="w-4 h-4 text-cyan-500" />
+              <div>
+                <p className="text-lg font-semibold text-foreground">{usersWithFreePass}</p>
+                <p className="text-xs text-muted-foreground">Free Passes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Search */}
@@ -265,9 +298,9 @@ function AdminUsers() {
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
-                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">Orbits</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground font-medium">Free Pass</th>
                   <th className="text-center py-3 px-4 text-muted-foreground font-medium">ICEs</th>
-                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,8 +323,16 @@ function AdminUsers() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {user.orbitCount > 0 ? (
-                        <span className="text-foreground font-medium">{user.orbitCount}</span>
+                      {user.hasFreePass ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <Gift className="w-3 h-3 text-cyan-500" />
+                          <span className="text-xs text-cyan-500 font-medium">
+                            {(() => {
+                              const daysLeft = Math.ceil((new Date(user.freePassExpiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                              return `${daysLeft}d`;
+                            })()}
+                          </span>
+                        </div>
                       ) : (
                         <span className="text-muted-foreground/50">—</span>
                       )}
@@ -303,8 +344,51 @@ function AdminUsers() {
                         <span className="text-muted-foreground/50">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground text-xs">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                    <td className="py-3 px-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" data-testid={`button-user-actions-${user.id}`}>
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Free Pass</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 1 })}
+                            data-testid={`button-grant-1day-${user.id}`}
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Grant 1 Day
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 3 })}
+                            data-testid={`button-grant-3day-${user.id}`}
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Grant 3 Days
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 7 })}
+                            data-testid={`button-grant-7day-${user.id}`}
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Grant 7 Days
+                          </DropdownMenuItem>
+                          {user.hasFreePass && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: null })}
+                                className="text-red-500"
+                                data-testid={`button-revoke-pass-${user.id}`}
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Revoke Pass
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}

@@ -3893,7 +3893,7 @@ export async function registerRoutes(
       
       const iceCountMap = new Map(iceCounts.map(i => [i.userId, Number(i.count)]));
       
-      // Return users without password hash, with ICE counts
+      // Return users without password hash, with ICE counts and free pass info
       const safeUsers = users.map(u => ({
         id: u.id,
         username: u.username,
@@ -3902,11 +3902,54 @@ export async function registerRoutes(
         isAdmin: u.isAdmin,
         createdAt: u.createdAt,
         iceCount: iceCountMap.get(u.id) || 0,
+        freePassExpiresAt: u.freePassExpiresAt,
+        hasFreePass: u.freePassExpiresAt && new Date(u.freePassExpiresAt) > new Date(),
       }));
       res.json(safeUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Error fetching users" });
+    }
+  });
+
+  // Grant or revoke free pass for a user
+  app.post("/api/admin/users/:userId/free-pass", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { days } = req.body; // days: 1, 3, 7, or null to revoke
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      let freePassExpiresAt: Date | null = null;
+      
+      if (days && typeof days === 'number' && days > 0) {
+        freePassExpiresAt = new Date();
+        freePassExpiresAt.setDate(freePassExpiresAt.getDate() + days);
+      }
+      
+      // Update user's free pass
+      await db.update(schema.users)
+        .set({ freePassExpiresAt })
+        .where(eq(schema.users.id, userId));
+      
+      const adminUser = req.user as any;
+      console.log(`[admin] Free pass ${days ? `granted (${days} days)` : 'revoked'} for user ${userId} by admin ${adminUser?.username}`);
+      
+      res.json({
+        success: true,
+        freePassExpiresAt,
+        message: days ? `Free pass granted for ${days} days` : 'Free pass revoked',
+      });
+    } catch (error) {
+      console.error("Error updating free pass:", error);
+      res.status(500).json({ message: "Error updating free pass" });
     }
   });
 
