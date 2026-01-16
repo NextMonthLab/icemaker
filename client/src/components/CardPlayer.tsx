@@ -285,31 +285,23 @@ export default function CardPlayer({
     }
   }, [phase, isPlaying, hasNarration, narrationMuted]);
   
+  // Play/pause video based on isPlaying state (unified control)
+  useEffect(() => {
+    if (!videoRef.current || !showVideo || !hasVideo) return;
+    
+    if (phase === "cinematic" && isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [phase, isPlaying, showVideo, hasVideo]);
+  
   const toggleAudioPlayback = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!hasNarration) return;
     
-    // Toggle isPlaying to sync captions, audio, and video
-    setIsPlaying(prev => {
-      const newPlaying = !prev;
-      if (audioRef.current) {
-        if (newPlaying) {
-          audioRef.current.play().catch(() => {});
-        } else {
-          audioRef.current.pause();
-        }
-      }
-      // Also pause/play video to keep in sync
-      if (videoRef.current) {
-        if (newPlaying) {
-          videoRef.current.play().catch(() => {});
-        } else {
-          videoRef.current.pause();
-        }
-      }
-      return newPlaying;
-    });
-  }, [hasNarration]);
+    // Toggle isPlaying - the useEffects above handle actual audio/video play/pause
+    setIsPlaying(prev => !prev);
+  }, []);
   
   const handleAudioTimeUpdate = useCallback(() => {
     if (audioRef.current) {
@@ -623,7 +615,6 @@ export default function CardPlayer({
                 <video
                   ref={videoRef}
                   src={activeMedia.videoUrl!}
-                  autoPlay
                   loop
                   muted
                   playsInline
