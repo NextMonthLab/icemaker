@@ -311,14 +311,8 @@ export default function CardPlayer({
   const toggleAudioPlayback = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
-    console.log('[CardPlayer] toggleAudioPlayback clicked, current isPlaying:', isPlaying);
-    // Toggle isPlaying - the useEffects above handle actual audio/video play/pause
-    setIsPlaying(prev => {
-      console.log('[CardPlayer] Setting isPlaying from', prev, 'to', !prev);
-      return !prev;
-    });
-  }, [isPlaying]);
+    setIsPlaying(prev => !prev);
+  }, []);
   
   const handleAudioTimeUpdate = useCallback(() => {
     if (audioRef.current) {
