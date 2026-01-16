@@ -1141,9 +1141,39 @@ export const icePreviewCardSchema = z.object({
   overrideSceneDescription: z.string().optional(), // Custom scene description when OVERRIDE_SCENE
   overrideCameraAngle: z.string().optional(), // Custom camera when OVERRIDE_SCENE
   overrideLighting: z.string().optional(), // Custom lighting when OVERRIDE_SCENE
+  
+  // Guest Appearance (Cameo) Card - distinct card type for talking-head inserts
+  cardType: z.enum(['standard', 'guest']).default('standard'), // Card type discriminator
+  
+  // Guest card fields (only used when cardType === 'guest')
+  guestCategory: z.enum(['testimonial', 'expert', 'engineer', 'interviewee', 'founder', 'customer', 'other']).optional(),
+  guestName: z.string().optional(), // Display name for lower-third
+  guestRole: z.string().optional(), // e.g., "CEO", "Head of Engineering"
+  guestCompany: z.string().optional(), // e.g., "Acme Corp"
+  guestHeadshotUrl: z.string().optional(), // Source image for avatar generation
+  guestScript: z.string().optional(), // Text the guest will say
+  guestVoiceId: z.string().optional(), // Provider voice ID (if not default)
+  guestAudioUrl: z.string().optional(), // Pre-recorded audio (optional)
+  guestVideoUrl: z.string().optional(), // Generated avatar video result
+  guestProvider: z.enum(['heygen', 'did']).default('heygen'), // Which avatar provider to use
+  guestProviderJobId: z.string().optional(), // Async job ID from provider
+  guestStatus: z.enum(['idle', 'generating', 'ready', 'failed']).default('idle'),
+  guestError: z.string().optional(), // Error message if failed
+  guestDurationSeconds: z.number().optional(), // Duration of generated video
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;
+
+// Guest category labels for UI display
+export const guestCategoryLabels: Record<string, string> = {
+  testimonial: 'Testimonial',
+  expert: 'Expert',
+  engineer: 'Engineer',
+  interviewee: 'Interviewee',
+  founder: 'Founder',
+  customer: 'Customer',
+  other: 'Other',
+};
 
 // ============ PROJECT BIBLE (Continuity Guardrails) ============
 
