@@ -225,19 +225,12 @@ export default function CardPlayer({
   const hasImage = !!activeMedia.imageUrl;
   const hasBothMediaTypes = hasImage && hasVideo;
 
-  // Reset all state when card changes
+  // Reset all state when card changes (only trigger on card.id change, not hasVideo)
   useEffect(() => {
     setPhase("cinematic");
     setCaptionIndex(0);
     setShowSwipeHint(false);
     setIsPlaying(autoplay);
-    // Show video if: preferredMediaType is video, OR selected asset is video, OR only video available (no image)
-    const useVideo = hasVideo && (
-      card.preferredMediaType === 'video' || 
-      activeMedia.selectedIsVideo || 
-      !hasImage
-    );
-    setShowVideo(!!useVideo);
     
     // Stop any playing audio when card changes
     if (audioRef.current) {
@@ -252,7 +245,18 @@ export default function CardPlayer({
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
-  }, [card.id, autoplay, hasVideo]);
+  }, [card.id, autoplay]);
+  
+  // Separate effect for video display preference (can run when hasVideo changes)
+  useEffect(() => {
+    // Show video if: preferredMediaType is video, OR selected asset is video, OR only video available (no image)
+    const useVideo = hasVideo && (
+      card.preferredMediaType === 'video' || 
+      activeMedia.selectedIsVideo || 
+      !hasImage
+    );
+    setShowVideo(!!useVideo);
+  }, [card.id, hasVideo, hasImage, card.preferredMediaType, activeMedia.selectedIsVideo]);
 
   // Update narration volume - use regular effect with more frequent checks
   // This ensures volume changes take effect even while audio is playing
