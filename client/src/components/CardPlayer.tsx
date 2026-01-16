@@ -733,16 +733,17 @@ export default function CardPlayer({
                     onClick={toggleMediaType}
                     className="p-2 bg-black/30 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors flex items-center gap-1"
                     data-testid="button-toggle-media"
+                    title={showVideo ? "Switch to Image" : "Switch to Video"}
                   >
                     {showVideo ? (
                       <>
-                        <Image className="w-4 h-4 text-white/70" />
-                        <span className="text-xs text-white/70">Image</span>
+                        <Film className="w-4 h-4 text-white/70" />
+                        <span className="text-xs text-white/70">Video</span>
                       </>
                     ) : (
                       <>
-                        <Film className="w-4 h-4 text-white/70" />
-                        <span className="text-xs text-white/70">Video</span>
+                        <Image className="w-4 h-4 text-white/70" />
+                        <span className="text-xs text-white/70">Image</span>
                       </>
                     )}
                   </button>
