@@ -24,6 +24,7 @@ import {
   QrCode,
   Download,
   Code,
+  Share2,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -233,6 +234,62 @@ export function PublishModal({
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {/* Share section - shown prominently at top when already published */}
+          {isPublished && (
+            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <label className="text-sm font-medium text-white mb-3 block flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-cyan-400" />
+                Share Your ICE
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 flex items-center gap-2 overflow-hidden">
+                  <Link2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span className="text-sm text-white truncate">{shareUrl}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyLink}
+                  className="shrink-0 border-cyan-500/50 bg-cyan-500/20 hover:bg-cyan-500/30"
+                  data-testid="button-copy-share-link-top"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-cyan-400" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => window.open(shareUrl!, '_blank')}
+                  className="shrink-0 border-cyan-500/50 hover:bg-cyan-500/20"
+                  data-testid="button-open-share-link-top"
+                >
+                  <ExternalLink className="w-4 h-4 text-cyan-400" />
+                </Button>
+              </div>
+              <div className="flex gap-3 mt-3">
+                <button
+                  onClick={() => setShowQrCode(!showQrCode)}
+                  className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                  data-testid="button-toggle-qr-top"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>QR Code</span>
+                </button>
+                <button
+                  onClick={() => setShowEmbedCode(!showEmbedCode)}
+                  className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                  data-testid="button-toggle-embed-top"
+                >
+                  <Code className="w-3.5 h-3.5" />
+                  <span>Embed</span>
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-2">
             {visibilityOptions.map((option) => {
               const Icon = option.icon;
