@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(), // Legacy, use role instead
   role: text("role").$type<UserRole>().default("viewer").notNull(),
+  freePassExpiresAt: timestamp("free_pass_expires_at"), // Admin-granted free access period
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });

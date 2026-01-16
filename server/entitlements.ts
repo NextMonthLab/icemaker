@@ -121,6 +121,40 @@ const TIER_DEFAULTS: Record<string, Partial<FullEntitlements>> = {
   },
 };
 
+// Check if user has an active free pass
+function hasActiveFreePass(user: User): boolean {
+  if (!user.freePassExpiresAt) return false;
+  return new Date(user.freePassExpiresAt) > new Date();
+}
+
+// Get free pass entitlements (same as Pro tier)
+function getFreePassEntitlements(): FullEntitlements {
+  return {
+    canCreateStory: true,
+    canCreateCharacter: true,
+    canUploadAudio: true,
+    canGenerateImages: true,
+    canGenerateVideos: true,
+    canExport: true,
+    canUseCharacterChat: true,
+    canUseCloudLlm: true,
+    canViewAnalytics: true,
+    canViewEngagement: true,
+    canViewConversationInsights: false, // Free pass doesn't include business features
+    canConfigureStructuredCapture: false,
+    maxUniverses: -1,
+    maxCardsPerStory: 50,
+    monthlyVideoCredits: 10, // Limited video credits during free pass
+    monthlyVoiceCredits: 100,
+    planName: 'Free Pass',
+    isAdmin: false,
+    isCreator: true,
+    activeIceLimit: 3,
+    analyticsEnabled: true,
+    chatEnabled: true,
+  };
+}
+
 export async function getFullEntitlements(userId: number): Promise<FullEntitlements> {
   const user = await storage.getUser(userId);
   if (!user) {
@@ -129,6 +163,11 @@ export async function getFullEntitlements(userId: number): Promise<FullEntitleme
   
   if (user.role === 'admin' || user.isAdmin) {
     return getAdminEntitlements();
+  }
+  
+  // Check for active free pass - grants Pro-level access
+  if (hasActiveFreePass(user)) {
+    return getFreePassEntitlements();
   }
   
   if (user.role === 'creator') {
