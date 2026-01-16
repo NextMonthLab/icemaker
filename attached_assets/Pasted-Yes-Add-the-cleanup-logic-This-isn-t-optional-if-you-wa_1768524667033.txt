@@ -1,0 +1,99 @@
+Yes. Add the cleanup logic. This isn’t optional if you want exports to survive anything beyond toy ICEs.
+
+You want two layers of defence:
+	1.	Delete aggressively as you go (per card)
+	2.	Make the pipeline streaming/low-footprint where possible (next step)
+
+Here’s exactly what I’d implement now.
+
+⸻
+
+1) Per-card cleanup, immediately after each step
+
+What to delete (keep only what you still need)
+
+For each card, you typically create:
+	•	downloaded source assets (image/video)
+	•	derived assets (resized image, caption png if you make one, audio segment)
+	•	intermediate renders (card mp4, temp mp4, temp wav)
+	•	concat list files
+
+Rule: once the card’s final mp4 is produced and queued for concat, delete everything else for that card.
+
+Practical sequence
+
+For each card i:
+	1.	Download / generate assets into a per-card temp folder:
+	•	/tmp/icemaker/export/<jobId>/card_<i>/…
+	2.	Render card_<i>.mp4 into:
+	•	/tmp/icemaker/export/<jobId>/cards/card_<i>.mp4
+	3.	Immediately delete:
+	•	/tmp/icemaker/export/<jobId>/card_<i>/ (entire folder)
+	•	any duplicate copies of inputs if you cached them
+
+Only keep:
+	•	cards/card_<i>.mp4
+	•	the global concat list file
+	•	the final output target path
+
+Then after you successfully concatenate:
+	•	delete cards/ and the concat list too.
+
+⸻
+
+2) Add a “cleanup on failure” safety net
+
+Wrap the export job in try/finally so even if ffmpeg dies, you don’t leak gigs in /tmp.
+	•	On failure: delete the entire job folder.
+	•	On success: delete the entire job folder once final file is uploaded/stored.
+
+⸻
+
+3) Reduce footprint further (simple knobs)
+
+These are quick wins that don’t change architecture:
+	•	Use a lower bitrate for intermediates:
+	•	-crf 23–28 for card renders (not 18)
+	•	-preset veryfast or faster
+	•	If you create WAV anywhere, stop. Use AAC.
+	•	WAV balloons disk instantly.
+	•	If input videos are huge, transcode them once to an “export proxy” and discard the original download.
+
+⸻
+
+4) Optional but powerful: concatenate incrementally
+
+If you’re currently keeping every card_i.mp4 until the end, you’ll still hit quota on longer ICEs.
+
+A better pattern:
+	•	Keep a rolling “current.mp4”
+	•	For each new card:
+	•	concat current.mp4 + card_i.mp4 -> next.mp4
+	•	delete current.mp4 and card_i.mp4
+	•	rename next.mp4 to current.mp4
+
+Disk usage stays near “two files worth”, not “N files worth”.
+
+This is the single best fix for Replit quota pain.
+
+⸻
+
+5) How to know you actually fixed it
+
+Add lightweight logging:
+	•	After each card render, log directory size:
+	•	job folder total MB
+	•	/tmp free space if available
+	•	If free space drops below a threshold (say 500MB), auto-switch to:
+	•	lower quality mode OR
+	•	incremental concat mode OR
+	•	fail early with a clear message
+
+⸻
+
+My recommendation
+
+Do per-card cleanup + try/finally cleanup first (fast).
+If you still get quota errors on longer ICEs, implement incremental concat next (it’s the real “never worry again” move).
+
+If you paste your current export flow outline (even just filenames you generate and when), I’ll tell you exactly where to insert deletes so you don’t accidentally remove something still needed.
