@@ -37,6 +37,7 @@ import AdminImport from "@/pages/AdminImport";
 import AdminCardDetail from "@/pages/AdminCardDetail";
 import AdminCardEdit from "@/pages/AdminCardEdit";
 import AdminAudio from "@/pages/AdminAudio";
+import AdminApiProviders from "@/pages/AdminApiProviders";
 import TransformationsPage from "@/pages/admin/TransformationsPage";
 import TransformationDetailPage from "@/pages/admin/TransformationDetailPage";
 import CharacterCreatorPage from "@/pages/admin/CharacterCreatorPage";
@@ -84,6 +85,7 @@ const ProtectedSuperAdmin = withAuth(SuperAdmin);
 const ProtectedAdminCreate = withAuth(AdminCreate);
 const ProtectedAdminImport = withAuth(AdminImport);
 const ProtectedAdminAudio = withAuth(AdminAudio);
+const ProtectedAdminApiProviders = withAuth(AdminApiProviders);
 const ProtectedAdminCardDetail = withAuth(AdminCardDetail);
 const ProtectedAdminCardEdit = withAuth(AdminCardEdit);
 const ProtectedTransformationsPage = withAuth(TransformationsPage);
@@ -164,6 +166,7 @@ function Router() {
       <Route path="/admin/create" component={ProtectedAdminCreate} />
       <Route path="/admin/import" component={ProtectedAdminImport} />
       <Route path="/admin/audio" component={ProtectedAdminAudio} />
+      <Route path="/admin/api-providers" component={ProtectedAdminApiProviders} />
       <Route path="/admin/cards/:id" component={ProtectedAdminCardDetail} />
       <Route path="/admin/cards/:id/edit" component={ProtectedAdminCardEdit} />
       <Route path="/admin/transformations" component={ProtectedTransformationsPage} />

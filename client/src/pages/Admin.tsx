@@ -842,6 +842,13 @@ export default function Admin() {
                         <span className="sm:hidden">Audio</span>
                     </Button>
                 </Link>
+                <Link href="/admin/api-providers" className="contents">
+                    <Button className="gap-2 h-12 sm:h-10" variant="ghost" data-testid="button-api-providers">
+                        <Settings className="w-4 h-4" /> 
+                        <span className="hidden sm:inline">API Providers</span>
+                        <span className="sm:hidden">APIs</span>
+                    </Button>
+                </Link>
             </div>
         
         {!selectedUniverse ? (

@@ -3888,6 +3888,108 @@ export async function registerRoutes(
     }
   });
 
+  // ============ API PROVIDERS STATUS ============
+  
+  // Get external API provider status for admin dashboard
+  app.get("/api/admin/api-providers", requireAdmin, async (req, res) => {
+    try {
+      // Define all external API providers used in the app
+      // IMPORTANT: Never expose actual API keys - only check if they exist
+      const providers = [
+        {
+          id: 'openai',
+          name: 'OpenAI',
+          description: 'GPT-4, DALL-E, Whisper, TTS - core AI capabilities',
+          envKey: 'OPENAI_API_KEY',
+          altEnvKey: 'AI_INTEGRATIONS_OPENAI_API_KEY',
+          category: 'ai' as const,
+          dashboardUrl: 'https://platform.openai.com/usage',
+          docsUrl: 'https://platform.openai.com/docs',
+          usageInfo: {
+            costPerUnit: '~$0.01/1K tokens (GPT-4o-mini)',
+          },
+        },
+        {
+          id: 'replicate',
+          name: 'Replicate',
+          description: 'Video generation models (Kling, Runway alternatives)',
+          envKey: 'REPLICATE_API_TOKEN',
+          category: 'ai' as const,
+          dashboardUrl: 'https://replicate.com/account/billing',
+          docsUrl: 'https://replicate.com/docs',
+          usageInfo: {
+            costPerUnit: 'Variable per model',
+          },
+        },
+        {
+          id: 'elevenlabs',
+          name: 'ElevenLabs',
+          description: 'Premium text-to-speech voices',
+          envKey: 'ELEVENLABS_API_KEY',
+          category: 'ai' as const,
+          dashboardUrl: 'https://elevenlabs.io/app/subscription',
+          docsUrl: 'https://docs.elevenlabs.io/',
+          usageInfo: {
+            costPerUnit: '~$0.30/1K chars',
+          },
+        },
+        {
+          id: 'pexels',
+          name: 'Pexels',
+          description: 'Stock photos and videos',
+          envKey: 'PEXELS_API_KEY',
+          category: 'media' as const,
+          dashboardUrl: 'https://www.pexels.com/api/new/',
+          docsUrl: 'https://www.pexels.com/api/documentation/',
+          usageInfo: {
+            plan: 'Free tier (200 req/hr)',
+          },
+        },
+        {
+          id: 'stripe',
+          name: 'Stripe',
+          description: 'Payment processing and subscriptions',
+          envKey: 'STRIPE_SECRET_KEY',
+          category: 'payment' as const,
+          dashboardUrl: 'https://dashboard.stripe.com/',
+          docsUrl: 'https://stripe.com/docs',
+        },
+        {
+          id: 'resend',
+          name: 'Resend',
+          description: 'Transactional email delivery',
+          envKey: 'RESEND_API_KEY',
+          category: 'email' as const,
+          dashboardUrl: 'https://resend.com/emails',
+          docsUrl: 'https://resend.com/docs',
+          usageInfo: {
+            plan: 'Free: 100 emails/day',
+          },
+        },
+      ];
+
+      // Check which providers are configured (key exists and is non-empty)
+      const providerStatus = providers.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        configured: !!(process.env[p.envKey] || (p.altEnvKey && process.env[p.altEnvKey])),
+        dashboardUrl: p.dashboardUrl,
+        docsUrl: p.docsUrl,
+        category: p.category,
+        usageInfo: p.usageInfo,
+      }));
+
+      res.json({
+        providers: providerStatus,
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching API provider status:", error);
+      res.status(500).json({ message: "Error fetching API provider status" });
+    }
+  });
+
   // ============ AUDIO LIBRARY ROUTES ============
 
   // Scan uploads/audio directory for unimported tracks
