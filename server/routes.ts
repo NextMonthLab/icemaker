@@ -8425,6 +8425,9 @@ Stay engaging, reference story details, and help the audience understand the nar
           enhancePromptEnabled: card.enhancePromptEnabled ?? existingCard.enhancePromptEnabled ?? undefined,
           basePrompt: card.basePrompt || existingCard.basePrompt || undefined,
           enhancedPrompt: card.enhancedPrompt || existingCard.enhancedPrompt || undefined,
+          // Producer Brief prompts - must persist across edits
+          visualPrompt: card.visualPrompt || existingCard.visualPrompt || undefined,
+          videoPrompt: card.videoPrompt || existingCard.videoPrompt || undefined,
         };
       });
       

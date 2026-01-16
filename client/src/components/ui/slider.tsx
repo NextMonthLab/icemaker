@@ -10,9 +10,10 @@ const Slider = React.forwardRef<
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
-      "relative flex w-full touch-pan-x select-none items-center",
+      "relative flex w-full touch-pan-y select-none items-center",
       className
     )}
+    style={{ touchAction: 'pan-y', WebkitUserSelect: 'none', userSelect: 'none' }}
     {...props}
   >
     <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
