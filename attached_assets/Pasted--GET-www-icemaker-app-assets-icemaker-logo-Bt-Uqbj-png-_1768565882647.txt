@@ -1,0 +1,35 @@
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="98.88.79.247" requestID="43cffe9f-3ef1-4ee4" responseTimeMS=444 responseBytes=2253116 userAgent="Mozilla/5.0 (Linux; Android 8.1.0; TECNO LA7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.87 Mobile Safari/537.36"
+[PUT]
+www.icemaker.app/api/ice/preview/ice_1768558497535_np72kq/settings clientIP="62.64.235.54" requestID="bfaf426b-bbf0-43de" responseTimeMS=46 responseBytes=291 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+12:13:27 PM [express] PUT /api/ice/preview/ice_1768558497535_np72kq/settings 200 in 42ms :: {"success":true}
+[ICE] Generating narration for preview ice_1768558497535_np72kq, card card_1
+[POST]
+www.icemaker.app/api/ice/preview/ice_1768558497535_np72kq/cards/card_1/narration/generate clientIP="62.64.235.54" requestID="64f783cb-8fca-47b1" responseTimeMS=205 responseBytes=309 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+Error generating ICE narration: Error: ElevenLabs API error: 401 - {"detail":{"status":"detected_unusual_activity","message":"Unusual activity detected. Free Tier usage disabled. If you are using a proxy/VPN you might need to purchase a Paid Plan to not trigger our abuse detectors. Free Tier only works if users do not abuse it, for example by creating multiple free accounts. If we notice that many people try to abuse it, we will need to reconsider Free Tier altogether. \nPlease play fair and purchase any Paid Subscription to continue."}}
+    at $w.synthesiseSpeech (/opt/render/project/src/dist/index.cjs:333:32538)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:739:13439
+12:13:48 PM [express] POST /api/ice/preview/ice_1768558497535_np72kq/cards/card_1/narration/generate 500 in 202ms :: {"message":"Error generating narration"}
+[GET]
+www.icemaker.app/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png clientIP="62.64.235.54" requestID="827168dc-3b4f-4948" responseTimeMS=195 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/favicon.png clientIP="62.64.235.54" requestID="a43d8c20-35b1-4ffb" responseTimeMS=131 responseBytes=266 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/Sunday_On_Repeat_1768503662596-4ZoKFmM4.mp3 clientIP="62.64.235.54" requestID="7c8d8dba-581f-4db9" responseTimeMS=290 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/icy_mountain_landscape_placeholder-BseCaJX7.png clientIP="62.64.235.54" requestID="c2a2a72d-d8db-4c6f" responseTimeMS=82 responseBytes=1483764 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/index-Dbbdppq_.css clientIP="62.64.235.54" requestID="e02f7835-5b59-4051" responseTimeMS=8 responseBytes=268 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png clientIP="62.64.235.54" requestID="a9f413ec-bd95-478a" responseTimeMS=7 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png clientIP="62.64.235.54" requestID="4dc197a7-67b4-4328" responseTimeMS=7 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/Sunday_On_Repeat_1768503662596-4ZoKFmM4.mp3 clientIP="62.64.235.54" requestID="a728442a-6299-4f72" responseTimeMS=15 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/icy_mountain_landscape_placeholder-BseCaJX7.png clientIP="62.64.235.54" requestID="9fc7db9d-7f0e-4712" responseTimeMS=6 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png clientIP="62.64.235.54" requestID="819cd9a8-efcb-47d7" responseTimeMS=81 responseBytes=269 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/icy_mountain_landscape_placeholder-BseCaJX7.png clientIP="62.64.235.54" requestID="7654a589-59ce-45fa" responseTimeMS=8 responseBytes=269 userAgent="Mozill
