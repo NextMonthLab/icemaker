@@ -4002,6 +4002,204 @@ export async function registerRoutes(
     }
   });
 
+  // ============ GUEST VIDEO (CAMEO) ROUTES ============
+  
+  // Generate guest cameo video using avatar provider
+  app.post("/api/guest-video/generate", requireAuth, async (req, res) => {
+    try {
+      const { iceId, cardId } = req.body;
+      
+      if (!iceId || !cardId) {
+        return res.status(400).json({ message: "iceId and cardId are required" });
+      }
+      
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const ice = await storage.getIcePreview(iceId);
+      if (!ice) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      if (ice.ownerUserId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this ICE" });
+      }
+      
+      const cards = ice.cards || [];
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      if (cardIndex === -1) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      const card = cards[cardIndex];
+      
+      if (card.cardType !== 'guest') {
+        return res.status(400).json({ message: "Card is not a guest card" });
+      }
+      
+      if (!card.guestScript || card.guestScript.trim().length === 0) {
+        return res.status(400).json({ message: "Guest script is required" });
+      }
+      
+      const { getAvatarProvider } = await import('./avatar/providers');
+      const provider = getAvatarProvider(card.guestProvider || 'heygen');
+      
+      if (!provider.isConfigured()) {
+        return res.status(400).json({ 
+          message: `${provider.name} is not configured. Please add the API key.` 
+        });
+      }
+      
+      const maxDurationSeconds = 10;
+      
+      const result = await provider.generateGuestVideo({
+        script: card.guestScript,
+        headshotUrl: card.guestHeadshotUrl,
+        voiceId: card.guestVoiceId,
+        audioUrl: card.guestAudioUrl,
+        name: card.guestName,
+        maxDurationSeconds,
+      });
+      
+      if (result.status === 'failed') {
+        cards[cardIndex] = {
+          ...card,
+          guestStatus: 'failed',
+          guestError: result.error,
+        };
+        await storage.updateIcePreview(iceId, { cards });
+        
+        return res.status(500).json({ 
+          message: result.error || 'Video generation failed',
+          status: 'failed',
+        });
+      }
+      
+      cards[cardIndex] = {
+        ...card,
+        guestStatus: 'generating',
+        guestProviderJobId: result.providerJobId,
+        guestError: undefined,
+      };
+      await storage.updateIcePreview(iceId, { cards });
+      
+      console.log(`[guest-video] Started generation for card ${cardId}, job: ${result.providerJobId}`);
+      
+      res.json({
+        status: 'generating',
+        providerJobId: result.providerJobId,
+        provider: provider.id,
+      });
+    } catch (error) {
+      console.error("[guest-video] Generate error:", error);
+      res.status(500).json({ message: "Error generating guest video" });
+    }
+  });
+  
+  // Check guest video generation status
+  app.get("/api/guest-video/status", requireAuth, async (req, res) => {
+    try {
+      const { iceId, cardId } = req.query;
+      
+      if (!iceId || !cardId) {
+        return res.status(400).json({ message: "iceId and cardId are required" });
+      }
+      
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const ice = await storage.getIcePreview(iceId as string);
+      if (!ice) {
+        return res.status(404).json({ message: "ICE not found" });
+      }
+      
+      if (ice.ownerUserId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const cards = ice.cards || [];
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      if (cardIndex === -1) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      const card = cards[cardIndex];
+      
+      if (card.cardType !== 'guest') {
+        return res.status(400).json({ message: "Card is not a guest card" });
+      }
+      
+      if (card.guestStatus === 'ready') {
+        return res.json({
+          status: 'ready',
+          videoUrl: card.guestVideoUrl,
+          durationSeconds: card.guestDurationSeconds,
+        });
+      }
+      
+      if (card.guestStatus === 'failed') {
+        return res.json({
+          status: 'failed',
+          error: card.guestError,
+        });
+      }
+      
+      if (card.guestStatus === 'idle' || !card.guestProviderJobId) {
+        return res.json({ status: 'idle' });
+      }
+      
+      const { getAvatarProvider } = await import('./avatar/providers');
+      const provider = getAvatarProvider(card.guestProvider || 'heygen');
+      
+      const result = await provider.getGuestVideoStatus(card.guestProviderJobId);
+      
+      if (result.status === 'completed' && result.videoUrl) {
+        cards[cardIndex] = {
+          ...card,
+          guestStatus: 'ready',
+          guestVideoUrl: result.videoUrl,
+          guestDurationSeconds: result.durationSeconds,
+          guestError: undefined,
+        };
+        await storage.updateIcePreview(iceId as string, { cards });
+        
+        console.log(`[guest-video] Completed for card ${cardId}: ${result.videoUrl}`);
+        
+        return res.json({
+          status: 'ready',
+          videoUrl: result.videoUrl,
+          durationSeconds: result.durationSeconds,
+        });
+      }
+      
+      if (result.status === 'failed') {
+        cards[cardIndex] = {
+          ...card,
+          guestStatus: 'failed',
+          guestError: result.error,
+        };
+        await storage.updateIcePreview(iceId as string, { cards });
+        
+        return res.json({
+          status: 'failed',
+          error: result.error,
+        });
+      }
+      
+      res.json({
+        status: 'generating',
+        progress: result.progress,
+      });
+    } catch (error) {
+      console.error("[guest-video] Status check error:", error);
+      res.status(500).json({ message: "Error checking guest video status" });
+    }
+  });
+
   // ============ AUDIO LIBRARY ROUTES ============
 
   // Scan uploads/audio directory for unimported tracks
