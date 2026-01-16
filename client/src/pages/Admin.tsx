@@ -415,18 +415,64 @@ function AdminUsers() {
                     }`}>
                       {user.isAdmin ? 'Admin' : user.role || 'Viewer'}
                     </span>
+                    {user.hasFreePass && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-500">
+                        <Gift className="w-3 h-3" />
+                        {Math.ceil((new Date(user.freePassExpiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{user.email || 'No email'}</p>
                 </div>
-                <div className="flex items-center gap-3 text-center shrink-0">
-                  <div>
-                    <p className="text-foreground text-sm font-medium">{user.orbitCount || '—'}</p>
-                    <p className="text-[10px] text-muted-foreground/50">Orbits</p>
-                  </div>
-                  <div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="text-center">
                     <p className="text-foreground text-sm font-medium">{user.iceCount || '—'}</p>
                     <p className="text-[10px] text-muted-foreground/50">ICEs</p>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" data-testid={`button-user-actions-mobile-${user.id}`}>
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Free Pass</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 1 })}
+                        data-testid={`button-grant-1day-mobile-${user.id}`}
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Grant 1 Day
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 3 })}
+                        data-testid={`button-grant-3day-mobile-${user.id}`}
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Grant 3 Days
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 7 })}
+                        data-testid={`button-grant-7day-mobile-${user.id}`}
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Grant 7 Days
+                      </DropdownMenuItem>
+                      {user.hasFreePass && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: null })}
+                            className="text-red-500"
+                            data-testid={`button-revoke-pass-mobile-${user.id}`}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Revoke Pass
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </CardContent>
