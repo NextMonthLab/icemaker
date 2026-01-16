@@ -401,6 +401,7 @@ export default function GuestIceBuilderPage() {
   const exportPollingRef = useRef<NodeJS.Timeout | null>(null);
   const [activePreviewNodeIndex, setActivePreviewNodeIndex] = useState<number | null>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showExportComingSoon, setShowExportComingSoon] = useState(false);
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   
@@ -1704,44 +1705,17 @@ export default function GuestIceBuilderPage() {
             {/* Professional Tools Bar - always visible for professional users */}
             {isProfessionalMode && (
               <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-3 border-b border-white/10 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* Video Export Button */}
-                {exportStatus?.status === "completed" && exportStatus.outputUrl ? (
-                  <a
-                    href={exportStatus.outputUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-cyan-600 hover:bg-cyan-700 text-white rounded-md transition-colors"
-                    data-testid="button-download-video"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download Video
-                  </a>
-                ) : exportStatus && exportStatus.status !== "failed" ? (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                    <div className="text-xs">
-                      <span className="text-white">{Math.round(exportStatus.progress)}%</span>
-                      <span className="text-white/50 ml-1">{exportStatus.currentStep}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportMutation.mutate()}
-                    disabled={exportMutation.isPending || cards.length === 0}
-                    className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5 shrink-0 whitespace-nowrap"
-                    data-testid="button-export-video"
-                  >
-                    {exportMutation.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    Export Video
-                  </Button>
-                )}
+                {/* Video Export Button - Coming Soon */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportComingSoon(true)}
+                  className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5 shrink-0 whitespace-nowrap"
+                  data-testid="button-export-video"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export Video
+                </Button>
 
                 <Button
                   variant="outline"
@@ -2661,6 +2635,69 @@ export default function GuestIceBuilderPage() {
         feature="AI Media Generation"
         reason="Unlock AI-powered image and video generation, character interactions, voiceover narration, and more."
       />
+      
+      {/* Export Coming Soon Modal */}
+      <Dialog open={showExportComingSoon} onOpenChange={setShowExportComingSoon}>
+        <DialogContent className="max-w-md bg-slate-900 border-cyan-500/30">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Download className="w-5 h-5 text-cyan-400" />
+              Video Export Coming Soon
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              We're working on video export so you can download your ICE and post directly to TikTok, Instagram Reels, YouTube Shorts, and more.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-white mb-2">What's coming:</h4>
+              <ul className="text-sm text-white/70 space-y-1.5">
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400">•</span>
+                  Export your ICE as a shareable video file
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400">•</span>
+                  Optimized for TikTok, Instagram Reels, YouTube Shorts
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400">•</span>
+                  AI narration and captions included
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-white mb-2">Want viewers to experience AI interactions?</h4>
+              <p className="text-sm text-white/60 mb-3">
+                Publish and share your ICE link so viewers can enjoy the full interactive experience with AI character conversations.
+              </p>
+              <Button
+                onClick={() => {
+                  setShowExportComingSoon(false);
+                  setShowPublishModal(true);
+                }}
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white"
+                data-testid="button-goto-publish"
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Publish & Share Instead
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowExportComingSoon(false)} 
+              className="text-white/70"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Publish Modal */}
       {preview && (
