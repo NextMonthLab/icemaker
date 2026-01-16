@@ -1,0 +1,106 @@
+Yep, your instinct is spot on, and the screenshots prove why this is happening.
+
+What the UI is currently communicating (and why it breaks Marco)
+	1.	You’ve got Add AI Chat on each card.
+	2.	That opens Choose a character, but the only obvious option is “Experience Guide” plus “Create Custom Character”.
+	3.	Separately, right at the bottom of the page, you’ve got Guest Cameo.
+
+So the product is effectively saying:
+	•	“Characters are for AI Chat” (modal)
+	•	“Cameos are a separate thing” (bottom button)
+
+That separation is fine in theory, but the naming overlap is causing the parser/ingestion logic to treat your brief character (Marco) like a “specialist style character”, and then it defaults back to a generic “Experience Guide” when it can’t reconcile the types.
+
+You’re correct: Guest Cameo is too disconnected and too ambiguous.
+
+⸻
+
+The fix: make “Guest Cameo” a first-class option inside the character modal
+
+Keep the bottom button if you want, but it should just be a shortcut that opens the same modal in the “Guest Cameo” state.
+
+Updated modal structure
+
+When you tap Add AI Chat on a card, the modal should clearly split:
+
+Section 1: Main Guide (the normal AI character)
+Title: Main Guide
+Helper line: “This is your narrator and checkpoint voice. Pulled from your project brief unless you change it.”
+
+Options inside:
+	•	Chef Marco (From brief) (default)
+	•	Edit pencil
+	•	Create custom guide
+
+Important: show “From brief” as a badge. That stops the system treating him like an optional specialist.
+
+Section 2: Guest Cameo (video avatar)
+Title: Guest Cameo (Video Avatar)
+Helper line: “Short cutaway clips from experts, customers, or testimonials. Not your narrator.”
+
+Then you choose cameo type:
+	•	Customer testimonial
+	•	Product expert
+	•	Founder message
+	•	Case study clip
+	•	Other
+
+When selected, it attaches to that specific card only.
+
+This makes it impossible for the system to “replace the guide” accidentally, because the user has explicitly chosen a cameo.
+
+⸻
+
+Rename tweak (small but high impact)
+
+“Experience Guide” is currently generic and invites the system to fallback to it.
+
+Change the label to either:
+	•	Main Guide
+	•	Narrator
+	•	Primary Guide
+
+And only show “Experience Guide” as a fallback name if there is genuinely no brief character.
+
+⸻
+
+Behaviour rules (the guardrails that stop this ever happening again)
+
+These should be coded and enforced, not left to prompting:
+	1.	Brief Character always maps to Primary Guide
+If the brief includes an AI character, that is primaryCharacter. Full stop.
+	2.	Guest Cameos are opt-in only
+Never auto-create them, never infer them.
+	3.	A cameo can never replace the primary character
+Cameos only attach to specific cards.
+	4.	Default presenter for any AI Chat is the primary character
+If no one is chosen, it uses Marco.
+
+⸻
+
+What to do with the bottom “Guest Cameo” button
+
+You were right to spot it. It’s in the wrong place if you want clarity.
+
+Best option:
+	•	Keep it, but make it a shortcut that opens the same modal with the Guest Cameo section preselected.
+	•	Add one line under it: “Attach a cameo to a specific card”.
+
+Even better:
+	•	Move it next to “Add AI Chat” as a small secondary action, so it’s clearly card-level.
+
+⸻
+
+Acceptance test (so you know it’s fixed)
+	•	Create pizza ICE with Marco in brief
+	•	Add AI Chat to card 2.3
+	•	Modal shows Chef Marco (From brief) as default
+	•	Generate ICE: Marco appears everywhere he should
+	•	Add a Guest Cameo to card 2.4 only
+	•	Generate ICE: cameo appears only on 2.4, Marco remains the guide
+
+If “Experience Guide” appears when Marco exists, that’s a bug.
+
+⸻
+
+If you want, I can write you the exact Claude Code prompt to implement this (UI + schema + guardrails) in one clean change set.

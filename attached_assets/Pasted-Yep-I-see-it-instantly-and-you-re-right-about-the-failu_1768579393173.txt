@@ -1,0 +1,127 @@
+Yep. I see it instantly, and you’re right about the failure mode.
+
+What’s happening (most likely) is your ingestion logic now has a “specialist detection” step (or a new canonical “character” type), and it’s reclassifying Marco as a Specialist/Avatar because he looks like “an expert persona”. Then the runtime tries to “help” by inserting a generic guide specialist instead of using the one you explicitly defined. Result: Marco gets dropped or overwritten.
+
+You fix this by making the system stop guessing and only use explicit user intent.
+
+The rule you want (plain English)
+	1.	Project Brief = the source of truth for the default guide/narrator character.
+	2.	Specialists / Video Avatars are opt-in only and only exist if the user adds them via UI.
+	3.	Ingestion should never “invent” new specialists and never replace the main character with a specialist.
+
+That’s it. Everything else is implementation detail.
+
+⸻
+
+The model you should use in the product
+
+A) Traditional AI Character (always allowed, always from brief)
+
+Call this one of:
+	•	Primary Guide
+	•	Narrator
+	•	Main AI Character (your existing wording is fine)
+
+This is Marco. He is part of the ICE’s core voice.
+
+B) Video Avatar (optional, user-added only)
+
+This is a different card type, not a “character replacement”.
+
+Suggested name:
+	•	Video Avatar (best, simple)
+Alternative:
+	•	Avatar Clip (also clear)
+Avoid calling it “specialist” in the UI if it keeps causing this confusion.
+
+⸻
+
+UI change (exactly what you described, but tighter)
+
+In the “Add Character” (or “Add AI”) area, split it into two panels:
+
+Panel 1: Main AI Character
+	•	Title: Main AI Character
+	•	Description: “This is the voice and personality that guides the whole ICE. It appears in checkpoints and narration.”
+	•	Fields: name, personality, expertise, voice/tone, visual description (if you use it)
+
+Panel 2: Video Avatar
+	•	Title: Video Avatar
+	•	Description (short, non-waffly):
+“Video Avatars add extra voices to your ICE, like a customer testimonial or a product expert. They appear only on the cards you assign them to.”
+	•	Then: Choose type
+	•	Customer testimonial
+	•	Product expert
+	•	Team member / founder message
+	•	Case study clip
+	•	Other
+
+And crucially:
+	•	A “Video Avatar” must require: avatar provider + script/lines + where it appears (cards)
+
+No card assignment = it never appears.
+
+⸻
+
+Data/schema change (this is the real fix)
+
+You need two explicit entities, not one overloaded “character”.
+
+primaryCharacter
+	•	single object
+	•	always used unless the user deletes it
+
+videoAvatars[]
+	•	array
+	•	only used if present
+	•	each avatar includes a placement rule (card IDs)
+
+And in the card model:
+	•	card.presenter (optional) = { type: "primary" | "videoAvatar", id?: string }
+
+Default behaviour:
+	•	If card.presenter is missing, it’s implicitly "primary".
+
+This prevents your renderer from “helpfully” choosing someone else.
+
+⸻
+
+Ingestion/parser guardrails (stop the system being clever)
+
+Add these rules to the ingestion step:
+	•	If the brief contains “AI Character” or “Name: Chef Marco” → map to primaryCharacter.
+	•	Never map brief content into videoAvatars unless the user explicitly created one in UI.
+	•	Never auto-create “specialist/guide” personas.
+	•	If the ingestion sees “specialist” language in the brief, treat it as descriptive text unless it matches an existing user-created avatar ID.
+
+If you want to keep “specialists” as a concept internally, fine, but make it non-generative unless a user chooses it.
+
+⸻
+
+Copy you can use in the UI (ready to paste)
+
+Main AI Character
+“This is the primary guide for your ICE. Their tone and personality shape the whole experience, including checkpoints and narration.”
+
+Video Avatar
+“Video Avatars add extra voices to your ICE, like customer testimonials, product experts, or founder messages. They only appear on the cards you assign them to.”
+
+Avatar Type helper
+	•	Customer Testimonial: “Build trust with a real voice.”
+	•	Product Expert: “Add credibility for technical moments.”
+	•	Founder Message: “Set vision and tone quickly.”
+
+⸻
+
+Quick sanity test (so you know it’s fixed)
+	•	Create pizza ICE with Marco in brief.
+	•	Do not add any Video Avatar.
+	•	Generate ICE → Marco appears at all checkpoints, zero other presenters appear.
+	•	Add a Video Avatar testimonial assigned to card 2.4 only.
+	•	Generate ICE → Marco remains everywhere else, avatar appears only on 2.4.
+
+If any generic specialist appears anywhere, you’ve still got auto-insertion happening.
+
+⸻
+
+If you send that screenshot, I can tell you exactly where to place the split in the UI so it feels natural (and doesn’t look like a feature dump). But even without it, the principle stands: Primary guide is narrative infrastructure; avatars are optional inserts.
