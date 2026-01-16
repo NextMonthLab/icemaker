@@ -50,10 +50,10 @@ interface AccentPreset {
 
 const accentPresets: AccentPreset[] = [
   { 
-    id: 'nextmonth', 
-    name: 'NextMonth', 
-    color: '#3b82f6', 
-    gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+    id: 'icemaker', 
+    name: 'IceMaker', 
+    color: '#06b6d4', 
+    gradient: 'linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%)',
     recommended: true 
   },
   { id: 'ocean', name: 'Ocean', color: '#06b6d4' },
