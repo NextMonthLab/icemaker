@@ -424,6 +424,29 @@ export default function PublishedIcePage() {
               Start Experience
             </Button>
           )}
+          
+          {/* Made with IceMaker branding */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-12"
+          >
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
+              data-testid="link-made-with-icemaker"
+            >
+              <div className="w-5 h-5 rounded bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <span className="text-white/80 text-sm font-medium">Made with IceMaker</span>
+            </a>
+          </motion.div>
         </div>
       </div>
     );
