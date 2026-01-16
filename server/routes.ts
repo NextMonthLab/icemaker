@@ -20,6 +20,7 @@ import { ObjectStorageService } from "./replit_integrations/object_storage";
 import { startArchiveExpiredPreviewsJob } from "./jobs/archiveExpiredPreviews";
 import { startOrphanCleanupJob } from "./jobs/orphanCleanup";
 import { startStorageReconciliationJob } from "./jobs/storageReconciliation";
+import { startExportCleanupJob } from "./jobs/exportCleanup";
 import { getFullEntitlements } from "./entitlements";
 import { 
   FREE_CONVERSATION_LIMIT, 
@@ -10864,6 +10865,7 @@ Return a JSON object with:
   startArchiveExpiredPreviewsJob(storage);
   startOrphanCleanupJob(storage);
   startStorageReconciliationJob(storage);
+  startExportCleanupJob(storage);
 
   return httpServer;
 }
