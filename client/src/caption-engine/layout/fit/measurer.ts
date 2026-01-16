@@ -31,8 +31,9 @@ export function measureLineWidth(
   const charCount = text.length;
   const letterSpacingAdjustment = Math.abs(letterSpacingEm) * fontSize * Math.max(0, charCount - 1);
   
-  // Add padding for potential browser rendering differences (font hinting, subpixel rendering)
-  const browserRenderingBuffer = fontSize * 0.08;
+  // Add substantial buffer for browser rendering differences (font hinting, subpixel rendering, bold weight)
+  // Bold text renders wider than canvas measurement due to stroke width
+  const browserRenderingBuffer = fontSize * 0.15;
   
   return metrics.width + letterSpacingAdjustment + browserRenderingBuffer;
 }
