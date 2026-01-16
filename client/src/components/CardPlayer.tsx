@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Card } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic } from "lucide-react";
+import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
 import type { CaptionState } from "@/caption-engine/schemas";
@@ -808,6 +808,67 @@ export default function CardPlayer({
             
 
             {/* ═══════════════════════════════════════════════════════════════════════
+                CTA CARD - Call to Action Layout
+                Displays centered button instead of captions for CTA cards
+            ═══════════════════════════════════════════════════════════════════════ */}
+            {card.cardType === 'cta' && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto z-20"
+                style={{
+                  padding: `${captionGeometry.safeAreaTop * captionGeometry.viewportScale}px ${captionGeometry.safeAreaLeft * captionGeometry.viewportScale}px`,
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="flex flex-col items-center gap-4 text-center px-6"
+                >
+                  {card.ctaHeadline && (
+                    <h2 
+                      className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg"
+                      style={{
+                        textShadow: '0 2px 10px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      {card.ctaHeadline}
+                    </h2>
+                  )}
+                  
+                  {card.ctaUrl && card.ctaButtonLabel && (
+                    <Button
+                      asChild
+                      size="lg"
+                      className="bg-cyan-500 text-white font-semibold shadow-lg shadow-cyan-500/30 border-cyan-600"
+                      data-testid="cta-button"
+                    >
+                      <a
+                        href={card.ctaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {card.ctaButtonLabel}
+                        <ExternalLink className="w-5 h-5 ml-2" />
+                      </a>
+                    </Button>
+                  )}
+                  
+                  {card.ctaSubtext && (
+                    <p 
+                      className="text-sm text-white/70 max-w-xs"
+                      style={{
+                        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                      }}
+                    >
+                      {card.ctaSubtext}
+                    </p>
+                  )}
+                </motion.div>
+              </div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════════════
                 COMPOSITION STAGE - Caption Rendering Architecture
                 
                 CRITICAL: Captions MUST be measured and rendered in composition space (1080px).
@@ -830,7 +891,7 @@ export default function CardPlayer({
                 
                 This architecture matches professional video systems (Remotion, CapCut, After Effects).
             ═══════════════════════════════════════════════════════════════════════ */}
-            {(() => {
+            {card.cardType !== 'cta' && (() => {
               // Position settings: top/middle/bottom third of screen
               // Using flexbox for reliable vertical positioning without transform conflicts
               const position = captionState?.position || 'bottom';

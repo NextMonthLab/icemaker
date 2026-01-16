@@ -4,7 +4,7 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User
+  User, ExternalLink, Link as LinkIcon
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -74,8 +74,13 @@ interface PreviewCard {
   overrideSceneDescription?: string;
   overrideCameraAngle?: string;
   overrideLighting?: string;
+  // Card type and CTA fields
+  cardType?: 'standard' | 'guest' | 'cta';
+  ctaHeadline?: string;
+  ctaButtonLabel?: string;
+  ctaUrl?: string;
+  ctaSubtext?: string;
   // Guest card fields
-  cardType?: 'standard' | 'guest';
   guestCategory?: GuestCategory;
   guestName?: string;
   guestRole?: string;
@@ -487,6 +492,128 @@ function GuestCardEditor({ card, previewId, onCardUpdate, onCardSave }: GuestCar
           </Button>
         )}
       </div>
+    </div>
+  );
+}
+
+interface CtaCardEditorProps {
+  card: PreviewCard;
+  onCardUpdate: (cardId: string, updates: Partial<PreviewCard>) => void;
+  onCardSave: (cardId: string, updates: Partial<PreviewCard>) => void;
+}
+
+function CtaCardEditor({ card, onCardUpdate, onCardSave }: CtaCardEditorProps) {
+  const handleFieldChange = (field: keyof PreviewCard, value: string) => {
+    onCardUpdate(card.id, { [field]: value });
+  };
+  
+  const handleFieldBlur = (field: keyof PreviewCard, value: string) => {
+    onCardSave(card.id, { [field]: value });
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+        <ExternalLink className="w-5 h-5 text-green-400" />
+        <div>
+          <h4 className="text-sm font-medium text-green-300">Call to Action Card</h4>
+          <p className="text-xs text-slate-400">
+            This card displays a centered button to drive viewers to your website.
+          </p>
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-slate-300 flex items-center gap-2">
+            Headline
+            <span className="text-xs text-slate-500">(displayed above the button)</span>
+          </Label>
+          <Input
+            value={card.ctaHeadline || ""}
+            onChange={(e) => handleFieldChange('ctaHeadline', e.target.value)}
+            onBlur={(e) => handleFieldBlur('ctaHeadline', e.target.value)}
+            placeholder="e.g., Ready to learn more?"
+            className="bg-slate-800 border-slate-700 text-white"
+            data-testid="input-cta-headline"
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-slate-300 flex items-center gap-2">
+              Button Label
+              <span className="text-xs text-slate-500">(button text)</span>
+            </Label>
+            <Input
+              value={card.ctaButtonLabel || ""}
+              onChange={(e) => handleFieldChange('ctaButtonLabel', e.target.value)}
+              onBlur={(e) => handleFieldBlur('ctaButtonLabel', e.target.value)}
+              placeholder="e.g., Visit Website"
+              className="bg-slate-800 border-slate-700 text-white"
+              data-testid="input-cta-button-label"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-slate-300 flex items-center gap-2">
+              <LinkIcon className="w-3 h-3" />
+              Button URL
+            </Label>
+            <Input
+              type="url"
+              value={card.ctaUrl || ""}
+              onChange={(e) => handleFieldChange('ctaUrl', e.target.value)}
+              onBlur={(e) => handleFieldBlur('ctaUrl', e.target.value)}
+              placeholder="https://yourwebsite.com"
+              className="bg-slate-800 border-slate-700 text-white"
+              data-testid="input-cta-url"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-slate-300 flex items-center gap-2">
+            Subtext
+            <span className="text-xs text-slate-500">(optional, shown below the button)</span>
+          </Label>
+          <Input
+            value={card.ctaSubtext || ""}
+            onChange={(e) => handleFieldChange('ctaSubtext', e.target.value)}
+            onBlur={(e) => handleFieldBlur('ctaSubtext', e.target.value)}
+            placeholder="e.g., Free consultation available"
+            className="bg-slate-800 border-slate-700 text-white"
+            data-testid="input-cta-subtext"
+          />
+        </div>
+      </div>
+      
+      <div className="p-3 bg-slate-800/50 rounded-lg">
+        <p className="text-xs text-slate-400">
+          The CTA button will appear centered on the card. You can still add a background image or video using the media tabs above the card list.
+        </p>
+      </div>
+      
+      {/* Preview of how the button will look */}
+      {(card.ctaButtonLabel || card.ctaHeadline) && (
+        <div className="p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-slate-700">
+          <p className="text-xs text-slate-500 mb-3">Preview:</p>
+          <div className="flex flex-col items-center gap-2 text-center">
+            {card.ctaHeadline && (
+              <h3 className="text-lg font-bold text-white">{card.ctaHeadline}</h3>
+            )}
+            {card.ctaButtonLabel && (
+              <div className="inline-flex items-center gap-2 px-5 py-2 bg-cyan-500 text-white font-semibold rounded-md">
+                {card.ctaButtonLabel}
+                <ExternalLink className="w-4 h-4" />
+              </div>
+            )}
+            {card.ctaSubtext && (
+              <p className="text-sm text-slate-400">{card.ctaSubtext}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1221,6 +1348,12 @@ export function IceCardEditor({
                 <GuestCardEditor 
                   card={card} 
                   previewId={previewId}
+                  onCardUpdate={onCardUpdate}
+                  onCardSave={onCardSave}
+                />
+              ) : card.cardType === 'cta' ? (
+                <CtaCardEditor
+                  card={card}
                   onCardUpdate={onCardUpdate}
                   onCardSave={onCardSave}
                 />

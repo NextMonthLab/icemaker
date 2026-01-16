@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -89,7 +89,13 @@ interface PreviewCard {
   narrationAudioUrl?: string;
   videoGenerated?: boolean;
   videoGenerationStatus?: string;
-  cardType?: 'standard' | 'guest';
+  cardType?: 'standard' | 'guest' | 'cta';
+  // CTA card fields
+  ctaHeadline?: string;
+  ctaButtonLabel?: string;
+  ctaUrl?: string;
+  ctaSubtext?: string;
+  // Guest card fields
   guestCategory?: GuestCategory;
   guestName?: string;
   guestRole?: string;
@@ -1214,6 +1220,41 @@ export default function GuestIceBuilderPage() {
       description: "Add a short cameo from an expert, customer, or testimonial. Not your narrator." 
     });
   };
+  
+  // Add a CTA (Call to Action) card
+  const handleAddCtaCard = () => {
+    // Check if there's already a CTA card
+    const existingCta = cards.find(c => c.cardType === 'cta');
+    if (existingCta) {
+      toast({ 
+        title: "CTA card already exists", 
+        description: "You can only have one Call to Action card per experience.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    const newCardId = `cta_${Date.now()}`;
+    const newCard: PreviewCard = {
+      id: newCardId,
+      title: "Call to Action",
+      content: "",
+      order: cards.length,
+      cardType: 'cta',
+      ctaHeadline: "Ready to learn more?",
+      ctaButtonLabel: "Visit Website",
+      ctaUrl: "https://",
+      ctaSubtext: "",
+    };
+    const newCards = [...cards, newCard];
+    setCards(newCards);
+    cardsRef.current = newCards;
+    performSave();
+    toast({ 
+      title: "CTA card added", 
+      description: "Configure your call-to-action button to drive viewers to your website." 
+    });
+  };
 
   // Delete a card
   const handleDeleteCard = (cardId: string) => {
@@ -2252,9 +2293,19 @@ export default function GuestIceBuilderPage() {
                   <User className="w-4 h-4 mr-2" />
                   Guest Cameo
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleAddCtaCard}
+                  className="flex-1 border-dashed border-green-500/30 text-green-300"
+                  data-testid="button-add-cta-card"
+                  disabled={cards.some(c => c.cardType === 'cta')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Call to Action
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                Guest cameos are short cutaway clips from experts, customers, or testimonials. Not your narrator.
+                Guest cameos are short cutaway clips. CTA cards display a clickable button to drive traffic.
               </p>
             </div>
 
