@@ -7950,6 +7950,7 @@ Provide a JSON response with:
         sourceValue: preview.sourceValue,
         status: preview.status,
         visibility: preview.visibility,
+        shareSlug: preview.shareSlug,
         contentType: preview.contentType,
         fidelityMode: preview.fidelityMode,
         sceneMap: preview.sceneMap,
