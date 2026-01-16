@@ -6258,14 +6258,23 @@ Output only the narration paragraph, nothing else.`;
         return res.status(400).json({ message: "File too large. Maximum size is 50MB." });
       }
       
-      // Get presigned upload URL from object storage
-      const { ObjectStorageService } = await import("./replit_integrations/object_storage");
-      const objectStorage = new ObjectStorageService();
-      const { uploadURL, objectPath } = await objectStorage.getObjectEntityUploadURLWithPath();
+      // Check if R2 is configured
+      const { isObjectStorageConfigured, getPresignedUploadUrl } = await import("./storage/objectStore");
+      
+      if (!isObjectStorageConfigured()) {
+        return res.status(503).json({ message: "Object storage not configured" });
+      }
+      
+      // Generate unique key for the upload
+      const ext = name.split('.').pop() || 'bin';
+      const key = `uploads/${req.user!.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      
+      const { uploadURL, objectPath, publicUrl } = await getPresignedUploadUrl(key, contentType);
       
       res.json({
         uploadURL,
         objectPath,
+        publicUrl,
       });
     } catch (error) {
       console.error("Error requesting upload URL:", error);
