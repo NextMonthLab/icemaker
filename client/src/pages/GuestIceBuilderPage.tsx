@@ -33,7 +33,7 @@ import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
 import { createDefaultCaptionState, type CaptionState } from "@/caption-engine/schemas";
 import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Share2 } from "lucide-react";
+import { ChevronDown, Share2, Copy } from "lucide-react";
 import { PublishModal } from "@/components/PublishModal";
 import type { ContentVisibility } from "@shared/schema";
 import { BuilderActionsSidebar } from "@/components/ice-maker/BuilderActionsSidebar";
@@ -1766,6 +1766,28 @@ export default function GuestIceBuilderPage() {
                   )}
                   {iceVisibility === "public" ? "Public" : iceVisibility === "unlisted" ? "Shared" : "Publish"}
                 </Button>
+                
+                {/* Share button - only shows when ICE is published */}
+                {(iceVisibility === "public" || iceVisibility === "unlisted") && shareSlug && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const shareUrl = `${window.location.origin}/ice/${shareSlug}`;
+                      try {
+                        await navigator.clipboard.writeText(shareUrl);
+                        toast({ title: "Link copied!", description: shareUrl });
+                      } catch {
+                        toast({ title: "Share link", description: shareUrl });
+                      }
+                    }}
+                    className="gap-1.5 shrink-0 whitespace-nowrap bg-cyan-600 hover:bg-cyan-500 text-white border-none"
+                    data-testid="button-copy-share-link"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy Link
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
