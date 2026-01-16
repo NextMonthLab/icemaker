@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { useLocation, useSearch } from "wouter";
 import { useState } from "react";
-import { Sparkles, User } from "lucide-react";
+import { Sparkles, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import icemakerLogo from "@assets/icemaker-logo.png";
@@ -56,9 +56,29 @@ export default function Login() {
     }
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      setLocation("/");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-foreground flex flex-col items-center justify-center p-3 relative overflow-hidden">
         
+        {/* Back button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="absolute top-4 left-4 z-20 text-white/60 hover:text-white hover:bg-white/10"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back
+        </Button>
+
         {/* Background Ambience */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/20 via-black to-black opacity-50 pointer-events-none" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
