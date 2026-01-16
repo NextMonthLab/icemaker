@@ -27,10 +27,10 @@ export interface FitResult {
 const SAFETY_MARGIN_PERCENT = 0.20;
 
 export const DEFAULT_SETTINGS: FitSettings = {
-  maxLines: 3,
-  panelMaxWidthPercent: 92,
-  baseFontSize: 56,
-  minFontSize: 12,
+  maxLines: 4,
+  panelMaxWidthPercent: 88,
+  baseFontSize: 52,
+  minFontSize: 14,
   padding: 16,
   lineHeight: 1.1,
   fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',

@@ -8,14 +8,14 @@ export type TitleComposeOptions = {
 };
 
 const TITLE_MODE_OPTIONS: Required<Omit<TitleComposeOptions, 'layoutMode'>> = {
-  maxLines: 3,
-  targetWordsPerLine: [2, 4],
+  maxLines: 4,
+  targetWordsPerLine: [2, 3],
   allowSingleWordLineForNumbers: true,
 };
 
 const PARAGRAPH_MODE_OPTIONS: Required<Omit<TitleComposeOptions, 'layoutMode'>> = {
   maxLines: 5,
-  targetWordsPerLine: [3, 6],
+  targetWordsPerLine: [2, 4],
   allowSingleWordLineForNumbers: true,
 };
 

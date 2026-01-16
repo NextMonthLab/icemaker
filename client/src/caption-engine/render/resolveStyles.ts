@@ -127,16 +127,16 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const containerWidth = layout?.containerWidthPx || 375;
   const lineHeight = isParagraphMode ? 1.15 : 1.1;
   
-  // Allow more lines for long captions - 5 lines default, 6 for paragraph mode
-  // This lets long captions wrap more before shrinking font
-  const maxLines = isParagraphMode ? 6 : 5;
+  // Tighter line constraints for shorter, more readable captions
+  // Title mode: 4 lines max, Paragraph mode: 5 lines max
+  const maxLines = isParagraphMode ? 5 : 4;
 
   const fitSettings: FitSettings = {
     maxLines,
-    panelMaxWidthPercent: 92,
+    panelMaxWidthPercent: 88,
     baseFontSize: baseFontSize,
     minFontSize: minFontSize,
-    padding: isParagraphMode ? 20 : 32,
+    padding: isParagraphMode ? 20 : 28,
     lineHeight,
     fontFamily: typography.fontFamily,
     fontWeight: 700,
@@ -178,6 +178,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
   const panel: CSSProperties = {
     ...panelStyles,
     maxWidth: `${fitSettings.panelMaxWidthPercent}%`,
+    boxSizing: 'border-box',
   };
 
   const headline: CSSProperties = {
