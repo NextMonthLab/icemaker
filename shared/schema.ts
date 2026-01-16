@@ -1348,6 +1348,7 @@ export const icePreviews = pgTable("ice_previews", {
   logoEnabled: boolean("logo_enabled").default(false), // Show logo on every card
   logoUrl: text("logo_url"), // URL to uploaded logo image
   logoPosition: text("logo_position").$type<"top-left" | "top-right" | "bottom-left" | "bottom-right">().default("top-right"), // Position on cards
+  brandAccentColor: text("brand_accent_color"), // Custom accent color for AI chat UI (hex code like #00bcd4)
   
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),

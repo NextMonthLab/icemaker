@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MessageCircle, Send, Loader2, X, Sparkles, Plus, ChevronDown, User, Wand2, PenLine, Check, Crown, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -354,9 +355,11 @@ export function InteractivityNode({
                     msg.role === "user"
                       ? "bg-cyan-600 text-white"
                       : "bg-slate-800 text-slate-200"
-                  }`}
+                  } chat-markdown`}
                 >
-                  {msg.content}
+                  <ReactMarkdown>
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
               </motion.div>
             ))}
