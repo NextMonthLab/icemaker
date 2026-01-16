@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,8 @@ import {
   Shield,
   Mail,
   AlertCircle,
+  QrCode,
+  Download,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { ContentVisibility } from "@shared/schema";
+import QRCode from "qrcode";
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -101,6 +104,25 @@ export function PublishModal({
   );
   const [leadGateEnabled, setLeadGateEnabled] = useState(initialLeadGateEnabled);
   const [leadGatePrompt, setLeadGatePrompt] = useState(initialLeadGatePrompt || "");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [showQrCode, setShowQrCode] = useState(false);
+
+  useEffect(() => {
+    if (shareUrl) {
+      QRCode.toDataURL(shareUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+        .then(url => setQrCodeDataUrl(url))
+        .catch(err => console.error('QR code generation failed:', err));
+    } else {
+      setQrCodeDataUrl(null);
+    }
+  }, [shareUrl]);
 
   const publishMutation = useMutation({
     mutationFn: async (visibility: ContentVisibility) => {
@@ -324,6 +346,55 @@ export function PublishModal({
                     <ExternalLink className="w-4 h-4 text-cyan-400" />
                   </Button>
                 </div>
+                
+                <AnimatePresence>
+                  {qrCodeDataUrl && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3"
+                    >
+                      <button
+                        onClick={() => setShowQrCode(!showQrCode)}
+                        className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                        data-testid="button-toggle-qr"
+                      >
+                        <QrCode className="w-4 h-4" />
+                        <span>{showQrCode ? "Hide QR Code" : "Show QR Code"}</span>
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showQrCode && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-3 flex flex-col items-center gap-3"
+                          >
+                            <div className="bg-white p-3 rounded-lg">
+                              <img 
+                                src={qrCodeDataUrl} 
+                                alt="QR Code" 
+                                className="w-40 h-40"
+                                data-testid="img-qr-code"
+                              />
+                            </div>
+                            <a
+                              href={qrCodeDataUrl}
+                              download="ice-qr-code.png"
+                              className="flex items-center gap-2 text-xs text-slate-400 hover:text-cyan-400 transition-colors"
+                              data-testid="link-download-qr"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Download QR Code</span>
+                            </a>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
