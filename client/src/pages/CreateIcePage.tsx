@@ -29,6 +29,33 @@ const iconMap: Record<string, any> = {
   ClipboardList, Magnet, Film, Sparkles,
 };
 
+const SAMPLE_BRIEF_TEMPLATE = `# Experience Overview
+Ice Title: My Interactive Experience
+Format: 3-stage tutorial with AI guide
+
+## AI Character
+Name: Guide
+Personality: Warm, encouraging, knowledgeable
+Expertise Level: Expert
+Communication Style: Conversational and supportive
+
+System Prompt (Base):
+You are Guide, a friendly expert who helps learners master this topic step by step.
+Keep explanations clear and celebrate their progress.
+
+| Card | Content | Visual Prompt |
+|------|---------|---------------|
+| 1.1  | Welcome to this experience! Let's get started with the basics. | IMAGE: Warm welcoming scene, soft lighting, inviting atmosphere |
+| 1.2  | Here's what you'll learn today and why it matters. | IMAGE: Overview diagram, clean modern design |
+| 2.1  | Now let's dive into the first key concept. | IMAGE: Step-by-step demonstration, clear focus |
+| 2.2  | Great progress! Here's a tip to remember. | IMAGE: Helpful tip card, friendly illustration |
+| 3.1  | Let's put it all together with a practical example. | VIDEO: Hands-on demonstration, real-world application |
+| 3.2  | Congratulations! You've completed the experience. | IMAGE: Celebration, achievement unlocked |
+
+## AI Checkpoint
+Your Guide is here to answer any questions and help you apply what you've learned.
+`;
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,7 +109,17 @@ export default function CreateIcePage() {
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to process brief");
+        // Include specific errors and warnings in the message for better guidance
+        const errorDetails = error.errors?.length 
+          ? error.errors.join(". ") 
+          : error.message || "Failed to process brief";
+        const warningDetails = error.warnings?.length 
+          ? " Hints: " + error.warnings.join(". ")
+          : "";
+        const guidance = error.errors?.some((e: string) => e.includes("No stages"))
+          ? " Try using card IDs like '1.1', '2.3' in your table, or add 'Stage 1: Name' headers."
+          : "";
+        throw new Error(errorDetails + warningDetails + guidance);
       }
       
       return response.json();
@@ -280,7 +317,7 @@ export default function CreateIcePage() {
                     Stage-based checkpoints
                   </li>
                 </ul>
-                <Button variant="outline" className="w-full border-amber-500/50 hover:bg-amber-500/10">
+                <Button variant="outline" className="w-full border-amber-500/50">
                   Upload Brief
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -500,7 +537,7 @@ export default function CreateIcePage() {
                     <Button
                       key={option.id}
                       variant={state.style.visualStyle === option.id ? "default" : "outline"}
-                      className={state.style.visualStyle === option.id ? "bg-cyan-500 hover:bg-cyan-600" : ""}
+                      className={state.style.visualStyle === option.id ? "bg-cyan-500" : ""}
                       onClick={() => setState(s => ({ 
                         ...s, 
                         style: { ...s.style, visualStyle: option.id as any } 
@@ -520,7 +557,7 @@ export default function CreateIcePage() {
                     <Button
                       key={option.id}
                       variant={state.style.voiceMode === option.id ? "default" : "outline"}
-                      className={state.style.voiceMode === option.id ? "bg-cyan-500 hover:bg-cyan-600" : ""}
+                      className={state.style.voiceMode === option.id ? "bg-cyan-500" : ""}
                       onClick={() => setState(s => ({ 
                         ...s, 
                         style: { ...s.style, voiceMode: option.id as any } 
@@ -540,7 +577,7 @@ export default function CreateIcePage() {
                     <Button
                       key={option.id}
                       variant={state.style.interactionMode === option.id ? "default" : "outline"}
-                      className={state.style.interactionMode === option.id ? "bg-cyan-500 hover:bg-cyan-600" : ""}
+                      className={state.style.interactionMode === option.id ? "bg-cyan-500" : ""}
                       onClick={() => setState(s => ({ 
                         ...s, 
                         style: { ...s.style, interactionMode: option.id as any } 
@@ -560,7 +597,7 @@ export default function CreateIcePage() {
                     <Button
                       key={option.id}
                       variant={state.style.titlePackVibe === option.id ? "default" : "outline"}
-                      className={state.style.titlePackVibe === option.id ? "bg-cyan-500 hover:bg-cyan-600" : ""}
+                      className={state.style.titlePackVibe === option.id ? "bg-cyan-500" : ""}
                       onClick={() => setState(s => ({ 
                         ...s, 
                         style: { ...s.style, titlePackVibe: option.id as any } 
@@ -667,15 +704,30 @@ Personality: Warm, encouraging
               
               <Card className="bg-amber-500/5 border-amber-500/20">
                 <CardContent className="p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-amber-500" />
-                    Brief Format Requirements
-                  </h4>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-amber-500" />
+                      Brief Format Requirements
+                    </h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 border-amber-500/50 text-amber-600"
+                      onClick={() => {
+                        setBriefText(SAMPLE_BRIEF_TEMPLATE);
+                        setBriefFile(null);
+                      }}
+                      data-testid="button-insert-template"
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      Insert Template
+                    </Button>
+                  </div>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Define stages with "Stage 1: Name", "Stage 2: Name", etc.</li>
-                    <li>• Use card tables: Card | Content | Visual Prompt columns</li>
+                    <li>• Use card tables with Card | Content | Visual Prompt columns</li>
+                    <li>• Card IDs like "1.1", "2.3" auto-group into stages</li>
+                    <li>• Optional: Add "Stage 1: Name" headers for custom stage names</li>
                     <li>• Include "AI Character" section for auto-character creation</li>
-                    <li>• Add "System Prompt" for character behaviour rules</li>
                     <li>• Mark "AI Checkpoint" for interactivity at stage ends</li>
                   </ul>
                 </CardContent>

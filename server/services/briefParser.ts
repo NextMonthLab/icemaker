@@ -241,30 +241,41 @@ export class ProducerBriefParser {
       });
     }
 
-    for (let i = 0; i < stagePositions.length; i++) {
-      const current = stagePositions[i];
-      const next = stagePositions[i + 1];
-      const endPos = next ? next.start : this.rawText.length;
-      const stageContent = this.rawText.slice(current.start, endPos);
+    // If we found explicit Stage headers, use them
+    if (stagePositions.length > 0) {
+      for (let i = 0; i < stagePositions.length; i++) {
+        const current = stagePositions[i];
+        const next = stagePositions[i + 1];
+        const endPos = next ? next.start : this.rawText.length;
+        const stageContent = this.rawText.slice(current.start, endPos);
 
-      const cards = this.extractCardsFromStage(stageContent, current.num, current.name);
-      const hasCheckpoint = PRODUCER_BRIEF_MARKERS.aiCheckpoint.test(stageContent);
+        const cards = this.extractCardsFromStage(stageContent, current.num, current.name);
+        const hasCheckpoint = PRODUCER_BRIEF_MARKERS.aiCheckpoint.test(stageContent);
+        
+        const checkpointMatch = stageContent.match(/AI\s+(?:Chef\s+)?Checkpoint[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
+        const checkpointDescription = checkpointMatch ? checkpointMatch[1].trim() : undefined;
+
+        const purposeMatch = stageContent.match(/Purpose[:\s]*([^\n]+)/i);
+        const purpose = purposeMatch ? purposeMatch[1].trim() : undefined;
+
+        if (cards.length > 0) {
+          stages.push({
+            stageNumber: current.num,
+            stageName: current.name,
+            purpose,
+            cards,
+            hasAiCheckpoint: hasCheckpoint,
+            checkpointDescription,
+          });
+        }
+      }
+    } else {
+      // Fallback: infer stages from card IDs in tables (e.g., "1.1", "2.3")
+      const inferredStages = this.inferStagesFromCardTables();
+      stages.push(...inferredStages);
       
-      const checkpointMatch = stageContent.match(/AI\s+(?:Chef\s+)?Checkpoint[:\s]*([^\n]+(?:\n(?![A-Z#\d])[^\n]+)*)/i);
-      const checkpointDescription = checkpointMatch ? checkpointMatch[1].trim() : undefined;
-
-      const purposeMatch = stageContent.match(/Purpose[:\s]*([^\n]+)/i);
-      const purpose = purposeMatch ? purposeMatch[1].trim() : undefined;
-
-      if (cards.length > 0) {
-        stages.push({
-          stageNumber: current.num,
-          stageName: current.name,
-          purpose,
-          cards,
-          hasAiCheckpoint: hasCheckpoint,
-          checkpointDescription,
-        });
+      if (inferredStages.length > 0) {
+        this.warnings.push("No explicit 'Stage N:' headers found - stages inferred from card numbering");
       }
     }
 
@@ -272,6 +283,109 @@ export class ProducerBriefParser {
       this.errors.push("No stages found in document");
     }
 
+    return stages;
+  }
+
+  private inferStagesFromCardTables(): BriefStage[] {
+    const stageMap = new Map<number, BriefCard[]>();
+    let foundTables = false;
+    let skippedRows = 0;
+    
+    // Find all card tables in the document
+    const tablePattern = /\|[^\n]*(?:Card|ID)[^\n]*\|[^\n]*Content[^\n]*\|[^\n]*(?:Visual|Prompt)[^\n]*\|([\s\S]*?)(?=\n\n[A-Z]|\n#+|AI\s+(?:Chef\s+)?Checkpoint|$)/gi;
+    let tableMatch: RegExpExecArray | null;
+    
+    while ((tableMatch = tablePattern.exec(this.rawText)) !== null) {
+      foundTables = true;
+      const tableContent = tableMatch[1];
+      const rows = tableContent.split('\n').filter(row => row.includes('|') && !row.match(/^[\s|:-]+$/));
+      
+      for (const row of rows) {
+        const cells = row.split('|').map(c => c.trim()).filter(c => c);
+        if (cells.length >= 2) {
+          const cardIdMatch = cells[0].match(/(\d+)\.(\d+)/);
+          if (cardIdMatch) {
+            const stageNum = parseInt(cardIdMatch[1]);
+            const cardIndex = parseInt(cardIdMatch[2]);
+            const rawVisual = cells[2] || '';
+            
+            // Parse IMAGE: vs VIDEO: prefix from visual column
+            let visualPrompt: string | undefined;
+            let videoPrompt: string | undefined;
+            
+            if (rawVisual) {
+              const trimmedVisual = rawVisual.trim();
+              const videoMatch = trimmedVisual.match(/^VIDEO\s*(?:\([^)]*\))?[:\s]+([\s\S]+)/i);
+              if (videoMatch) {
+                videoPrompt = videoMatch[1].trim();
+              } else {
+                const imageMatch = trimmedVisual.match(/^IMAGE[:\s]+([\s\S]+)/i);
+                if (imageMatch) {
+                  visualPrompt = imageMatch[1].trim();
+                } else {
+                  visualPrompt = trimmedVisual;
+                }
+              }
+            }
+            
+            const card: BriefCard = {
+              stageNumber: stageNum,
+              stageName: `Stage ${stageNum}`,
+              cardIndex,
+              cardId: cells[0],
+              content: cells[1] || '',
+              visualPrompt,
+              videoPrompt,
+              isCheckpoint: false,
+            };
+            
+            if (!stageMap.has(stageNum)) {
+              stageMap.set(stageNum, []);
+            }
+            stageMap.get(stageNum)!.push(card);
+          } else {
+            // Card ID doesn't match expected format (e.g., "1.1")
+            skippedRows++;
+          }
+        }
+      }
+    }
+    
+    // Add warnings for parsing issues
+    if (foundTables && stageMap.size === 0) {
+      this.warnings.push("Card tables found but no valid card IDs detected. Use format like '1.1', '2.3' in first column.");
+    }
+    if (skippedRows > 0) {
+      this.warnings.push(`Skipped ${skippedRows} table row(s) with missing or malformed card IDs (expected format: '1.1', '2.3')`);
+    }
+    
+    // Convert map to sorted array of stages
+    const stages: BriefStage[] = [];
+    const sortedStageNums = Array.from(stageMap.keys()).sort((a, b) => a - b);
+    
+    // Check once for AI checkpoint (only assign to final stage)
+    const hasCheckpoint = PRODUCER_BRIEF_MARKERS.aiCheckpoint.test(this.rawText);
+    const checkpointMatch = this.rawText.match(/AI\s+(?:Chef\s+)?Checkpoint[:\s]*([^\n]+(?:\n(?![A-Z#\d|\|])[^\n]+)*)/i);
+    const checkpointDescription = checkpointMatch ? checkpointMatch[1].trim() : undefined;
+    const finalStageNum = sortedStageNums[sortedStageNums.length - 1];
+    
+    for (const stageNum of sortedStageNums) {
+      const cards = stageMap.get(stageNum)!;
+      
+      // Sort cards by cardIndex to preserve order
+      cards.sort((a, b) => a.cardIndex - b.cardIndex);
+      
+      const isFinalStage = stageNum === finalStageNum;
+      
+      stages.push({
+        stageNumber: stageNum,
+        stageName: `Stage ${stageNum}`,
+        cards,
+        hasAiCheckpoint: isFinalStage && hasCheckpoint,
+        checkpointDescription: isFinalStage ? checkpointDescription : undefined,
+      });
+    }
+    
     return stages;
   }
 

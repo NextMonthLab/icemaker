@@ -1,0 +1,56 @@
+icemaker.app/wp-login.php clientIP="159.223.212.43" requestID="" responseTimeMS=0 responseBytes=161 userAgent="Mozilla/5.0"
+[GET]
+icemaker.app/ clientIP="103.4.250.177" requestID="" responseTimeMS=0 responseBytes=137 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+[GET]
+icemaker.app/ clientIP="104.164.126.119" requestID="" responseTimeMS=0 responseBytes=137 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/ clientIP="103.4.250.177" requestID="199a20d6-197f-4078" responseTimeMS=16 responseBytes=1115 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/ clientIP="104.164.126.119" requestID="276297de-432c-4997" responseTimeMS=16 responseBytes=1115 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+[GET]
+icemaker.app/ clientIP="103.4.250.177" requestID="" responseTimeMS=0 responseBytes=137 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/ clientIP="103.4.250.177" requestID="a13ac0d0-316a-4e8d" responseTimeMS=2 responseBytes=1115 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/https%3A/icemaker.io clientIP="103.4.250.177" requestID="9e9e49c8-b9a5-47fc" responseTimeMS=14 responseBytes=1115 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/https%3A/fonts.googleapis.com/css2%3Ffamily%3DBebas%2BNeue%26family%3DCinzel%3Awght%40400%3B700%3B900%26family%3DDancing%2BScript%3Awght%40400%3B700%26family%3DInter%3Awght%40300%3B400%3B500%3B600%26family%3DOswald%3Awght%40400%3B500%3B600%3B700%26family%3DPlayfair%2BDisplay%3Awght%40400%3B600%3B700%3B900%26display%3Dswap clientIP="103.4.250.177" requestID="96f204ab-9727-4351" responseTimeMS=2 responseBytes=1115 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/index-DL3OFjeX.js clientIP="103.4.250.177" requestID="9c404786-4c7a-4c83" responseTimeMS=80 responseBytes=485451 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/https%3A/https%3A/icemaker.io clientIP="103.4.250.177" requestID="059555d4-cdb4-4efa" responseTimeMS=2 responseBytes=1115 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/https%3A/https%3A/fonts.googleapis.com/css2%3Ffamily%3DBebas%2BNeue%26family%3DCinzel%3Awght%40400%3B700%3B900%26family%3DDancing%2BScript%3Awght%40400%3B700%26family%3DInter%3Awght%40300%3B400%3B500%3B600%26family%3DOswald%3Awght%40400%3B500%3B600%3B700%26family%3DPlayfair%2BDisplay%3Awght%40400%3B600%3B700%3B900%26display%3Dswap clientIP="103.4.250.177" requestID="152bfd2d-6f14-4908" responseTimeMS=2 responseBytes=1115 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/api/auth/me clientIP="86.133.77.159" requestID="62692933-2722-4351" responseTimeMS=28 responseBytes=306 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+6:33:16 AM [express] GET /api/auth/me 401 in 24ms :: {"message":"Not authenticated"}
+[POST]
+www.icemaker.app/api/ice/preview/brief clientIP="86.133.77.159" requestID="6df9a644-c079-4b42" responseTimeMS=382 responseBytes=355 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+6:34:07 AM [express] POST /api/ice/preview/brief 400 in 378ms :: {"message":"Error parsing producer brief","errors":["No stages found in document"],"warnings":[]}
+[POST]
+www.icemaker.app/api/ice/preview/brief clientIP="86.133.77.159" requestID="4c55607c-acda-42e3" responseTimeMS=33 responseBytes=313 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143.0.7499.151 Mobile/15E148 Safari/604.1"
+Error creating ICE from producer brief: error: column "caption_timing_mode" of relation "ice_previews" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38079
+    at async NE.createIcePreview (/opt/render/project/src/dist/index.cjs:70:215824)
+    at async /opt/render/project/src/dist/index.cjs:582:845 {
+  length: 145,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '392',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1068',
+  routine: 'checkInsertTargets'
+}
+6:38:12 AM [express] POST /api/ice/preview/brief 500 in 29ms :: {"message":"Error processing producer brief"}
