@@ -289,7 +289,7 @@ export default function CardPlayer({
     e.stopPropagation();
     if (!hasNarration) return;
     
-    // Toggle isPlaying to sync captions and audio
+    // Toggle isPlaying to sync captions, audio, and video
     setIsPlaying(prev => {
       const newPlaying = !prev;
       if (audioRef.current) {
@@ -297,6 +297,14 @@ export default function CardPlayer({
           audioRef.current.play().catch(() => {});
         } else {
           audioRef.current.pause();
+        }
+      }
+      // Also pause/play video to keep in sync
+      if (videoRef.current) {
+        if (newPlaying) {
+          videoRef.current.play().catch(() => {});
+        } else {
+          videoRef.current.pause();
         }
       }
       return newPlaying;

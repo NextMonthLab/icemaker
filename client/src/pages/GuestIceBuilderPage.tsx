@@ -398,6 +398,24 @@ export default function GuestIceBuilderPage() {
   const [previewDrawerCardIndex, setPreviewDrawerCardIndex] = useState<number | null>(null);
   
   const handleManualNav = (newIndex: number) => {
+    // When navigating forward, check if we need to stop at an AI character checkpoint
+    if (newIndex > previewCardIndex) {
+      // Find any interactivity nodes between current position and target
+      const checkpointInRange = interactivityNodes.find(
+        node => node.isActive && 
+               node.afterCardIndex >= previewCardIndex && 
+               node.afterCardIndex < newIndex
+      );
+      
+      if (checkpointInRange) {
+        // Stop at the checkpoint instead of skipping past it
+        setPreviewCardIndex(checkpointInRange.afterCardIndex);
+        setActivePreviewNodeIndex(checkpointInRange.afterCardIndex);
+        return;
+      }
+    }
+    
+    // No checkpoint in the way, navigate directly
     setActivePreviewNodeIndex(null);
     setPreviewCardIndex(newIndex);
   };
