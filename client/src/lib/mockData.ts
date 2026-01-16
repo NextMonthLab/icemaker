@@ -49,6 +49,12 @@ export interface Card {
   enhancePromptEnabled?: boolean;
   basePrompt?: string;
   enhancedPrompt?: string;
+  // CTA card fields
+  cardType?: 'standard' | 'guest' | 'cta';
+  ctaHeadline?: string;
+  ctaButtonLabel?: string;
+  ctaUrl?: string;
+  ctaSubtext?: string;
 }
 
 export interface Character {

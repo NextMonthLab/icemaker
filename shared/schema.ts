@@ -1142,8 +1142,14 @@ export const icePreviewCardSchema = z.object({
   overrideCameraAngle: z.string().optional(), // Custom camera when OVERRIDE_SCENE
   overrideLighting: z.string().optional(), // Custom lighting when OVERRIDE_SCENE
   
-  // Guest Appearance (Cameo) Card - distinct card type for talking-head inserts
-  cardType: z.enum(['standard', 'guest']).default('standard'), // Card type discriminator
+  // Card type discriminator - distinct card types for special functionality
+  cardType: z.enum(['standard', 'guest', 'cta']).default('standard'),
+  
+  // CTA (Call to Action) card fields (only used when cardType === 'cta')
+  ctaHeadline: z.string().optional(), // Main headline text displayed above button
+  ctaButtonLabel: z.string().optional(), // Button text, e.g., "Learn More", "Visit Website"
+  ctaUrl: z.string().optional(), // URL the button links to
+  ctaSubtext: z.string().optional(), // Optional smaller text below the button
   
   // Guest card fields (only used when cardType === 'guest')
   guestCategory: z.enum(['testimonial', 'expert', 'engineer', 'interviewee', 'founder', 'customer', 'other']).optional(),
