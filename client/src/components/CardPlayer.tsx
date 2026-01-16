@@ -140,6 +140,9 @@ export default function CardPlayer({
   const titlePack = getTitlePackById(captionState?.presetId || DEFAULT_TITLE_PACK_ID) || getTitlePackById(DEFAULT_TITLE_PACK_ID)!;
 
   // Calculate unified caption geometry contract
+  // Dynamic viewportScale based on actual container width to prevent clipping on narrow devices
+  const dynamicViewportScale = containerWidthPx / titlePack.canvas.width;
+  
   const captionGeometry = calculateCaptionGeometry({
     compositionWidth: titlePack.canvas.width,
     compositionHeight: titlePack.canvas.height,
@@ -147,7 +150,7 @@ export default function CardPlayer({
     safeZoneRightPercent: titlePack.safeZone.right,
     safeZoneTopPercent: titlePack.safeZone.top,
     safeZoneBottomPercent: titlePack.safeZone.bottom,
-    viewportScale: fullScreen ? 0.5 : 0.4,
+    viewportScale: dynamicViewportScale,
   });
   
   // Pre-calculate styles for all captions with deck-level font consistency
