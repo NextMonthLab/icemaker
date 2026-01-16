@@ -3696,6 +3696,7 @@ export async function registerRoutes(
             videoGenerated: true,
             videoGenerationStatus: "completed",
             videoGeneratedAt: new Date(),
+            preferredMediaType: "video",
           });
           
           return res.json({
@@ -3746,6 +3747,7 @@ export async function registerRoutes(
         await storage.updateCard(cardId, {
           generatedVideoUrl: result.videoUrl,
           videoGenerated: true,
+          preferredMediaType: "video",
         });
         
         return res.json({
@@ -6098,6 +6100,7 @@ Output only the narration paragraph, nothing else.`;
               videoGenerationStatus: "completed",
               videoGenerationMode: imageUrl ? "image-to-video" : "text-to-video",
               videoGeneratedAt: new Date(),
+              preferredMediaType: "video",
             });
             
             return res.json({
@@ -6188,6 +6191,7 @@ Output only the narration paragraph, nothing else.`;
           videoGenerated: true,
           videoGeneratedAt: new Date(),
           videoGenerationError: null,
+          preferredMediaType: "video",
         });
       } else if (result.status === "failed" && card.videoGenerationStatus !== "failed") {
         await storage.updateCard(cardId, {

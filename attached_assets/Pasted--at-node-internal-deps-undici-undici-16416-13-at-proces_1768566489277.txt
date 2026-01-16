@@ -1,0 +1,36 @@
+    at node:internal/deps/undici/undici:16416:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Xw (/opt/render/project/src/dist/index.cjs:461:2414)
+    at async bZ (/opt/render/project/src/dist/index.cjs:461:4519) {
+  [cause]: TypeError: Invalid URL
+      at new URL (node:internal/url:828:25)
+      at new Request (node:internal/deps/undici/undici:10971:25)
+      at fetch (node:internal/deps/undici/undici:11891:25)
+      at fetch (node:internal/deps/undici/undici:16414:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:83:12)
+      at Xw (/opt/render/project/src/dist/index.cjs:461:2420)
+      at bZ (/opt/render/project/src/dist/index.cjs:461:4525)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+    code: 'ERR_INVALID_URL',
+    input: '/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png'
+  }
+}
+Background export failed for exp_1768566416611_5ru754: TypeError: Failed to parse URL from /uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png
+    at node:internal/deps/undici/undici:16416:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Xw (/opt/render/project/src/dist/index.cjs:461:2414)
+    at async bZ (/opt/render/project/src/dist/index.cjs:461:4519) {
+  [cause]: TypeError: Invalid URL
+      at new URL (node:internal/url:828:25)
+      at new Request (node:internal/deps/undici/undici:10971:25)
+      at fetch (node:internal/deps/undici/undici:11891:25)
+      at fetch (node:internal/deps/undici/undici:16414:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:83:12)
+      at Xw (/opt/render/project/src/dist/index.cjs:461:2420)
+      at bZ (/opt/render/project/src/dist/index.cjs:461:4525)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+    code: 'ERR_INVALID_URL',
+    input: '/uploads/ice-generated/ice-ice_1768558497535_np72kq-card_0-1768564976143.png'
+  }
+}
+12:26:56 PM [express] GET /api/ice/export/exp_1768566416611_5ru754 200 in 5ms :: {"jobId":"exp_1768566416611_5ru754","status":"failed","progress":10,"currentStep":"Processing card 1/10...","out
