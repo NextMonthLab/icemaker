@@ -9309,9 +9309,14 @@ Stay engaging, reference story details, and help the audience understand the nar
         });
       }
       
-      // Check if object storage is configured
+      // Check if object storage is configured (Replit integration OR R2/S3 for Render)
+      const { ObjectStorageService } = await import("./replit_integrations/object_storage/objectStorage");
       const objectStore = await import("./storage/objectStore");
-      if (!objectStore.isObjectStorageConfigured()) {
+      const replitStorage = new ObjectStorageService();
+      const hasReplitStorage = replitStorage.isConfigured();
+      const hasR2Storage = objectStore.isObjectStorageConfigured();
+      
+      if (!hasReplitStorage && !hasR2Storage) {
         return res.status(503).json({ message: "Object storage not configured for exports" });
       }
       
