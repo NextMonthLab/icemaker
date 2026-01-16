@@ -651,7 +651,7 @@ export default function CardPlayer({
                     // Move overlay to opposite position to avoid overlap with captions
                     const overlayJustify = captionPosition === 'top' ? 'justify-end pb-24' : captionPosition === 'middle' ? 'justify-start pt-16' : 'justify-start pt-16';
                     return (
-                    <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10`}>
+                    <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10 pointer-events-none`}>
                       <div className="text-center mb-4">
                         <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
                           ADD YOUR...
@@ -684,7 +684,7 @@ export default function CardPlayer({
                     // Move overlay to opposite position to avoid overlap with captions
                     const overlayJustify = captionPosition === 'top' ? 'justify-end pb-24' : captionPosition === 'middle' ? 'justify-start pt-16' : 'justify-start pt-16';
                     return (
-                  <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10`}>
+                  <div className={`absolute inset-0 flex flex-col items-center ${overlayJustify} z-10 pointer-events-none`}>
                     <div className="text-center mb-4">
                       <h3 className="text-2xl font-light tracking-[0.3em] text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
                         ADD YOUR...
@@ -734,7 +734,7 @@ export default function CardPlayer({
               </div>
             )}
 
-            <div className="absolute top-4 left-4 right-4 flex items-center justify-end">
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-end z-30">
               <div className="flex items-center gap-2">
                 {hasBothMediaTypes && (
                   <button
