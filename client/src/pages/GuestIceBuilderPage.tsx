@@ -1676,6 +1676,18 @@ export default function GuestIceBuilderPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    document.getElementById('story-cards-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="flex-1 sm:flex-none gap-1.5 border-white/20 text-white/80 hover:bg-white/5"
+                  data-testid="button-jump-to-cards"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span className="hidden xs:inline">Edit Cards</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
                     setPreviewCardIndex(0);
                     setShowPreviewModal(true);
                   }}
@@ -2181,6 +2193,30 @@ export default function GuestIceBuilderPage() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Story Cards Section Header */}
+            <div id="story-cards-section" className="scroll-mt-24">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <Film className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white">Story Cards</h3>
+                    <p className="text-xs text-white/50">{cards.length} cards to edit</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExpandedCardIndex(expandedCardIndex === null ? 0 : null)}
+                  className="text-white/60 hover:text-white"
+                  data-testid="button-expand-collapse-all"
+                >
+                  {expandedCardIndex !== null ? "Collapse" : "Expand First"}
+                </Button>
+              </div>
+            </div>
 
             {/* Professional ICE Editor cards */}
             <div className="space-y-3">
