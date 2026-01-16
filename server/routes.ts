@@ -8896,6 +8896,154 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Generate continuation still image for Cinematic Continuation feature
+  // This creates a context-aware still image to display after video ends while narration continues
+  app.post("/api/ice/preview/:previewId/cards/:cardId/generate-continuation-still", requireAuth, async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check write permission
+      const user = req.user as schema.User;
+      const policy = canWriteIcePreview(user, preview);
+      
+      if (!policy.allowed) {
+        return res.status(403).json({ message: policy.reason || "Permission denied" });
+      }
+      
+      const cards = preview.cards as any[];
+      const card = cards.find(c => c.id === cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // Check if card has video (continuation only makes sense for video cards)
+      const hasVideo = !!card.generatedVideoUrl || (card.mediaAssets || []).some((a: any) => a.kind === 'video');
+      if (!hasVideo) {
+        return res.status(400).json({ message: "Card must have a video for continuation still generation" });
+      }
+      
+      // Check OpenAI configuration
+      const { isOpenAIConfigured, getOpenAI } = await import("./ai");
+      if (!isOpenAIConfigured()) {
+        return res.status(503).json({ message: "OpenAI not configured" });
+      }
+      
+      // Build a prompt for the continuation still - should match the video scene but with subtle variations
+      const promptParts: string[] = [];
+      
+      // Use scene lock context if available (for visual continuity)
+      // Note: We intentionally use only environment and lighting from Scene Lock
+      // These are the primary drivers of visual consistency for still images.
+      // Camera settings are less relevant for stills (no motion), and background
+      // is usually captured in environment description.
+      if (preview.sceneLockConfig && typeof preview.sceneLockConfig === 'object') {
+        const lock = preview.sceneLockConfig as any;
+        if (lock.environment?.enabled && lock.environment?.description) {
+          promptParts.push(`Environment: ${lock.environment.description}`);
+        }
+        if (lock.lighting?.enabled && lock.lighting?.description) {
+          promptParts.push(`Lighting: ${lock.lighting.description}`);
+        }
+        if (lock.background?.enabled && lock.background?.description) {
+          promptParts.push(`Background: ${lock.background.description}`);
+        }
+      }
+      
+      // Use video generation prompt or scene description
+      if (card.videoGenerationPrompt) {
+        promptParts.push(card.videoGenerationPrompt);
+      } else if (card.sceneDescription) {
+        promptParts.push(card.sceneDescription);
+      }
+      
+      // Fallback to card title/content
+      if (promptParts.length === 0) {
+        if (card.title) promptParts.push(card.title);
+        if (card.captionsJson && Array.isArray(card.captionsJson)) {
+          const captions = card.captionsJson.map((c: any) => c.text || c).slice(0, 3).join(" ");
+          if (captions) promptParts.push(captions);
+        }
+      }
+      
+      // Add continuation-specific context
+      const basePrompt = promptParts.join(". ") || "Cinematic atmosphere, dramatic lighting";
+      const fullPrompt = `${basePrompt}. Same scene, slightly different angle or lighting, cinematic still frame, high quality, 9:16 aspect ratio.`;
+      
+      console.log(`[Continuation Still] Generating for card ${cardId}, prompt: ${fullPrompt.substring(0, 200)}...`);
+      
+      // Generate the image using OpenAI
+      const response = await getOpenAI().images.generate({
+        model: "dall-e-3",
+        prompt: fullPrompt,
+        n: 1,
+        size: "1024x1792", // 9:16 aspect ratio for vertical video
+        quality: "standard",
+      });
+      
+      const imageUrl = response.data[0]?.url;
+      if (!imageUrl) {
+        throw new Error("No image generated");
+      }
+      
+      // Download and store the image
+      let continuationImageUrl = imageUrl;
+      
+      const { isObjectStorageConfigured, uploadToObjectStorage } = await import("./objectStorage");
+      if (isObjectStorageConfigured()) {
+        // Upload to R2/Object Storage
+        const imageResponse = await fetch(imageUrl);
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        const filename = `continuation-${cardId}-${Date.now()}.png`;
+        
+        continuationImageUrl = await uploadToObjectStorage({
+          buffer: imageBuffer,
+          filename,
+          contentType: "image/png",
+          isPublic: true,
+        });
+        
+        console.log(`[Continuation Still] Saved to R2: ${continuationImageUrl}`);
+      }
+      
+      // Update the card with continuation image URL and metadata
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      cards[cardIndex] = {
+        ...card,
+        continuationImageUrl,
+        cinematicContinuationEnabled: true, // Ensure it's enabled
+      };
+      await storage.updateIcePreview(previewId, { cards });
+      
+      console.log(`[Continuation Still] Generated for card ${cardId}: ${continuationImageUrl}`);
+      
+      res.json({
+        success: true,
+        cardId,
+        continuationImageUrl,
+        promptUsed: fullPrompt.substring(0, 300),
+      });
+    } catch (error: any) {
+      console.error("Error generating continuation still:", error);
+      
+      if (error?.status === 400) {
+        return res.status(400).json({
+          message: "OpenAI rejected the prompt. It may contain prohibited content.",
+          error: error.message,
+        });
+      }
+      
+      res.status(500).json({
+        message: "Error generating continuation still",
+        error: error.message || "Unknown error",
+      });
+    }
+  });
+  
   // Preview narration for an ICE preview card (short audio, not stored)
   app.post("/api/ice/preview/:previewId/cards/:cardId/narration/preview", requireAuth, async (req, res) => {
     try {

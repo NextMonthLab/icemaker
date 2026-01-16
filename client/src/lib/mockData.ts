@@ -55,6 +55,13 @@ export interface Card {
   ctaButtonLabel?: string;
   ctaUrl?: string;
   ctaSubtext?: string;
+  
+  // Cinematic Continuation (Cutaway Still) - when video ends before narration
+  cinematicContinuationEnabled?: boolean; // Default true
+  continuationImageUrl?: string | null; // Generated continuation still
+  continuationImageStatus?: 'none' | 'pending' | 'generating' | 'ready' | 'failed';
+  videoDurationSec?: number; // Video duration in seconds
+  narrationDurationSec?: number; // Narration audio duration in seconds
 }
 
 export interface Character {

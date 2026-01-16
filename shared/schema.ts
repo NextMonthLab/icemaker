@@ -1167,6 +1167,14 @@ export const icePreviewCardSchema = z.object({
   guestStatus: z.enum(['idle', 'generating', 'ready', 'failed']).default('idle'),
   guestError: z.string().optional(), // Error message if failed
   guestDurationSeconds: z.number().optional(), // Duration of generated video
+  
+  // Cinematic Continuation (Cutaway Still) - used when video ends before narration
+  cinematicContinuationEnabled: z.boolean().default(true), // Default ON as per spec
+  continuationImageUrl: z.string().optional(), // Generated continuation still image
+  continuationImageStatus: z.enum(['none', 'pending', 'generating', 'ready', 'failed']).default('none'),
+  continuationImagePrompt: z.string().optional(), // Prompt used for continuation image
+  videoDurationSec: z.number().optional(), // Duration of video in seconds
+  narrationDurationSec: z.number().optional(), // Duration of narration audio in seconds
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;

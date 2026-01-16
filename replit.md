@@ -52,6 +52,7 @@ Key architectural decisions and features include:
 -   **Enterprise Custom Branding Page**: Sales and education page at `/enterprise/custom-branding` for enterprise custom branding services, featuring various branding options and an enquiry form.
 -   **Scene Lock System**: Enables visual continuity across ICE cards through a locked scene configuration in Project Bible, with granular lock flags for environment, camera, lighting, and background elements, and card-level override options.
 -   **Desktop Builder Layout**: Responsive 2-column layout for GuestIceBuilderPage with BuilderActionsSidebar (collapsible sidebar for actions like AI media, music, logo, captions, export, publish) visible on desktop (lg+), BuilderPreviewDrawer (slide-in preview with card media), and stacked panels hidden on desktop.
+-   **Cinematic Continuation System**: Solves the video-narration duration mismatch problem. When narration continues beyond the 5-second video cap, CardPlayer transitions via crossfade to a context-aware still image. Uses `cinematicContinuationEnabled` (default true), `continuationImageUrl`, `videoDurationSec`, and `narrationDurationSec` fields. Video `ended` event triggers the transition. API endpoint at `/api/ice/preview/:previewId/cards/:cardId/generate-continuation-still` generates AI stills using scene context and Scene Lock config for visual continuity.
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).

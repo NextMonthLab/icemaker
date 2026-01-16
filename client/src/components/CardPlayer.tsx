@@ -107,6 +107,7 @@ export default function CardPlayer({
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [debugOverlay, setDebugOverlay] = useState(false);
+  const [showContinuation, setShowContinuation] = useState(false); // Cinematic Continuation state
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captionRegionRef = useRef<HTMLDivElement | null>(null);
@@ -245,6 +246,7 @@ export default function CardPlayer({
     setCaptionIndex(0);
     setShowSwipeHint(false);
     setIsPlaying(autoplay);
+    setShowContinuation(false); // Reset cinematic continuation state
     
     // Stop any playing audio when card changes
     if (audioRef.current) {
@@ -291,6 +293,8 @@ export default function CardPlayer({
   const toggleMediaType = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowVideo(prev => !prev);
+    // Reset continuation state when toggling back to video mode
+    setShowContinuation(false);
   }, []);
   
   // Play/pause audio based on phase
@@ -309,19 +313,66 @@ export default function CardPlayer({
     if (!videoRef.current || !showVideo || !hasVideo) return;
     
     if (phase === "cinematic" && isPlaying) {
+      // Reset continuation state when restarting video playback
+      // This allows video to replay from start after it previously ended
+      if (videoRef.current.currentTime === 0 || videoRef.current.ended) {
+        setShowContinuation(false);
+      }
       videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.pause();
     }
   }, [phase, isPlaying, showVideo, hasVideo]);
   
+  // Cinematic Continuation: determine if we need to show continuation still when video ends
+  const cinematicContinuationEnabled = card.cinematicContinuationEnabled !== false; // Default true
+  const hasContinuationImage = !!card.continuationImageUrl;
+  const needsContinuation = hasVideo && hasNarration && cinematicContinuationEnabled && (
+    // Use audio duration comparison if available
+    (audioDuration > 0 && card.videoDurationSec && audioDuration > card.videoDurationSec) ||
+    // Fallback: compare stored durations
+    (card.narrationDurationSec && card.videoDurationSec && card.narrationDurationSec > card.videoDurationSec)
+  );
+  
+  // Handle video ended event - transition to continuation still if needed
+  const handleVideoEnded = useCallback(() => {
+    if (needsContinuation && hasContinuationImage) {
+      // Transition to continuation still - crossfade effect
+      setShowContinuation(true);
+    } else if (needsContinuation && !hasContinuationImage) {
+      // No continuation image yet - hold on last frame (video already stopped since no loop)
+      console.log('[CardPlayer] Video ended, continuation needed but no image available');
+    }
+    // Note: video stays on last frame since loop is removed
+  }, [needsContinuation, hasContinuationImage]);
+  
   // Video ref callback to start playback when video element mounts
   const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
-    videoRef.current = el;
-    if (el && phase === "cinematic" && isPlaying && showVideo && hasVideo) {
-      el.play().catch(() => {});
+    // Remove old event listener if swapping elements
+    if (videoRef.current && videoRef.current !== el) {
+      videoRef.current.removeEventListener('ended', handleVideoEnded);
     }
-  }, [phase, isPlaying, showVideo, hasVideo]);
+    
+    videoRef.current = el;
+    
+    if (el) {
+      // Add ended event listener for cinematic continuation
+      el.addEventListener('ended', handleVideoEnded);
+      
+      if (phase === "cinematic" && isPlaying && showVideo && hasVideo) {
+        el.play().catch(() => {});
+      }
+    }
+  }, [phase, isPlaying, showVideo, hasVideo, handleVideoEnded]);
+  
+  // Cleanup video ended event listener on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('ended', handleVideoEnded);
+      }
+    };
+  }, [handleVideoEnded]);
   
   const toggleAudioPlayback = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -642,14 +693,29 @@ export default function CardPlayer({
               transition={{ duration: 20, ease: "linear" }}
             >
               {showVideo && hasVideo ? (
-                <video
-                  ref={setVideoRef}
-                  src={activeMedia.videoUrl!}
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  data-testid="video-player"
-                />
+                <>
+                  {/* Video element - stays visible unless continuation is showing */}
+                  <video
+                    ref={setVideoRef}
+                    src={activeMedia.videoUrl!}
+                    muted
+                    playsInline
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
+                    data-testid="video-player"
+                  />
+                  {/* Cinematic Continuation: crossfade to still image when video ends */}
+                  {showContinuation && hasContinuationImage && (
+                    <motion.img
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      src={card.continuationImageUrl!}
+                      alt={`${card.title} continuation`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      data-testid="continuation-image"
+                    />
+                  )}
+                </>
               ) : activeMedia.imageUrl ? (
                 <>
                   <img
