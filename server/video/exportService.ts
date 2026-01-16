@@ -35,9 +35,9 @@ interface CardData {
 }
 
 const QUALITY_SETTINGS: Record<VideoExportQuality, { width: number; height: number; crf: number; preset: string }> = {
-  draft: { width: 720, height: 1280, crf: 28, preset: "ultrafast" },
-  standard: { width: 1080, height: 1920, crf: 23, preset: "medium" },
-  hd: { width: 1080, height: 1920, crf: 18, preset: "slow" },
+  draft: { width: 720, height: 1280, crf: 30, preset: "ultrafast" },
+  standard: { width: 1080, height: 1920, crf: 26, preset: "veryfast" },
+  hd: { width: 1080, height: 1920, crf: 23, preset: "faster" },
 };
 
 const CARD_DURATION = 5;
@@ -83,6 +83,38 @@ async function runFFmpeg(args: string[]): Promise<{ stdout: string; stderr: stri
   });
 }
 
+async function cleanupFiles(paths: string[]): Promise<void> {
+  for (const filePath of paths) {
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (e) {
+    }
+  }
+}
+
+async function getDirSizeMB(dirPath: string): Promise<number> {
+  let totalSize = 0;
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isFile()) {
+        const stats = await fs.promises.stat(fullPath);
+        totalSize += stats.size;
+      } else if (entry.isDirectory()) {
+        totalSize += await getDirSizeMB(fullPath) * 1024 * 1024;
+      }
+    }
+  } catch (e) {
+  }
+  return totalSize / (1024 * 1024);
+}
+
+async function logDirSize(tempDir: string, label: string): Promise<void> {
+  const sizeMB = await getDirSizeMB(tempDir);
+  console.log(`[Export] ${label}: tempDir size = ${sizeMB.toFixed(2)} MB`);
+}
+
 async function updateJobProgress(jobId: string, progress: number, currentStep: string): Promise<void> {
   await storage.updateVideoExportJob(jobId, {
     progress,
@@ -124,85 +156,150 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
       throw new Error("No cards to export");
     }
 
-    await updateJobProgress(jobId, 10, "Downloading media files...");
+    await updateJobProgress(jobId, 10, "Processing cards...");
+    await logDirSize(tempDir, "Start");
 
-    const cardInputs: string[] = [];
+    const titlePack = getTitlePackById(titlePackId) || TITLE_PACKS[0];
     const cardDurations: number[] = [];
+    
+    let rollingVideoPath: string | null = null;
+    const concatListPath = path.join(tempDir, "concat.txt");
 
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
-      const progress = 10 + (i / cards.length) * 40;
-      await updateJobProgress(jobId, progress, `Downloading card ${i + 1}/${cards.length}...`);
+      const progress = 10 + (i / cards.length) * 50;
+      await updateJobProgress(jobId, progress, `Processing card ${i + 1}/${cards.length}...`);
 
       const duration = getCardDuration(card);
       cardDurations.push(duration);
 
-      if (card.generatedVideoUrl) {
-        const videoPath = path.join(tempDir, `card_${i}_video.mp4`);
-        await downloadFile(card.generatedVideoUrl, videoPath);
-        cardInputs.push(videoPath);
-      } else if (card.generatedImageUrl) {
-        const imagePath = path.join(tempDir, `card_${i}_image.jpg`);
-        await downloadFile(card.generatedImageUrl, imagePath);
+      const filesToCleanup: string[] = [];
+      let cardVideoPath: string;
+
+      try {
+        if (card.generatedVideoUrl) {
+          const videoPath = path.join(tempDir, `card_${i}_video.mp4`);
+          await downloadFile(card.generatedVideoUrl, videoPath);
+          cardVideoPath = videoPath;
+          filesToCleanup.push(videoPath);
+        } else if (card.generatedImageUrl) {
+          const imagePath = path.join(tempDir, `card_${i}_image.jpg`);
+          await downloadFile(card.generatedImageUrl, imagePath);
+          filesToCleanup.push(imagePath);
+          
+          cardVideoPath = path.join(tempDir, `card_${i}_from_image.mp4`);
+          await runFFmpeg([
+            "-y",
+            "-loop", "1",
+            "-i", imagePath,
+            "-c:v", "libx264",
+            "-t", duration.toString(),
+            "-pix_fmt", "yuv420p",
+            "-vf", `scale=${qualitySettings.width}:${qualitySettings.height}:force_original_aspect_ratio=decrease,pad=${qualitySettings.width}:${qualitySettings.height}:(ow-iw)/2:(oh-ih)/2,zoompan=z='min(zoom+0.0015,1.2)':d=${duration * 30}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${qualitySettings.width}x${qualitySettings.height}`,
+            "-r", "30",
+            "-crf", qualitySettings.crf.toString(),
+            "-preset", qualitySettings.preset,
+            cardVideoPath,
+          ]);
+          await cleanupFiles([imagePath]);
+          filesToCleanup.push(cardVideoPath);
+        } else {
+          cardVideoPath = path.join(tempDir, `card_${i}_placeholder.mp4`);
+          await runFFmpeg([
+            "-y",
+            "-f", "lavfi",
+            "-i", `color=c=black:s=${qualitySettings.width}x${qualitySettings.height}:d=${duration}`,
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-crf", qualitySettings.crf.toString(),
+            "-preset", qualitySettings.preset,
+            cardVideoPath,
+          ]);
+          filesToCleanup.push(cardVideoPath);
+        }
+
+        let captionedPath = cardVideoPath;
         
-        const videoPath = path.join(tempDir, `card_${i}_from_image.mp4`);
-        await runFFmpeg([
-          "-y",
-          "-loop", "1",
-          "-i", imagePath,
-          "-c:v", "libx264",
-          "-t", duration.toString(),
-          "-pix_fmt", "yuv420p",
-          "-vf", `scale=${qualitySettings.width}:${qualitySettings.height}:force_original_aspect_ratio=decrease,pad=${qualitySettings.width}:${qualitySettings.height}:(ow-iw)/2:(oh-ih)/2,zoompan=z='min(zoom+0.0015,1.2)':d=${duration * 30}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${qualitySettings.width}x${qualitySettings.height}`,
-          "-r", "30",
-          "-preset", qualitySettings.preset,
-          videoPath,
-        ]);
-        cardInputs.push(videoPath);
-      } else {
-        const videoPath = path.join(tempDir, `card_${i}_placeholder.mp4`);
-        await runFFmpeg([
-          "-y",
-          "-f", "lavfi",
-          "-i", `color=c=black:s=${qualitySettings.width}x${qualitySettings.height}:d=${duration}`,
-          "-c:v", "libx264",
-          "-pix_fmt", "yuv420p",
-          "-preset", qualitySettings.preset,
-          videoPath,
-        ]);
-        cardInputs.push(videoPath);
+        if (!useCaptionEngine || !captionState || !captionState.phraseGroups || captionState.phraseGroups.length === 0) {
+          const outputPath = path.join(tempDir, `card_${i}_captioned.mp4`);
+          const captionText = card.content.split(". ").slice(0, 2).join(". ");
+          
+          const captionFilePath = path.join(tempDir, `card_${i}_caption.txt`);
+          await fs.promises.writeFile(captionFilePath, captionText);
+          const escapedCaptionPath = captionFilePath.replace(/\\/g, "/").replace(/:/g, "\\:");
+
+          const headlineStyle = titlePack.headline;
+          const fontColor = headlineStyle.color.replace("#", "");
+          const shadowColor = "0x000000@0.8";
+          const fontSize = Math.round((headlineStyle.sizeMin + headlineStyle.sizeMax) / 2);
+
+          await runFFmpeg([
+            "-y",
+            "-i", cardVideoPath,
+            "-vf", `drawtext=textfile=${escapedCaptionPath}:fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2`,
+            "-c:v", "libx264",
+            "-crf", qualitySettings.crf.toString(),
+            "-preset", qualitySettings.preset,
+            "-c:a", "copy",
+            outputPath,
+          ]);
+
+          await cleanupFiles([captionFilePath, cardVideoPath]);
+          captionedPath = outputPath;
+          filesToCleanup.length = 0;
+          filesToCleanup.push(captionedPath);
+        }
+
+        if (rollingVideoPath === null) {
+          rollingVideoPath = path.join(tempDir, "current.mp4");
+          await fs.promises.rename(captionedPath, rollingVideoPath);
+        } else {
+          const nextPath = path.join(tempDir, "next.mp4");
+          
+          await fs.promises.writeFile(concatListPath, 
+            `file '${rollingVideoPath}'\nfile '${captionedPath}'`
+          );
+          
+          await runFFmpeg([
+            "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", concatListPath,
+            "-c:v", "libx264",
+            "-crf", qualitySettings.crf.toString(),
+            "-preset", qualitySettings.preset,
+            "-c:a", "aac",
+            nextPath,
+          ]);
+
+          await cleanupFiles([rollingVideoPath, captionedPath, concatListPath]);
+          
+          await fs.promises.rename(nextPath, rollingVideoPath);
+        }
+
+        await logDirSize(tempDir, `After card ${i + 1}`);
+
+      } catch (cardError) {
+        await cleanupFiles(filesToCleanup);
+        throw cardError;
       }
     }
 
-    await updateJobProgress(jobId, 55, "Adding captions...");
+    if (!rollingVideoPath) {
+      throw new Error("No video output generated");
+    }
 
-    const titlePack = getTitlePackById(titlePackId) || TITLE_PACKS[0];
-    const cardVideosWithCaptions: string[] = [];
+    let concatenatedPath = rollingVideoPath;
 
     if (useCaptionEngine && captionState && captionState.phraseGroups && captionState.phraseGroups.length > 0) {
+      await updateJobProgress(jobId, 65, "Applying captions...");
+      
       const assContent = generateASSFromCaptionState(captionState, {
         width: qualitySettings.width,
         height: qualitySettings.height,
       });
       const assPath = path.join(tempDir, "captions.ass");
       await fs.promises.writeFile(assPath, assContent, "utf-8");
-
-      const concatListPath = path.join(tempDir, "all_cards.txt");
-      const concatContent = cardInputs.map((p) => `file '${p}'`).join("\n");
-      await fs.promises.writeFile(concatListPath, concatContent);
-
-      const concatenatedPath = path.join(tempDir, "all_cards.mp4");
-      await runFFmpeg([
-        "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", concatListPath,
-        "-c:v", "libx264",
-        "-crf", qualitySettings.crf.toString(),
-        "-preset", qualitySettings.preset,
-        "-c:a", "aac",
-        concatenatedPath,
-      ]);
 
       const withCaptionsPath = path.join(tempDir, "with_captions.mp4");
       const escapedAssPath = assPath.replace(/\\/g, "/").replace(/:/g, "\\:");
@@ -217,70 +314,14 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
         withCaptionsPath,
       ]);
 
-      cardVideosWithCaptions.push(withCaptionsPath);
-    } else {
-      for (let i = 0; i < cardInputs.length; i++) {
-        const card = cards[i];
-        const inputPath = cardInputs[i];
-        const outputPath = path.join(tempDir, `card_${i}_captioned.mp4`);
-
-        const captionText = card.content.split(". ").slice(0, 2).join(". ");
-        
-        // Write caption to a temp file to avoid escaping issues with special characters
-        const captionFilePath = path.join(tempDir, `card_${i}_caption.txt`);
-        await fs.promises.writeFile(captionFilePath, captionText);
-        const escapedCaptionPath = captionFilePath.replace(/\\/g, "/").replace(/:/g, "\\:");
-
-        const headlineStyle = titlePack.headline;
-        const fontColor = headlineStyle.color.replace("#", "");
-        // Use hex color for shadowcolor to avoid FFmpeg parsing issues with rgba()
-        const shadowColor = "0x000000@0.8";
-        const fontSize = Math.round((headlineStyle.sizeMin + headlineStyle.sizeMax) / 2);
-
-        await runFFmpeg([
-          "-y",
-          "-i", inputPath,
-          "-vf", `drawtext=textfile=${escapedCaptionPath}:fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2`,
-          "-c:v", "libx264",
-          "-crf", qualitySettings.crf.toString(),
-          "-preset", qualitySettings.preset,
-          "-c:a", "copy",
-          outputPath,
-        ]);
-
-        cardVideosWithCaptions.push(outputPath);
-      }
-    }
-
-    await updateJobProgress(jobId, 70, "Concatenating cards...");
-
-    let concatenatedPath: string;
-    
-    if (useCaptionEngine && captionState && cardVideosWithCaptions.length === 1) {
-      concatenatedPath = cardVideosWithCaptions[0];
-    } else {
-      const concatListPath = path.join(tempDir, "concat.txt");
-      const concatContent = cardVideosWithCaptions.map((p) => `file '${p}'`).join("\n");
-      await fs.promises.writeFile(concatListPath, concatContent);
-
-      concatenatedPath = path.join(tempDir, "concatenated.mp4");
-      await runFFmpeg([
-        "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", concatListPath,
-        "-c:v", "libx264",
-        "-crf", qualitySettings.crf.toString(),
-        "-preset", qualitySettings.preset,
-        "-c:a", "aac",
-        concatenatedPath,
-      ]);
+      await cleanupFiles([concatenatedPath, assPath]);
+      concatenatedPath = withCaptionsPath;
     }
 
     let finalVideoPath = concatenatedPath;
 
     if (includeNarration) {
-      await updateJobProgress(jobId, 80, "Adding narration audio...");
+      await updateJobProgress(jobId, 75, "Adding narration audio...");
 
       const narrationPaths: { path: string; startTime: number }[] = [];
       let currentTime = 0;
@@ -299,7 +340,6 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
         const withNarrationPath = path.join(tempDir, "with_narration.mp4");
         const narrationVolumeFactor = narrationVolume / 100;
 
-        const filterInputs = narrationPaths.map((n, i) => `-i ${n.path}`).join(" ");
         const filterComplex = narrationPaths
           .map((n, i) => `[${i + 1}:a]adelay=${Math.round(n.startTime * 1000)}|${Math.round(n.startTime * 1000)},volume=${narrationVolumeFactor}[a${i}]`)
           .join(";");
@@ -319,12 +359,13 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
           withNarrationPath,
         ]);
 
+        await cleanupFiles([concatenatedPath, ...narrationPaths.map(n => n.path)]);
         finalVideoPath = withNarrationPath;
       }
     }
 
     if (includeMusic && musicTrackUrl) {
-      await updateJobProgress(jobId, 90, "Adding background music...");
+      await updateJobProgress(jobId, 85, "Adding background music...");
 
       const musicPath = path.join(tempDir, "music.mp3");
       await downloadFile(musicTrackUrl, musicPath);
@@ -364,10 +405,12 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
         ]);
       }
 
+      await cleanupFiles([finalVideoPath, musicPath]);
       finalVideoPath = withMusicPath;
     }
 
     await updateJobProgress(jobId, 95, "Uploading final video...");
+    await logDirSize(tempDir, "Before upload");
 
     const finalVideoData = await fs.promises.readFile(finalVideoPath);
     const stats = await fs.promises.stat(finalVideoPath);
@@ -425,4 +468,8 @@ export async function createExportJob(config: Omit<ExportConfig, "jobId">): Prom
   });
 
   return jobId;
+}
+
+export async function getExportJob(jobId: string) {
+  return storage.getVideoExportJob(jobId);
 }
