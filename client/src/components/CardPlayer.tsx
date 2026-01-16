@@ -757,24 +757,9 @@ export default function CardPlayer({
                     )}
                   </button>
                 )}
-                {(hasNarration || (showVideo && hasVideo)) && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={toggleAudioPlayback}
-                      className="p-2 bg-black/30 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors"
-                      data-testid="button-toggle-audio-playback"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-4 h-4 text-white/70" />
-                      ) : (
-                        <Play className="w-4 h-4 text-white/70" />
-                      )}
-                    </button>
-                    {hasNarration && narrationMuted && (
-                      <div className="p-2 bg-black/30 rounded-full backdrop-blur-sm">
-                        <VolumeX className="w-4 h-4 text-white/40" />
-                      </div>
-                    )}
+                {hasNarration && narrationMuted && (
+                  <div className="p-2 bg-black/30 rounded-full backdrop-blur-sm">
+                    <VolumeX className="w-4 h-4 text-white/40" />
                   </div>
                 )}
               </div>

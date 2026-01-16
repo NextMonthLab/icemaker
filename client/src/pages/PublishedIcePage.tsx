@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart } from "lucide-react";
+import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
@@ -110,6 +110,7 @@ interface InteractivityNodeData {
 export default function PublishedIcePage() {
   const { shareSlug } = useParams<{ shareSlug: string }>();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeNodeIndex, setActiveNodeIndex] = useState<number | null>(null);
@@ -120,6 +121,18 @@ export default function PublishedIcePage() {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadCaptured, setLeadCaptured] = useState(false);
   const [leadError, setLeadError] = useState("");
+
+  const handleCloseICE = () => {
+    if (musicAudioRef.current) {
+      musicAudioRef.current.pause();
+      musicAudioRef.current = null;
+    }
+    if (user && ice?.id) {
+      setLocation(`/ice/preview/${ice.id}`);
+    } else {
+      setLocation("/");
+    }
+  };
 
   const { data: ice, isLoading, error } = useQuery({
     queryKey: ["/api/ice/s", shareSlug],
@@ -426,7 +439,17 @@ export default function PublishedIcePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-zinc-950 flex flex-col relative">
+      {/* Close button - top left */}
+      <button
+        onClick={handleCloseICE}
+        className="fixed top-4 left-4 z-50 p-2.5 bg-black/50 hover:bg-black/70 rounded-full backdrop-blur-sm transition-colors"
+        data-testid="button-close-ice"
+        title={user ? "Return to editor" : "Go to homepage"}
+      >
+        <X className="w-5 h-5 text-white" />
+      </button>
+      
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md relative">
           {nextCard && (
