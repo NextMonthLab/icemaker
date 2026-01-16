@@ -3922,6 +3922,18 @@ export async function registerRoutes(
           },
         },
         {
+          id: 'heygen',
+          name: 'HeyGen',
+          description: 'AI avatar video generation with realistic talking heads',
+          envKey: 'HEYGEN_API_KEY',
+          category: 'ai' as const,
+          dashboardUrl: 'https://app.heygen.com/settings',
+          docsUrl: 'https://docs.heygen.com/',
+          usageInfo: {
+            costPerUnit: '~$0.10/second of video',
+          },
+        },
+        {
           id: 'elevenlabs',
           name: 'ElevenLabs',
           description: 'Premium text-to-speech voices',
