@@ -9562,7 +9562,10 @@ Stay engaging, reference story details, and help the audience understand the nar
       if (logoEnabled !== undefined) updateData.logoEnabled = logoEnabled;
       if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
       if (logoPosition !== undefined) updateData.logoPosition = logoPosition;
-      if (adminCtaEnabled !== undefined) updateData.adminCtaEnabled = adminCtaEnabled;
+      // Admin CTA can only be set by admins - enforce server-side
+      if (adminCtaEnabled !== undefined && req.user?.role === 'admin') {
+        updateData.adminCtaEnabled = adminCtaEnabled;
+      }
       
       await storage.updateIcePreview(previewId, updateData);
       
