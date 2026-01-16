@@ -225,23 +225,21 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
         const outputPath = path.join(tempDir, `card_${i}_captioned.mp4`);
 
         const captionText = card.content.split(". ").slice(0, 2).join(". ");
-        const escapedText = captionText
-          .replace(/\\/g, "\\\\")
-          .replace(/'/g, "'\\''")
-          .replace(/:/g, "\\:")
-          .replace(/\[/g, "\\[")
-          .replace(/\]/g, "\\]");
+        
+        // Write caption to a temp file to avoid escaping issues with special characters
+        const captionFilePath = path.join(tempDir, `card_${i}_caption.txt`);
+        await fs.promises.writeFile(captionFilePath, captionText);
+        const escapedCaptionPath = captionFilePath.replace(/\\/g, "/").replace(/:/g, "\\:");
 
         const headlineStyle = titlePack.headline;
         const fontColor = headlineStyle.color.replace("#", "");
-        const shadowColor = headlineStyle.shadow?.color || "black";
+        const shadowColor = headlineStyle.shadow?.color || "rgba(0,0,0,0.8)";
         const fontSize = Math.round((headlineStyle.sizeMin + headlineStyle.sizeMax) / 2);
-        const fontWeight = headlineStyle.fontWeight >= 700 ? ":force_style='Bold'" : "";
 
         await runFFmpeg([
           "-y",
           "-i", inputPath,
-          "-vf", `drawtext=text='${escapedText}':fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2${fontWeight}`,
+          "-vf", `drawtext=textfile='${escapedCaptionPath}':fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2`,
           "-c:v", "libx264",
           "-crf", qualitySettings.crf.toString(),
           "-preset", qualitySettings.preset,
