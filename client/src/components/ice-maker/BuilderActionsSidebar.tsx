@@ -134,58 +134,67 @@ export function BuilderActionsSidebar({
 
       {isProfessionalMode && (
         <>
-          {(cardsNeedingImages.length > 0 || cardsNeedingVideos.length > 0) && entitlements && (
-            <div className="bg-white/[0.03] border border-white/10 rounded-lg p-3">
+          {/* Bulk Image Generation - distinct section */}
+          {cardsNeedingImages.length > 0 && entitlements?.canGenerateImages && (
+            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
-                <Wand2 className="w-4 h-4 text-cyan-400" />
-                <h4 className="text-sm font-medium text-white">Generate AI Media</h4>
+                <Image className="w-4 h-4 text-cyan-400" />
+                <h4 className="text-sm font-medium text-white">Generate All Images</h4>
               </div>
-              <div className="flex flex-col gap-2">
-                {cardsNeedingImages.length > 0 && entitlements.canGenerateImages && (
-                  <Button
-                    onClick={() => setShowBulkImageConfirm(true)}
-                    disabled={bulkGeneratingImages || bulkGeneratingVideos}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start gap-1.5"
-                    data-testid="sidebar-bulk-generate-images"
-                  >
-                    {bulkGeneratingImages ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        {bulkProgress.current}/{bulkProgress.total}
-                      </>
-                    ) : (
-                      <>
-                        <Image className="w-3.5 h-3.5" />
-                        Generate Images ({cardsNeedingImages.length})
-                      </>
-                    )}
-                  </Button>
+              <p className="text-xs text-white/50 mb-2">
+                {cardsNeedingImages.length} cards need images
+              </p>
+              <Button
+                onClick={() => setShowBulkImageConfirm(true)}
+                disabled={bulkGeneratingImages}
+                size="sm"
+                className="w-full gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white"
+                data-testid="sidebar-bulk-generate-images"
+              >
+                {bulkGeneratingImages ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating {bulkProgress.current}/{bulkProgress.total}
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Generate {cardsNeedingImages.length} Images
+                  </>
                 )}
-                {cardsNeedingVideos.length > 0 && entitlements.canGenerateVideos && (
-                  <Button
-                    onClick={() => setShowBulkVideoConfirm(true)}
-                    disabled={bulkGeneratingVideos || bulkGeneratingImages}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start gap-1.5"
-                    data-testid="sidebar-bulk-generate-videos"
-                  >
-                    {bulkGeneratingVideos ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        {bulkProgress.current}/{bulkProgress.total}
-                      </>
-                    ) : (
-                      <>
-                        <Video className="w-3.5 h-3.5" />
-                        Generate Videos ({cardsNeedingVideos.length})
-                      </>
-                    )}
-                  </Button>
-                )}
+              </Button>
+            </div>
+          )}
+          
+          {/* Bulk Video Generation - distinct section */}
+          {cardsNeedingVideos.length > 0 && entitlements?.canGenerateVideos && (
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Video className="w-4 h-4 text-purple-400" />
+                <h4 className="text-sm font-medium text-white">Generate All Videos</h4>
               </div>
+              <p className="text-xs text-white/50 mb-2">
+                {cardsNeedingVideos.length} cards ready for video
+              </p>
+              <Button
+                onClick={() => setShowBulkVideoConfirm(true)}
+                disabled={bulkGeneratingVideos}
+                size="sm"
+                className="w-full gap-1.5 bg-purple-600 hover:bg-purple-500 text-white"
+                data-testid="sidebar-bulk-generate-videos"
+              >
+                {bulkGeneratingVideos ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Starting {bulkProgress.current}/{bulkProgress.total}
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Generate {cardsNeedingVideos.length} Videos
+                  </>
+                )}
+              </Button>
             </div>
           )}
 

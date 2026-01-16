@@ -1267,14 +1267,20 @@ export default function GuestIceBuilderPage() {
   const handleBulkGenerateImages = async () => {
     if (!preview || !entitlements?.canGenerateImages) return;
     
+    // Capture the list of cards needing images at the start
+    const cardsToProcess = [...cardsNeedingImages];
+    const totalCards = cardsToProcess.length;
+    
+    if (totalCards === 0) return;
+    
     setShowBulkImageConfirm(false);
     setBulkGeneratingImages(true);
-    setBulkProgress({ current: 0, total: cardsNeedingImages.length });
+    setBulkProgress({ current: 0, total: totalCards });
     
     let successCount = 0;
-    for (let i = 0; i < cardsNeedingImages.length; i++) {
-      const card = cardsNeedingImages[i];
-      setBulkProgress({ current: i + 1, total: cardsNeedingImages.length });
+    for (let i = 0; i < cardsToProcess.length; i++) {
+      const card = cardsToProcess[i];
+      setBulkProgress({ current: i + 1, total: totalCards });
       
       try {
         const res = await fetch(`/api/ice/preview/${preview.id}/cards/${card.id}/generate-image`, {
@@ -1287,7 +1293,7 @@ export default function GuestIceBuilderPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.imageUrl) {
-            handleCardUpdate(card.id, { generatedImageUrl: data.imageUrl });
+            // Only call saveCardsWithUpdates (which also updates state) - avoid double update
             saveCardsWithUpdates(card.id, { generatedImageUrl: data.imageUrl });
             successCount++;
           }
@@ -1300,7 +1306,7 @@ export default function GuestIceBuilderPage() {
     setBulkGeneratingImages(false);
     toast({
       title: "Bulk image generation complete",
-      description: `Generated ${successCount} of ${cardsNeedingImages.length} images.`,
+      description: `Generated ${successCount} of ${totalCards} images.`,
     });
   };
   
@@ -1308,14 +1314,20 @@ export default function GuestIceBuilderPage() {
   const handleBulkGenerateVideos = async () => {
     if (!preview || !entitlements?.canGenerateVideos) return;
     
+    // Capture the list of cards needing videos at the start
+    const cardsToProcess = [...cardsNeedingVideos];
+    const totalCards = cardsToProcess.length;
+    
+    if (totalCards === 0) return;
+    
     setShowBulkVideoConfirm(false);
     setBulkGeneratingVideos(true);
-    setBulkProgress({ current: 0, total: cardsNeedingVideos.length });
+    setBulkProgress({ current: 0, total: totalCards });
     
     let successCount = 0;
-    for (let i = 0; i < cardsNeedingVideos.length; i++) {
-      const card = cardsNeedingVideos[i];
-      setBulkProgress({ current: i + 1, total: cardsNeedingVideos.length });
+    for (let i = 0; i < cardsToProcess.length; i++) {
+      const card = cardsToProcess[i];
+      setBulkProgress({ current: i + 1, total: totalCards });
       
       try {
         const res = await fetch(`/api/ice/preview/${preview.id}/cards/${card.id}/generate-video`, {
@@ -1329,8 +1341,12 @@ export default function GuestIceBuilderPage() {
         });
         
         if (res.ok) {
+          const data = await res.json();
+          // Update card with video status immediately
+          if (data.status) {
+            saveCardsWithUpdates(card.id, { videoGenerationStatus: data.status });
+          }
           successCount++;
-          // Video generation is async, just count as started
         }
       } catch (error) {
         console.error(`Failed to start video for card ${card.id}:`, error);
@@ -1795,65 +1811,74 @@ export default function GuestIceBuilderPage() {
               </div>
             )}
 
-            {/* Bulk AI Generation Panel - neutral surface, only for professional users, hidden on desktop (in sidebar) */}
-            {isProfessionalMode && entitlements && (cardsNeedingImages.length > 0 || cardsNeedingVideos.length > 0) && (
-              <div className="lg:hidden bg-white/[0.03] border border-white/10 rounded-lg p-4">
+            {/* Bulk AI Image Generation - clearly separated section */}
+            {isProfessionalMode && entitlements && cardsNeedingImages.length > 0 && entitlements.canGenerateImages && (
+              <div className="lg:hidden bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                      <Wand2 className="w-4 h-4 text-cyan-400" />
-                      Generate AI Media
+                      <Image className="w-4 h-4 text-cyan-400" />
+                      Generate All Images
                     </h3>
-                    <p className="text-xs text-white/40 mt-0.5">
-                      Review prompts before generating.
+                    <p className="text-xs text-white/50 mt-0.5">
+                      {cardsNeedingImages.length} cards need images
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    {cardsNeedingImages.length > 0 && entitlements.canGenerateImages && (
-                      <Button
-                        onClick={() => setShowBulkImageConfirm(true)}
-                        disabled={bulkGeneratingImages || bulkGeneratingVideos}
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
-                        data-testid="button-bulk-generate-images"
-                      >
-                        {bulkGeneratingImages ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            {bulkProgress.current}/{bulkProgress.total}
-                          </>
-                        ) : (
-                          <>
-                            <Image className="w-3.5 h-3.5" />
-                            Images ({cardsNeedingImages.length})
-                          </>
-                        )}
-                      </Button>
+                  <Button
+                    onClick={() => setShowBulkImageConfirm(true)}
+                    disabled={bulkGeneratingImages}
+                    size="sm"
+                    className="gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white"
+                    data-testid="button-bulk-generate-images"
+                  >
+                    {bulkGeneratingImages ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Generating {bulkProgress.current}/{bulkProgress.total}
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Generate {cardsNeedingImages.length} Images
+                      </>
                     )}
-                    {cardsNeedingVideos.length > 0 && entitlements.canGenerateVideos && (
-                      <Button
-                        onClick={() => setShowBulkVideoConfirm(true)}
-                        disabled={bulkGeneratingVideos || bulkGeneratingImages}
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 border-white/20 text-white/70 hover:bg-white/5"
-                        data-testid="button-bulk-generate-videos"
-                      >
-                        {bulkGeneratingVideos ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            {bulkProgress.current}/{bulkProgress.total}
-                          </>
-                        ) : (
-                          <>
-                            <Video className="w-3.5 h-3.5" />
-                            Videos ({cardsNeedingVideos.length})
-                          </>
-                        )}
-                      </Button>
-                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Bulk AI Video Generation - clearly separated section */}
+            {isProfessionalMode && entitlements && cardsNeedingVideos.length > 0 && entitlements.canGenerateVideos && (
+              <div className="lg:hidden bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                      <Video className="w-4 h-4 text-purple-400" />
+                      Generate All Videos
+                    </h3>
+                    <p className="text-xs text-white/50 mt-0.5">
+                      {cardsNeedingVideos.length} cards ready for video
+                    </p>
                   </div>
+                  <Button
+                    onClick={() => setShowBulkVideoConfirm(true)}
+                    disabled={bulkGeneratingVideos}
+                    size="sm"
+                    className="gap-1.5 bg-purple-600 hover:bg-purple-500 text-white"
+                    data-testid="button-bulk-generate-videos"
+                  >
+                    {bulkGeneratingVideos ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Starting {bulkProgress.current}/{bulkProgress.total}
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Generate {cardsNeedingVideos.length} Videos
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
