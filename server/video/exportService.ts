@@ -70,23 +70,42 @@ function resolveAbsoluteUrl(url: string): string {
   return `${cleanBase}${cleanPath}`;
 }
 
-async function downloadFile(url: string, destPath: string): Promise<void> {
+async function downloadFile(url: string, destPath: string, timeoutMs: number = 60000): Promise<void> {
   const absoluteUrl = resolveAbsoluteUrl(url);
   console.log(`[Export] Downloading: ${absoluteUrl}`);
   
-  const response = await fetch(absoluteUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to download ${absoluteUrl}: ${response.status}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(absoluteUrl, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Failed to download ${absoluteUrl}: ${response.status}`);
+    }
+    const buffer = await response.arrayBuffer();
+    await fs.promises.writeFile(destPath, Buffer.from(buffer));
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Download timeout after ${timeoutMs}ms: ${absoluteUrl}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  const buffer = await response.arrayBuffer();
-  await fs.promises.writeFile(destPath, Buffer.from(buffer));
 }
 
-async function runFFmpeg(args: string[]): Promise<{ stdout: string; stderr: string }> {
+async function runFFmpeg(args: string[], timeoutMs: number = 180000): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const ffmpeg = spawn("ffmpeg", args);
     let stdout = "";
     let stderr = "";
+    let killed = false;
+
+    const timeout = setTimeout(() => {
+      killed = true;
+      ffmpeg.kill("SIGKILL");
+      reject(new Error(`FFmpeg timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
 
     ffmpeg.stdout.on("data", (data) => {
       stdout += data.toString();
@@ -97,6 +116,8 @@ async function runFFmpeg(args: string[]): Promise<{ stdout: string; stderr: stri
     });
 
     ffmpeg.on("close", (code) => {
+      clearTimeout(timeout);
+      if (killed) return;
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
@@ -105,6 +126,8 @@ async function runFFmpeg(args: string[]): Promise<{ stdout: string; stderr: stri
     });
 
     ffmpeg.on("error", (err) => {
+      clearTimeout(timeout);
+      if (killed) return;
       reject(err);
     });
   });
@@ -196,6 +219,7 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
       const card = cards[i];
       const progress = 10 + (i / cards.length) * 50;
       await updateJobProgress(jobId, progress, `Processing card ${i + 1}/${cards.length}...`);
+      console.log(`[Export ${jobId}] Starting card ${i + 1}/${cards.length}, video: ${card.generatedVideoUrl ? 'yes' : 'no'}, image: ${card.generatedImageUrl ? 'yes' : 'no'}`);
 
       const duration = getCardDuration(card);
       cardDurations.push(duration);
@@ -205,13 +229,17 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
 
       try {
         if (card.generatedVideoUrl) {
+          console.log(`[Export ${jobId}] Downloading video: ${card.generatedVideoUrl}`);
           const videoPath = path.join(tempDir, `card_${i}_video.mp4`);
           await downloadFile(card.generatedVideoUrl, videoPath);
+          console.log(`[Export ${jobId}] Video downloaded successfully`);
           cardVideoPath = videoPath;
           filesToCleanup.push(videoPath);
         } else if (card.generatedImageUrl) {
+          console.log(`[Export ${jobId}] Downloading image: ${card.generatedImageUrl}`);
           const imagePath = path.join(tempDir, `card_${i}_image.jpg`);
           await downloadFile(card.generatedImageUrl, imagePath);
+          console.log(`[Export ${jobId}] Image downloaded successfully`);
           filesToCleanup.push(imagePath);
           
           cardVideoPath = path.join(tempDir, `card_${i}_from_image.mp4`);
