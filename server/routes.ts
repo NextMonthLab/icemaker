@@ -6874,14 +6874,84 @@ Stay focused on the content and be helpful.`,
         if (ext === "txt" || ext === "md") {
           contentText = file.buffer.toString("utf-8");
         } else if (ext === "docx" || ext === "doc") {
-          // Basic text extraction from docx
+          // Enhanced text extraction from docx that preserves table structure
           const AdmZip = (await import("adm-zip")).default;
           const zip = new AdmZip(file.buffer);
           const docXml = zip.getEntry("word/document.xml");
           if (docXml) {
             const xmlContent = docXml.getData().toString("utf-8");
-            // Extract text between <w:t> tags
-            contentText = xmlContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+            
+            // Parse tables into markdown format to preserve structure
+            let processedContent = xmlContent;
+            
+            // Extract and convert tables first
+            const tablePattern = /<w:tbl[^>]*>([\s\S]*?)<\/w:tbl>/g;
+            const tables: string[] = [];
+            let tableMatch;
+            
+            while ((tableMatch = tablePattern.exec(xmlContent)) !== null) {
+              const tableXml = tableMatch[0];
+              const rows: string[] = [];
+              
+              // Extract each row
+              const rowPattern = /<w:tr[^>]*>([\s\S]*?)<\/w:tr>/g;
+              let rowMatch;
+              let isFirstRow = true;
+              
+              while ((rowMatch = rowPattern.exec(tableXml)) !== null) {
+                const rowXml = rowMatch[0];
+                const cells: string[] = [];
+                
+                // Extract each cell
+                const cellPattern = /<w:tc[^>]*>([\s\S]*?)<\/w:tc>/g;
+                let cellMatch;
+                
+                while ((cellMatch = cellPattern.exec(rowXml)) !== null) {
+                  // Get text from cell (extract <w:t> tags content)
+                  const cellText = cellMatch[0]
+                    .replace(/<w:t[^>]*>/g, '')
+                    .replace(/<\/w:t>/g, ' ')
+                    .replace(/<[^>]+>/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  cells.push(cellText);
+                }
+                
+                if (cells.length > 0) {
+                  rows.push('| ' + cells.join(' | ') + ' |');
+                  
+                  // Add separator after header row
+                  if (isFirstRow && cells.length >= 2) {
+                    rows.push('| ' + cells.map(() => '---').join(' | ') + ' |');
+                    isFirstRow = false;
+                  }
+                }
+              }
+              
+              tables.push(rows.join('\n'));
+            }
+            
+            // Remove tables from XML before general text extraction
+            processedContent = processedContent.replace(/<w:tbl[^>]*>[\s\S]*?<\/w:tbl>/g, '\n[TABLE_PLACEHOLDER]\n');
+            
+            // Extract paragraphs, preserving line breaks
+            processedContent = processedContent
+              .replace(/<w:p[^>]*>/g, '\n')
+              .replace(/<\/w:p>/g, '')
+              .replace(/<w:t[^>]*>/g, '')
+              .replace(/<\/w:t>/g, '')
+              .replace(/<[^>]+>/g, '')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
+            
+            // Reinsert tables
+            let tableIndex = 0;
+            contentText = processedContent.replace(/\[TABLE_PLACEHOLDER\]/g, () => {
+              return '\n\n' + (tables[tableIndex++] || '') + '\n\n';
+            });
+            
+            console.log('[brief-parser] Extracted DOCX content length:', contentText.length);
+            console.log('[brief-parser] Found', tables.length, 'tables');
           } else {
             return res.status(400).json({ message: "Could not read document content" });
           }
