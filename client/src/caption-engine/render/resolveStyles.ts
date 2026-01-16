@@ -195,12 +195,14 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     margin: 0,
     textAlign: "center",
     display: "block",
-    overflow: "visible",
-    textOverflow: "clip",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     whiteSpace: "pre-line",
-    wordBreak: "keep-all" as any,
-    overflowWrap: "normal" as any,
+    wordBreak: "break-word" as any,
+    overflowWrap: "break-word" as any,
     hyphens: "none",
+    maxWidth: "100%",
+    boxSizing: "border-box" as any,
   };
 
   const supporting: CSSProperties = {
