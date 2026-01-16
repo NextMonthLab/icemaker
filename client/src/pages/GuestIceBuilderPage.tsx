@@ -419,6 +419,9 @@ export default function GuestIceBuilderPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   
+  // Admin CTA settings (replaces logo with "Made with IceMaker" badge)
+  const [adminCtaEnabled, setAdminCtaEnabled] = useState(false);
+  
   // Desktop sidebar and preview drawer state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showPreviewDrawer, setShowPreviewDrawer] = useState(false);
@@ -605,6 +608,7 @@ export default function GuestIceBuilderPage() {
             logoEnabled,
             logoUrl,
             logoPosition,
+            adminCtaEnabled,
             captionSettings: {
               presetId: captionState.presetId,
               animationId: captionState.animationId,
@@ -624,7 +628,7 @@ export default function GuestIceBuilderPage() {
         clearTimeout(settingsSaveTimeoutRef.current);
       }
     };
-  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume, logoEnabled, logoUrl, logoPosition, captionState.presetId, captionState.animationId, captionState.karaokeEnabled, captionState.karaokeStyle, captionState.safeAreaProfileId]);
+  }, [preview?.id, musicTrackUrl, musicVolume, musicEnabled, narrationVolume, logoEnabled, logoUrl, logoPosition, adminCtaEnabled, captionState.presetId, captionState.animationId, captionState.karaokeEnabled, captionState.karaokeStyle, captionState.safeAreaProfileId]);
   
   const hasSeenWalkthrough = () => {
     if (typeof window === "undefined") return true;
@@ -727,6 +731,9 @@ export default function GuestIceBuilderPage() {
       }
       if (existingPreview.logoPosition) {
         setLogoPosition(existingPreview.logoPosition);
+      }
+      if (existingPreview.adminCtaEnabled !== undefined) {
+        setAdminCtaEnabled(existingPreview.adminCtaEnabled);
       }
       
       // Enable saving after a short delay to ensure all state is hydrated
@@ -2157,6 +2164,35 @@ export default function GuestIceBuilderPage() {
                     </select>
                   </div>
                 )}
+                
+                {/* Admin CTA Toggle - only visible to admins */}
+                {user?.role === 'admin' && (
+                  <div className="sm:w-auto">
+                    <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Platform CTA
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={adminCtaEnabled}
+                        onChange={(e) => {
+                          setAdminCtaEnabled(e.target.checked);
+                          if (e.target.checked) {
+                            setLogoEnabled(false);
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                      <div className={`w-9 h-5 rounded-full transition-colors ${adminCtaEnabled ? "bg-cyan-500" : "bg-white/20"}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white mt-0.5 transition-transform ${adminCtaEnabled ? "translate-x-4.5 ml-0.5" : "translate-x-0.5"}`} />
+                      </div>
+                      <span className="text-xs text-white/60">{adminCtaEnabled ? "On" : "Off"}</span>
+                    </label>
+                    <p className="text-[10px] text-white/40 mt-1">
+                      Shows "Made with IceMaker" badge
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="mt-3 pt-3 border-t border-white/5">
                 <EnterpriseBrandingUpsell context="assets" variant="compact" />
@@ -2602,6 +2638,7 @@ export default function GuestIceBuilderPage() {
                   logoEnabled={logoEnabled}
                   logoUrl={logoUrl}
                   logoPosition={logoPosition}
+                  adminCtaEnabled={adminCtaEnabled}
                   onPhaseChange={(phase) => {
                     if (phase === 'context') {
                       handleCardPhaseComplete();

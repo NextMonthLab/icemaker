@@ -73,6 +73,7 @@ interface CardPlayerProps {
   logoEnabled?: boolean; // Show logo overlay on cards
   logoUrl?: string | null; // URL to the logo image
   logoPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right"; // Position of logo overlay
+  adminCtaEnabled?: boolean; // Show "Powered by IceMaker" CTA instead of logo (admin feature)
 }
 
 type Phase = "cinematic" | "context";
@@ -92,7 +93,8 @@ export default function CardPlayer({
   icePreviewId,
   logoEnabled = false,
   logoUrl = null,
-  logoPosition = "top-right"
+  logoPosition = "top-right",
+  adminCtaEnabled = false
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -714,8 +716,30 @@ export default function CardPlayer({
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none" />
 
-            {/* Logo Overlay - positioned to avoid controls and captions */}
-            {logoEnabled && logoUrl && (
+            {/* Logo Overlay or Admin CTA - positioned to avoid controls and captions */}
+            {adminCtaEnabled ? (
+              <a 
+                href="/"
+                className={`absolute z-20 pointer-events-auto ${
+                  logoPosition === "top-left" ? "top-16 left-4" :
+                  logoPosition === "top-right" ? "top-16 right-4" :
+                  logoPosition === "bottom-left" ? "bottom-44 left-4" :
+                  "bottom-44 right-4"
+                }`}
+                data-testid="admin-cta-overlay"
+              >
+                <div className="bg-gradient-to-r from-cyan-500/90 to-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg hover:from-cyan-400/90 hover:to-blue-400/90 transition-all">
+                  <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  </div>
+                  <span className="text-white text-xs font-medium whitespace-nowrap">
+                    Made with IceMaker
+                  </span>
+                </div>
+              </a>
+            ) : logoEnabled && logoUrl ? (
               <div 
                 className={`absolute z-20 pointer-events-none ${
                   logoPosition === "top-left" ? "top-16 left-4" :
@@ -733,7 +757,7 @@ export default function CardPlayer({
                   />
                 </div>
               </div>
-            )}
+            ) : null}
 
             <div className="absolute top-3 left-3 right-3 pr-1 flex items-center justify-end z-30 pointer-events-auto">
               <div className="flex items-center gap-2">

@@ -8046,6 +8046,7 @@ Provide a JSON response with:
         logoEnabled: preview.logoEnabled,
         logoUrl: preview.logoUrl,
         logoPosition: preview.logoPosition,
+        adminCtaEnabled: preview.adminCtaEnabled,
         // Additional settings
         projectBible: preview.projectBible,
         previewAccessToken: preview.previewAccessToken,
@@ -9543,7 +9544,7 @@ Stay engaging, reference story details, and help the audience understand the nar
   app.put("/api/ice/preview/:previewId/settings", async (req, res) => {
     try {
       const { previewId } = req.params;
-      const { musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume, captionSettings, logoEnabled, logoUrl, logoPosition } = req.body;
+      const { musicTrackUrl, musicVolume, musicEnabled, titlePackId, narrationVolume, captionSettings, logoEnabled, logoUrl, logoPosition, adminCtaEnabled } = req.body;
       
       const preview = await storage.getIcePreview(previewId);
       if (!preview) {
@@ -9561,6 +9562,7 @@ Stay engaging, reference story details, and help the audience understand the nar
       if (logoEnabled !== undefined) updateData.logoEnabled = logoEnabled;
       if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
       if (logoPosition !== undefined) updateData.logoPosition = logoPosition;
+      if (adminCtaEnabled !== undefined) updateData.adminCtaEnabled = adminCtaEnabled;
       
       await storage.updateIcePreview(previewId, updateData);
       

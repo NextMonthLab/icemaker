@@ -1394,6 +1394,9 @@ export const icePreviews = pgTable("ice_previews", {
   logoPosition: text("logo_position").$type<"top-left" | "top-right" | "bottom-left" | "bottom-right">().default("top-right"), // Position on cards
   brandAccentColor: text("brand_accent_color"), // Custom accent color for AI chat UI (hex code like #00bcd4)
   
+  // Admin CTA settings (for admin-produced ICEs to show platform promotion)
+  adminCtaEnabled: boolean("admin_cta_enabled").default(false), // Show "Powered by IceMaker" CTA instead of logo
+  
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
   promotedToJobId: integer("promoted_to_job_id").references(() => transformationJobs.id),
