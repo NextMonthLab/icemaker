@@ -233,13 +233,14 @@ export async function processVideoExport(config: ExportConfig): Promise<string> 
 
         const headlineStyle = titlePack.headline;
         const fontColor = headlineStyle.color.replace("#", "");
-        const shadowColor = headlineStyle.shadow?.color || "rgba(0,0,0,0.8)";
+        // Use hex color for shadowcolor to avoid FFmpeg parsing issues with rgba()
+        const shadowColor = "0x000000@0.8";
         const fontSize = Math.round((headlineStyle.sizeMin + headlineStyle.sizeMax) / 2);
 
         await runFFmpeg([
           "-y",
           "-i", inputPath,
-          "-vf", `drawtext=textfile='${escapedCaptionPath}':fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2`,
+          "-vf", `drawtext=textfile=${escapedCaptionPath}:fontcolor=${fontColor}:fontsize=${fontSize}:x=(w-text_w)/2:y=h-th-100:shadowcolor=${shadowColor}:shadowx=2:shadowy=2`,
           "-c:v", "libx264",
           "-crf", qualitySettings.crf.toString(),
           "-preset", qualitySettings.preset,
