@@ -65,14 +65,14 @@ export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillCol
         backgroundColor: "rgba(0, 0, 0, 0.55)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        padding: "16px 24px",
+        padding: "20px 32px",
         borderRadius: "12px",
       };
     case "pill":
       return {
         ...baseContainerStyles,
         backgroundColor: options?.pillColor || "rgba(255, 220, 0, 0.9)",
-        padding: "14px 24px",
+        padding: "16px 32px",
         borderRadius: "999px",
       };
     case "blur":
@@ -81,14 +81,14 @@ export function getBackgroundCSS(tokenId: BackgroundTokenId, options?: { pillCol
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        padding: "18px 26px",
+        padding: "22px 34px",
         borderRadius: "16px",
       };
     case "gradient":
       return {
         ...baseContainerStyles,
         background: "linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(59, 130, 246, 0.85))",
-        padding: "18px 26px",
+        padding: "22px 34px",
         borderRadius: "16px",
       };
     case "none":

@@ -136,7 +136,7 @@ export function resolveStyles(input: ResolveStylesInput): ResolvedCaptionStyles 
     panelMaxWidthPercent: 92,
     baseFontSize: baseFontSize,
     minFontSize: minFontSize,
-    padding: isParagraphMode ? 12 : 16,
+    padding: isParagraphMode ? 20 : 32,
     lineHeight,
     fontFamily: typography.fontFamily,
     fontWeight: 700,
