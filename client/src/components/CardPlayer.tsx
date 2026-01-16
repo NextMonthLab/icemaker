@@ -227,8 +227,17 @@ export default function CardPlayer({
     (card.videoGenerated && card.videoGenerationStatus === "completed") ||
     !!card.generatedVideoUrl  // Fallback: show if URL exists even without flags
   );
+  
+  // Check if there's an actual generated/uploaded image (not just a placeholder/fallback)
+  // Generated image = any image asset in mediaAssets with status 'ready'
+  // This distinguishes from card.image which may be a placeholder background
+  const hasGeneratedImage = !!(
+    card.mediaAssets?.some(a => a.kind === 'image' && a.status === 'ready')
+  );
+  
+  // hasImage is for display purposes (can use fallback), hasGeneratedImage is for media selection logic
   const hasImage = !!activeMedia.imageUrl;
-  const hasBothMediaTypes = hasImage && hasVideo;
+  const hasBothMediaTypes = hasGeneratedImage && hasVideo;
 
   // Reset all state when card changes (only trigger on card.id change, not hasVideo)
   useEffect(() => {
@@ -254,14 +263,15 @@ export default function CardPlayer({
   
   // Separate effect for video display preference (can run when hasVideo changes)
   useEffect(() => {
-    // Show video if: preferredMediaType is video, OR selected asset is video, OR only video available (no image)
+    // Show video if: preferredMediaType is video, OR selected asset is video, OR only video available (no generated image)
+    // Use hasGeneratedImage (not hasImage) so video-only cards default to video mode
     const useVideo = hasVideo && (
       card.preferredMediaType === 'video' || 
       activeMedia.selectedIsVideo || 
-      !hasImage
+      !hasGeneratedImage
     );
     setShowVideo(!!useVideo);
-  }, [card.id, hasVideo, hasImage, card.preferredMediaType, activeMedia.selectedIsVideo]);
+  }, [card.id, hasVideo, hasGeneratedImage, card.preferredMediaType, activeMedia.selectedIsVideo]);
 
   // Update narration volume - use regular effect with more frequent checks
   // This ensures volume changes take effect even while audio is playing
