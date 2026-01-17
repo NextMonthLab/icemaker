@@ -995,7 +995,7 @@ export default function CardPlayer({
                   transformOrigin,
                 }}
               >
-                {/* COMPOSITION STAGE - exactly compositionWidth, no DOM constraints */}
+                {/* COMPOSITION STAGE - exactly compositionWidth, clips any overflow */}
                 <div
                   style={{
                     width: captionGeometry.compositionWidth,
@@ -1005,6 +1005,7 @@ export default function CardPlayer({
                     paddingLeft: captionGeometry.safeAreaLeft,
                     paddingRight: captionGeometry.safeAreaRight,
                     boxSizing: "border-box",
+                    overflow: "hidden", // Clip any text that exceeds safe area width
                   }}
                 >
                   <AnimatePresence mode="wait">
