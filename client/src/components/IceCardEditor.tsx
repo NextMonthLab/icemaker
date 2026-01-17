@@ -4,7 +4,7 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle
+  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -587,6 +587,53 @@ function GuestCardEditor({ card, previewId, onCardUpdate, onCardSave }: GuestCar
               <div className="text-xs text-slate-500">
                 <p>Upload a clear headshot</p>
                 <p>for the AI avatar</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* AI Avatar Model - Coming Soon */}
+          <div className="relative">
+            <Label className="text-slate-300 text-sm flex items-center gap-2">
+              Avatar Model
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white animate-pulse">
+                Coming Soon
+              </span>
+            </Label>
+            <div className="mt-2 p-4 rounded-lg bg-gradient-to-br from-purple-900/30 via-indigo-900/20 to-pink-900/30 border border-purple-500/30 relative overflow-hidden">
+              {/* Sparkle decorations */}
+              <div className="absolute top-2 right-3 text-yellow-400 animate-pulse">✨</div>
+              <div className="absolute bottom-3 left-4 text-cyan-400 animate-pulse delay-150">✨</div>
+              <div className="absolute top-1/2 right-8 text-pink-400 animate-pulse delay-300">⭐</div>
+              
+              <div className="relative z-10 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Choose Your Avatar Style</h4>
+                    <p className="text-xs text-purple-300/80">Pick from realistic, animated, or custom-trained models</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="p-2 rounded-md bg-slate-800/50 border border-slate-700/50 text-center opacity-60">
+                    <div className="text-lg mb-1">🎭</div>
+                    <span className="text-[10px] text-slate-400 block">Realistic</span>
+                  </div>
+                  <div className="p-2 rounded-md bg-slate-800/50 border border-slate-700/50 text-center opacity-60">
+                    <div className="text-lg mb-1">✨</div>
+                    <span className="text-[10px] text-slate-400 block">Stylized</span>
+                  </div>
+                  <div className="p-2 rounded-md bg-slate-800/50 border border-slate-700/50 text-center opacity-60">
+                    <div className="text-lg mb-1">🚀</div>
+                    <span className="text-[10px] text-slate-400 block">Custom</span>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-center text-purple-200/70 pt-2 border-t border-purple-500/20">
+                  🎬 Multiple avatar providers • Expressive animations • Your brand voice
+                </p>
               </div>
             </div>
           </div>
@@ -1220,7 +1267,7 @@ export function IceCardEditor({
         const data = await res.json();
         // Mark asset as regenerating
         const updatedAssets = (card.mediaAssets || []).map(a => 
-          a.id === assetId ? { ...a, status: 'generating', predictionId: data.predictionId } : a
+          a.id === assetId ? { ...a, status: 'generating' as const, predictionId: data.predictionId } : a
         );
         onCardUpdate(card.id, { mediaAssets: updatedAssets });
         toast({ title: 'Video regenerating...', description: 'This may take 1-3 minutes.' });
