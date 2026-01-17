@@ -1375,7 +1375,7 @@ export const icePreviews = pgTable("ice_previews", {
   
   // Audio settings (music + narration)
   musicTrackUrl: text("music_track_url"), // URL to background music file
-  musicVolume: integer("music_volume").default(50), // 0-100 volume level
+  musicVolume: integer("music_volume").default(25), // 0-100 volume level (low default for background ambiance)
   narrationVolume: integer("narration_volume").default(100), // 0-100 volume level
   musicEnabled: boolean("music_enabled").default(false),
   

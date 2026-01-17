@@ -290,7 +290,8 @@ export default function PublishedIcePage() {
       if (!musicAudioRef.current) {
         musicAudioRef.current = new Audio(ice.musicTrackUrl);
         musicAudioRef.current.loop = true;
-        musicAudioRef.current.volume = (ice.musicVolume || 50) / 100;
+        // Default music volume is low (25%) so narration is clearly audible
+        musicAudioRef.current.volume = (ice.musicVolume ?? 25) / 100;
       }
       musicAudioRef.current.play().catch(console.error);
     } else if (musicAudioRef.current) {
