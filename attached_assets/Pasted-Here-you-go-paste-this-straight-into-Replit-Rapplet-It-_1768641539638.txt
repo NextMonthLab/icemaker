@@ -1,0 +1,118 @@
+Here you go — paste this straight into Replit (Rapplet). It’s written to be unambiguous and implementable without scope creep.
+
+⸻
+
+Replit Prompt: Per-Clip Orientation Toggle (Auto / Fill / Fit) for Pexels Videos
+
+Context: We are building IceMaker / Interactive Cinematic Experiences (ICEs) in a vertical-first (9:16) preview environment. Many Pexels videos are landscape (16:9), so we need a premium way to render them without ugly distortion or bad cropping.
+
+Goal
+
+Add a per-video-clip UI control in the ICE preview (and any clip inspector modal) so users can decide case-by-case how each video should be rendered in the vertical frame:
+	•	AUTO (Recommended)
+	•	FILL (Crop to 9:16)
+	•	FIT (Keep full frame, add background fill)
+
+This should affect preview immediately, and also persist to the ICE data model so exports use the same choice.
+
+⸻
+
+Requirements
+
+1) Data model changes
+
+For each video asset/clip (e.g. the video attached to a card), store a render mode:
+	•	renderMode: "auto" | "fill" | "fit"
+
+Default should be "auto" for existing ICEs.
+
+If the asset has metadata, also store:
+	•	sourceWidth, sourceHeight (if available)
+	•	sourceAspectRatio (derived)
+
+If we don’t have width/height from Pexels API, infer later by reading video metadata when we download/process.
+
+⸻
+
+2) UI changes (per clip)
+
+In the ICE preview UI (where the clip appears), add a small control near the video preview:
+
+Label: “Framing” or “Video framing”
+Options: Auto / Fill / Fit
+Microcopy: “Controls how this clip is framed in vertical (9:16).”
+
+Behaviour:
+	•	Changing the toggle updates the preview instantly (no page refresh).
+	•	Selection persists (save to ICE state + backend).
+
+Add two small actions:
+	•	“Apply to this clip only” (default behaviour)
+	•	Optional (nice-to-have): “Apply to all clips in this ICE” — sets a global default but still allows overrides.
+
+Do NOT clutter the UI; keep it minimal and premium.
+
+⸻
+
+3) Rendering rules (no distortion, ever)
+
+We never stretch video.
+
+Implement two rendering modes for a vertical preview container:
+
+A) FIT (keep full frame)
+	•	Show the full landscape clip inside a vertical container without cropping.
+	•	Fill the unused top/bottom space using a background treatment:
+	•	blurred version of the same video (preferred), or
+	•	a static blurred frame, or
+	•	a subtle dark gradient behind it
+	•	Foreground video should be centred, with correct aspect ratio.
+
+B) FILL (crop to 9:16)
+	•	Scale video to fill the vertical container.
+	•	Crop left/right (or top/bottom if source is taller than container).
+	•	Default crop anchor is centre.
+	•	Keep it deterministic and stable (no jitter).
+
+C) AUTO (recommended default)
+Auto selects FILL vs FIT based on basic heuristics:
+	•	If sourceHeight > sourceWidth (vertical) → use FILL
+	•	Else if source is near-square (e.g. aspect ratio between ~0.8 and ~1.2) → FILL with minimal crop
+	•	Else if wide landscape (e.g. aspect ratio >= 1.5) → default to FIT
+	•	Otherwise → FILL
+
+(We can tune thresholds later; implement a clean helper function now.)
+
+⸻
+
+4) Export / render pipeline must respect renderMode
+
+Wherever we generate final outputs (FFmpeg or equivalent), ensure the chosen mode is used:
+	•	FIT = scale-to-fit + background fill (blurred)
+	•	FILL = scale-to-fill + crop
+
+This must match the preview.
+
+⸻
+
+5) Implementation notes
+	•	Add a helper: getEffectiveRenderMode(clip):
+	•	if clip.renderMode !== “auto” return it
+	•	else compute based on aspect ratio heuristic
+	•	Add a helper: getVideoStyleProps(mode) or equivalent.
+	•	Ensure mode is stored with the clip in the ICE JSON so it survives reloads and deploys.
+
+⸻
+
+Acceptance Criteria
+	•	Users can toggle Auto/Fill/Fit per clip.
+	•	Preview updates immediately and looks correct.
+	•	No distortion/stretching.
+	•	Choice persists and affects export output.
+	•	Defaults are sensible for typical Pexels landscape content.
+
+⸻
+
+If you need to choose the UI placement: put it in the clip details / inspector and also expose a quick toggle overlay on the clip preview (small segmented control).
+
+That’s it — implement MVP cleanly, then we can refine cropping anchors and add subject-aware framing later.
