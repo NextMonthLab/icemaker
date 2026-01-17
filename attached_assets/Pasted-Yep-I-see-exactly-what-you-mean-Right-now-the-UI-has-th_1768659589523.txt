@@ -1,0 +1,121 @@
+Yep, I see exactly what you mean. Right now the UI has the power, but it’s presenting it like a settings panel with four tabs fighting for attention. Your “media blocks” idea is the right direction because it matches how people think: “This card needs visuals + audio” not “I must visit three separate tabs”.
+
+Here’s the cleanest structure I’d push for.
+
+Proposed card editor structure
+
+1) Keep “Story Cards” list exactly as-is
+
+Tap a card to expand, same as now. No change to the overall library mental model.
+
+2) Inside a card: split into two lanes
+
+A) Media (Visual) lane
+Everything that appears on screen visually for that card:
+	•	Video clips (AI video / uploaded / stock)
+	•	Images (AI image / uploaded / stock)
+	•	Continuation stills (this is just another “visual block”)
+
+B) Audio lane
+Not part of the media blocks:
+	•	Narration (voice, speed, generate, preview)
+	•	Music (track select, volume, loop, fade)
+
+This matches your instinct: narration/music are “global-ish” for the card, not “a visual asset”.
+
+3) Visual lane is block-based, not tab-based
+
+Instead of Content | AI Image | AI Video | Narration | Your Media, you show:
+
+Visual Blocks
+	•	Block 1: “Clip 1 (5s)” with thumbnail + duration + framing (Auto/Fill/Fit)
+	•	“+ Add Visual” button (big, obvious)
+
+When the user taps + Add Visual, you open a selector:
+
+Choose visual type
+	•	AI Video
+	•	AI Image
+	•	Upload Video
+	•	Upload Image
+	•	Stock Video (Pexels)
+	•	Stock Image (Pexels/Unsplash)
+	•	Continuation Still (smart cutaway)
+
+Then the block appears with the right controls inside the block.
+
+4) “Suggest Next Clip” becomes a block action, not a tab feature
+
+Inside the visual lane, after Clip 1 you can show:
+	•	“Suggest Next Clip” (context aware, optional)
+	•	“Generate Continuation Still” only when needed (or as a deliberate “Add Visual” option)
+
+5) Timeline stays, but it lives at the top of the Visual lane
+
+You already have a great “Media Timeline” bar. Keep it, but make it the header for the Visual lane:
+	•	“Visual Duration: 5.0s / Narration: 26.6s”
+	•	“21.6s remaining” becomes a clear CTA: Add Visual
+
+This is the bit that makes it feel like a real editor, not a collection of tools.
+
+⸻
+
+Why this is better (in plain English)
+	•	Less cognitive load: no more hunting the right tab.
+	•	More “creator flow”: add block → choose type → generate/upload → done.
+	•	Scales cleanly: once you add Pexels, continuation, multiple clips, the UI won’t collapse into chaos.
+
+⸻
+
+Prompt to send to Replit (RoClaires)
+
+Goal: Refactor Story Card editing UI from multi-tab controls to a block-based “Visual Lane + Audio Lane” editor.
+
+Instructions:
+	1.	Replace the current per-card tabs (Content / AI Image / AI Video / Narration / Your Media) with two sections inside an expanded card:
+	•	Visuals (block-based, ordered)
+	•	Audio (Narration + Music)
+	2.	Visuals section (block-based):
+	•	Keep the existing “Media Timeline” bar, but make it the header for the Visuals section.
+	•	Show a list of Visual Blocks in playback order.
+	•	Each block displays: thumbnail/preview, type label, duration, and key controls (e.g., framing Auto/Fill/Fit for video).
+	•	Add a large CTA button: + Add Visual.
+	3.	Add Visual flow:
+	•	Tapping + Add Visual opens a modal/bottom-sheet selector:
+	•	AI Video
+	•	AI Image
+	•	Upload Video
+	•	Upload Image
+	•	Stock Video (Pexels)
+	•	Stock Image (Pexels/Unsplash)
+	•	Continuation Still
+	•	After selecting, create a new block of that type and show its relevant controls inline.
+	4.	Cinematic Continuation:
+	•	Treat continuation as a Visual Block type (not a separate “feature panel”).
+	•	If narration exceeds visual duration, show a subtle warning + quick action:
+	•	“Add Continuation Still” (creates a continuation block at the end)
+	•	Still allow manual addition via + Add Visual → Continuation Still.
+	5.	Audio section:
+	•	Move narration controls into the Audio section:
+	•	narration text, voice, speed, preview, generate, delete
+	•	Add Music controls (if already present elsewhere), also in Audio.
+	6.	Data model:
+	•	Keep existing backend logic where possible.
+	•	Introduce/normalise a visualBlocks[] array per card (ordered), where each block references either:
+	•	generated AI media
+	•	uploaded media
+	•	stock media
+	•	continuation still
+	•	Migrate existing “single active video / image” state into block 1 automatically for backwards compatibility.
+	7.	Mobile UX:
+	•	Use bottom sheets for Add Visual and block settings where needed.
+	•	Ensure the expanded card remains scrollable and the CTAs remain visible.
+
+Acceptance criteria:
+	•	A user can build a full card without ever thinking “which tab do I need?”
+	•	Visuals are clearly ordered and previewable in sequence.
+	•	Narration and music are always in one place.
+
+⸻
+
+If you want my opinion: this change is one of those “feels like a real product overnight” moments. Right now it’s an engine bay; this makes it a cockpit.

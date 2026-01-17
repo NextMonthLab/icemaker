@@ -65,6 +65,104 @@ interface ClipSuggestion {
   continuityHints: string[];
 }
 
+// Visual Block - unified view model for all visual content in a card
+type VisualBlockType = 'ai-video' | 'ai-image' | 'upload-video' | 'upload-image' | 'stock-video' | 'stock-image' | 'continuation';
+type VisualBlockStatus = 'ready' | 'generating' | 'draft' | 'failed';
+
+interface VisualBlock {
+  id: string;
+  type: VisualBlockType;
+  assetId?: string;
+  url?: string;
+  thumbnailUrl?: string;
+  durationSec: number;
+  status: VisualBlockStatus;
+  prompt?: string;
+  order: number;
+  renderMode?: RenderMode;
+}
+
+// Derive visual blocks from existing card data
+function deriveVisualBlocks(card: PreviewCard, draftClips: Array<{ id: string; prompt: string; status: 'draft' | 'generating' }>): VisualBlock[] {
+  const blocks: VisualBlock[] = [];
+  const videoAssets = (card.mediaAssets || []).filter(a => a.kind === 'video' && a.status === 'ready');
+  
+  // Build from persisted video assets first
+  videoAssets.forEach((asset, index) => {
+    const source = asset.source;
+    let type: VisualBlockType = 'ai-video';
+    if (source === 'upload') type = 'upload-video';
+    else if (source === 'stock') type = 'stock-video';
+    
+    blocks.push({
+      id: asset.id,
+      type,
+      assetId: asset.id,
+      url: asset.url,
+      thumbnailUrl: asset.thumbnailUrl || asset.url,
+      durationSec: asset.durationSec || 5,
+      status: 'ready',
+      prompt: asset.prompt,
+      order: index,
+      renderMode: asset.renderMode,
+    });
+  });
+  
+  // Add draft clips that are being generated
+  draftClips.forEach((draft, index) => {
+    blocks.push({
+      id: draft.id,
+      type: 'ai-video',
+      durationSec: 5,
+      status: draft.status === 'generating' ? 'generating' : 'draft',
+      prompt: draft.prompt,
+      order: blocks.length + index,
+    });
+  });
+  
+  // If no video assets but has image, add image block
+  if (blocks.length === 0 && card.generatedImageUrl) {
+    const imageAsset = (card.mediaAssets || []).find(a => a.kind === 'image' && a.url === card.generatedImageUrl);
+    const source = imageAsset?.source || 'ai';
+    let type: VisualBlockType = 'ai-image';
+    if (source === 'upload') type = 'upload-image';
+    else if (source === 'stock') type = 'stock-image';
+    
+    blocks.push({
+      id: imageAsset?.id || 'img-legacy',
+      type,
+      assetId: imageAsset?.id,
+      url: card.generatedImageUrl,
+      thumbnailUrl: card.generatedImageUrl,
+      durationSec: card.narrationDurationSec || 10,
+      status: 'ready',
+      prompt: imageAsset?.prompt,
+      order: 0,
+    });
+  }
+  
+  // Add continuation as virtual block if enabled and generated
+  if (card.cinematicContinuationEnabled && card.continuationImageUrl) {
+    const narrationDur = card.narrationDurationSec || 0;
+    const videoDur = blocks.reduce((sum, b) => sum + b.durationSec, 0);
+    const continuationDur = Math.max(0, narrationDur - videoDur);
+    
+    if (continuationDur > 0) {
+      blocks.push({
+        id: 'continuation-still',
+        type: 'continuation',
+        url: card.continuationImageUrl,
+        thumbnailUrl: card.continuationImageUrl,
+        durationSec: continuationDur,
+        status: 'ready',
+        order: blocks.length,
+      });
+    }
+  }
+  
+  return blocks.sort((a, b) => a.order - b.order);
+}
+
 type GuestCategory = 'testimonial' | 'expert' | 'engineer' | 'interviewee' | 'founder' | 'customer' | 'other';
 type GuestStatus = 'idle' | 'generating' | 'ready' | 'failed';
 type GuestProvider = 'heygen' | 'did';
@@ -873,6 +971,9 @@ export function IceCardEditor({
   const isPro = entitlements && entitlements.tier !== "free";
   
   const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration" | "upload" | "stock">("content");
+  const [editorMode, setEditorMode] = useState<"lanes" | "tabs">("lanes");
+  const [showAddVisualModal, setShowAddVisualModal] = useState(false);
+  const [activeLane, setActiveLane] = useState<"visuals" | "audio">("visuals");
   const [editedTitle, setEditedTitle] = useState(card.title);
   const [editedContent, setEditedContent] = useState(card.content);
   
@@ -1009,6 +1110,13 @@ export function IceCardEditor({
   const removeDraft = (draftId: string) => {
     setDraftClips(prev => prev.filter(d => d.id !== draftId));
   };
+  
+  // Derive visual blocks for the lane-based UI
+  const visualBlocks = deriveVisualBlocks(card, draftClips);
+  const totalVisualDuration = visualBlocks.reduce((sum, b) => sum + b.durationSec, 0);
+  const narrationDuration = card.narrationDurationSec || 0;
+  const remainingDuration = Math.max(0, narrationDuration - totalVisualDuration);
+  const needsMoreVisuals = remainingDuration > 0 && narrationDuration > 0;
   
   const { data: videoConfig } = useQuery({
     queryKey: ["video-config"],
@@ -1912,6 +2020,415 @@ export function IceCardEditor({
                 />
               ) : (
               <>
+              {/* Lane-based Editor (new) */}
+              {editorMode === "lanes" ? (
+                <div className="space-y-4">
+                  {/* Content Section - Title & Content always visible */}
+                  <div className="space-y-3 pb-3 border-b border-slate-700/50">
+                    <div className="space-y-2">
+                      <Label className="text-slate-300 text-sm">Card Title</Label>
+                      <Input
+                        value={editedTitle}
+                        onChange={(e) => {
+                          setEditedTitle(e.target.value);
+                          onCardUpdate(card.id, { title: e.target.value });
+                        }}
+                        onBlur={() => onCardSave(card.id, { title: editedTitle, content: editedContent })}
+                        placeholder="Enter card title..."
+                        className="bg-slate-800 border-slate-700 text-white font-semibold h-9"
+                        data-testid="input-card-title-lane"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-300 text-sm">Card Content</Label>
+                      <Textarea
+                        value={editedContent}
+                        onChange={(e) => {
+                          setEditedContent(e.target.value);
+                          onCardUpdate(card.id, { content: e.target.value });
+                        }}
+                        onBlur={() => onCardSave(card.id, { title: editedTitle, content: editedContent })}
+                        placeholder="Enter card content..."
+                        rows={3}
+                        className="bg-slate-800 border-slate-700 text-white text-sm"
+                        data-testid="input-card-content-lane"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Lane Tabs */}
+                  <div className="flex gap-2 border-b border-slate-700 pb-2">
+                    <button
+                      onClick={() => setActiveLane("visuals")}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeLane === "visuals" 
+                          ? "bg-cyan-600 text-white" 
+                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                      }`}
+                      data-testid="lane-visuals"
+                    >
+                      <Video className="w-4 h-4" />
+                      Visuals
+                      {needsMoreVisuals && (
+                        <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" title="More visuals needed" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setActiveLane("audio")}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeLane === "audio" 
+                          ? "bg-cyan-600 text-white" 
+                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                      }`}
+                      data-testid="lane-audio"
+                    >
+                      <Mic className="w-4 h-4" />
+                      Audio
+                      {card.narrationAudioUrl && (
+                        <CheckCircle className="w-3 h-3 text-green-400" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* VISUALS LANE */}
+                  {activeLane === "visuals" && (
+                    <div className="space-y-4">
+                      {/* Timeline Header */}
+                      <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-cyan-400" />
+                            <span className="text-sm font-medium text-white">Media Timeline</span>
+                          </div>
+                          <span className="text-sm text-slate-400">
+                            {totalVisualDuration.toFixed(1)}s / {narrationDuration.toFixed(1)}s
+                          </span>
+                        </div>
+                        <Progress 
+                          value={narrationDuration > 0 ? Math.min(100, (totalVisualDuration / narrationDuration) * 100) : 100} 
+                          className="h-2"
+                        />
+                        {needsMoreVisuals && (
+                          <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {remainingDuration.toFixed(1)}s remaining to fill
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Visual Blocks List */}
+                      <div className="space-y-2">
+                        {visualBlocks.length === 0 ? (
+                          <div className="p-6 border-2 border-dashed border-slate-700 rounded-lg text-center">
+                            <Video className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                            <p className="text-sm text-slate-400">No visuals yet</p>
+                            <p className="text-xs text-slate-500">Add a visual to bring this card to life</p>
+                          </div>
+                        ) : (
+                          visualBlocks.map((block, index) => (
+                            <div 
+                              key={block.id}
+                              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                                block.status === 'generating' 
+                                  ? 'border-blue-500/50 bg-blue-500/10 animate-pulse'
+                                  : block.status === 'draft'
+                                    ? 'border-amber-500/50 bg-amber-500/10'
+                                    : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800'
+                              }`}
+                              data-testid={`visual-block-${index}`}
+                            >
+                              {/* Thumbnail */}
+                              <div className="w-16 h-10 rounded bg-slate-700 overflow-hidden flex-shrink-0">
+                                {block.thumbnailUrl ? (
+                                  block.type.includes('video') ? (
+                                    <video src={block.url} className="w-full h-full object-cover" muted />
+                                  ) : (
+                                    <img src={block.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                                  )
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    {block.status === 'generating' ? (
+                                      <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                                    ) : block.status === 'draft' ? (
+                                      <Plus className="w-4 h-4 text-amber-400" />
+                                    ) : (
+                                      <Video className="w-4 h-4 text-slate-500" />
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-slate-300">
+                                    {block.type === 'ai-video' ? 'AI Video' :
+                                     block.type === 'ai-image' ? 'AI Image' :
+                                     block.type === 'upload-video' ? 'Uploaded' :
+                                     block.type === 'stock-video' ? 'Stock' :
+                                     block.type === 'continuation' ? 'Continuation Still' :
+                                     'Visual'}
+                                  </span>
+                                  <span className="text-xs text-slate-500">{block.durationSec}s</span>
+                                </div>
+                                {block.prompt && (
+                                  <p className="text-xs text-slate-500 truncate">{block.prompt}</p>
+                                )}
+                              </div>
+                              
+                              {/* Status indicator */}
+                              <div className="flex-shrink-0">
+                                {block.status === 'generating' && (
+                                  <span className="text-xs text-blue-400">Generating...</span>
+                                )}
+                                {block.status === 'draft' && (
+                                  <span className="text-xs text-amber-400">Draft</span>
+                                )}
+                                {block.status === 'ready' && (
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      
+                      {/* Add Visual Button */}
+                      <Button
+                        onClick={() => setShowAddVisualModal(true)}
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
+                        data-testid="button-add-visual"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Visual
+                      </Button>
+                      
+                      {/* Add Visual Modal */}
+                      {showAddVisualModal && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+                          <motion.div 
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            className="bg-slate-900 rounded-t-xl sm:rounded-xl w-full max-w-md border border-slate-700 shadow-xl"
+                          >
+                            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+                              <h3 className="font-semibold text-white">Add Visual</h3>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => setShowAddVisualModal(false)}
+                                className="h-8 w-8"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="p-4 grid grid-cols-2 gap-3">
+                              <button
+                                onClick={() => {
+                                  setShowAddVisualModal(false);
+                                  setActiveTab("video");
+                                  setEditorMode("tabs");
+                                }}
+                                className="p-4 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-colors text-left"
+                                data-testid="add-visual-ai-video"
+                              >
+                                <Video className="w-6 h-6 text-cyan-400 mb-2" />
+                                <p className="text-sm font-medium text-white">AI Video</p>
+                                <p className="text-xs text-slate-400">Generate with AI</p>
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  setShowAddVisualModal(false);
+                                  setActiveTab("image");
+                                  setEditorMode("tabs");
+                                }}
+                                className="p-4 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-colors text-left"
+                                data-testid="add-visual-ai-image"
+                              >
+                                <Image className="w-6 h-6 text-purple-400 mb-2" />
+                                <p className="text-sm font-medium text-white">AI Image</p>
+                                <p className="text-xs text-slate-400">Generate with AI</p>
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  setShowAddVisualModal(false);
+                                  setActiveTab("upload");
+                                  setEditorMode("tabs");
+                                }}
+                                className="p-4 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-colors text-left"
+                                data-testid="add-visual-upload"
+                              >
+                                <Upload className="w-6 h-6 text-green-400 mb-2" />
+                                <p className="text-sm font-medium text-white">Upload</p>
+                                <p className="text-xs text-slate-400">Your own media</p>
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  setShowAddVisualModal(false);
+                                  setActiveTab("stock");
+                                  setEditorMode("tabs");
+                                }}
+                                className="p-4 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-colors text-left"
+                                data-testid="add-visual-stock"
+                              >
+                                <ImagePlus className="w-6 h-6 text-amber-400 mb-2" />
+                                <p className="text-sm font-medium text-white">Stock</p>
+                                <p className="text-xs text-slate-400">Pexels library</p>
+                              </button>
+                              
+                              {needsMoreVisuals && (
+                                <button
+                                  onClick={() => {
+                                    setShowAddVisualModal(false);
+                                    // Trigger continuation generation
+                                    onCardUpdate(card.id, { cinematicContinuationEnabled: true });
+                                  }}
+                                  className="col-span-2 p-4 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 hover:border-purple-500/50 transition-colors text-left"
+                                  data-testid="add-visual-continuation"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Sparkles className="w-6 h-6 text-purple-400" />
+                                    <div>
+                                      <p className="text-sm font-medium text-white">Continuation Still</p>
+                                      <p className="text-xs text-slate-400">AI-generated cutaway (~$0.04)</p>
+                                    </div>
+                                  </div>
+                                </button>
+                              )}
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* AUDIO LANE */}
+                  {activeLane === "audio" && (
+                    <div className="space-y-4">
+                      {/* Existing Narration */}
+                      {card.narrationAudioUrl && (
+                        <div className="rounded-lg overflow-hidden border border-cyan-500/30 bg-cyan-500/5">
+                          <div className="p-2 bg-cyan-500/10 flex items-center justify-between">
+                            <span className="text-sm font-medium text-cyan-400">Generated Narration</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              onClick={() => onCardUpdate(card.id, { narrationAudioUrl: undefined })}
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="p-3">
+                            <audio 
+                              src={card.narrationAudioUrl} 
+                              controls 
+                              className="w-full h-10"
+                              data-testid="audio-preview-lane"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Narration Controls */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Narration Text</Label>
+                          <Textarea
+                            placeholder="Enter the text to be narrated..."
+                            value={narrationText}
+                            onChange={(e) => setNarrationText(e.target.value)}
+                            rows={4}
+                            className="bg-slate-800 border-slate-700 text-white"
+                            data-testid="input-narration-text-lane"
+                          />
+                          <p className="text-xs text-slate-500">{narrationText.length} / 3000 characters</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Voice</Label>
+                            <Select value={narrationVoice} onValueChange={setNarrationVoice}>
+                              <SelectTrigger className="bg-slate-800 border-slate-700">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(voicesData?.voices || []).map((v: { id: string; name: string }) => (
+                                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Speed: {narrationSpeed.toFixed(1)}x</Label>
+                            <Slider
+                              value={[narrationSpeed]}
+                              onValueChange={([v]) => setNarrationSpeed(v)}
+                              min={0.5}
+                              max={2.0}
+                              step={0.1}
+                              className="mt-3"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={handlePreviewNarration}
+                            disabled={!narrationText.trim()}
+                            className="gap-2 border-slate-600"
+                            data-testid="button-preview-narration-lane"
+                          >
+                            {previewPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                            {previewPlaying ? "Stop" : "Preview"}
+                          </Button>
+                          
+                          <Button
+                            onClick={handleGenerateNarration}
+                            disabled={narrationLoading || !narrationText.trim() || narrationText.length > 3000}
+                            className="flex-1 gap-2"
+                            data-testid="button-generate-narration-lane"
+                          >
+                            {narrationLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Mic className="w-4 h-4" />
+                            )}
+                            {narrationLoading ? "Generating..." : "Generate Narration"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Back to Tabs toggle (temporary during transition) */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <button
+                      onClick={() => setEditorMode("tabs")}
+                      className="text-xs text-slate-500 hover:text-slate-400"
+                    >
+                      Switch to tab view
+                    </button>
+                  </div>
+                </div>
+              ) : (
+              /* Old Tab-based Editor (fallback) */
+              <>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => setEditorMode("lanes")}
+                  className="text-xs text-cyan-400 hover:text-cyan-300"
+                >
+                  ← Back to lane view
+                </button>
+              </div>
               <div className="flex gap-2 border-b border-slate-700 pb-2 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("content")}
@@ -3438,6 +3955,8 @@ export function IceCardEditor({
               />
               </>
               )}
+            </>
+            )}
             </div>
           </motion.div>
         )}
