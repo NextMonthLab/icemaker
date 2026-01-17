@@ -36,6 +36,7 @@ import { EnterpriseBrandingUpsell } from "@/components/EnterpriseBrandingUpsell"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Share2, Copy } from "lucide-react";
 import { PublishModal } from "@/components/PublishModal";
+import { SharePanel } from "@/components/SharePanel";
 import type { ContentVisibility } from "@shared/schema";
 import { BuilderActionsSidebar } from "@/components/ice-maker/BuilderActionsSidebar";
 import { BuilderPreviewDrawer } from "@/components/ice-maker/BuilderPreviewDrawer";
@@ -440,6 +441,7 @@ export default function GuestIceBuilderPage() {
   const [previewPromptFeature, setPreviewPromptFeature] = useState<string>("");
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
   const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [showSharePanel, setShowSharePanel] = useState(false);
   
   // Logo branding settings
   const [logoEnabled, setLogoEnabled] = useState(false);
@@ -2026,49 +2028,43 @@ export default function GuestIceBuilderPage() {
                   Export Video
                 </Button>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowPublishModal(true)}
-                  disabled={cards.length === 0}
-                  className={`gap-1.5 shrink-0 whitespace-nowrap ${
-                    iceVisibility === "public" 
-                      ? "border-green-500/40 text-green-400 hover:bg-green-500/10" 
-                      : iceVisibility === "unlisted"
-                      ? "border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
-                      : "border-white/20 text-white/70 hover:bg-white/5"
-                  }`}
-                  data-testid="button-publish"
-                >
-                  {iceVisibility === "public" ? (
-                    <Globe className="w-3.5 h-3.5" />
-                  ) : iceVisibility === "unlisted" ? (
+                {/* Share button - different behavior based on visibility state */}
+                {iceVisibility === "private" ? (
+                  // Not shared yet - plain SHARE button
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPublishModal(true)}
+                    disabled={cards.length === 0}
+                    className="gap-1.5 shrink-0 whitespace-nowrap"
+                    data-testid="button-share"
+                  >
                     <Share2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <Lock className="w-3.5 h-3.5" />
-                  )}
-                  {iceVisibility === "public" ? "Public" : iceVisibility === "unlisted" ? "Shared" : "Publish"}
-                </Button>
-                
-                {/* Share button - only shows when ICE is published */}
-                {(iceVisibility === "public" || iceVisibility === "unlisted") && shareSlug && (
+                    SHARE
+                  </Button>
+                ) : shareSlug ? (
+                  // Already shared with valid slug - highlighted SHARED button that opens share panel
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setShowSharePanel(true)}
+                    className="gap-1.5 shrink-0 whitespace-nowrap"
+                    data-testid="button-shared"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    SHARED
+                  </Button>
+                ) : (
+                  // Shared but slug not loaded yet - disabled state
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={async () => {
-                      const shareUrl = `${window.location.origin}/ice/${shareSlug}`;
-                      try {
-                        await navigator.clipboard.writeText(shareUrl);
-                        toast({ title: "Link copied!", description: shareUrl });
-                      } catch {
-                        toast({ title: "Share link", description: shareUrl });
-                      }
-                    }}
-                    className="gap-1.5 shrink-0 whitespace-nowrap bg-cyan-600 hover:bg-cyan-500 text-white border-none"
-                    data-testid="button-copy-share-link"
+                    disabled
+                    className="gap-1.5 shrink-0 whitespace-nowrap"
+                    data-testid="button-shared-loading"
                   >
-                    <Copy className="w-3.5 h-3.5" />
-                    Copy Link
+                    <Share2 className="w-3.5 h-3.5" />
+                    SHARED
                   </Button>
                 )}
 
@@ -2814,6 +2810,8 @@ export default function GuestIceBuilderPage() {
                   setPreviewPromptFeature(feature);
                   setShowPreviewPrompt(true);
                 }}
+                onShowSharePanel={() => setShowSharePanel(true)}
+                shareSlug={shareSlug}
                 onShowBibleWarning={(pendingAction) => {
                   setPendingGenerateAction(() => pendingAction);
                   setShowBibleWarningOnGenerate(true);
@@ -3324,6 +3322,15 @@ export default function GuestIceBuilderPage() {
             setIceVisibility(data.visibility);
             setShareSlug(data.shareSlug);
           }}
+        />
+      )}
+      
+      {/* Share Panel - for already shared ICEs */}
+      {shareSlug && (
+        <SharePanel
+          isOpen={showSharePanel}
+          onClose={() => setShowSharePanel(false)}
+          shareUrl={`${window.location.origin}/ice/${shareSlug}`}
         />
       )}
       

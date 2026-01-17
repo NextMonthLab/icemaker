@@ -108,7 +108,7 @@ export function SharePanel({
                 onClick={handleCopyLink}
                 variant="default"
                 size="sm"
-                className="flex-1 gap-2 bg-cyan-600 text-white"
+                className="flex-1 gap-2"
                 data-testid="share-copy-link"
               >
                 {copied ? (
@@ -123,16 +123,22 @@ export function SharePanel({
                   </>
                 )}
               </Button>
-              <a
-                href={shareUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-700 text-white rounded-md transition-colors"
-                data-testid="share-open-link"
+              <Button
+                asChild
+                variant="secondary"
+                size="sm"
+                className="gap-2"
               >
-                <ExternalLink className="w-4 h-4" />
-                Open
-              </a>
+                <a
+                  href={shareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="share-open-link"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open
+                </a>
+              </Button>
             </div>
           </div>
 

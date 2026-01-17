@@ -62,6 +62,7 @@ interface BuilderActionsSidebarProps {
   onShowPreviewPrompt?: (feature: string) => void;
   onShowBibleWarning?: (pendingAction: () => void) => void;
   onShowSharePanel?: () => void;
+  shareSlug?: string | null;
 }
 
 export function BuilderActionsSidebar({
@@ -114,6 +115,7 @@ export function BuilderActionsSidebar({
   onShowPreviewPrompt,
   onShowBibleWarning,
   onShowSharePanel,
+  shareSlug,
 }: BuilderActionsSidebarProps) {
   if (isCollapsed) {
     return (
@@ -305,14 +307,26 @@ export function BuilderActionsSidebar({
                 <Share2 className="w-3.5 h-3.5" />
                 SHARE
               </Button>
-            ) : (
-              // Already shared - highlighted SHARED button that opens share panel
+            ) : shareSlug && onShowSharePanel ? (
+              // Already shared with valid slug - highlighted SHARED button that opens share panel
               <Button
                 variant="default"
                 size="sm"
                 onClick={onShowSharePanel}
-                className="gap-1.5 bg-cyan-600 text-white"
+                className="gap-1.5"
                 data-testid="sidebar-shared"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                SHARED
+              </Button>
+            ) : (
+              // Shared but slug not loaded yet - disabled state
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="gap-1.5"
+                data-testid="sidebar-shared-loading"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 SHARED
