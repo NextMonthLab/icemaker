@@ -2601,6 +2601,57 @@ export function IceCardEditor({
                                     )}
                                   </div>
                                 ))}
+                                
+                                {/* More Ideas Button */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full mt-2 border-cyan-500/20 text-cyan-400/70 hover:text-cyan-400"
+                                  onClick={async () => {
+                                    setClipSuggestionsLoading(true);
+                                    try {
+                                      const priorPrompts = [
+                                        ...segments.filter(s => s.kind === 'video').map(s => {
+                                          const asset = card.mediaAssets?.find(a => a.id === s.assetId);
+                                          return asset?.prompt || '';
+                                        }),
+                                        ...clipSuggestions.map(s => s.prompt)
+                                      ].filter(Boolean);
+                                      
+                                      const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/suggest-next-clip`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        credentials: 'include',
+                                        body: JSON.stringify({
+                                          cardTitle: card.title,
+                                          cardNarration: card.content,
+                                          currentSegmentIndex: segments.length + clipSuggestions.length,
+                                          totalSegmentsPlanned: Math.ceil(narrationDuration / 5),
+                                          priorPrompts,
+                                          excludeIds: clipSuggestions.map(s => s.id),
+                                        }),
+                                      });
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        // Append new suggestions to existing ones
+                                        setClipSuggestions(prev => [...prev, ...(data.suggestions || [])]);
+                                      }
+                                    } catch (err) {
+                                      console.error('Failed to get more clip suggestions:', err);
+                                    } finally {
+                                      setClipSuggestionsLoading(false);
+                                    }
+                                  }}
+                                  disabled={clipSuggestionsLoading}
+                                  data-testid="button-more-ideas"
+                                >
+                                  {clipSuggestionsLoading ? (
+                                    <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                                  ) : (
+                                    <Sparkles className="w-3 h-3 mr-1.5" />
+                                  )}
+                                  More Ideas
+                                </Button>
                               </div>
                             )}
                           </div>
