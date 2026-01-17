@@ -2889,6 +2889,41 @@ export function IceCardEditor({
                     />
                   )}
                   
+                  {/* Quick Add Section - one-click image generation */}
+                  <div className="p-4 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                        <Sparkles className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold text-white">Quick Add</span>
+                        <p className="text-[10px] text-slate-400">One-click image generation</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setEnhancePromptEnabled(true);
+                        handleGenerateImage();
+                      }}
+                      disabled={imageLoading || imageUploading}
+                      className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white gap-2 h-12"
+                      data-testid="button-quick-image"
+                    >
+                      {imageLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-4 h-4" />
+                      )}
+                      <div className="text-left">
+                        <div className="text-sm font-medium">Generate AI Image</div>
+                        <div className="text-[10px] opacity-80">Auto-enhanced from card content</div>
+                      </div>
+                    </Button>
+                    <p className="text-[10px] text-slate-500 mt-2 text-center">
+                      Scroll down for advanced options or to browse your media library.
+                    </p>
+                  </div>
+                  
                   {/* Media Library - shows all assets */}
                   {(card.mediaAssets?.length || 0) > 0 && (
                     <div className="p-4 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent space-y-3">
@@ -3358,6 +3393,70 @@ export function IceCardEditor({
                       description="Create cinematic AI videos from your story cards with a Business subscription."
                       onUpgrade={onUpgradeClick}
                     />
+                  )}
+                  
+                  {/* Quick Add Section - one-click video generation */}
+                  {videoConfig?.configured && (
+                    <div className="p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-transparent">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                          <Sparkles className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-white">Quick Add</span>
+                          <p className="text-[10px] text-slate-400">One-click video generation</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={() => {
+                            setVideoDuration(5);
+                            setVideoMode("text-to-video");
+                            const autoPrompt = `${card.title}. ${card.content?.slice(0, 200) || ''}`;
+                            setVideoPrompt(autoPrompt);
+                            setTimeout(() => handleGenerateVideo(), 100);
+                          }}
+                          disabled={videoLoading || videoStatus === "processing"}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white gap-2 h-12"
+                          data-testid="button-quick-video-5s"
+                        >
+                          {(videoLoading || videoStatus === "processing") && videoDuration === 5 ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Video className="w-4 h-4" />
+                          )}
+                          <div className="text-left">
+                            <div className="text-sm font-medium">5s Video</div>
+                            <div className="text-[10px] opacity-80">Fast & affordable</div>
+                          </div>
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setVideoDuration(10);
+                            setVideoMode("text-to-video");
+                            const autoPrompt = `${card.title}. ${card.content?.slice(0, 200) || ''}`;
+                            setVideoPrompt(autoPrompt);
+                            setTimeout(() => handleGenerateVideo(), 100);
+                          }}
+                          disabled={videoLoading || videoStatus === "processing"}
+                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white gap-2 h-12"
+                          data-testid="button-quick-video-10s"
+                        >
+                          {(videoLoading || videoStatus === "processing") && videoDuration === 10 ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Video className="w-4 h-4" />
+                          )}
+                          <div className="text-left">
+                            <div className="text-sm font-medium">10s Video</div>
+                            <div className="text-[10px] opacity-80">More coverage</div>
+                          </div>
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-2 text-center">
+                        Auto-generates from card content. Scroll down for advanced options.
+                      </p>
+                    </div>
                   )}
                   
                   {/* Media Timeline - shows filled vs remaining time */}
@@ -4018,6 +4117,43 @@ export function IceCardEditor({
                     </div>
                   ) : (
                     <>
+                      {/* Quick Add Section - one-click narration */}
+                      {!card.narrationAudioUrl && (
+                        <div className="p-4 rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                              <Mic className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold text-white">Quick Add</span>
+                              <p className="text-[10px] text-slate-400">One-click narration from card content</p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              setNarrationText(card.content || '');
+                              setTimeout(() => handleGenerateNarration(), 100);
+                            }}
+                            disabled={narrationLoading || !card.content}
+                            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white gap-2 h-12"
+                            data-testid="button-quick-narration"
+                          >
+                            {narrationLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Mic className="w-4 h-4" />
+                            )}
+                            <div className="text-left">
+                              <div className="text-sm font-medium">Generate Narration</div>
+                              <div className="text-[10px] opacity-80">Uses card content as script</div>
+                            </div>
+                          </Button>
+                          <p className="text-[10px] text-slate-500 mt-2 text-center">
+                            Scroll down to customize voice, speed, or edit the script.
+                          </p>
+                        </div>
+                      )}
+                      
                       <div className="space-y-2">
                         <Label className="text-slate-300">Narration Text</Label>
                         <Textarea
