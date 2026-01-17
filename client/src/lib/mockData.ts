@@ -1,10 +1,12 @@
 import cardImage from "@assets/generated_images/cinematic_cyberpunk_noir_city_street_at_night_with_rain.png";
 import charImage from "@assets/generated_images/mysterious_cyberpunk_character_portrait.png";
 
+export type VideoRenderMode = 'auto' | 'fill' | 'fit';
+
 export interface MediaAsset {
   id: string;
   kind: 'image' | 'video';
-  source: 'upload' | 'ai';
+  source: 'upload' | 'ai' | 'stock';
   url: string;
   thumbnailUrl?: string;
   createdAt: string;
@@ -14,6 +16,10 @@ export interface MediaAsset {
   status: 'ready' | 'generating' | 'failed';
   predictionId?: string;
   model?: string;
+  renderMode?: VideoRenderMode;
+  sourceWidth?: number;
+  sourceHeight?: number;
+  sourceAspectRatio?: number;
 }
 
 // Caption timing for forced alignment (Phase 2)

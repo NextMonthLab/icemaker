@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Card } from "@/lib/mockData";
+import { Card, MediaAsset } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
+import { getEffectiveRenderMode, computeAspectRatio, type EffectiveRenderMode } from "@/lib/videoFraming";
 import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import MessageBoard from "@/components/MessageBoard";
@@ -212,6 +213,7 @@ export default function CardPlayer({
           imageUrl: selected.kind === 'image' ? selected.url : card.image,
           videoUrl: selected.kind === 'video' ? selected.url : card.generatedVideoUrl,
           selectedIsVideo: selected.kind === 'video',
+          selectedAsset: selected as MediaAsset,
         };
       }
     }
@@ -219,10 +221,38 @@ export default function CardPlayer({
       imageUrl: card.image,
       videoUrl: card.generatedVideoUrl,
       selectedIsVideo: false,
+      selectedAsset: undefined as MediaAsset | undefined,
     };
   };
   
   const activeMedia = getActiveMedia();
+  
+  // Compute effective render mode - use asset metadata if available, fallback to runtime-detected videoAspect
+  const effectiveVideoRenderMode: EffectiveRenderMode = useMemo(() => {
+    // If we have a selected video asset with explicit renderMode (not auto), use it directly
+    if (activeMedia.selectedAsset?.kind === 'video' && activeMedia.selectedAsset.renderMode && activeMedia.selectedAsset.renderMode !== 'auto') {
+      return activeMedia.selectedAsset.renderMode;
+    }
+    
+    // For auto mode or no asset: try to compute from metadata, fallback to runtime detection
+    const asset = activeMedia.selectedAsset;
+    if (asset?.kind === 'video') {
+      // Prefer stored aspect ratio, compute from dimensions if not available
+      const assetRatio = asset.sourceAspectRatio ?? 
+        (asset.sourceWidth && asset.sourceHeight ? computeAspectRatio(asset.sourceWidth, asset.sourceHeight) : undefined);
+      
+      if (assetRatio) {
+        return getEffectiveRenderMode({
+          renderMode: 'auto',
+          sourceAspectRatio: assetRatio,
+        });
+      }
+    }
+    
+    // Fallback to runtime-detected videoAspect from handleVideoLoadedMetadata
+    // This covers cases where metadata isn't pre-populated on the asset
+    return videoAspect === 'landscape' ? 'fit' : 'fill';
+  }, [activeMedia.selectedAsset, videoAspect]);
   
   const hasNarration = card.narrationEnabled && card.narrationStatus === "ready" && card.narrationAudioUrl;
   // Show video if: selected asset is video, OR videoGenerated flag is set, OR generatedVideoUrl exists (fallback for older cards)
@@ -727,10 +757,10 @@ export default function CardPlayer({
             >
               {showVideo && hasVideo ? (
                 <>
-                  {/* Video element with smart scaling based on aspect ratio */}
-                  {videoAspect === 'landscape' ? (
+                  {/* Video element with smart scaling based on renderMode (Auto/Fill/Fit) */}
+                  {effectiveVideoRenderMode === 'fit' ? (
                     <>
-                      {/* Blur-fill background for landscape videos - fills space attractively */}
+                      {/* FIT mode: Blur-fill background for landscape videos - fills space attractively */}
                       <video
                         src={activeMedia.videoUrl!}
                         muted
@@ -752,7 +782,7 @@ export default function CardPlayer({
                       />
                     </>
                   ) : (
-                    /* Portrait/square videos use object-cover for full-bleed effect */
+                    /* FILL mode: object-cover for full-bleed effect (crops to fill) */
                     <video
                       ref={setVideoRef}
                       src={activeMedia.videoUrl!}

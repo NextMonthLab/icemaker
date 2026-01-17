@@ -21,10 +21,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VideoEngineSelector, type VideoEngineConfig, type VideoEngine, type VideoModel } from "@/components/ui/VideoEngineSelector";
 import { VideoUpsellModal } from "@/components/ui/VideoUpsellModal";
 
+type RenderMode = 'auto' | 'fill' | 'fit';
+
 interface MediaAsset {
   id: string;
   kind: 'image' | 'video';
-  source: 'upload' | 'ai';
+  source: 'upload' | 'ai' | 'stock';
   url: string;
   thumbnailUrl?: string;
   createdAt: string;
@@ -34,6 +36,11 @@ interface MediaAsset {
   status: 'ready' | 'generating' | 'failed';
   predictionId?: string;
   model?: string;
+  // Video framing controls
+  renderMode?: RenderMode;
+  sourceWidth?: number;
+  sourceHeight?: number;
+  sourceAspectRatio?: number;
 }
 
 type GuestCategory = 'testimonial' | 'expert' | 'engineer' | 'interviewee' | 'founder' | 'customer' | 'other';
@@ -1937,31 +1944,97 @@ export function IceCardEditor({
                     />
                   )}
                   
-                  {card.generatedVideoUrl && (
-                    <div className="rounded-lg overflow-hidden border border-blue-500/30 bg-blue-500/5">
-                      <div className="p-2 bg-blue-500/10 flex items-center justify-between">
-                        <span className="text-sm font-medium text-blue-400">Generated Video</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          onClick={() => onCardUpdate(card.id, { generatedVideoUrl: undefined })}
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          Remove
-                        </Button>
+                  {/* Current Video Display - shows selected video asset or generatedVideoUrl */}
+                  {(() => {
+                    // Find the currently selected video asset (by selectedMediaAssetId or matching generatedVideoUrl)
+                    const selectedVideoAsset = card.mediaAssets?.find(a => 
+                      a.kind === 'video' && (a.id === card.selectedMediaAssetId || a.url === card.generatedVideoUrl)
+                    );
+                    const displayVideoUrl = selectedVideoAsset?.url || card.generatedVideoUrl;
+                    
+                    if (!displayVideoUrl) return null;
+                    
+                    const currentRenderMode: RenderMode = selectedVideoAsset?.renderMode || 'auto';
+                    
+                    const handleRenderModeChange = (mode: RenderMode) => {
+                      if (!selectedVideoAsset) return;
+                      const updatedAssets = card.mediaAssets?.map(a => 
+                        a.id === selectedVideoAsset.id ? { ...a, renderMode: mode } : a
+                      ) || [];
+                      onCardUpdate(card.id, { mediaAssets: updatedAssets });
+                      onCardSave(card.id, { mediaAssets: updatedAssets });
+                    };
+                    
+                    const sourceLabel = selectedVideoAsset?.source === 'ai' ? 'AI Video' : 
+                                       selectedVideoAsset?.source === 'stock' ? 'Stock Video' : 
+                                       selectedVideoAsset?.source === 'upload' ? 'Uploaded Video' : 'Video';
+                    
+                    return (
+                      <div className="rounded-lg overflow-hidden border border-blue-500/30 bg-blue-500/5">
+                        <div className="p-2 bg-blue-500/10 flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-400">{sourceLabel}</span>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedVideoAsset) {
+                                // Remove from mediaAssets and clear generatedVideoUrl if it matches
+                                const updatedAssets = card.mediaAssets?.filter(a => a.id !== selectedVideoAsset.id) || [];
+                                const updates = { 
+                                  mediaAssets: updatedAssets,
+                                  generatedVideoUrl: card.generatedVideoUrl === selectedVideoAsset.url ? undefined : card.generatedVideoUrl,
+                                  selectedMediaAssetId: undefined
+                                };
+                                onCardUpdate(card.id, updates);
+                                onCardSave(card.id, updates);
+                              } else {
+                                const updates = { generatedVideoUrl: undefined };
+                                onCardUpdate(card.id, updates);
+                                onCardSave(card.id, updates);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
+                        <video 
+                          src={displayVideoUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="w-full bg-black max-h-64"
+                          data-testid="video-preview"
+                          onError={(e) => console.error("Video load error:", e)}
+                        />
+                        {/* Video Framing Toggle - always show when we have a video asset */}
+                        {selectedVideoAsset && (
+                          <div className="p-2 bg-blue-500/5 border-t border-blue-500/20">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs text-slate-400 min-w-[50px]">Framing:</Label>
+                              <div className="flex gap-1">
+                                {(['auto', 'fill', 'fit'] as const).map((mode) => (
+                                  <Button
+                                    key={mode}
+                                    variant={currentRenderMode === mode ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleRenderModeChange(mode)}
+                                    data-testid={`button-framing-${mode}`}
+                                  >
+                                    {mode === 'auto' ? 'Auto' : mode === 'fill' ? 'Fill' : 'Fit'}
+                                  </Button>
+                                ))}
+                              </div>
+                              <span className="text-[10px] text-slate-500 ml-auto">
+                                {currentRenderMode === 'auto' ? 'Smart detect' : 
+                                 currentRenderMode === 'fill' ? 'Full-bleed crop' : 'Show full frame'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <video 
-                        src={card.generatedVideoUrl}
-                        controls
-                        playsInline
-                        preload="metadata"
-                        className="w-full bg-black max-h-64"
-                        data-testid="video-preview"
-                        onError={(e) => console.error("Video load error:", e)}
-                      />
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   {!videoConfig?.configured ? (
                     <div className="p-4 bg-slate-800 rounded-lg text-sm text-slate-400">

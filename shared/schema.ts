@@ -1075,11 +1075,14 @@ export const iceSceneMapSchema = z.object({
 
 export type IceSceneMap = z.infer<typeof iceSceneMapSchema>;
 
+// Video render mode for vertical (9:16) preview framing
+export type VideoRenderMode = 'auto' | 'fill' | 'fit';
+
 // Media asset for ICE cards - supports multiple user uploads and AI generations
 export const iceMediaAssetSchema = z.object({
   id: z.string(), // Unique ID for this asset
   kind: z.enum(['image', 'video']),
-  source: z.enum(['upload', 'ai']), // User uploaded or AI generated
+  source: z.enum(['upload', 'ai', 'stock']), // User uploaded, AI generated, or stock (Pexels)
   url: z.string(), // Full URL or storage path
   thumbnailUrl: z.string().optional(), // Poster for video or thumb for image
   createdAt: z.string(), // ISO timestamp
@@ -1092,6 +1095,11 @@ export const iceMediaAssetSchema = z.object({
   predictionId: z.string().optional(), // For async generation tracking
   model: z.string().optional(), // Which AI model was used
   bibleVersionIdUsed: z.string().optional(), // Bible version for continuity tracking
+  // Video framing controls (per-clip orientation)
+  renderMode: z.enum(['auto', 'fill', 'fit']).default('auto'), // How video is framed in vertical container
+  sourceWidth: z.number().optional(), // Original video width in pixels
+  sourceHeight: z.number().optional(), // Original video height in pixels
+  sourceAspectRatio: z.number().optional(), // Derived: sourceWidth / sourceHeight
 });
 
 export type IceMediaAsset = z.infer<typeof iceMediaAssetSchema>;
