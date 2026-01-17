@@ -3918,7 +3918,7 @@ export function IceCardEditor({
                         const newAsset: MediaAsset = {
                           id: `stock-${Date.now()}`,
                           kind: 'image',
-                          source: 'upload',
+                          source: 'stock',
                           url,
                           status: 'ready',
                           createdAt: new Date().toISOString(),
@@ -3935,23 +3935,31 @@ export function IceCardEditor({
                           selectedMediaAssetId: newAsset.id,
                           generatedImageUrl: url 
                         });
+                        // Return to lanes view after selection
+                        setEditorMode("lanes");
+                        setActiveTab("content");
                       }}
-                      onSelectVideo={async (url, thumbnailUrl, photographer) => {
-                        // Detect video duration
-                        let videoDuration: number | undefined;
-                        try {
-                          const tempVideo = document.createElement('video');
-                          tempVideo.preload = 'metadata';
-                          tempVideo.crossOrigin = 'anonymous';
-                          videoDuration = await new Promise<number>((resolve) => {
-                            tempVideo.onloadedmetadata = () => resolve(tempVideo.duration);
-                            tempVideo.onerror = () => resolve(5); // Default fallback
-                            setTimeout(() => resolve(5), 5000); // Timeout fallback
-                            tempVideo.src = url;
-                          });
-                        } catch {
-                          videoDuration = undefined;
+                      onSelectVideo={async (url, thumbnailUrl, photographer, width, height, duration) => {
+                        // Use passed duration or detect from video element
+                        let videoDuration = duration;
+                        if (!videoDuration) {
+                          try {
+                            const tempVideo = document.createElement('video');
+                            tempVideo.preload = 'metadata';
+                            tempVideo.crossOrigin = 'anonymous';
+                            videoDuration = await new Promise<number>((resolve) => {
+                              tempVideo.onloadedmetadata = () => resolve(tempVideo.duration);
+                              tempVideo.onerror = () => resolve(5); // Default fallback
+                              setTimeout(() => resolve(5), 5000); // Timeout fallback
+                              tempVideo.src = url;
+                            });
+                          } catch {
+                            videoDuration = undefined;
+                          }
                         }
+                        
+                        // Compute aspect ratio from dimensions for proper scaling
+                        const aspectRatio = (width && height) ? width / height : undefined;
                         
                         const newAsset: MediaAsset = {
                           id: `stock-video-${Date.now()}`,
@@ -3963,6 +3971,10 @@ export function IceCardEditor({
                           createdAt: new Date().toISOString(),
                           prompt: photographer ? `Stock video by ${photographer}` : 'Stock video from Pexels',
                           durationSec: videoDuration,
+                          sourceWidth: width,
+                          sourceHeight: height,
+                          sourceAspectRatio: aspectRatio,
+                          renderMode: 'auto', // Let system auto-detect based on aspect ratio
                         };
                         const updatedAssets = [...(card.mediaAssets || []), newAsset];
                         onCardUpdate(card.id, { 
@@ -3977,6 +3989,9 @@ export function IceCardEditor({
                           generatedVideoUrl: url,
                           videoDurationSec: videoDuration,
                         });
+                        // Return to lanes view after selection
+                        setEditorMode("lanes");
+                        setActiveTab("content");
                       }}
                       showVideos={true}
                     />

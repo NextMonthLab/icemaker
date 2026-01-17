@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Image, Video, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ interface PexelsPhoto {
 interface PexelsVideo {
   id: number;
   image: string;
+  duration: number;
   video_files: Array<{
     id: number;
     quality: string;
@@ -36,7 +37,7 @@ interface PexelsVideo {
 
 interface PexelsMediaPickerProps {
   onSelectImage: (url: string, photographer?: string) => void;
-  onSelectVideo?: (url: string, thumbnailUrl: string, photographer?: string) => void;
+  onSelectVideo?: (url: string, thumbnailUrl: string, photographer?: string, width?: number, height?: number, duration?: number) => void;
   showVideos?: boolean;
 }
 
@@ -50,28 +51,49 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [photosPage, setPhotosPage] = useState(1);
+  const [videosPage, setVideosPage] = useState(1);
+  const [photosHasMore, setPhotosHasMore] = useState(true);
+  const [videosHasMore, setVideosHasMore] = useState(true);
   const [lastQuery, setLastQuery] = useState("");
+  const isInitialMount = useRef(true);
 
-  const search = async (isLoadMore = false) => {
+  // Auto-search when switching tabs if we have a query and haven't searched this type yet
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // If we have a query but no results for this media type, auto-search
+    if (query.trim() && hasSearched) {
+      if (mediaType === "photos" && photos.length === 0) {
+        searchType("photos");
+      } else if (mediaType === "videos" && videos.length === 0) {
+        searchType("videos");
+      }
+    }
+  }, [mediaType]);
+
+  const searchType = async (type: "photos" | "videos", isLoadMore = false) => {
     if (!query.trim()) return;
     
-    const currentPage = isLoadMore ? page + 1 : 1;
+    const currentPage = isLoadMore ? (type === "photos" ? photosPage + 1 : videosPage + 1) : 1;
     
     if (isLoadMore) {
       setIsLoadingMore(true);
     } else {
       setIsLoading(true);
       setHasSearched(true);
-      setPage(1);
+      if (type === "photos") setPhotosPage(1);
+      else setVideosPage(1);
       setLastQuery(query);
     }
     setError(null);
     
     try {
       const response = await fetch(
-        `/api/pexels/search?query=${encodeURIComponent(query)}&type=${mediaType}&per_page=15&page=${currentPage}`,
+        `/api/pexels/search?query=${encodeURIComponent(query)}&type=${type}&per_page=15&page=${currentPage}`,
         { credentials: 'include' }
       );
       
@@ -84,20 +106,16 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
       
       const data = await response.json();
       
-      if (mediaType === "photos") {
+      if (type === "photos") {
         const newPhotos = data.photos || [];
         setPhotos(isLoadMore ? [...photos, ...newPhotos] : newPhotos);
-        setVideos([]);
-        setHasMore(newPhotos.length >= 15);
+        setPhotosHasMore(newPhotos.length >= 15);
+        if (isLoadMore) setPhotosPage(currentPage);
       } else {
         const newVideos = data.videos || [];
         setVideos(isLoadMore ? [...videos, ...newVideos] : newVideos);
-        setPhotos([]);
-        setHasMore(newVideos.length >= 15);
-      }
-      
-      if (isLoadMore) {
-        setPage(currentPage);
+        setVideosHasMore(newVideos.length >= 15);
+        if (isLoadMore) setVideosPage(currentPage);
       }
     } catch (err) {
       console.error("Pexels search error:", err);
@@ -107,9 +125,21 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
       setIsLoadingMore(false);
     }
   };
+
+  const search = async (isLoadMore = false) => {
+    // Search both types when not load more to pre-populate both tabs
+    if (!isLoadMore) {
+      await Promise.all([
+        searchType("photos", false),
+        searchType("videos", false)
+      ]);
+    } else {
+      await searchType(mediaType, true);
+    }
+  };
   
   const loadMore = () => {
-    search(true);
+    searchType(mediaType, true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -226,7 +256,14 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
                   key={video.id}
                   onClick={() => {
                     setSelectedId(video.id);
-                    onSelectVideo?.(hdFile?.link || "", video.image, video.user.name);
+                    onSelectVideo?.(
+                      hdFile?.link || "", 
+                      video.image, 
+                      video.user.name,
+                      hdFile?.width,
+                      hdFile?.height,
+                      video.duration
+                    );
                   }}
                   className={`relative aspect-video rounded-md overflow-hidden group transition-all ${
                     selectedId === video.id 
@@ -252,7 +289,8 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
           </div>
           
           {/* Load More button */}
-          {hasMore && (photos.length > 0 || videos.length > 0) && (
+          {((mediaType === "photos" && photosHasMore && photos.length > 0) || 
+            (mediaType === "videos" && videosHasMore && videos.length > 0)) && (
             <div className="flex justify-center pt-2">
               <Button
                 onClick={loadMore}
@@ -274,7 +312,8 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
             </div>
           )}
           
-          {!hasMore && (photos.length > 0 || videos.length > 0) && (
+          {((mediaType === "photos" && !photosHasMore && photos.length > 0) || 
+            (mediaType === "videos" && !videosHasMore && videos.length > 0)) && (
             <p className="text-center text-xs text-white/40 pt-2">No more results</p>
           )}
           
