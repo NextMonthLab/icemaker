@@ -2112,8 +2112,21 @@ export function IceCardEditor({
                   
                   {/* Media Timeline - shows filled vs remaining time */}
                   {(() => {
-                    const narrationDuration = card.narrationDurationSec || 0;
                     const segments = card.mediaSegments || [];
+                    const videoAssets = card.mediaAssets?.filter(a => a.kind === 'video') || [];
+                    const hasVideo = !!(card.generatedVideoUrl || videoAssets.length > 0);
+                    const hasNarration = !!card.narrationAudioUrl;
+                    
+                    // If no videos and no narration, don't show timeline
+                    if (!hasVideo && !hasNarration) return null;
+                    
+                    // For narration duration: use stored value, or estimate from content
+                    // Estimation: ~12.5 chars/second at normal speed (same as backend TTS)
+                    let narrationDuration = card.narrationDurationSec || 0;
+                    if (narrationDuration <= 0 && hasNarration && card.content) {
+                      // Fallback estimation for cards where duration wasn't stored
+                      narrationDuration = Math.max(1, Math.round((card.content.length / 12.5) * 10) / 10);
+                    }
                     
                     // Calculate filled time from segments first
                     let totalFilledTime = segments.reduce((sum, s) => sum + s.durationSec, 0);
@@ -2130,10 +2143,10 @@ export function IceCardEditor({
                       totalFilledTime = videoDuration;
                     }
                     
-                    const remainingTime = Math.max(0, narrationDuration - totalFilledTime);
-                    const percentFilled = narrationDuration > 0 ? Math.min(100, (totalFilledTime / narrationDuration) * 100) : 0;
-                    
-                    if (narrationDuration <= 0) return null;
+                    // If we have no narration duration but have videos, still show filled time
+                    const displayNarrationDuration = narrationDuration > 0 ? narrationDuration : totalFilledTime;
+                    const remainingTime = narrationDuration > 0 ? Math.max(0, narrationDuration - totalFilledTime) : 0;
+                    const percentFilled = displayNarrationDuration > 0 ? Math.min(100, (totalFilledTime / displayNarrationDuration) * 100) : 100;
                     
                     return (
                       <div className="p-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 space-y-2">
@@ -2143,7 +2156,8 @@ export function IceCardEditor({
                             Media Timeline
                           </span>
                           <span className="text-slate-400">
-                            {totalFilledTime.toFixed(1)}s / {narrationDuration.toFixed(1)}s
+                            {totalFilledTime.toFixed(1)}s{narrationDuration > 0 ? ` / ${narrationDuration.toFixed(1)}s` : ''}
+                            {!hasNarration && hasVideo && ' (no narration)'}
                           </span>
                         </div>
                         
@@ -2284,6 +2298,60 @@ export function IceCardEditor({
                                 </div>
                               </div>
                             )}
+                          </div>
+                        )}
+                        
+                        {/* Video Assets list - show when no segments but multiple videos */}
+                        {segments.length === 0 && videoAssets.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
+                              <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                                Videos ({videoAssets.length})
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {videoAssets.map((asset, idx) => {
+                                const isSelected = asset.id === card.selectedMediaAssetId || 
+                                  asset.url === card.generatedVideoUrl;
+                                return (
+                                  <div 
+                                    key={asset.id}
+                                    className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
+                                      isSelected 
+                                        ? 'bg-cyan-500/20 border border-cyan-500/40' 
+                                        : 'bg-slate-800/50'
+                                    }`}
+                                    onClick={() => {
+                                      onCardUpdate(card.id, { 
+                                        selectedMediaAssetId: asset.id,
+                                        generatedVideoUrl: asset.url 
+                                      });
+                                      onCardSave(card.id, { 
+                                        selectedMediaAssetId: asset.id,
+                                        generatedVideoUrl: asset.url 
+                                      });
+                                    }}
+                                    data-testid={`video-asset-item-${idx}`}
+                                  >
+                                    <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-medium ${
+                                      isSelected
+                                        ? 'bg-cyan-500 text-white'
+                                        : 'bg-cyan-500/20 text-cyan-400'
+                                    }`}>
+                                      {idx + 1}
+                                    </span>
+                                    <Video className="w-3 h-3 text-slate-400" />
+                                    <span className="text-slate-300 flex-1 truncate">
+                                      {asset.durationSec ? `${asset.durationSec}s` : '5s'}
+                                      {isSelected && ' (active)'}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <p className="text-[10px] text-slate-500">
+                              Click a video to set it as active. Only one video plays at a time.
+                            </p>
                           </div>
                         )}
                         
