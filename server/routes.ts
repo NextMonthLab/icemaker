@@ -1247,6 +1247,41 @@ export async function registerRoutes(
       res.status(500).json({ message: "Error checking storage quota" });
     }
   });
+
+  // Get all user's media assets across all ICEs for cross-ICE reuse
+  app.get("/api/me/media", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getCreatorProfile(req.user!.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Creator profile not found" });
+      }
+
+      // Get all active media assets for this user
+      const mediaAssets = await storage.getMediaAssetsByProfile(profile.id, 'active');
+      
+      // Import the helper to construct public URLs from file keys
+      const { getPublicUrlFromKey } = await import("./storage/objectStore");
+      
+      // Transform to client-friendly format with URLs
+      const formattedAssets = mediaAssets.map(asset => ({
+        id: asset.id,
+        iceId: asset.iceId,
+        url: getPublicUrlFromKey(asset.fileKey),
+        fileKey: asset.fileKey,
+        category: asset.category, // 'image' | 'video' | 'audio' | 'document' | 'other'
+        sizeBytes: asset.sizeBytes,
+        createdAt: asset.createdAt,
+      }));
+
+      res.json({
+        assets: formattedAssets,
+        total: formattedAssets.length,
+      });
+    } catch (error) {
+      console.error("Error fetching user media:", error);
+      res.status(500).json({ message: "Error fetching user media" });
+    }
+  });
   
   // Get engagement metrics for universes (creators/admins only)
   app.get("/api/engagement", requireAuth, async (req, res) => {

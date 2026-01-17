@@ -34,6 +34,17 @@ export function isObjectStorageConfigured(): boolean {
   );
 }
 
+export function getPublicUrlFromKey(key: string): string {
+  const bucket = process.env.R2_BUCKET;
+  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
+  
+  if (publicBaseUrl) {
+    return `${publicBaseUrl.replace(/\/$/, "")}/${key}`;
+  }
+  
+  return `https://${bucket}.r2.dev/${key}`;
+}
+
 export async function putObject(
   key: string,
   buffer: Buffer,
