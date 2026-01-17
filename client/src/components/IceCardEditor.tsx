@@ -4,7 +4,7 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus
+  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -2177,27 +2177,48 @@ export function IceCardEditor({
                               </div>
                               
                               {/* Video scaling toggle for video blocks */}
-                              {block.type.includes('video') && block.status === 'ready' && block.assetId && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const asset = card.mediaAssets?.find(a => a.id === block.assetId);
-                                    if (asset) {
-                                      const newMode = asset.renderMode === 'fit' ? 'fill' : 'fit';
-                                      const updatedAssets = card.mediaAssets?.map(a => 
-                                        a.id === block.assetId ? { ...a, renderMode: newMode as RenderMode } : a
-                                      );
-                                      onCardUpdate(card.id, { mediaAssets: updatedAssets });
-                                      onCardSave(card.id, { mediaAssets: updatedAssets });
-                                    }
-                                  }}
-                                  className="px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
-                                  title={card.mediaAssets?.find(a => a.id === block.assetId)?.renderMode === 'fit' ? 'Click to fill screen' : 'Click to fit to screen'}
-                                  data-testid={`button-toggle-scale-${block.id}`}
-                                >
-                                  {card.mediaAssets?.find(a => a.id === block.assetId)?.renderMode === 'fit' ? 'Fit' : 'Fill'}
-                                </button>
-                              )}
+                              {block.type.includes('video') && block.status === 'ready' && block.assetId && (() => {
+                                const currentMode = card.mediaAssets?.find(a => a.id === block.assetId)?.renderMode || 'fill';
+                                const isFit = currentMode === 'fit';
+                                return (
+                                  <div className="flex items-center gap-1 bg-slate-700 rounded-md p-0.5">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const updatedAssets = card.mediaAssets?.map(a => 
+                                          a.id === block.assetId ? { ...a, renderMode: 'fill' as RenderMode } : a
+                                        );
+                                        onCardUpdate(card.id, { mediaAssets: updatedAssets });
+                                        onCardSave(card.id, { mediaAssets: updatedAssets });
+                                      }}
+                                      className={`p-1.5 rounded transition-colors ${
+                                        !isFit ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'
+                                      }`}
+                                      title="Fill screen (may crop edges)"
+                                      data-testid={`button-scale-fill-${block.id}`}
+                                    >
+                                      <Maximize className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const updatedAssets = card.mediaAssets?.map(a => 
+                                          a.id === block.assetId ? { ...a, renderMode: 'fit' as RenderMode } : a
+                                        );
+                                        onCardUpdate(card.id, { mediaAssets: updatedAssets });
+                                        onCardSave(card.id, { mediaAssets: updatedAssets });
+                                      }}
+                                      className={`p-1.5 rounded transition-colors ${
+                                        isFit ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'
+                                      }`}
+                                      title="Fit to screen (shows full video)"
+                                      data-testid={`button-scale-fit-${block.id}`}
+                                    >
+                                      <Minimize className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                );
+                              })()}
                               
                               {/* Status indicator */}
                               <div className="flex-shrink-0">
