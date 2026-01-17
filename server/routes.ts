@@ -3450,6 +3450,9 @@ export async function registerRoutes(
       }
     }
     
+    // CRITICAL: Add anti-text guardrail to prevent AI from rendering text/words in images
+    prompt += ". IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this image. Pure visual imagery only.";
+    
     return prompt;
   };
   
@@ -3479,9 +3482,18 @@ export async function registerRoutes(
       parts.push(card.imageGeneration.negativePrompt);
     }
     
-    // Always include baseline quality negatives
+    // Always include baseline quality negatives and anti-text guardrail
+    const baselineNegatives = ["blurry", "low quality", "distorted", "ugly", "deformed", "text", "words", "letters", "titles", "captions", "watermarks", "typography", "writing", "labels"];
     if (parts.length === 0) {
-      parts.push("blurry", "low quality", "distorted", "ugly", "deformed");
+      parts.push(...baselineNegatives);
+    } else {
+      // Always add anti-text items even if custom negative prompt exists
+      const antiTextItems = ["text", "words", "letters", "titles", "captions", "watermarks", "typography"];
+      antiTextItems.forEach(item => {
+        if (!parts.some(p => p.toLowerCase().includes(item))) {
+          parts.push(item);
+        }
+      });
     }
     
     return parts.join(", ");
@@ -8570,7 +8582,9 @@ Stay engaging, reference story details, and help the audience understand the nar
       const card = cards[cardIndex];
       
       // Generate prompt from card content if not provided
-      const imagePrompt = prompt || `${card.title}. ${card.content}`;
+      const basePrompt = prompt || `${card.title}. ${card.content}`;
+      // CRITICAL: Add anti-text guardrail to prevent AI from rendering text/words in images
+      const imagePrompt = `${basePrompt}. IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in this image. Pure visual imagery only.`;
       
       // Check if OpenAI is configured
       if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
