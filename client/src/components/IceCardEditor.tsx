@@ -244,14 +244,7 @@ function DraggableMediaTimeline({
   const sortedSegments = [...segments].sort((a, b) => a.order - b.order);
   
   return (
-    <div className="space-y-2 pt-1">
-      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
-        <span className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-          <GripVertical className="w-3 h-3" />
-          Clips ({segments.length}) - Drag to reorder
-        </span>
-      </div>
-      
+    <div className="space-y-3">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -261,7 +254,7 @@ function DraggableMediaTimeline({
           items={sortedSegments.map(s => s.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-1.5" data-testid="timeline-clips-container">
+          <div className="space-y-2" data-testid="timeline-clips-container">
             {sortedSegments.map((seg, idx) => (
               <SortableMediaClip
                 key={seg.id}
@@ -281,11 +274,11 @@ function DraggableMediaTimeline({
       </p>
       
       {selectedIndex !== null && sortedSegments[selectedIndex] && (
-        <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-cyan-500/20">
+          <div className="text-[10px] text-cyan-400 uppercase tracking-wider mb-2 font-medium">
             Preview: Clip {selectedIndex + 1}
           </div>
-          <div className="aspect-video rounded overflow-hidden bg-slate-900">
+          <div className="aspect-video rounded-lg overflow-hidden bg-black shadow-lg shadow-cyan-500/10">
             {sortedSegments[selectedIndex].kind === 'video' ? (
               <video 
                 src={sortedSegments[selectedIndex].url} 
@@ -3415,46 +3408,65 @@ export function IceCardEditor({
                     const percentFilled = displayNarrationDuration > 0 ? Math.min(100, (totalFilledTime / displayNarrationDuration) * 100) : 100;
                     
                     return (
-                      <div className="p-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-cyan-400 font-medium flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            Media Timeline
-                          </span>
-                          <span className="text-slate-400">
-                            {totalFilledTime.toFixed(1)}s{narrationDuration > 0 ? ` / ${narrationDuration.toFixed(1)}s` : ''}
-                            {!hasNarration && hasVideo && ' (no narration)'}
-                          </span>
+                      <div className="p-4 rounded-xl border border-cyan-500/40 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                              <Clock className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold text-white">Media Timeline</span>
+                              <p className="text-[10px] text-slate-400">Drag to reorder clips</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-lg font-bold text-cyan-400">
+                              {totalFilledTime.toFixed(1)}s
+                            </span>
+                            {narrationDuration > 0 && (
+                              <span className="text-slate-500 text-sm"> / {narrationDuration.toFixed(1)}s</span>
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                           <div 
-                            className={`h-full rounded-full transition-all ${
+                            className={`h-full rounded-full transition-all duration-500 ${
                               percentFilled >= 100 
-                                ? 'bg-green-500' 
-                                : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/30' 
+                                : 'bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 shadow-lg shadow-cyan-500/20'
                             }`}
                             style={{ width: `${percentFilled}%` }}
                           />
                         </div>
                         
                         {remainingTime > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-amber-400">
-                              {remainingTime.toFixed(1)}s remaining to fill
+                          <div className="flex items-center justify-between px-1">
+                            <span className="text-xs text-amber-400 font-medium">
+                              {remainingTime.toFixed(1)}s remaining
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-cyan-400/70">
                               Add more media below
                             </span>
                           </div>
                         )}
                         
                         {percentFilled >= 100 && (
-                          <div className="flex items-center gap-1.5 text-xs text-green-400">
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            Timeline filled - no gaps during playback
+                          <div className="flex items-center gap-2 px-1 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-xs text-green-400 font-medium">
+                              Timeline complete - ready for playback
+                            </span>
                           </div>
                         )}
+                        
+                        {/* Clips header */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-700/50">
+                          <GripVertical className="w-4 h-4 text-slate-500" />
+                          <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">
+                            Clips ({(card.mediaAssets?.filter(a => a.status === 'ready') || []).length})
+                          </span>
+                        </div>
                         
                         {/* Unified drag-and-drop media timeline */}
                         {(() => {
@@ -3799,77 +3811,6 @@ export function IceCardEditor({
                     </div>
                   ) : (
                     <>
-                      {/* Clip Tabs - shows sequence of video clips (persisted + drafts) */}
-                      {unifiedClips.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                            {unifiedClips.map((clip, idx) => {
-                              const isActive = activeClipId === clip.id || 
-                                (clip.isPersistedAsset && (card.selectedMediaAssetId === clip.id || card.generatedVideoUrl === clip.videoUrl));
-                              const isDraft = clip.status === 'draft';
-                              const isGenerating = clip.status === 'generating';
-                              
-                              return (
-                                <button
-                                  key={clip.id}
-                                  onClick={() => {
-                                    setActiveClipId(clip.id);
-                                    if (clip.isPersistedAsset && clip.videoUrl) {
-                                      onCardUpdate(card.id, { 
-                                        selectedMediaAssetId: clip.id,
-                                        generatedVideoUrl: clip.videoUrl 
-                                      });
-                                    }
-                                    if (!clip.isPersistedAsset) {
-                                      setVideoPrompt(clip.prompt);
-                                    }
-                                  }}
-                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                                    isActive
-                                      ? 'bg-cyan-500 text-white'
-                                      : isGenerating
-                                        ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50 animate-pulse'
-                                        : isDraft
-                                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
-                                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                  }`}
-                                  data-testid={`clip-tab-${idx}`}
-                                >
-                                  {isGenerating && <Loader2 className="w-3 h-3 animate-spin" />}
-                                  {isDraft && <span className="text-amber-400">●</span>}
-                                  <span>Clip {idx + 1}</span>
-                                  {clip.durationSec && <span className="text-[10px] opacity-70">({clip.durationSec}s)</span>}
-                                  {isDraft && <span className="text-[10px] opacity-70">(draft)</span>}
-                                </button>
-                              );
-                            })}
-                            {/* Add new clip button - only show if no draft exists */}
-                            {!draftClips.some(d => d.status === 'draft') && (
-                              <button
-                                onClick={() => {
-                                  addDraftClip('');
-                                  setShowClipSuggestions(true);
-                                  toast({
-                                    title: `Clip ${unifiedClips.length + 1} created`,
-                                    description: "Enter a prompt or pick a suggestion below.",
-                                  });
-                                }}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-800 text-cyan-400 border border-dashed border-cyan-500/50 hover:border-cyan-500 hover:bg-cyan-500/10 transition-colors whitespace-nowrap"
-                                data-testid="button-add-clip"
-                              >
-                                <Plus className="w-3 h-3" />
-                                <span>Add Clip</span>
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            {draftClips.some(d => d.status === 'draft') 
-                              ? `Working on Clip ${unifiedClips.length}. Enter a prompt and generate.`
-                              : "Click a clip tab to preview it. Clips play in sequence during playback."
-                            }
-                          </p>
-                        </div>
-                      )}
                       
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
