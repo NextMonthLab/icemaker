@@ -1207,21 +1207,21 @@ export default function CardPlayer({
               </motion.div>
             )}
 
-            {/* Admin CTA - positioned at bottom-right, just above navigation controls */}
+            {/* Admin CTA - centered at bottom, above navigation controls */}
             {/* Placed outside the scale animation container for stable positioning */}
             {adminCtaEnabled && (
               <a 
                 href="/"
-                className="absolute z-30 pointer-events-auto bottom-16 right-4"
+                className="absolute z-30 pointer-events-auto bottom-20 left-1/2 -translate-x-1/2"
                 data-testid="admin-cta-overlay"
               >
-                <div className="bg-gradient-to-r from-cyan-500/90 to-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg hover:from-cyan-400/90 hover:to-blue-400/90 transition-all">
-                  <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                <div className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-blue-500 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2.5 shadow-lg shadow-cyan-500/25 border border-white/20 hover:shadow-cyan-400/40 hover:scale-[1.02] transition-all duration-200">
+                  <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center backdrop-blur-sm">
                     <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
                   </div>
-                  <span className="text-white text-xs font-medium whitespace-nowrap">
+                  <span className="text-white text-xs font-semibold tracking-wide whitespace-nowrap">
                     Made with IceMaker
                   </span>
                 </div>
