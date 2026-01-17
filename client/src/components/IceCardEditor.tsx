@@ -938,27 +938,77 @@ export function IceCardEditor({
   const [showClipSuggestions, setShowClipSuggestions] = useState(false);
   
   // Clip tabs for multi-video sequence editing
+  // Draft clips are clips being created but not yet generated
   interface ClipDraft {
     id: string;
     prompt: string;
-    status: 'draft' | 'generating' | 'ready' | 'failed';
-    assetId?: string;
-    videoUrl?: string;
+    status: 'draft' | 'generating';
+    predictionId?: string;
   }
+  const [draftClips, setDraftClips] = useState<ClipDraft[]>([]);
+  const [activeClipId, setActiveClipId] = useState<string | null>(null);
+  
+  // Get persisted video assets
   const videoAssets = card.mediaAssets?.filter(a => a.kind === 'video') || [];
-  const initialClips: ClipDraft[] = videoAssets.map((asset, idx) => ({
-    id: asset.id,
-    prompt: asset.prompt || '',
-    status: asset.status === 'generating' ? 'generating' : 'ready',
-    assetId: asset.id,
-    videoUrl: asset.url,
-  }));
-  // Always have at least one draft clip to work with
-  if (initialClips.length === 0 || initialClips.every(c => c.status === 'ready')) {
-    initialClips.push({ id: `draft-${Date.now()}`, prompt: videoPrompt || '', status: 'draft' });
+  
+  // Unified clip list: persisted assets + draft clips
+  interface UnifiedClip {
+    id: string;
+    prompt: string;
+    status: 'ready' | 'generating' | 'draft' | 'failed';
+    isPersistedAsset: boolean;
+    videoUrl?: string;
+    durationSec?: number;
+    predictionId?: string;
   }
-  const [clipDrafts, setClipDrafts] = useState<ClipDraft[]>(initialClips);
-  const [activeClipIndex, setActiveClipIndex] = useState(initialClips.length > 0 ? initialClips.length - 1 : 0);
+  
+  const unifiedClips: UnifiedClip[] = [
+    // First, all persisted video assets
+    ...videoAssets.map(asset => ({
+      id: asset.id,
+      prompt: asset.prompt || '',
+      status: asset.status as 'ready' | 'generating' | 'failed',
+      isPersistedAsset: true,
+      videoUrl: asset.url,
+      durationSec: asset.durationSec,
+      predictionId: asset.predictionId,
+    })),
+    // Then, draft clips that aren't already in assets (by predictionId match)
+    ...draftClips.filter(draft => 
+      !videoAssets.some(a => a.predictionId && a.predictionId === draft.predictionId)
+    ).map(draft => ({
+      id: draft.id,
+      prompt: draft.prompt,
+      status: draft.status as 'draft' | 'generating',
+      isPersistedAsset: false,
+      predictionId: draft.predictionId,
+    })),
+  ];
+  
+  // Helper to add a new draft clip immediately
+  const addDraftClip = (prompt: string) => {
+    const newDraft: ClipDraft = {
+      id: `draft-${Date.now()}`,
+      prompt,
+      status: 'draft',
+    };
+    setDraftClips(prev => [...prev, newDraft]);
+    setActiveClipId(newDraft.id);
+    setVideoPrompt(prompt);
+    return newDraft;
+  };
+  
+  // Helper to mark a draft as generating
+  const markDraftGenerating = (draftId: string, predictionId: string) => {
+    setDraftClips(prev => prev.map(d => 
+      d.id === draftId ? { ...d, status: 'generating' as const, predictionId } : d
+    ));
+  };
+  
+  // Helper to remove a draft (when asset is persisted)
+  const removeDraft = (draftId: string) => {
+    setDraftClips(prev => prev.filter(d => d.id !== draftId));
+  };
   
   const { data: videoConfig } = useQuery({
     queryKey: ["video-config"],
@@ -1329,6 +1379,9 @@ export function IceCardEditor({
       return;
     }
     
+    // Find active draft to mark as generating
+    const activeDraft = draftClips.find(d => d.id === activeClipId && d.status === 'draft');
+    
     setVideoLoading(true);
     setVideoStatus("pending");
     setVideoGenStartTime(Date.now());
@@ -1369,6 +1422,11 @@ export function IceCardEditor({
       if (data.status === "completed") {
         setVideoStatus("completed");
         
+        // Remove draft clip if it exists (video is now persisted as asset)
+        if (activeDraft) {
+          removeDraft(activeDraft.id);
+        }
+        
         // Create new MediaAsset for the video
         const newAssetId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const newAsset: MediaAsset = {
@@ -1407,10 +1465,22 @@ export function IceCardEditor({
           mediaSegments: [...existingSegments, newSegment],
           selectedMediaAssetId: newAssetId,
         });
-        toast({ title: "Video ready!", description: "AI video has been generated and added to timeline." });
+        
+        // Update active clip to the new asset
+        setActiveClipId(newAssetId);
+        
+        const clipNumber = unifiedClips.length;
+        toast({ title: `Clip ${clipNumber} ready!`, description: "AI video has been generated and added to timeline." });
       } else {
         setVideoStatus("processing");
-        toast({ title: "Video generation started", description: "This may take 5-10 minutes." });
+        
+        // Mark draft as generating if we have a prediction ID
+        if (activeDraft && data.predictionId) {
+          markDraftGenerating(activeDraft.id, data.predictionId);
+        }
+        
+        const clipNumber = unifiedClips.length;
+        toast({ title: `Generating Clip ${clipNumber}`, description: "This may take 1-3 minutes." });
       }
     } catch (error: any) {
       setVideoStatus("failed");
@@ -2637,26 +2707,23 @@ export function IceCardEditor({
                                         size="sm"
                                         className="bg-cyan-600 hover:bg-cyan-700 text-white gap-1"
                                         onClick={() => {
-                                          setVideoPrompt(suggestion.prompt);
+                                          // Immediately create a draft clip with this prompt
+                                          const clipNumber = unifiedClips.length + 1;
+                                          addDraftClip(suggestion.prompt);
                                           toast({
-                                            title: videoAssets.length > 0 ? "New clip prompt ready" : "Prompt applied",
-                                            description: videoAssets.length > 0 
-                                              ? "Press 'Generate AI Video' to create this as your next clip."
-                                              : "The suggested prompt has been added. Press Generate to create.",
+                                            title: `Clip ${clipNumber} created`,
+                                            description: "Your new clip is ready. Press Generate to create the video.",
                                           });
                                           // Scroll down to generate button
                                           document.querySelector('[data-testid="button-generate-video"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         }}
                                         data-testid={`button-use-suggestion-${suggestion.id}`}
                                       >
-                                        {videoAssets.length > 0 ? (
-                                          <>
-                                            <Plus className="w-3 h-3" />
-                                            Add as Clip {videoAssets.length + 1}
-                                          </>
-                                        ) : (
-                                          "Use"
-                                        )}
+                                        <Plus className="w-3 h-3" />
+                                        {unifiedClips.length > 0 
+                                          ? `Add as Clip ${unifiedClips.length + 1}`
+                                          : "Create Clip 1"
+                                        }
                                       </Button>
                                     </div>
                                     <p 
@@ -2839,54 +2906,74 @@ export function IceCardEditor({
                     </div>
                   ) : (
                     <>
-                      {/* Clip Tabs - shows sequence of video clips */}
-                      {videoAssets.length > 0 && (
+                      {/* Clip Tabs - shows sequence of video clips (persisted + drafts) */}
+                      {unifiedClips.length > 0 && (
                         <div className="space-y-2">
                           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                            {videoAssets.map((asset, idx) => {
-                              const isGenerating = asset.status === 'generating';
+                            {unifiedClips.map((clip, idx) => {
+                              const isActive = activeClipId === clip.id || 
+                                (clip.isPersistedAsset && (card.selectedMediaAssetId === clip.id || card.generatedVideoUrl === clip.videoUrl));
+                              const isDraft = clip.status === 'draft';
+                              const isGenerating = clip.status === 'generating';
+                              
                               return (
                                 <button
-                                  key={asset.id}
+                                  key={clip.id}
                                   onClick={() => {
-                                    // Select this video to preview
-                                    onCardUpdate(card.id, { 
-                                      selectedMediaAssetId: asset.id,
-                                      generatedVideoUrl: asset.url 
-                                    });
+                                    setActiveClipId(clip.id);
+                                    if (clip.isPersistedAsset && clip.videoUrl) {
+                                      onCardUpdate(card.id, { 
+                                        selectedMediaAssetId: clip.id,
+                                        generatedVideoUrl: clip.videoUrl 
+                                      });
+                                    }
+                                    if (!clip.isPersistedAsset) {
+                                      setVideoPrompt(clip.prompt);
+                                    }
                                   }}
                                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                                    card.selectedMediaAssetId === asset.id || card.generatedVideoUrl === asset.url
+                                    isActive
                                       ? 'bg-cyan-500 text-white'
                                       : isGenerating
-                                        ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50'
-                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                        ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50 animate-pulse'
+                                        : isDraft
+                                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
+                                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                                   }`}
                                   data-testid={`clip-tab-${idx}`}
                                 >
                                   {isGenerating && <Loader2 className="w-3 h-3 animate-spin" />}
+                                  {isDraft && <span className="text-amber-400">●</span>}
                                   <span>Clip {idx + 1}</span>
-                                  {asset.durationSec && <span className="text-[10px] opacity-70">({asset.durationSec}s)</span>}
+                                  {clip.durationSec && <span className="text-[10px] opacity-70">({clip.durationSec}s)</span>}
+                                  {isDraft && <span className="text-[10px] opacity-70">(draft)</span>}
                                 </button>
                               );
                             })}
-                            {/* Add new clip button */}
-                            <button
-                              onClick={() => {
-                                // Clear the prompt to prepare for new clip
-                                setVideoPrompt('');
-                                // Scroll to suggestions if available
-                                setShowClipSuggestions(true);
-                              }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-800 text-cyan-400 border border-dashed border-cyan-500/50 hover:border-cyan-500 hover:bg-cyan-500/10 transition-colors whitespace-nowrap"
-                              data-testid="button-add-clip"
-                            >
-                              <Plus className="w-3 h-3" />
-                              <span>Add Clip</span>
-                            </button>
+                            {/* Add new clip button - only show if no draft exists */}
+                            {!draftClips.some(d => d.status === 'draft') && (
+                              <button
+                                onClick={() => {
+                                  addDraftClip('');
+                                  setShowClipSuggestions(true);
+                                  toast({
+                                    title: `Clip ${unifiedClips.length + 1} created`,
+                                    description: "Enter a prompt or pick a suggestion below.",
+                                  });
+                                }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-800 text-cyan-400 border border-dashed border-cyan-500/50 hover:border-cyan-500 hover:bg-cyan-500/10 transition-colors whitespace-nowrap"
+                                data-testid="button-add-clip"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>Add Clip</span>
+                              </button>
+                            )}
                           </div>
                           <p className="text-[10px] text-slate-500">
-                            Click a clip tab to preview it. Clips play in sequence during playback.
+                            {draftClips.some(d => d.status === 'draft') 
+                              ? `Working on Clip ${unifiedClips.length}. Enter a prompt and generate.`
+                              : "Click a clip tab to preview it. Clips play in sequence during playback."
+                            }
                           </p>
                         </div>
                       )}
@@ -2985,7 +3072,7 @@ export function IceCardEditor({
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium flex items-center gap-2 text-blue-300">
                               <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
-                              🎬 Generating Clip {videoAssets.length + 1}...
+                              🎬 Generating Clip {unifiedClips.length}...
                             </span>
                             <span className="text-lg font-mono text-cyan-400">
                               {Math.floor(videoGenElapsed / 60)}:{(videoGenElapsed % 60).toString().padStart(2, '0')}
@@ -3015,9 +3102,9 @@ export function IceCardEditor({
                         {videoLoading 
                           ? "Starting generation..." 
                           : videoStatus === "processing"
-                            ? `Generating Clip ${videoAssets.length + 1}...`
-                            : videoAssets.length > 0 
-                              ? `Generate Clip ${videoAssets.length + 1}`
+                            ? `Generating Clip ${unifiedClips.length}...`
+                            : unifiedClips.length > 0 
+                              ? `Generate Clip ${unifiedClips.length}`
                               : "Generate AI Video"
                         }
                       </Button>
