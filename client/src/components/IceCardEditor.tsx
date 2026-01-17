@@ -1042,6 +1042,17 @@ export function IceCardEditor({
   const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
   const [showClipSuggestions, setShowClipSuggestions] = useState(false);
   
+  // Image suggestions for filler images when video exists but time remains
+  interface ImageSuggestion {
+    id: string;
+    prompt: string;
+    rationale: string;
+    continuityElements: string[];
+  }
+  const [imageSuggestions, setImageSuggestions] = useState<ImageSuggestion[]>([]);
+  const [imageSuggestionsLoading, setImageSuggestionsLoading] = useState(false);
+  const [showImageSuggestions, setShowImageSuggestions] = useState(false);
+  
   // Fetch all user media assets across all ICEs for reuse (lazy load when upload tab opens)
   interface UserMediaAsset {
     id: number;
@@ -2910,6 +2921,143 @@ export function IceCardEditor({
                     </div>
                   )}
                   
+                  {/* Contextual Image Suggestions - show when video exists but time remains */}
+                  {(() => {
+                    const videoAssets = card.mediaAssets?.filter(a => a.kind === 'video' && a.status === 'ready') || [];
+                    const hasVideo = !!(card.generatedVideoUrl || videoAssets.length > 0);
+                    const hasNarration = !!card.narrationAudioUrl;
+                    
+                    // Calculate if there's remaining time after video
+                    let narrationDuration = card.narrationDurationSec || 0;
+                    if (narrationDuration <= 0 && hasNarration && card.content) {
+                      narrationDuration = Math.max(1, Math.round((card.content.length / 12.5) * 10) / 10);
+                    }
+                    const videoDuration = videoAssets[0]?.durationSec || card.videoDurationSec || 5;
+                    const remainingTime = Math.max(0, narrationDuration - videoDuration);
+                    
+                    // Show suggestions when video exists and there's remaining time to fill
+                    if (!hasVideo || remainingTime <= 0) return null;
+                    
+                    const existingVideoPrompt = videoAssets[0]?.prompt || '';
+                    
+                    return (
+                      <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-500/5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-medium text-purple-300">
+                              Fill Remaining Time ({remainingTime.toFixed(1)}s)
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-slate-400">
+                          Your video is {videoDuration.toFixed(1)}s but narration is {narrationDuration.toFixed(1)}s. 
+                          Get AI suggestions for a filler image to continue the visual story.
+                        </p>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-purple-500/30 text-purple-400"
+                          onClick={async () => {
+                            if (showImageSuggestions && imageSuggestions.length > 0) {
+                              setShowImageSuggestions(false);
+                              return;
+                            }
+                            setImageSuggestionsLoading(true);
+                            setShowImageSuggestions(true);
+                            try {
+                              const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/suggest-filler-image`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                  cardTitle: card.title,
+                                  cardNarration: card.content,
+                                  existingVideoPrompt,
+                                  remainingSeconds: remainingTime,
+                                }),
+                              });
+                              if (res.ok) {
+                                const data = await res.json();
+                                setImageSuggestions(data.suggestions || []);
+                              }
+                            } catch (err) {
+                              console.error('Failed to get image suggestions:', err);
+                            } finally {
+                              setImageSuggestionsLoading(false);
+                            }
+                          }}
+                          disabled={imageSuggestionsLoading}
+                          data-testid="button-suggest-filler-image"
+                        >
+                          {imageSuggestionsLoading ? (
+                            <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                          ) : (
+                            <Sparkles className="w-3 h-3 mr-1.5" />
+                          )}
+                          {showImageSuggestions && imageSuggestions.length > 0 
+                            ? 'Hide Suggestions' 
+                            : imageSuggestionsLoading 
+                              ? 'Finding ideas...' 
+                              : 'Suggest Filler Image'}
+                        </Button>
+                        
+                        {showImageSuggestions && imageSuggestions.length > 0 && (
+                          <div className="space-y-2" data-testid="image-suggestions-list">
+                            {imageSuggestions.map((suggestion) => (
+                              <div 
+                                key={suggestion.id}
+                                className="p-2 rounded-lg bg-slate-800/70 border border-slate-700 space-y-1.5"
+                                data-testid={`image-suggestion-card-${suggestion.id}`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xs text-slate-300 leading-relaxed line-clamp-3 flex-1">
+                                    {suggestion.prompt}
+                                  </p>
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white gap-1 shrink-0"
+                                    onClick={() => {
+                                      setImagePrompt(suggestion.prompt);
+                                      setEnhancePromptEnabled(false);
+                                      toast({
+                                        title: "Prompt loaded",
+                                        description: "Hit Generate to create the filler image.",
+                                      });
+                                      setShowImageSuggestions(false);
+                                    }}
+                                    data-testid={`button-use-image-suggestion-${suggestion.id}`}
+                                  >
+                                    <Wand2 className="w-3 h-3" />
+                                    Use
+                                  </Button>
+                                </div>
+                                <p className="text-[10px] text-slate-500 italic">
+                                  {suggestion.rationale}
+                                </p>
+                                {suggestion.continuityElements?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {suggestion.continuityElements.slice(0, 3).map((elem, i) => (
+                                      <span 
+                                        key={i}
+                                        className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/40 text-purple-300"
+                                      >
+                                        {elem}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  
                   <Button
                     onClick={handleGenerateImage}
                     disabled={imageLoading || imageUploading}
@@ -3235,8 +3383,8 @@ export function IceCardEditor({
                           </div>
                         )}
                         
-                        {/* AI Clip Suggestions - show when remaining time allows 4+ segments (20s+) */}
-                        {remainingTime >= 20 && (
+                        {/* AI Clip Suggestions - show when remaining time allows at least 1 segment (5s+) */}
+                        {remainingTime >= 5 && (
                           <div className="pt-2 space-y-2">
                             <Button
                               variant="outline"

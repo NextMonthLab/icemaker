@@ -8852,6 +8852,136 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
     }
   });
   
+  // AI-powered contextual image suggestions when video exists but time remains
+  const imageSuggestionCache = new Map<string, { suggestions: any[]; timestamp: number }>();
+  
+  app.post("/api/ice/preview/:previewId/cards/:cardId/suggest-filler-image", requireAuth, async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      const { 
+        cardTitle, 
+        cardNarration, 
+        existingVideoPrompt,
+        remainingSeconds,
+        sceneLockDescription,
+        visualBibleStyle
+      } = req.body;
+      
+      // Validate required fields
+      if (!cardTitle || !cardNarration) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Create cache key from input hash
+      const cacheKey = `img-${previewId}-${cardId}-${
+        Buffer.from(cardNarration.slice(0, 200) + (existingVideoPrompt || '')).toString('base64').slice(0, 32)
+      }`;
+      
+      // Check cache
+      const cached = imageSuggestionCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < SUGGESTION_CACHE_TTL) {
+        console.log(`[ImageSuggestions] Cache hit for ${cacheKey}`);
+        return res.json({ suggestions: cached.suggestions, cached: true });
+      }
+      
+      // Build prompt for OpenAI
+      const systemPrompt = `You are a creative director helping to create filler images for a story card timeline.
+The user has a video that covers part of the narration, but there's still ${remainingSeconds || 'some'} seconds of narration that needs visual coverage.
+Your job is to suggest IMAGE prompts that:
+1. Continue the visual narrative from the existing video
+2. Show a complementary or follow-up scene
+3. Maintain visual continuity with the video's style and mood
+4. Work as a still image that will display while narration continues
+
+IMPORTANT: These are for STILL IMAGE generation - describe a single frozen moment, not motion.
+Do NOT include any text, titles, captions, or typography in your suggestions.
+
+Respond with a JSON array of 2-3 suggestions, each with:
+- prompt: The image generation prompt (40-100 words, cinematographic and detailed)
+- rationale: Brief 1-sentence explanation of why this works as a continuation
+- continuityElements: Array of 2-3 visual elements that connect to the video
+
+Example format:
+[
+  {
+    "prompt": "Close-up of hands on a vintage steering wheel, golden hour light streaming through windshield, blurred landscape visible through glass, warm nostalgic color palette...",
+    "rationale": "Provides intimate detail that complements the wider video shot",
+    "continuityElements": ["warm lighting", "automotive theme", "nostalgic mood"]
+  }
+]`;
+
+      const userPrompt = `Card Title: "${cardTitle}"
+Narration Script: "${cardNarration}"
+
+${existingVideoPrompt ? `Existing video prompt: "${existingVideoPrompt}"` : 'No video prompt provided.'}
+
+${sceneLockDescription ? `Scene context: ${sceneLockDescription}` : ''}
+${visualBibleStyle ? `Visual style: ${visualBibleStyle}` : ''}
+
+Suggest 2-3 still image prompts that would work as a visual continuation after the video ends while narration continues.`;
+
+      // Call OpenAI
+      const completion = await getOpenAI().chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 800,
+      });
+      
+      const responseText = completion.choices[0]?.message?.content || '[]';
+      
+      // Parse suggestions from response
+      let suggestions: any[] = [];
+      try {
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } catch (parseError) {
+        console.warn('[ImageSuggestions] Failed to parse AI response:', parseError);
+        suggestions = [{
+          id: `suggestion-fallback-${Date.now()}`,
+          prompt: `Detailed still image depicting "${cardTitle}". Professional photography, cinematic lighting, high quality.`,
+          rationale: 'Default suggestion based on card title',
+          continuityElements: ['consistent style', 'professional quality']
+        }];
+      }
+      
+      // Add IDs to each suggestion
+      suggestions = suggestions.map((s: any, i: number) => ({
+        id: `img-suggestion-${Date.now()}-${i}`,
+        prompt: s.prompt || '',
+        rationale: s.rationale || '',
+        continuityElements: s.continuityElements || s.continuityHints || []
+      }));
+      
+      // Cache the result
+      imageSuggestionCache.set(cacheKey, { suggestions, timestamp: Date.now() });
+      
+      // Clean old cache entries periodically
+      if (imageSuggestionCache.size > 100) {
+        const now = Date.now();
+        const keysToDelete: string[] = [];
+        imageSuggestionCache.forEach((value, key) => {
+          if (now - value.timestamp > SUGGESTION_CACHE_TTL) {
+            keysToDelete.push(key);
+          }
+        });
+        keysToDelete.forEach(key => imageSuggestionCache.delete(key));
+      }
+      
+      console.log(`[ImageSuggestions] Generated ${suggestions.length} suggestions for ${previewId}/${cardId}`);
+      
+      res.json({ suggestions, cached: false });
+    } catch (error) {
+      console.error("Error generating image suggestions:", error);
+      res.status(500).json({ message: "Error generating suggestions" });
+    }
+  });
+  
   // Generate video for an ICE preview card (requires auth + entitlements + daily cap)
   app.post("/api/ice/preview/:previewId/cards/:cardId/generate-video", requireAuth, dailyCapMiddleware('video'), async (req, res) => {
     try {
