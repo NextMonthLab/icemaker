@@ -1590,13 +1590,23 @@ export function IceCardEditor({
         </div>
         <div className="flex items-center gap-2">
           {card.generatedImageUrl && (
-            <div className="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center" title="Has image">
+            <div className="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center relative" title="Has image">
               <Image className="w-3 h-3 text-green-400" />
+              {(card.mediaAssets?.filter(a => a.kind === 'image').length || 0) > 1 && (
+                <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-green-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center" data-testid="badge-image-count">
+                  ×{card.mediaAssets?.filter(a => a.kind === 'image').length}
+                </span>
+              )}
             </div>
           )}
           {card.generatedVideoUrl && (
-            <div className="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center" title="Has video">
+            <div className="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center relative" title="Has video">
               <Video className="w-3 h-3 text-blue-400" />
+              {((card.mediaSegments?.length || 0) > 1 || (card.mediaAssets?.filter(a => a.kind === 'video').length || 0) > 1) && (
+                <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-blue-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center" data-testid="badge-video-count">
+                  ×{card.mediaSegments?.length || card.mediaAssets?.filter(a => a.kind === 'video').length || 1}
+                </span>
+              )}
             </div>
           )}
           {card.narrationAudioUrl && (
