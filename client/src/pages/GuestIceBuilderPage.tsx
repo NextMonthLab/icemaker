@@ -2012,11 +2012,11 @@ export default function GuestIceBuilderPage() {
                       )}
                     </Button>
                   </SheetTrigger>
-                  <SheetContent className="w-[400px] sm:w-[450px] bg-zinc-950 border-zinc-800 overflow-hidden flex flex-col">
+                  <SheetContent className="w-[400px] sm:w-[450px] bg-zinc-950 border-zinc-800 flex flex-col overflow-y-auto">
                     <SheetHeader>
                       <SheetTitle className="text-white">Project Bible</SheetTitle>
                     </SheetHeader>
-                    <div className="flex-1 overflow-hidden">
+                    <div className="flex-1 min-h-0">
                       <ContinuityPanel
                         previewId={preview?.id || ""}
                         bible={projectBible}
