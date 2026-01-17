@@ -200,6 +200,114 @@ function SortableMediaClip({
   );
 }
 
+// Drag-and-drop timeline wrapper component (proper hooks usage)
+function DraggableMediaTimeline({
+  segments,
+  selectedIndex,
+  onReorder,
+  onRemove,
+  onDurationChange,
+  onSelect,
+}: {
+  segments: MediaSegment[];
+  selectedIndex: number | null;
+  onReorder: (reordered: MediaSegment[]) => void;
+  onRemove: (id: string) => void;
+  onDurationChange: (id: string, duration: number) => void;
+  onSelect: (index: number | null) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = segments.findIndex(s => s.id === active.id);
+    const newIndex = segments.findIndex(s => s.id === over.id);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reordered = arrayMove(segments, oldIndex, newIndex);
+      let time = 0;
+      const updated = reordered.map((s, i) => {
+        const seg = { ...s, order: i, startTimeSec: time };
+        time += s.durationSec;
+        return seg;
+      });
+      onReorder(updated);
+    }
+  };
+  
+  const sortedSegments = [...segments].sort((a, b) => a.order - b.order);
+  
+  return (
+    <div className="space-y-2 pt-1">
+      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
+          <GripVertical className="w-3 h-3" />
+          Clips ({segments.length}) - Drag to reorder
+        </span>
+      </div>
+      
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sortedSegments.map(s => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-1.5" data-testid="timeline-clips-container">
+            {sortedSegments.map((seg, idx) => (
+              <SortableMediaClip
+                key={seg.id}
+                segment={seg}
+                onRemove={onRemove}
+                onDurationChange={seg.kind === 'image' ? onDurationChange : undefined}
+                isSelected={selectedIndex === idx}
+                onSelect={() => onSelect(idx)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      
+      <p className="text-[10px] text-slate-500">
+        Drag clips to reorder. Images: adjust duration with +/- buttons.
+      </p>
+      
+      {selectedIndex !== null && sortedSegments[selectedIndex] && (
+        <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
+          <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">
+            Preview: Clip {selectedIndex + 1}
+          </div>
+          <div className="aspect-video rounded overflow-hidden bg-slate-900">
+            {sortedSegments[selectedIndex].kind === 'video' ? (
+              <video 
+                src={sortedSegments[selectedIndex].url} 
+                className="w-full h-full object-cover"
+                controls
+                data-testid="video-segment-preview"
+              />
+            ) : (
+              <img 
+                src={sortedSegments[selectedIndex].url} 
+                alt={`Clip ${selectedIndex + 1}`}
+                className="w-full h-full object-cover"
+                data-testid="image-segment-preview"
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface ClipSuggestion {
   id: string;
   prompt: string;
@@ -3350,11 +3458,9 @@ export function IceCardEditor({
                         
                         {/* Unified drag-and-drop media timeline */}
                         {(() => {
-                          // Build unified segments from all media assets if no segments exist
                           const allAssets = card.mediaAssets?.filter(a => a.status === 'ready') || [];
-                          let displaySegments = segments.length > 0 ? [...segments] : [];
+                          let displaySegments: MediaSegment[] = segments.length > 0 ? [...segments] : [];
                           
-                          // Auto-populate segments from assets if empty
                           if (displaySegments.length === 0 && allAssets.length > 0) {
                             displaySegments = allAssets
                               .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
@@ -3365,7 +3471,7 @@ export function IceCardEditor({
                                 source: asset.source,
                                 url: asset.url,
                                 thumbnailUrl: asset.thumbnailUrl,
-                                durationSec: asset.durationSec || (asset.kind === 'video' ? 5 : 5),
+                                durationSec: asset.durationSec || 5,
                                 startTimeSec: 0,
                                 order: idx,
                                 renderMode: asset.renderMode,
@@ -3374,128 +3480,43 @@ export function IceCardEditor({
                           
                           if (displaySegments.length === 0) return null;
                           
-                          const sensors = [
-                            { sensor: PointerSensor, options: { activationConstraint: { distance: 8 } } },
-                            { sensor: TouchSensor, options: { activationConstraint: { delay: 200, tolerance: 5 } } },
-                          ];
-                          
-                          const handleDragEnd = (event: DragEndEvent) => {
-                            const { active, over } = event;
-                            if (!over || active.id === over.id) return;
-                            
-                            const oldIndex = displaySegments.findIndex(s => s.id === active.id);
-                            const newIndex = displaySegments.findIndex(s => s.id === over.id);
-                            
-                            if (oldIndex !== -1 && newIndex !== -1) {
-                              const reordered = arrayMove(displaySegments, oldIndex, newIndex);
-                              // Recalculate order and start times
-                              let time = 0;
-                              const updatedSegments = reordered.map((s, i) => {
-                                const updated = { ...s, order: i, startTimeSec: time };
-                                time += s.durationSec;
-                                return updated;
-                              });
-                              onCardUpdate(card.id, { mediaSegments: updatedSegments });
-                              onCardSave(card.id, { mediaSegments: updatedSegments });
-                            }
-                          };
-                          
-                          const handleRemoveSegment = (segId: string) => {
-                            const updatedSegments = displaySegments
-                              .filter(s => s.id !== segId)
-                              .map((s, i) => ({ ...s, order: i }));
-                            let time = 0;
-                            for (const s of updatedSegments) {
-                              s.startTimeSec = time;
-                              time += s.durationSec;
-                            }
-                            onCardUpdate(card.id, { mediaSegments: updatedSegments });
-                            onCardSave(card.id, { mediaSegments: updatedSegments });
-                          };
-                          
-                          const handleDurationChange = (segId: string, duration: number) => {
-                            const updatedSegments = displaySegments.map(s => 
-                              s.id === segId ? { ...s, durationSec: duration } : s
-                            );
-                            let time = 0;
-                            for (const s of updatedSegments) {
-                              s.startTimeSec = time;
-                              time += s.durationSec;
-                            }
-                            onCardUpdate(card.id, { mediaSegments: updatedSegments });
-                            onCardSave(card.id, { mediaSegments: updatedSegments });
-                          };
-                          
                           return (
-                            <div className="space-y-2 pt-1">
-                              <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
-                                <span className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                                  <GripVertical className="w-3 h-3" />
-                                  Clips ({displaySegments.length}) - Drag to reorder
-                                </span>
-                              </div>
-                              
-                              <DndContext
-                                sensors={useSensors(
-                                  useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-                                  useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-                                  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-                                )}
-                                collisionDetection={closestCenter}
-                                onDragEnd={handleDragEnd}
-                              >
-                                <SortableContext
-                                  items={displaySegments.map(s => s.id)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  <div className="space-y-1.5" data-testid="timeline-clips-container">
-                                    {displaySegments.sort((a, b) => a.order - b.order).map((seg) => (
-                                      <SortableMediaClip
-                                        key={seg.id}
-                                        segment={seg}
-                                        onRemove={handleRemoveSegment}
-                                        onDurationChange={seg.kind === 'image' ? handleDurationChange : undefined}
-                                        isSelected={selectedSegmentIndex !== null && displaySegments[selectedSegmentIndex]?.id === seg.id}
-                                        onSelect={(id) => {
-                                          const idx = displaySegments.findIndex(s => s.id === id);
-                                          setSelectedSegmentIndex(idx >= 0 ? idx : null);
-                                        }}
-                                      />
-                                    ))}
-                                  </div>
-                                </SortableContext>
-                              </DndContext>
-                              
-                              <p className="text-[10px] text-slate-500">
-                                Drag clips to reorder. Images: adjust duration with +/- buttons.
-                              </p>
-                              
-                              {/* Selected segment preview */}
-                              {selectedSegmentIndex !== null && displaySegments[selectedSegmentIndex] && (
-                                <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
-                                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">
-                                    Preview: Clip {selectedSegmentIndex + 1}
-                                  </div>
-                                  <div className="aspect-video rounded overflow-hidden bg-slate-900">
-                                    {displaySegments[selectedSegmentIndex].kind === 'video' ? (
-                                      <video 
-                                        src={displaySegments[selectedSegmentIndex].url} 
-                                        className="w-full h-full object-cover"
-                                        controls
-                                        data-testid="video-segment-preview"
-                                      />
-                                    ) : (
-                                      <img 
-                                        src={displaySegments[selectedSegmentIndex].url} 
-                                        alt={`Clip ${selectedSegmentIndex + 1}`}
-                                        className="w-full h-full object-cover"
-                                        data-testid="image-segment-preview"
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            <DraggableMediaTimeline
+                              segments={displaySegments}
+                              selectedIndex={selectedSegmentIndex}
+                              onReorder={(reordered) => {
+                                onCardUpdate(card.id, { mediaSegments: reordered });
+                                onCardSave(card.id, { mediaSegments: reordered });
+                              }}
+                              onRemove={(segId) => {
+                                const updated = displaySegments
+                                  .filter(s => s.id !== segId)
+                                  .map((s, i) => ({ ...s, order: i }));
+                                let time = 0;
+                                for (const s of updated) {
+                                  s.startTimeSec = time;
+                                  time += s.durationSec;
+                                }
+                                if (selectedSegmentIndex !== null && selectedSegmentIndex >= updated.length) {
+                                  setSelectedSegmentIndex(updated.length > 0 ? updated.length - 1 : null);
+                                }
+                                onCardUpdate(card.id, { mediaSegments: updated });
+                                onCardSave(card.id, { mediaSegments: updated });
+                              }}
+                              onDurationChange={(segId, duration) => {
+                                const updated = displaySegments.map(s => 
+                                  s.id === segId ? { ...s, durationSec: duration } : s
+                                );
+                                let time = 0;
+                                for (const s of updated) {
+                                  s.startTimeSec = time;
+                                  time += s.durationSec;
+                                }
+                                onCardUpdate(card.id, { mediaSegments: updated });
+                                onCardSave(card.id, { mediaSegments: updated });
+                              }}
+                              onSelect={setSelectedSegmentIndex}
+                            />
                           );
                         })()}
                         
