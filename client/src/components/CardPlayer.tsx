@@ -419,51 +419,8 @@ export default function CardPlayer({
     (card.narrationDurationSec && card.videoDurationSec && card.narrationDurationSec > card.videoDurationSec)
   );
   
-  // Handle video ended event - use centralized advancement
-  const handleVideoEnded = useCallback(() => {
-    // If using segments, use centralized advancement (handles guard against double-advancement)
-    if (hasSegments) {
-      advanceToNextSegment();
-      return;
-    }
-    
-    // No segments - check for continuation
-    if (needsContinuation && hasContinuationImage) {
-      setShowContinuation(true);
-    } else if (needsContinuation && !hasContinuationImage) {
-      console.log('[CardPlayer] Video ended, continuation needed but no image available');
-    }
-  }, [hasSegments, advanceToNextSegment, needsContinuation, hasContinuationImage]);
-  
-  // Video ref callback to start playback when video element mounts
-  const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
-    // Remove old event listener if swapping elements
-    if (videoRef.current && videoRef.current !== el) {
-      videoRef.current.removeEventListener('ended', handleVideoEnded);
-    }
-    
-    videoRef.current = el;
-    
-    if (el) {
-      // Add ended event listener for cinematic continuation
-      el.addEventListener('ended', handleVideoEnded);
-      
-      if (phase === "cinematic" && isPlaying && showVideo && hasVideo) {
-        el.play().catch(() => {});
-      }
-    }
-  }, [phase, isPlaying, showVideo, hasVideo, handleVideoEnded]);
-  
-  // Cleanup video ended event listener on unmount
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('ended', handleVideoEnded);
-      }
-    };
-  }, [handleVideoEnded]);
-  
   // Centralized segment advancement with guard against double-advancement
+  // NOTE: These refs and the advanceToNextSegment function MUST be defined before handleVideoEnded
   const segmentTimerRef = useRef<NodeJS.Timeout | null>(null);
   const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -516,6 +473,50 @@ export default function CardPlayer({
       }, 300);
     }, 150);
   }, [hasSegments, currentSegmentIndex, sortedSegments.length, needsContinuation, hasContinuationImage, clearAllSegmentTimers]);
+  
+  // Handle video ended event - use centralized advancement
+  const handleVideoEnded = useCallback(() => {
+    // If using segments, use centralized advancement (handles guard against double-advancement)
+    if (hasSegments) {
+      advanceToNextSegment();
+      return;
+    }
+    
+    // No segments - check for continuation
+    if (needsContinuation && hasContinuationImage) {
+      setShowContinuation(true);
+    } else if (needsContinuation && !hasContinuationImage) {
+      console.log('[CardPlayer] Video ended, continuation needed but no image available');
+    }
+  }, [hasSegments, advanceToNextSegment, needsContinuation, hasContinuationImage]);
+  
+  // Video ref callback to start playback when video element mounts
+  const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    // Remove old event listener if swapping elements
+    if (videoRef.current && videoRef.current !== el) {
+      videoRef.current.removeEventListener('ended', handleVideoEnded);
+    }
+    
+    videoRef.current = el;
+    
+    if (el) {
+      // Add ended event listener for cinematic continuation
+      el.addEventListener('ended', handleVideoEnded);
+      
+      if (phase === "cinematic" && isPlaying && showVideo && hasVideo) {
+        el.play().catch(() => {});
+      }
+    }
+  }, [phase, isPlaying, showVideo, hasVideo, handleVideoEnded]);
+  
+  // Cleanup video ended event listener on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('ended', handleVideoEnded);
+      }
+    };
+  }, [handleVideoEnded]);
   
   // Timer-based segment advancement for image segments
   useEffect(() => {
