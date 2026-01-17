@@ -866,6 +866,7 @@ export function IceCardEditor({
   const [videoGenStartTime, setVideoGenStartTime] = useState<number | null>(null);
   const [showVideoUpsell, setShowVideoUpsell] = useState(false);
   const [upsellTier, setUpsellTier] = useState("pro");
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
   
   const [narrationEnabled, setNarrationEnabled] = useState(false);
   const [narrationText, setNarrationText] = useState(card.content || "");
@@ -2175,42 +2176,114 @@ export function IceCardEditor({
                           </div>
                         )}
                         
-                        {/* Segment list */}
+                        {/* Segment list with navigation */}
                         {segments.length > 0 && (
-                          <div className="space-y-1 pt-1">
-                            {segments.sort((a, b) => a.order - b.order).map((seg, idx) => (
-                              <div 
-                                key={seg.id}
-                                className="flex items-center gap-2 p-1.5 bg-slate-800/50 rounded text-xs"
-                              >
-                                <span className="w-4 h-4 rounded bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-medium">
-                                  {idx + 1}
-                                </span>
-                                <span className="text-slate-300 flex-1 truncate">
-                                  {seg.kind === 'video' ? 'Video' : 'Image'}: {seg.durationSec}s
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 w-5 p-0"
-                                  onClick={() => {
-                                    const updatedSegments = segments.filter(s => s.id !== seg.id)
-                                      .map((s, i) => ({ ...s, order: i, startTimeSec: 0 }));
-                                    // Recalculate start times
-                                    let time = 0;
-                                    for (const s of updatedSegments) {
-                                      s.startTimeSec = time;
-                                      time += s.durationSec;
-                                    }
-                                    onCardUpdate(card.id, { mediaSegments: updatedSegments });
-                                    onCardSave(card.id, { mediaSegments: updatedSegments });
-                                  }}
-                                  data-testid={`button-remove-segment-${idx}`}
-                                >
-                                  <X className="w-3 h-3 text-slate-500" />
-                                </Button>
+                          <div className="space-y-2 pt-1">
+                            {/* Navigation header */}
+                            {segments.length > 1 && (
+                              <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Segments ({segments.length})</span>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedSegmentIndex(prev => 
+                                      prev === null || prev <= 0 ? segments.length - 1 : prev - 1
+                                    )}
+                                    data-testid="button-prev-segment"
+                                  >
+                                    ← Prev
+                                  </Button>
+                                  <span className="text-xs text-slate-400 min-w-[3ch] text-center">
+                                    {selectedSegmentIndex !== null ? selectedSegmentIndex + 1 : '-'}/{segments.length}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedSegmentIndex(prev => 
+                                      prev === null || prev >= segments.length - 1 ? 0 : prev + 1
+                                    )}
+                                    data-testid="button-next-segment"
+                                  >
+                                    Next →
+                                  </Button>
+                                </div>
                               </div>
-                            ))}
+                            )}
+                            
+                            {/* Segment items */}
+                            <div className="space-y-1">
+                              {segments.sort((a, b) => a.order - b.order).map((seg, idx) => (
+                                <div 
+                                  key={seg.id}
+                                  className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
+                                    selectedSegmentIndex === idx 
+                                      ? 'bg-cyan-500/20 border border-cyan-500/40' 
+                                      : 'bg-slate-800/50'
+                                  }`}
+                                  onClick={() => setSelectedSegmentIndex(selectedSegmentIndex === idx ? null : idx)}
+                                  data-testid={`segment-item-${idx}`}
+                                >
+                                  <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-medium ${
+                                    selectedSegmentIndex === idx
+                                      ? 'bg-cyan-500 text-white'
+                                      : 'bg-cyan-500/20 text-cyan-400'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-slate-300 flex-1 truncate">
+                                    {seg.kind === 'video' ? 'Video' : 'Image'}: {seg.durationSec}s
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const updatedSegments = segments.filter(s => s.id !== seg.id)
+                                        .map((s, i) => ({ ...s, order: i, startTimeSec: 0 }));
+                                      // Recalculate start times
+                                      let time = 0;
+                                      for (const s of updatedSegments) {
+                                        s.startTimeSec = time;
+                                        time += s.durationSec;
+                                      }
+                                      if (selectedSegmentIndex !== null && selectedSegmentIndex >= updatedSegments.length) {
+                                        setSelectedSegmentIndex(updatedSegments.length > 0 ? updatedSegments.length - 1 : null);
+                                      }
+                                      onCardUpdate(card.id, { mediaSegments: updatedSegments });
+                                      onCardSave(card.id, { mediaSegments: updatedSegments });
+                                    }}
+                                    data-testid={`button-remove-segment-${idx}`}
+                                  >
+                                    <X className="w-3 h-3 text-slate-500" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Selected segment preview */}
+                            {selectedSegmentIndex !== null && segments[selectedSegmentIndex] && (
+                              <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
+                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Preview: Segment {selectedSegmentIndex + 1}</div>
+                                <div className="aspect-video rounded overflow-hidden bg-slate-900">
+                                  {segments[selectedSegmentIndex].kind === 'video' ? (
+                                    <video 
+                                      src={segments[selectedSegmentIndex].url} 
+                                      className="w-full h-full object-cover"
+                                      controls
+                                      data-testid="video-segment-preview"
+                                    />
+                                  ) : (
+                                    <img 
+                                      src={segments[selectedSegmentIndex].url} 
+                                      alt={`Segment ${selectedSegmentIndex + 1}`}
+                                      className="w-full h-full object-cover"
+                                      data-testid="image-segment-preview"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                         
