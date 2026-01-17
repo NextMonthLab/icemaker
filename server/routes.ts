@@ -9241,13 +9241,16 @@ Stay engaging, reference story details, and help the audience understand the nar
       const narrationDuration = result.durationSeconds || 0;
       const videoDuration = updatedCard.videoDurationSec || 5; // Default 5 sec for video cap
       const needsContinuation = hasVideo && narrationDuration > videoDuration && !updatedCard.continuationImageUrl;
+      const cinematicEnabled = updatedCard.cinematicContinuationEnabled !== false; // Default true
       
       res.json({
         success: true,
         audioUrl,
         cardId,
         narrationDurationSec: narrationDuration,
-        needsContinuation, // Signals frontend to offer continuation still generation
+        needsContinuation: needsContinuation && cinematicEnabled, // Frontend can show continuation button
+        hasVideo,
+        videoDurationSec: videoDuration,
       });
     } catch (error) {
       console.error("Error generating ICE narration:", error);
