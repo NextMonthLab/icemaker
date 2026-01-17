@@ -256,6 +256,8 @@ interface IceCardEditorProps {
   onMoveDown?: () => void;
   onDelete?: () => void;
   hasLockedScene?: boolean; // Whether Project Bible has a locked scene defined
+  hasBible?: boolean; // Whether Project Bible is configured
+  onShowBibleWarning?: (pendingAction: () => void) => void;
 }
 
 function LockedOverlay({ 
@@ -961,6 +963,8 @@ export function IceCardEditor({
   onMoveDown,
   onDelete,
   hasLockedScene = false,
+  hasBible = false,
+  onShowBibleWarning,
 }: IceCardEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1439,12 +1443,7 @@ export function IceCardEditor({
     }
   };
 
-  const handleGenerateImage = async () => {
-    if (!canGenerateImages) {
-      onUpgradeClick();
-      return;
-    }
-    
+  const doGenerateImage = async () => {
     setImageLoading(true);
     try {
       const prompt = enhancePromptEnabled && enhancedPrompt 
@@ -1479,6 +1478,21 @@ export function IceCardEditor({
     } finally {
       setImageLoading(false);
     }
+  };
+  
+  const handleGenerateImage = () => {
+    if (!canGenerateImages) {
+      onUpgradeClick();
+      return;
+    }
+    
+    // Check if Bible is set - if not, show warning before generating
+    if (!hasBible && onShowBibleWarning) {
+      onShowBibleWarning(doGenerateImage);
+      return;
+    }
+    
+    doGenerateImage();
   };
   
   const handleGenerateVideo = async () => {

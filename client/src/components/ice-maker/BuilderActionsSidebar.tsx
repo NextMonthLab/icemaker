@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Music, Mic, Image, Upload, Wand2, Video, Download, Loader2, Globe, Lock, Share2, Lightbulb, BookOpen, X, Play, Sparkles, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Music, Mic, Image, Upload, Wand2, Video, Download, Loader2, Globe, Lock, Share2, Lightbulb, BookOpen, X, Play, Sparkles, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
@@ -60,6 +60,7 @@ interface BuilderActionsSidebarProps {
   setShowBiblePanel: (show: boolean) => void;
   projectBible: any;
   onShowPreviewPrompt?: (feature: string) => void;
+  onShowBibleWarning?: (pendingAction: () => void) => void;
 }
 
 export function BuilderActionsSidebar({
@@ -110,6 +111,7 @@ export function BuilderActionsSidebar({
   setShowBiblePanel,
   projectBible,
   onShowPreviewPrompt,
+  onShowBibleWarning,
 }: BuilderActionsSidebarProps) {
   if (isCollapsed) {
     return (
@@ -153,7 +155,13 @@ export function BuilderActionsSidebar({
                 {cardsNeedingImages.length} cards need images
               </p>
               <Button
-                onClick={() => setShowBulkImageConfirm(true)}
+                onClick={() => {
+                  if (!projectBible && onShowBibleWarning) {
+                    onShowBibleWarning(() => setShowBulkImageConfirm(true));
+                  } else {
+                    setShowBulkImageConfirm(true);
+                  }
+                }}
                 disabled={bulkGeneratingImages}
                 size="sm"
                 className="w-full gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white"
@@ -171,6 +179,13 @@ export function BuilderActionsSidebar({
                   </>
                 )}
               </Button>
+              {/* Bible status indicator for images */}
+              {!projectBible && (
+                <p className="text-[10px] text-amber-400/80 mt-1.5 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" />
+                  Set Creative Bible for consistent characters
+                </p>
+              )}
             </div>
           )}
           

@@ -420,6 +420,10 @@ export default function GuestIceBuilderPage() {
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
   const [bibleGenerating, setBibleGenerating] = useState(false);
+  const [showBiblePromptModal, setShowBiblePromptModal] = useState(false);
+  const [hasShownBiblePrompt, setHasShownBiblePrompt] = useState(false);
+  const [showBibleWarningOnGenerate, setShowBibleWarningOnGenerate] = useState(false);
+  const [pendingGenerateAction, setPendingGenerateAction] = useState<(() => void) | null>(null);
   const [exportJobId, setExportJobId] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<{
     status: string;
@@ -743,6 +747,14 @@ export default function GuestIceBuilderPage() {
       localStorage.setItem("ice_walkthrough_seen", "true");
     }
     setShowWalkthrough(false);
+    
+    // Show Bible prompt after walkthrough if Bible isn't set
+    if (!projectBible && !hasShownBiblePrompt) {
+      setTimeout(() => {
+        setShowBiblePromptModal(true);
+        setHasShownBiblePrompt(true);
+      }, 300);
+    }
   };
   
   // Auto-advance through visual stages during creation
@@ -843,8 +855,17 @@ export default function GuestIceBuilderPage() {
       } else if (!hasSeenWalkthrough()) {
         setShowWalkthrough(true);
       }
+      
+      // Show Bible prompt for new ICEs without a Bible set (skip if walkthrough will show)
+      if (!existingPreview.projectBible && !hasShownBiblePrompt && !isViewMode && hasSeenWalkthrough()) {
+        // Small delay to let UI settle
+        setTimeout(() => {
+          setShowBiblePromptModal(true);
+          setHasShownBiblePrompt(true);
+        }, 300);
+      }
     }
-  }, [existingPreview, isViewMode]);
+  }, [existingPreview, isViewMode, hasShownBiblePrompt]);
 
   // Resume video polling for any cards that have processing status
   // This handles the case where user navigated away and returned while videos were generating
@@ -2109,7 +2130,14 @@ export default function GuestIceBuilderPage() {
                     </p>
                   </div>
                   <Button
-                    onClick={() => setShowBulkImageConfirm(true)}
+                    onClick={() => {
+                      if (!projectBible) {
+                        setPendingGenerateAction(() => () => setShowBulkImageConfirm(true));
+                        setShowBibleWarningOnGenerate(true);
+                      } else {
+                        setShowBulkImageConfirm(true);
+                      }
+                    }}
                     disabled={bulkGeneratingImages}
                     size="sm"
                     className="gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white"
@@ -2546,6 +2574,11 @@ export default function GuestIceBuilderPage() {
                       onMoveDown={() => handleMoveCardDown(index)}
                       onDelete={() => handleDeleteCard(card.id)}
                       hasLockedScene={projectBible?.scene?.enabled || false}
+                      hasBible={isBibleConfigured}
+                      onShowBibleWarning={(pendingAction) => {
+                        setPendingGenerateAction(() => pendingAction);
+                        setShowBibleWarningOnGenerate(true);
+                      }}
                     />
                     
                     {/* Interactivity node slot between cards */}
@@ -2780,6 +2813,10 @@ export default function GuestIceBuilderPage() {
                 onShowPreviewPrompt={(feature) => {
                   setPreviewPromptFeature(feature);
                   setShowPreviewPrompt(true);
+                }}
+                onShowBibleWarning={(pendingAction) => {
+                  setPendingGenerateAction(() => pendingAction);
+                  setShowBibleWarningOnGenerate(true);
                 }}
               />
             </div>
@@ -3059,7 +3096,7 @@ export default function GuestIceBuilderPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10">
+            <AlertDialogCancel className="bg-transparent border-white/20 text-white">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -3167,7 +3204,7 @@ export default function GuestIceBuilderPage() {
                 setPreviewCardIndex(0);
                 setShowPreviewModal(true);
               }}
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
               data-testid="button-preview-now"
             >
               <Play className="w-4 h-4 mr-2" />
@@ -3184,6 +3221,94 @@ export default function GuestIceBuilderPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Creative Bible Prompt Modal - shown when editor loads without a Bible set */}
+      <Dialog open={showBiblePromptModal} onOpenChange={setShowBiblePromptModal}>
+        <DialogContent className="max-w-md bg-slate-900 border-cyan-500/30">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <BookOpen className="w-5 h-5 text-cyan-400" />
+              Set Up Your Creative Bible
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              For consistent AI-generated visuals across your story, we recommend setting up a Creative Bible first. This ensures your characters, locations, and style remain consistent on every card.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-amber-300 mb-2 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                Why this matters
+              </h4>
+              <p className="text-sm text-white/70">
+                Without a Creative Bible, AI-generated images may show different character appearances, inconsistent styles, and varying settings across your cards.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => {
+                setShowBiblePromptModal(false);
+                setShowBiblePanel(true);
+              }}
+              className="w-full bg-cyan-600 text-white"
+              data-testid="button-setup-bible-now"
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              Set Up Creative Bible
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowBiblePromptModal(false)} 
+              className="text-white/60 hover:text-white"
+              data-testid="button-skip-bible"
+            >
+              Skip for Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Bible Warning Dialog - shown when trying to generate images without a Bible */}
+      <AlertDialog open={showBibleWarningOnGenerate} onOpenChange={setShowBibleWarningOnGenerate}>
+        <AlertDialogContent className="bg-slate-900 border-amber-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-amber-400" />
+              Creative Bible Not Set
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Your Creative Bible isn't configured yet. AI-generated images may have inconsistent character appearances and styles across cards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel 
+              className="bg-transparent border-white/20 text-white"
+              onClick={() => {
+                setShowBibleWarningOnGenerate(false);
+                setShowBiblePanel(true);
+              }}
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              Set Up Bible First
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 text-white"
+              onClick={() => {
+                setShowBibleWarningOnGenerate(false);
+                if (pendingGenerateAction) {
+                  pendingGenerateAction();
+                  setPendingGenerateAction(null);
+                }
+              }}
+            >
+              Generate Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Publish Modal */}
       {preview && (
