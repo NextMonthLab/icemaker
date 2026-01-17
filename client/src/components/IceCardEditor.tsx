@@ -3108,6 +3108,21 @@ export function IceCardEditor({
                               : "Generate AI Video"
                         }
                       </Button>
+                      
+                      {/* Cinematic Continuation - cheaper alternative to generating more clips */}
+                      {card.generatedVideoUrl && card.narrationAudioUrl && (
+                        <div className="mt-4 pt-4 border-t border-slate-700/50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs text-slate-400">Or save money with:</span>
+                          </div>
+                          <CinematicContinuationSection
+                            previewId={previewId}
+                            card={card}
+                            onCardUpdate={onCardUpdate}
+                            onCardSave={onCardSave}
+                          />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -3228,16 +3243,6 @@ export function IceCardEditor({
                           {narrationLoading ? "Generating..." : "Generate Narration"}
                         </Button>
                       </div>
-                      
-                      {/* Cinematic Continuation Section - shown when video exists with narration */}
-                      {card.generatedVideoUrl && card.narrationAudioUrl && (
-                        <CinematicContinuationSection
-                          previewId={previewId}
-                          card={card}
-                          onCardUpdate={onCardUpdate}
-                          onCardSave={onCardSave}
-                        />
-                      )}
                     </>
                   )}
                 </div>
