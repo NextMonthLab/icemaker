@@ -60,6 +60,7 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
 
   const handleLogout = async () => {
     await logout();
+    window.location.href = '/';
   };
 
   const getInitials = (name: string) => {

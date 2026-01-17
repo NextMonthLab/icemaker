@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
   Sparkles,
@@ -60,6 +60,7 @@ export default function GlobalNav({
 
   const handleLogout = async () => {
     await logout();
+    window.location.href = '/';
   };
 
   const getInitials = (name: string) => {
