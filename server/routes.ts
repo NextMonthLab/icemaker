@@ -432,6 +432,20 @@ export async function registerRoutes(
         isAdmin: false,
       });
       
+      // Claim any guest ICE previews from this IP address
+      const userIp = req.ip || req.socket.remoteAddress || "";
+      if (userIp) {
+        try {
+          const claimedCount = await storage.claimGuestPreviewsByIp(userIp, user.id);
+          if (claimedCount > 0) {
+            console.log(`[auth] Claimed ${claimedCount} guest ICE preview(s) for new user ${user.id} from IP ${userIp}`);
+          }
+        } catch (claimError) {
+          console.error('[auth] Error claiming guest previews:', claimError);
+          // Don't fail registration if claiming fails
+        }
+      }
+      
       req.login(user, (loginErr) => {
         if (loginErr) {
           console.error('[auth] Register login error:', loginErr);

@@ -166,6 +166,7 @@ export interface IStorage {
   deleteIcePreview(id: string): Promise<void>;
   countIpIcePreviewsToday(ip: string): Promise<number>;
   promoteIcePreview(id: string, userId: number, jobId: number): Promise<schema.IcePreview | undefined>;
+  claimGuestPreviewsByIp(ip: string, userId: number): Promise<number>;
   
   // ICE Leads
   getLeadsByUser(userId: number): Promise<Array<schema.IceLead & { iceTitle: string }>>;
@@ -1394,6 +1395,21 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.icePreviews.id, id))
       .returning();
     return result;
+  }
+  
+  async claimGuestPreviewsByIp(ip: string, userId: number): Promise<number> {
+    // Claim all unclaimed ICE previews from this IP address
+    // Only claim previews that have no owner and haven't expired
+    const now = new Date();
+    const results = await db.update(schema.icePreviews)
+      .set({ ownerUserId: userId })
+      .where(and(
+        eq(schema.icePreviews.ownerIp, ip),
+        sql`${schema.icePreviews.ownerUserId} IS NULL`,
+        gte(schema.icePreviews.expiresAt, now)
+      ))
+      .returning({ id: schema.icePreviews.id });
+    return results.length;
   }
   
   // ICE Leads
