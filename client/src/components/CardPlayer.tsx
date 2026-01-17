@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Card, MediaAsset } from "@/lib/mockData";
+import { Card, MediaAsset, MediaSegment } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { getEffectiveRenderMode, computeAspectRatio, type EffectiveRenderMode } from "@/lib/videoFraming";
 import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic, ExternalLink } from "lucide-react";
@@ -112,8 +112,11 @@ export default function CardPlayer({
   const [debugOverlay, setDebugOverlay] = useState(false);
   const [showContinuation, setShowContinuation] = useState(false); // Cinematic Continuation state
   const [videoAspect, setVideoAspect] = useState<'portrait' | 'landscape' | 'square'>('portrait'); // Track video aspect ratio for smart scaling
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0); // For multi-segment timeline playback
+  const [segmentTransitioning, setSegmentTransitioning] = useState(false); // Crossfade between segments
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const prevVideoRef = useRef<HTMLVideoElement | null>(null); // For segment crossfade
   const captionRegionRef = useRef<HTMLDivElement | null>(null);
   const [containerWidthPx, setContainerWidthPx] = useState(375);
   const isTabletLandscape = useIsTabletLandscape();
@@ -205,7 +208,32 @@ export default function CardPlayer({
     return cache;
   }, [card.captions, captionGeometry.availableCaptionWidth, captionState?.presetId, captionState?.fontSize, captionState?.karaokeEnabled, captionState?.karaokeStyle, fullScreen]);
 
+  // Get sorted media segments for timeline playback
+  const sortedSegments = useMemo(() => {
+    if (!card.mediaSegments?.length) return [];
+    return [...card.mediaSegments].sort((a, b) => a.order - b.order);
+  }, [card.mediaSegments]);
+  
+  const hasSegments = sortedSegments.length > 0;
+  const currentSegment = hasSegments ? sortedSegments[currentSegmentIndex] : null;
+  const nextSegment = hasSegments && currentSegmentIndex < sortedSegments.length - 1 
+    ? sortedSegments[currentSegmentIndex + 1] 
+    : null;
+  
   const getActiveMedia = () => {
+    // If using segments, get media from current segment
+    if (hasSegments && currentSegment) {
+      const segmentAsset = card.mediaAssets?.find(a => a.id === currentSegment.assetId);
+      return {
+        imageUrl: currentSegment.kind === 'image' ? currentSegment.url : card.image,
+        videoUrl: currentSegment.kind === 'video' ? currentSegment.url : undefined,
+        selectedIsVideo: currentSegment.kind === 'video',
+        selectedAsset: segmentAsset,
+        segment: currentSegment,
+      };
+    }
+    
+    // Fallback to standard asset selection
     if (card.mediaAssets?.length && card.selectedMediaAssetId) {
       const selected = card.mediaAssets.find(a => a.id === card.selectedMediaAssetId);
       if (selected && selected.status === 'ready') {
@@ -214,6 +242,7 @@ export default function CardPlayer({
           videoUrl: selected.kind === 'video' ? selected.url : card.generatedVideoUrl,
           selectedIsVideo: selected.kind === 'video',
           selectedAsset: selected as MediaAsset,
+          segment: undefined as MediaSegment | undefined,
         };
       }
     }
@@ -222,6 +251,7 @@ export default function CardPlayer({
       videoUrl: card.generatedVideoUrl,
       selectedIsVideo: false,
       selectedAsset: undefined as MediaAsset | undefined,
+      segment: undefined as MediaSegment | undefined,
     };
   };
   
@@ -281,6 +311,8 @@ export default function CardPlayer({
     setIsPlaying(autoplay);
     setShowContinuation(false); // Reset cinematic continuation state
     setVideoAspect('portrait'); // Reset video aspect for new card
+    setCurrentSegmentIndex(0); // Reset segment playback for new card
+    setSegmentTransitioning(false);
     
     // Stop any playing audio when card changes
     if (audioRef.current) {
@@ -387,17 +419,21 @@ export default function CardPlayer({
     (card.narrationDurationSec && card.videoDurationSec && card.narrationDurationSec > card.videoDurationSec)
   );
   
-  // Handle video ended event - transition to continuation still if needed
+  // Handle video ended event - use centralized advancement
   const handleVideoEnded = useCallback(() => {
+    // If using segments, use centralized advancement (handles guard against double-advancement)
+    if (hasSegments) {
+      advanceToNextSegment();
+      return;
+    }
+    
+    // No segments - check for continuation
     if (needsContinuation && hasContinuationImage) {
-      // Transition to continuation still - crossfade effect
       setShowContinuation(true);
     } else if (needsContinuation && !hasContinuationImage) {
-      // No continuation image yet - hold on last frame (video already stopped since no loop)
       console.log('[CardPlayer] Video ended, continuation needed but no image available');
     }
-    // Note: video stays on last frame since loop is removed
-  }, [needsContinuation, hasContinuationImage]);
+  }, [hasSegments, advanceToNextSegment, needsContinuation, hasContinuationImage]);
   
   // Video ref callback to start playback when video element mounts
   const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
@@ -426,6 +462,102 @@ export default function CardPlayer({
       }
     };
   }, [handleVideoEnded]);
+  
+  // Centralized segment advancement with guard against double-advancement
+  const segmentTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const advancingRef = useRef(false); // Guard against double-advancement
+  
+  // Clear all segment-related timers
+  const clearAllSegmentTimers = useCallback(() => {
+    if (segmentTimerRef.current) {
+      clearTimeout(segmentTimerRef.current);
+      segmentTimerRef.current = null;
+    }
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+      fadeTimeoutRef.current = null;
+    }
+  }, []);
+  
+  // Centralized segment advancement function
+  const advanceToNextSegment = useCallback(() => {
+    // Guard against double-advancement
+    if (advancingRef.current) {
+      console.log('[CardPlayer] Segment advancement already in progress, skipping');
+      return;
+    }
+    
+    if (!hasSegments || currentSegmentIndex >= sortedSegments.length - 1) {
+      // Last segment - check for continuation
+      if (needsContinuation && hasContinuationImage) {
+        setShowContinuation(true);
+      }
+      return;
+    }
+    
+    advancingRef.current = true;
+    console.log('[CardPlayer] Advancing to next segment:', currentSegmentIndex + 1);
+    setSegmentTransitioning(true);
+    
+    // Clear any pending timers before scheduling new ones
+    clearAllSegmentTimers();
+    
+    transitionTimeoutRef.current = setTimeout(() => {
+      setCurrentSegmentIndex(prev => prev + 1);
+      fadeTimeoutRef.current = setTimeout(() => {
+        setSegmentTransitioning(false);
+        advancingRef.current = false;
+      }, 300);
+    }, 150);
+  }, [hasSegments, currentSegmentIndex, sortedSegments.length, needsContinuation, hasContinuationImage, clearAllSegmentTimers]);
+  
+  // Timer-based segment advancement for image segments
+  useEffect(() => {
+    clearAllSegmentTimers();
+    advancingRef.current = false; // Reset guard when segment changes
+    
+    if (!isPlaying || !hasSegments || !currentSegment) return;
+    
+    // For image segments, use timer-based advancement
+    if (currentSegment.kind === 'image' && currentSegment.durationSec > 0) {
+      console.log('[CardPlayer] Setting timer for image segment:', currentSegmentIndex, 'duration:', currentSegment.durationSec);
+      segmentTimerRef.current = setTimeout(() => {
+        advanceToNextSegment();
+      }, currentSegment.durationSec * 1000);
+    }
+    
+    return () => {
+      clearAllSegmentTimers();
+    };
+  }, [isPlaying, hasSegments, currentSegment, currentSegmentIndex, advanceToNextSegment, clearAllSegmentTimers]);
+  
+  // Update handleVideoEnded to use centralized advancement
+  // This is done by updating the callback dependency below
+  
+  // Restart video playback when segment changes (for video segments)
+  useEffect(() => {
+    if (!hasSegments || !currentSegment || currentSegment.kind !== 'video') return;
+    if (!videoRef.current || !isPlaying) return;
+    
+    // Reset video to start and play
+    videoRef.current.currentTime = 0;
+    if (showVideo) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [currentSegmentIndex, hasSegments, currentSegment?.kind, isPlaying, showVideo, activeMedia.videoUrl]);
+  
+  // Clamp currentSegmentIndex if segments array changes
+  useEffect(() => {
+    if (hasSegments && currentSegmentIndex >= sortedSegments.length) {
+      setCurrentSegmentIndex(Math.max(0, sortedSegments.length - 1));
+    }
+  }, [hasSegments, currentSegmentIndex, sortedSegments.length]);
   
   const toggleAudioPlayback = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -777,7 +909,7 @@ export default function CardPlayer({
                         muted
                         playsInline
                         onLoadedMetadata={handleVideoLoadedMetadata}
-                        className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
+                        className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${showContinuation || segmentTransitioning ? 'opacity-0' : 'opacity-100'}`}
                         data-testid="video-player"
                       />
                     </>
@@ -789,7 +921,7 @@ export default function CardPlayer({
                       muted
                       playsInline
                       onLoadedMetadata={handleVideoLoadedMetadata}
-                      className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation || segmentTransitioning ? 'opacity-0' : 'opacity-100'}`}
                       data-testid="video-player"
                     />
                   )}
