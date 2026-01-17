@@ -759,6 +759,84 @@ export default function GuestIceBuilderPage() {
     }
   }, [existingPreview, isViewMode]);
 
+  // Resume video polling for any cards that have processing status
+  // This handles the case where user navigated away and returned while videos were generating
+  const videoPollingRef = useRef<Record<string, NodeJS.Timeout>>({});
+  
+  useEffect(() => {
+    if (!preview?.id || cards.length === 0) return;
+    
+    const processingCards = cards.filter(card => 
+      card.videoGenerationStatus === "processing" && !videoPollingRef.current[card.id]
+    );
+    
+    processingCards.forEach(card => {
+      console.log(`[Video Resume] Starting polling for card ${card.id}`);
+      
+      const pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/ice/preview/${preview.id}/cards/${card.id}/video/status`, {
+            credentials: "include",
+          });
+          
+          if (!res.ok) {
+            console.error(`[Video Resume] Poll failed for card ${card.id}`);
+            return;
+          }
+          
+          const data = await res.json();
+          
+          if (data.status === "completed" && data.videoUrl) {
+            clearInterval(videoPollingRef.current[card.id]);
+            delete videoPollingRef.current[card.id];
+            
+            // Update card state with the completed video
+            setCards(currentCards => {
+              const newCards = currentCards.map(c => 
+                c.id === card.id 
+                  ? { ...c, generatedVideoUrl: data.videoUrl, videoGenerationStatus: "completed", videoGenerated: true, preferredMediaType: 'video' as const }
+                  : c
+              );
+              cardsRef.current = newCards;
+              return newCards;
+            });
+            
+            toast({ title: "Video ready!", description: `Video for "${card.title}" has been generated.` });
+          } else if (data.status === "failed") {
+            clearInterval(videoPollingRef.current[card.id]);
+            delete videoPollingRef.current[card.id];
+            
+            setCards(currentCards => {
+              const newCards = currentCards.map(c => 
+                c.id === card.id 
+                  ? { ...c, videoGenerationStatus: "failed" }
+                  : c
+              );
+              cardsRef.current = newCards;
+              return newCards;
+            });
+            
+            toast({ 
+              title: "Video generation failed", 
+              description: data.error || "Please try again", 
+              variant: "destructive" 
+            });
+          }
+        } catch (err) {
+          console.error(`[Video Resume] Error polling card ${card.id}:`, err);
+        }
+      }, 10000); // Poll every 10 seconds
+      
+      videoPollingRef.current[card.id] = pollInterval;
+    });
+    
+    // Cleanup polling on unmount
+    return () => {
+      Object.values(videoPollingRef.current).forEach(interval => clearInterval(interval));
+      videoPollingRef.current = {};
+    };
+  }, [preview?.id, cards, toast]);
+
   const handleGenerateBible = async () => {
     if (!preview?.id || !user) return;
     setBibleGenerating(true);

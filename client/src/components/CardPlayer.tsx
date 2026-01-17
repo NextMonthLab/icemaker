@@ -791,30 +791,8 @@ export default function CardPlayer({
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none" />
 
-            {/* Logo Overlay or Admin CTA - positioned to avoid controls and captions */}
-            {adminCtaEnabled ? (
-              <a 
-                href="/"
-                className={`absolute z-20 pointer-events-auto ${
-                  logoPosition === "top-left" ? "top-16 left-4" :
-                  logoPosition === "top-right" ? "top-16 right-4" :
-                  logoPosition === "bottom-left" ? "bottom-44 left-4" :
-                  "bottom-44 right-4"
-                }`}
-                data-testid="admin-cta-overlay"
-              >
-                <div className="bg-gradient-to-r from-cyan-500/90 to-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg hover:from-cyan-400/90 hover:to-blue-400/90 transition-all">
-                  <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                  </div>
-                  <span className="text-white text-xs font-medium whitespace-nowrap">
-                    Made with IceMaker
-                  </span>
-                </div>
-              </a>
-            ) : logoEnabled && logoUrl ? (
+            {/* Logo Overlay - positioned based on user preference, inside scale container */}
+            {logoEnabled && logoUrl ? (
               <div 
                 className={`absolute z-20 pointer-events-none ${
                   logoPosition === "top-left" ? "top-16 left-4" :
@@ -1136,6 +1114,27 @@ export default function CardPlayer({
                 </motion.div>
                 <span className="text-xs text-white/60">Tap to continue</span>
               </motion.div>
+            )}
+
+            {/* Admin CTA - positioned at bottom-right, just above navigation controls */}
+            {/* Placed outside the scale animation container for stable positioning */}
+            {adminCtaEnabled && (
+              <a 
+                href="/"
+                className="absolute z-30 pointer-events-auto bottom-16 right-4"
+                data-testid="admin-cta-overlay"
+              >
+                <div className="bg-gradient-to-r from-cyan-500/90 to-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg hover:from-cyan-400/90 hover:to-blue-400/90 transition-all">
+                  <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  </div>
+                  <span className="text-white text-xs font-medium whitespace-nowrap">
+                    Made with IceMaker
+                  </span>
+                </div>
+              </a>
             )}
           </motion.div>
         ) : (
