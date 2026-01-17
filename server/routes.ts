@@ -8632,6 +8632,163 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // AI-powered video prompt suggestions for multi-segment timelines
+  // Simple in-memory cache for suggestions (keyed by hash of inputs)
+  const clipSuggestionCache = new Map<string, { suggestions: any[]; timestamp: number }>();
+  const SUGGESTION_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  
+  app.post("/api/ice/preview/:previewId/cards/:cardId/suggest-next-clip", async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      const { 
+        cardTitle, 
+        cardNarration, 
+        currentSegmentIndex, 
+        totalSegmentsPlanned, 
+        priorPrompts,
+        sceneLockDescription,
+        visualBibleStyle
+      } = req.body;
+      
+      // Validate required fields
+      if (!cardTitle || !cardNarration || currentSegmentIndex === undefined || !totalSegmentsPlanned) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Create cache key from input hash
+      const cacheKey = `${previewId}-${cardId}-${currentSegmentIndex}-${
+        Buffer.from(cardNarration.slice(0, 200) + (priorPrompts || []).join('')).toString('base64').slice(0, 32)
+      }`;
+      
+      // Check cache
+      const cached = clipSuggestionCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < SUGGESTION_CACHE_TTL) {
+        console.log(`[ClipSuggestions] Cache hit for ${cacheKey}`);
+        return res.json({ suggestions: cached.suggestions, cached: true });
+      }
+      
+      // Determine story arc phase based on segment position
+      const progress = (currentSegmentIndex + 1) / totalSegmentsPlanned;
+      let arcPhase: 'setup' | 'build' | 'peak' | 'resolve';
+      let phaseGuidance: string;
+      
+      if (progress <= 0.25) {
+        arcPhase = 'setup';
+        phaseGuidance = 'Set the scene, introduce the subject, establish mood and context';
+      } else if (progress <= 0.5) {
+        arcPhase = 'build';
+        phaseGuidance = 'Build tension or interest, show progression, add visual energy';
+      } else if (progress <= 0.75) {
+        arcPhase = 'peak';
+        phaseGuidance = 'Reach the climax, show the key moment, maximum visual impact';
+      } else {
+        arcPhase = 'resolve';
+        phaseGuidance = 'Conclude the visual narrative, call to action, memorable ending';
+      }
+      
+      // Build prompt for OpenAI
+      const systemPrompt = `You are a creative director helping to plan video clips for a story card. 
+The user is building a multi-clip timeline where each clip is about 5 seconds.
+Your job is to suggest the next video prompt that:
+1. Fits the narrative context (title and narration)
+2. Maintains visual continuity with previous clips
+3. Follows proper story pacing for this phase: ${arcPhase} - ${phaseGuidance}
+4. Creates compelling, cinematic visuals
+
+IMPORTANT: Suggest prompts for VIDEO generation - describe motion, camera movement, atmosphere. 
+Do NOT include any text, titles, captions, or typography in your suggestions.
+
+Respond with a JSON array of 2-3 suggestions, each with:
+- prompt: The video generation prompt (50-150 words, cinematic and detailed)
+- rationale: Brief 1-sentence explanation of why this fits the narrative
+- continuityHints: Array of 2-3 visual elements to maintain from prior clips
+
+Example format:
+[
+  {
+    "prompt": "Cinematic tracking shot through a modern office...",
+    "rationale": "Opens with establishing context before focusing on the main subject",
+    "continuityHints": ["professional lighting", "corporate color palette", "steady camera movement"]
+  }
+]`;
+
+      const userPrompt = `Card Title: "${cardTitle}"
+Narration Script: "${cardNarration}"
+
+This is clip ${currentSegmentIndex + 1} of ${totalSegmentsPlanned} (${arcPhase} phase).
+
+${priorPrompts?.length ? `Previous clip prompts:\n${priorPrompts.map((p: string, i: number) => `${i + 1}. ${p}`).join('\n')}` : 'This is the first clip.'}
+
+${sceneLockDescription ? `Scene context: ${sceneLockDescription}` : ''}
+${visualBibleStyle ? `Visual style: ${visualBibleStyle}` : ''}
+
+Suggest 2-3 video prompts for the next clip that continue the visual narrative.`;
+
+      // Call OpenAI
+      const completion = await getOpenAI().chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 1000,
+      });
+      
+      const responseText = completion.choices[0]?.message?.content || '[]';
+      
+      // Parse suggestions from response
+      let suggestions: any[] = [];
+      try {
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } catch (parseError) {
+        console.warn('[ClipSuggestions] Failed to parse AI response:', parseError);
+        suggestions = [{
+          id: `suggestion-fallback-${Date.now()}`,
+          prompt: `Cinematic scene depicting "${cardTitle}". Smooth camera movement, professional lighting, atmospheric depth.`,
+          rationale: 'Default suggestion based on card title',
+          arcPhase,
+          continuityHints: ['consistent lighting', 'smooth transitions']
+        }];
+      }
+      
+      // Add IDs and arc phase to each suggestion
+      suggestions = suggestions.map((s: any, i: number) => ({
+        id: `suggestion-${Date.now()}-${i}`,
+        prompt: s.prompt || '',
+        rationale: s.rationale || '',
+        arcPhase,
+        continuityHints: s.continuityHints || []
+      }));
+      
+      // Cache the result
+      clipSuggestionCache.set(cacheKey, { suggestions, timestamp: Date.now() });
+      
+      // Clean old cache entries periodically
+      if (clipSuggestionCache.size > 100) {
+        const now = Date.now();
+        const keysToDelete: string[] = [];
+        clipSuggestionCache.forEach((value, key) => {
+          if (now - value.timestamp > SUGGESTION_CACHE_TTL) {
+            keysToDelete.push(key);
+          }
+        });
+        keysToDelete.forEach(key => clipSuggestionCache.delete(key));
+      }
+      
+      console.log(`[ClipSuggestions] Generated ${suggestions.length} suggestions for ${previewId}/${cardId} segment ${currentSegmentIndex}`);
+      
+      res.json({ suggestions, cached: false });
+    } catch (error) {
+      console.error("Error generating clip suggestions:", error);
+      res.status(500).json({ message: "Error generating suggestions" });
+    }
+  });
+  
   // Generate video for an ICE preview card (requires auth + entitlements)
   app.post("/api/ice/preview/:previewId/cards/:cardId/generate-video", requireAuth, async (req, res) => {
     try {

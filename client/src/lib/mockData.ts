@@ -88,6 +88,32 @@ export interface Card {
   mediaSegments?: MediaSegment[];
 }
 
+// AI-powered video prompt suggestion for multi-segment timelines
+export type StoryArcPhase = 'setup' | 'build' | 'peak' | 'resolve';
+
+export interface ClipSuggestion {
+  id: string;
+  prompt: string;
+  rationale: string; // Brief explanation of why this prompt fits
+  arcPhase: StoryArcPhase;
+  continuityHints: string[]; // Visual elements to maintain from previous clips
+}
+
+export interface ClipSuggestionRequest {
+  cardTitle: string;
+  cardNarration: string;
+  currentSegmentIndex: number; // Which segment we're suggesting for (0-based)
+  totalSegmentsPlanned: number; // How many segments will fit the timeline
+  priorPrompts: string[]; // Prompts used for previous segments
+  sceneLockDescription?: string; // Scene Lock visual context
+  visualBibleStyle?: string; // Visual Bible style hints
+}
+
+export interface ClipSuggestionResponse {
+  suggestions: ClipSuggestion[];
+  cached: boolean;
+}
+
 export interface Character {
   id: string;
   name: string;
