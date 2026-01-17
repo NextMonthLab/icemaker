@@ -280,6 +280,7 @@ export default function CardPlayer({
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = narrationVolume / 100;
+      console.log('[Narration] Volume updated to:', narrationVolume / 100);
     }
   }, [narrationVolume]);
   
@@ -302,11 +303,13 @@ export default function CardPlayer({
     if (!hasNarration || !audioRef.current) return;
     
     if (phase === "cinematic" && isPlaying && !narrationMuted) {
+      // Always apply volume before playing (ensures volume is set)
+      audioRef.current.volume = narrationVolume / 100;
       audioRef.current.play().catch(() => {});
     } else {
       audioRef.current.pause();
     }
-  }, [phase, isPlaying, hasNarration, narrationMuted]);
+  }, [phase, isPlaying, hasNarration, narrationMuted, narrationVolume]);
   
   // Play/pause video based on isPlaying state (unified control)
   useEffect(() => {

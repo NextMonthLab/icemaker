@@ -481,17 +481,26 @@ export default function GuestIceBuilderPage() {
       musicAudioRef.current = new Audio();
       musicAudioRef.current.loop = true;
       musicAudioRef.current.volume = musicVolume / 100;
+      // Re-apply volume after audio loads (browser may reset on load)
+      musicAudioRef.current.oncanplaythrough = () => {
+        if (musicAudioRef.current) {
+          musicAudioRef.current.volume = musicVolume / 100;
+        }
+      };
     }
     
     if (!showPreviewModal && musicAudioRef.current) {
       musicAudioRef.current.pause();
       musicAudioRef.current = null;
     }
-  }, [showPreviewModal]);
+  }, [showPreviewModal, musicVolume]);
   
   // Handle track changes - reuse same audio element, just update src
   useEffect(() => {
     if (!musicAudioRef.current) return;
+    
+    // Always ensure volume is correct before playing
+    musicAudioRef.current.volume = musicVolume / 100;
     
     // Update track if changed
     if (musicTrackUrl) {
@@ -505,16 +514,19 @@ export default function GuestIceBuilderPage() {
     
     // Play/pause based on enabled state
     if (showPreviewModal && musicEnabled && musicTrackUrl) {
+      // Apply volume again before playing (ensures volume is set)
+      musicAudioRef.current.volume = musicVolume / 100;
       musicAudioRef.current.play().catch(() => {});
     } else {
       musicAudioRef.current.pause();
     }
-  }, [showPreviewModal, musicEnabled, musicTrackUrl]);
+  }, [showPreviewModal, musicEnabled, musicTrackUrl, musicVolume]);
   
-  // Separate effect for volume - always apply volume immediately
+  // Separate effect for volume - always apply volume immediately (backup)
   useEffect(() => {
     if (musicAudioRef.current) {
       musicAudioRef.current.volume = musicVolume / 100;
+      console.log('[Music] Volume updated to:', musicVolume / 100);
     }
   }, [musicVolume]);
   
