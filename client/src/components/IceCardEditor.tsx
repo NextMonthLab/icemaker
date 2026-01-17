@@ -1925,6 +1925,26 @@ export function IceCardEditor({
                     <div className="rounded-lg overflow-hidden border border-green-500/30 bg-green-500/5">
                       <div className="p-2 bg-green-500/10 flex items-center justify-between">
                         <span className="text-sm font-medium text-green-400">Active Image</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                          onClick={() => {
+                            onCardUpdate(card.id, { 
+                              generatedImageUrl: undefined, 
+                              selectedMediaAssetId: undefined 
+                            });
+                            onCardSave(card.id, { 
+                              generatedImageUrl: undefined, 
+                              selectedMediaAssetId: undefined 
+                            });
+                            toast({ title: 'Image removed' });
+                          }}
+                          data-testid="button-remove-active-image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Remove
+                        </Button>
                       </div>
                       <img 
                         src={card.generatedImageUrl} 
