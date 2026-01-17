@@ -10487,7 +10487,7 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
         includeMusic,
         titlePackId: titlePackId || preview.titlePackId,
         musicTrackUrl: preview.musicTrackUrl || undefined,
-        musicVolume: preview.musicVolume || 50,
+        musicVolume: preview.musicVolume || 15,
         narrationVolume: preview.narrationVolume || 100,
         captionState,
         useCaptionEngine,

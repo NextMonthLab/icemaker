@@ -186,7 +186,7 @@ async function updateJobStatus(jobId: string, status: VideoExportStatus, errorMe
 }
 
 export async function processVideoExport(config: ExportConfig): Promise<string> {
-  const { jobId, previewId, quality, includeNarration, includeMusic, musicTrackUrl, musicVolume = 50, narrationVolume = 100, captionState, useCaptionEngine = false } = config;
+  const { jobId, previewId, quality, includeNarration, includeMusic, musicTrackUrl, musicVolume = 15, narrationVolume = 100, captionState, useCaptionEngine = false } = config;
   const titlePackId = config.titlePackId || DEFAULT_TITLE_PACK_ID;
 
   const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "ice-export-"));

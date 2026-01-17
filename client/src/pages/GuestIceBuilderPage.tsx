@@ -411,9 +411,9 @@ export default function GuestIceBuilderPage() {
            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }, []);
   
-  // On iOS: fixed volumes (music 20%, narration 100%) since programmatic volume control doesn't work
-  // Default music volume is low (25%) so narration is clearly audible
-  const [musicVolume, setMusicVolume] = useState(() => isIOS ? 20 : 25);
+  // On iOS: fixed volumes (music 15%, narration 100%) since programmatic volume control doesn't work
+  // Default music volume is quiet (15%) so narration is clearly audible
+  const [musicVolume, setMusicVolume] = useState(() => isIOS ? 15 : 15);
   const [narrationVolume, setNarrationVolume] = useState(100);
   const [isNarrationPlaying, setIsNarrationPlaying] = useState(false);
   const musicFadeRef = useRef<number | null>(null); // For smooth fade animation
