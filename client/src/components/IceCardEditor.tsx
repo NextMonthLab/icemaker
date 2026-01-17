@@ -57,6 +57,14 @@ interface MediaSegment {
   sourceAspectRatio?: number;
 }
 
+interface ClipSuggestion {
+  id: string;
+  prompt: string;
+  rationale: string;
+  arcPhase: 'setup' | 'build' | 'peak' | 'resolve';
+  continuityHints: string[];
+}
+
 type GuestCategory = 'testimonial' | 'expert' | 'engineer' | 'interviewee' | 'founder' | 'customer' | 'other';
 type GuestStatus = 'idle' | 'generating' | 'ready' | 'failed';
 type GuestProvider = 'heygen' | 'did';
@@ -875,6 +883,10 @@ export function IceCardEditor({
   const [targetAudience, setTargetAudience] = useState<string>("general");
   const [selectingAsset, setSelectingAsset] = useState(false);
   const [deletingAsset, setDeletingAsset] = useState<string | null>(null);
+  
+  const [clipSuggestions, setClipSuggestions] = useState<ClipSuggestion[]>([]);
+  const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
+  const [showClipSuggestions, setShowClipSuggestions] = useState(false);
   
   const { data: videoConfig } = useQuery({
     queryKey: ["video-config"],
@@ -2123,6 +2135,125 @@ export function IceCardEditor({
                                 </Button>
                               </div>
                             ))}
+                          </div>
+                        )}
+                        
+                        {/* AI Clip Suggestions - show when remaining time allows 4+ segments (20s+) */}
+                        {remainingTime >= 20 && (
+                          <div className="pt-2 space-y-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full border-cyan-500/30 text-cyan-400"
+                              onClick={async () => {
+                                if (showClipSuggestions && clipSuggestions.length > 0) {
+                                  setShowClipSuggestions(false);
+                                  return;
+                                }
+                                setClipSuggestionsLoading(true);
+                                setShowClipSuggestions(true);
+                                try {
+                                  const priorPrompts = segments
+                                    .filter(s => s.kind === 'video')
+                                    .map(s => {
+                                      const asset = card.mediaAssets?.find(a => a.id === s.assetId);
+                                      return asset?.prompt || '';
+                                    })
+                                    .filter(Boolean);
+                                  
+                                  const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/suggest-next-clip`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({
+                                      cardTitle: card.title,
+                                      cardNarration: card.content,
+                                      currentSegmentIndex: segments.length,
+                                      totalSegmentsPlanned: Math.ceil(narrationDuration / 5),
+                                      priorPrompts,
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    setClipSuggestions(data.suggestions || []);
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to get clip suggestions:', err);
+                                } finally {
+                                  setClipSuggestionsLoading(false);
+                                }
+                              }}
+                              disabled={clipSuggestionsLoading}
+                              data-testid="button-suggest-clips"
+                            >
+                              {clipSuggestionsLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                              ) : (
+                                <Sparkles className="w-3 h-3 mr-1.5" />
+                              )}
+                              {showClipSuggestions && clipSuggestions.length > 0 
+                                ? 'Hide Suggestions' 
+                                : clipSuggestionsLoading 
+                                  ? 'Finding clips...' 
+                                  : 'Suggest Next Clip'}
+                            </Button>
+                            
+                            {showClipSuggestions && clipSuggestions.length > 0 && (
+                              <div className="space-y-2" data-testid="clip-suggestions-list">
+                                {clipSuggestions.map((suggestion) => (
+                                  <div 
+                                    key={suggestion.id}
+                                    className="p-2 rounded-lg bg-slate-800/70 border border-slate-700 space-y-1.5"
+                                    data-testid={`suggestion-card-${suggestion.id}`}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <span 
+                                        className="text-[10px] uppercase tracking-wide text-cyan-400/70 font-medium"
+                                        data-testid={`text-arc-phase-${suggestion.id}`}
+                                      >
+                                        {suggestion.arcPhase}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-cyan-400"
+                                        onClick={() => {
+                                          setVideoPrompt(suggestion.prompt);
+                                          toast({
+                                            title: "Prompt applied",
+                                            description: "The suggested prompt has been added to the video prompt field.",
+                                          });
+                                        }}
+                                        data-testid={`button-use-suggestion-${suggestion.id}`}
+                                      >
+                                        Use
+                                      </Button>
+                                    </div>
+                                    <p 
+                                      className="text-xs text-slate-300 leading-relaxed line-clamp-3"
+                                      data-testid={`text-prompt-${suggestion.id}`}
+                                    >
+                                      {suggestion.prompt}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 italic">
+                                      {suggestion.rationale}
+                                    </p>
+                                    {suggestion.continuityHints?.length > 0 && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {suggestion.continuityHints.slice(0, 3).map((hint, i) => (
+                                          <span 
+                                            key={i}
+                                            className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400"
+                                          >
+                                            {hint}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
