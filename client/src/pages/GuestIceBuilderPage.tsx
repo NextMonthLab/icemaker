@@ -421,6 +421,17 @@ export default function GuestIceBuilderPage() {
   const musicPreviewRef = useRef<HTMLAudioElement | null>(null);
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
+  // Check if project bible has any meaningful configuration
+  const isBibleConfigured = useMemo(() => {
+    if (!projectBible) return false;
+    // Bible is configured if it has style, characters, world, or scene lock
+    return !!(
+      projectBible.style?.aspectRatio ||
+      projectBible.characters?.length ||
+      projectBible.world?.setting ||
+      projectBible.scene?.enabled
+    );
+  }, [projectBible]);
   const [bibleGenerating, setBibleGenerating] = useState(false);
   const [showBiblePromptModal, setShowBiblePromptModal] = useState(false);
   const [hasShownBiblePrompt, setHasShownBiblePrompt] = useState(false);
