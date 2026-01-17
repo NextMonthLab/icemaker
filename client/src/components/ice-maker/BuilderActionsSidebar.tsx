@@ -61,6 +61,7 @@ interface BuilderActionsSidebarProps {
   projectBible: any;
   onShowPreviewPrompt?: (feature: string) => void;
   onShowBibleWarning?: (pendingAction: () => void) => void;
+  onShowSharePanel?: () => void;
 }
 
 export function BuilderActionsSidebar({
@@ -112,6 +113,7 @@ export function BuilderActionsSidebar({
   projectBible,
   onShowPreviewPrompt,
   onShowBibleWarning,
+  onShowSharePanel,
 }: BuilderActionsSidebarProps) {
   if (isCollapsed) {
     return (
@@ -289,29 +291,33 @@ export function BuilderActionsSidebar({
               </Button>
             )}
 
-            <Button
-              variant={iceVisibility === "public" ? "default" : iceVisibility === "unlisted" ? "outline" : "ghost"}
-              size="sm"
-              onClick={() => setShowPublishModal(true)}
-              disabled={cardsLength === 0}
-              className={`gap-1.5 ${
-                iceVisibility === "public" 
-                  ? "bg-green-600 text-white" 
-                  : iceVisibility === "unlisted"
-                  ? "border-cyan-500/40 text-cyan-400"
-                  : ""
-              }`}
-              data-testid="sidebar-publish"
-            >
-              {iceVisibility === "public" ? (
-                <Globe className="w-3.5 h-3.5" />
-              ) : iceVisibility === "unlisted" ? (
+            {/* Share button - different behavior based on visibility state */}
+            {iceVisibility === "private" ? (
+              // Not shared yet - plain SHARE button
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPublishModal(true)}
+                disabled={cardsLength === 0}
+                className="gap-1.5"
+                data-testid="sidebar-share"
+              >
                 <Share2 className="w-3.5 h-3.5" />
-              ) : (
-                <Lock className="w-3.5 h-3.5" />
-              )}
-              {iceVisibility === "public" ? "Public" : iceVisibility === "unlisted" ? "Shared" : "Publish"}
-            </Button>
+                SHARE
+              </Button>
+            ) : (
+              // Already shared - highlighted SHARED button that opens share panel
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onShowSharePanel}
+                className="gap-1.5 bg-cyan-600 text-white"
+                data-testid="sidebar-shared"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                SHARED
+              </Button>
+            )}
 
             <Button
               variant="ghost"
