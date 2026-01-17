@@ -530,6 +530,23 @@ export default function GuestIceBuilderPage() {
     }
   }, [musicVolume]);
   
+  // Continuously enforce music volume while playing (catches any browser resets)
+  useEffect(() => {
+    if (!showPreviewModal || !musicEnabled || !musicAudioRef.current) return;
+    
+    const intervalId = setInterval(() => {
+      if (musicAudioRef.current && !musicAudioRef.current.paused) {
+        const targetVolume = musicVolume / 100;
+        if (Math.abs(musicAudioRef.current.volume - targetVolume) > 0.01) {
+          console.log('[Music] Volume drift detected, correcting from', musicAudioRef.current.volume, 'to', targetVolume);
+          musicAudioRef.current.volume = targetVolume;
+        }
+      }
+    }, 100); // Check every 100ms
+    
+    return () => clearInterval(intervalId);
+  }, [showPreviewModal, musicEnabled, musicVolume]);
+  
   // Cleanup music audio on component unmount
   useEffect(() => {
     return () => {

@@ -391,6 +391,7 @@ export default function CardPlayer({
   
   // Use requestAnimationFrame for smoother caption sync with audio
   // The timeupdate event only fires ~4 times/second, which causes visible lag
+  // Also continuously enforce volume to catch any resets
   useEffect(() => {
     if (!hasNarration || !isAudioPlaying) return;
     
@@ -398,13 +399,19 @@ export default function CardPlayer({
     const updateProgress = () => {
       if (audioRef.current && !audioRef.current.paused) {
         setAudioProgress(audioRef.current.currentTime);
+        // Continuously enforce volume in case something resets it
+        const targetVolume = narrationVolume / 100;
+        if (Math.abs(audioRef.current.volume - targetVolume) > 0.01) {
+          console.log('[Narration] Volume drift detected, correcting from', audioRef.current.volume, 'to', targetVolume);
+          audioRef.current.volume = targetVolume;
+        }
         animationId = requestAnimationFrame(updateProgress);
       }
     };
     
     animationId = requestAnimationFrame(updateProgress);
     return () => cancelAnimationFrame(animationId);
-  }, [hasNarration, isAudioPlaying]);
+  }, [hasNarration, isAudioPlaying, narrationVolume]);
   
   const handleAudioLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
