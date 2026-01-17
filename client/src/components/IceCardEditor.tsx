@@ -2437,15 +2437,17 @@ export function IceCardEditor({
                           <Button
                             onClick={handleGenerateNarration}
                             disabled={narrationLoading || !narrationText.trim() || narrationText.length > 3000}
-                            className="flex-1 gap-2"
+                            className={`flex-1 gap-2 ${card.narrationAudioUrl ? 'bg-green-600 hover:bg-green-700' : ''}`}
                             data-testid="button-generate-narration-lane"
                           >
                             {narrationLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : card.narrationAudioUrl ? (
+                              <CheckCircle className="w-4 h-4" />
                             ) : (
                               <Mic className="w-4 h-4" />
                             )}
-                            {narrationLoading ? "Generating..." : "Generate Narration"}
+                            {narrationLoading ? "Generating..." : card.narrationAudioUrl ? "Regenerate" : "Generate Narration"}
                           </Button>
                         </div>
                       </div>
@@ -3793,15 +3795,17 @@ export function IceCardEditor({
                         <Button
                           onClick={handleGenerateNarration}
                           disabled={narrationLoading || !narrationText.trim() || narrationText.length > 3000}
-                          className="flex-1 gap-2"
+                          className={`flex-1 gap-2 ${card.narrationAudioUrl ? 'bg-green-600 hover:bg-green-700' : ''}`}
                           data-testid="button-generate-narration"
                         >
                           {narrationLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : card.narrationAudioUrl ? (
+                            <CheckCircle className="w-4 h-4" />
                           ) : (
                             <Mic className="w-4 h-4" />
                           )}
-                          {narrationLoading ? "Generating..." : "Generate Narration"}
+                          {narrationLoading ? "Generating..." : card.narrationAudioUrl ? "Regenerate" : "Generate Narration"}
                         </Button>
                       </div>
                     </>
