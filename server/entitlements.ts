@@ -350,6 +350,82 @@ export async function checkCredits(
   };
 }
 
+// Daily AI generation caps per tier
+const DAILY_CAPS: Record<string, { images: number; videos: number; tts: number }> = {
+  free: { images: 0, videos: 0, tts: 0 },
+  freePass: { images: 20, videos: 5, tts: 30 },
+  pro: { images: 50, videos: 10, tts: 100 },
+  business: { images: 200, videos: 30, tts: 500 },
+  admin: { images: -1, videos: -1, tts: -1 }, // Unlimited
+};
+
+export type AiGenerationType = 'image' | 'video' | 'tts';
+
+export async function checkDailyAiCap(
+  userId: number,
+  generationType: AiGenerationType
+): Promise<{ allowed: boolean; used: number; limit: number; remaining: number }> {
+  const user = await storage.getUser(userId);
+  if (!user) {
+    return { allowed: false, used: 0, limit: 0, remaining: 0 };
+  }
+  
+  // Determine tier
+  let tier = 'free';
+  if (user.role === 'admin' || user.isAdmin) {
+    tier = 'admin';
+  } else if (hasActiveFreePass(user)) {
+    tier = 'freePass';
+  } else if (user.role === 'creator') {
+    const creatorProfile = await storage.getCreatorProfile(userId);
+    if (creatorProfile?.subscriptionStatus === 'active' && creatorProfile?.planId) {
+      const plan = await storage.getPlan(creatorProfile.planId);
+      if (plan) {
+        tier = detectTierFromSlug(plan.name);
+      }
+    }
+  }
+  
+  const caps = DAILY_CAPS[tier] || DAILY_CAPS.free;
+  const capKey = generationType === 'image' ? 'images' : generationType === 'video' ? 'videos' : 'tts';
+  const limit = caps[capKey];
+  
+  // Unlimited for admins
+  if (limit === -1) {
+    return { allowed: true, used: 0, limit: -1, remaining: -1 };
+  }
+  
+  // No cap for free tier (they can't generate anyway due to entitlements)
+  if (limit === 0) {
+    return { allowed: false, used: 0, limit: 0, remaining: 0 };
+  }
+  
+  // Get today's UTC start
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  
+  // Get today's usage from ai_usage_events
+  const usageEvents = await storage.getAiUsageByProfile(userId, todayUtc);
+  
+  // Map generation type to usage type in db
+  const usageTypeMap: Record<AiGenerationType, string[]> = {
+    image: ['image_generation', 'image'],
+    video: ['video_generation', 'video'],
+    tts: ['tts_generation', 'tts', 'voice'],
+  };
+  
+  const relevantTypes = usageTypeMap[generationType];
+  const used = usageEvents.filter(e => relevantTypes.includes(e.usageType)).length;
+  const remaining = Math.max(0, limit - used);
+  
+  return {
+    allowed: used < limit,
+    used,
+    limit,
+    remaining,
+  };
+}
+
 export function entitlementMiddleware(key: EntitlementKey) {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated() || !req.user) {
@@ -385,6 +461,30 @@ export function creditMiddleware(creditType: 'video' | 'voice', amount: number =
         creditType,
         balance: result.balance,
         needed: amount
+      });
+    }
+
+    next();
+  };
+}
+
+export function dailyCapMiddleware(generationType: AiGenerationType) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const result = await checkDailyAiCap((req.user as any).id, generationType);
+    
+    if (!result.allowed) {
+      const typeLabel = generationType === 'image' ? 'image' : generationType === 'video' ? 'video' : 'narration';
+      return res.status(429).json({ 
+        message: `Daily ${typeLabel} generation limit reached (${result.limit} per day). Try again tomorrow or upgrade your plan.`,
+        dailyCapExceeded: true,
+        generationType,
+        used: result.used,
+        limit: result.limit,
+        remaining: result.remaining,
       });
     }
 

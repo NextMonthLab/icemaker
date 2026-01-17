@@ -368,11 +368,25 @@ function AdminUsers() {
                             Grant 3 Days
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 5 })}
+                            data-testid={`button-grant-5day-${user.id}`}
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Grant 5 Days
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 7 })}
                             data-testid={`button-grant-7day-${user.id}`}
                           >
                             <Gift className="w-4 h-4 mr-2" />
                             Grant 7 Days
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 13 })}
+                            data-testid={`button-grant-13day-${user.id}`}
+                          >
+                            <Gift className="w-4 h-4 mr-2" />
+                            Grant 13 Days
                           </DropdownMenuItem>
                           {user.hasFreePass && (
                             <>
@@ -452,11 +466,25 @@ function AdminUsers() {
                         Grant 3 Days
                       </DropdownMenuItem>
                       <DropdownMenuItem
+                        onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 5 })}
+                        data-testid={`button-grant-5day-mobile-${user.id}`}
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Grant 5 Days
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 7 })}
                         data-testid={`button-grant-7day-mobile-${user.id}`}
                       >
                         <Gift className="w-4 h-4 mr-2" />
                         Grant 7 Days
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => grantFreePassMutation.mutate({ userId: user.id, days: 13 })}
+                        data-testid={`button-grant-13day-mobile-${user.id}`}
+                      >
+                        <Gift className="w-4 h-4 mr-2" />
+                        Grant 13 Days
                       </DropdownMenuItem>
                       {user.hasFreePass && (
                         <>

@@ -21,7 +21,7 @@ import { startArchiveExpiredPreviewsJob } from "./jobs/archiveExpiredPreviews";
 import { startOrphanCleanupJob } from "./jobs/orphanCleanup";
 import { startStorageReconciliationJob } from "./jobs/storageReconciliation";
 import { startExportCleanupJob } from "./jobs/exportCleanup";
-import { getFullEntitlements } from "./entitlements";
+import { getFullEntitlements, dailyCapMiddleware } from "./entitlements";
 import { 
   FREE_CONVERSATION_LIMIT, 
   FREE_CONVERSATION_SOFT_LIMIT, 
@@ -8466,8 +8466,8 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
-  // Generate image for an ICE preview card (requires auth + entitlements)
-  app.post("/api/ice/preview/:previewId/cards/:cardId/generate-image", requireAuth, async (req, res) => {
+  // Generate image for an ICE preview card (requires auth + entitlements + daily cap)
+  app.post("/api/ice/preview/:previewId/cards/:cardId/generate-image", requireAuth, dailyCapMiddleware('image'), async (req, res) => {
     try {
       const { previewId, cardId } = req.params;
       const { prompt } = req.body;
@@ -8789,8 +8789,8 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
     }
   });
   
-  // Generate video for an ICE preview card (requires auth + entitlements)
-  app.post("/api/ice/preview/:previewId/cards/:cardId/generate-video", requireAuth, async (req, res) => {
+  // Generate video for an ICE preview card (requires auth + entitlements + daily cap)
+  app.post("/api/ice/preview/:previewId/cards/:cardId/generate-video", requireAuth, dailyCapMiddleware('video'), async (req, res) => {
     try {
       const { previewId, cardId } = req.params;
       const { mode, prompt, sourceImageUrl } = req.body;
@@ -9272,8 +9272,8 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
     }
   });
   
-  // Generate narration for an ICE preview card (requires auth + entitlements)
-  app.post("/api/ice/preview/:previewId/cards/:cardId/narration/generate", requireAuth, async (req, res) => {
+  // Generate narration for an ICE preview card (requires auth + entitlements + daily cap)
+  app.post("/api/ice/preview/:previewId/cards/:cardId/narration/generate", requireAuth, dailyCapMiddleware('tts'), async (req, res) => {
     try {
       const { previewId, cardId } = req.params;
       const { text, voice, speed } = req.body;
