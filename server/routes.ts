@@ -9543,24 +9543,52 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
         return res.status(404).json({ message: "Asset not found" });
       }
       
+      // Get the asset being deleted to check its type
+      const deletedAsset = assets[assetIndex];
+      const deletedAssetKind = deletedAsset.kind;
+      const wasActiveImage = deletedAssetKind === 'image' && 
+        (card.selectedMediaAssetId === assetId || card.generatedImageUrl === deletedAsset.url);
+      const wasActiveVideo = deletedAssetKind === 'video' && 
+        (card.selectedMediaAssetId === assetId || card.generatedVideoUrl === deletedAsset.url);
+      
       // Remove the asset
       const newAssets = assets.filter((a: any) => a.id !== assetId);
       
-      // If deleted asset was selected, select the most recent remaining asset
+      // If deleted asset was selected, select the most recent remaining asset of same type
       let newSelectedId = card.selectedMediaAssetId;
       if (card.selectedMediaAssetId === assetId) {
         const readyAssets = newAssets.filter((a: any) => a.status === 'ready');
         newSelectedId = readyAssets.length > 0 ? readyAssets[readyAssets.length - 1].id : undefined;
       }
       
-      // Update legacy fields based on new selection
-      const newSelectedAsset = newAssets.find((a: any) => a.id === newSelectedId);
+      // Find new active image/video based on remaining assets
+      const remainingImages = newAssets.filter((a: any) => a.kind === 'image' && a.status === 'ready');
+      const remainingVideos = newAssets.filter((a: any) => a.kind === 'video' && a.status === 'ready');
+      
+      // Determine new generatedImageUrl and generatedVideoUrl
+      let newGeneratedImageUrl = card.generatedImageUrl;
+      let newGeneratedVideoUrl = card.generatedVideoUrl;
+      
+      // If we deleted the active image, update to next image or clear
+      if (wasActiveImage) {
+        newGeneratedImageUrl = remainingImages.length > 0 
+          ? remainingImages[remainingImages.length - 1].url 
+          : undefined;
+      }
+      
+      // If we deleted the active video, update to next video or clear
+      if (wasActiveVideo) {
+        newGeneratedVideoUrl = remainingVideos.length > 0 
+          ? remainingVideos[remainingVideos.length - 1].url 
+          : undefined;
+      }
+      
       cards[cardIndex] = {
         ...card,
         mediaAssets: newAssets,
         selectedMediaAssetId: newSelectedId,
-        generatedImageUrl: newSelectedAsset?.kind === 'image' ? newSelectedAsset.url : (newSelectedId ? card.generatedImageUrl : undefined),
-        generatedVideoUrl: newSelectedAsset?.kind === 'video' ? newSelectedAsset.url : (newSelectedId ? card.generatedVideoUrl : undefined),
+        generatedImageUrl: newGeneratedImageUrl,
+        generatedVideoUrl: newGeneratedVideoUrl,
       };
       
       await storage.updateIcePreview(previewId, { cards });
@@ -9569,6 +9597,8 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
         success: true,
         deletedAssetId: assetId,
         newSelectedAssetId: newSelectedId,
+        newGeneratedImageUrl: newGeneratedImageUrl || null,
+        newGeneratedVideoUrl: newGeneratedVideoUrl || null,
       });
     } catch (error) {
       console.error("Error deleting media asset:", error);

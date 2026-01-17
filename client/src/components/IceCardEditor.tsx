@@ -1119,13 +1119,6 @@ export function IceCardEditor({
   const handleDeleteAsset = async (assetId: string) => {
     setDeletingAsset(assetId);
     try {
-      // Check if this asset is the currently active image/video
-      const deletedAsset = card.mediaAssets?.find(a => a.id === assetId);
-      const wasActiveImage = deletedAsset?.kind === 'image' && 
-        (card.selectedMediaAssetId === assetId || card.generatedImageUrl === deletedAsset.url);
-      const wasActiveVideo = deletedAsset?.kind === 'video' && 
-        (card.selectedMediaAssetId === assetId || card.generatedVideoUrl === deletedAsset.url);
-      
       const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/media/${assetId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -1136,31 +1129,15 @@ export function IceCardEditor({
       const data = await res.json();
       const updatedAssets = (card.mediaAssets || []).filter(a => a.id !== assetId);
       
-      // Build update object - clear active URL if deleted asset was active
+      // Use server's response for the new active URLs (already persisted)
       const updateData: Record<string, any> = { 
         mediaAssets: updatedAssets,
-        selectedMediaAssetId: data.newSelectedAssetId || null,
+        selectedMediaAssetId: data.newSelectedAssetId || undefined,
+        generatedImageUrl: data.newGeneratedImageUrl || undefined,
+        generatedVideoUrl: data.newGeneratedVideoUrl || undefined,
       };
       
-      // Clear the active image/video URL if the deleted asset was active
-      if (wasActiveImage) {
-        // Find another image to use, or clear it
-        const nextImage = updatedAssets.find(a => a.kind === 'image');
-        updateData.generatedImageUrl = nextImage?.url || null;
-        if (nextImage) {
-          updateData.selectedMediaAssetId = nextImage.id;
-        }
-      }
-      if (wasActiveVideo) {
-        const nextVideo = updatedAssets.find(a => a.kind === 'video');
-        updateData.generatedVideoUrl = nextVideo?.url || null;
-        if (nextVideo && !wasActiveImage) {
-          updateData.selectedMediaAssetId = nextVideo.id;
-        }
-      }
-      
       onCardUpdate(card.id, updateData);
-      onCardSave(card.id, updateData);
       toast({ title: 'Asset deleted' });
     } catch (error: any) {
       toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
@@ -1925,26 +1902,6 @@ export function IceCardEditor({
                     <div className="rounded-lg overflow-hidden border border-green-500/30 bg-green-500/5">
                       <div className="p-2 bg-green-500/10 flex items-center justify-between">
                         <span className="text-sm font-medium text-green-400">Active Image</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                          onClick={() => {
-                            onCardUpdate(card.id, { 
-                              generatedImageUrl: undefined, 
-                              selectedMediaAssetId: undefined 
-                            });
-                            onCardSave(card.id, { 
-                              generatedImageUrl: undefined, 
-                              selectedMediaAssetId: undefined 
-                            });
-                            toast({ title: 'Image removed' });
-                          }}
-                          data-testid="button-remove-active-image"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 mr-1" />
-                          Remove
-                        </Button>
                       </div>
                       <img 
                         src={card.generatedImageUrl} 
