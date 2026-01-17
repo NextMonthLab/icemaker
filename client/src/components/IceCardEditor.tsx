@@ -2891,8 +2891,14 @@ export function IceCardEditor({
                   
                   {/* Media Library - shows all assets */}
                   {(card.mediaAssets?.length || 0) > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Media Library</Label>
+                    <div className="p-4 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                          <Image className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <span className="text-sm font-semibold text-white">Media Library</span>
+                        <span className="text-xs text-slate-400 ml-auto">{card.mediaAssets?.filter(a => a.kind === 'image').length} images</span>
+                      </div>
                       <div className="grid grid-cols-3 gap-2">
                         {card.mediaAssets?.filter(a => a.kind === 'image').map((asset) => (
                           <div 
@@ -2966,22 +2972,22 @@ export function IceCardEditor({
                           </div>
                         ))}
                       </div>
-                      <p className="text-xs text-slate-500">
-                        Click an image to select it as active. {card.mediaAssets?.filter(a => a.kind === 'image').length} image(s) available.
-                      </p>
                     </div>
                   )}
                   
                   {/* Currently Selected Preview */}
                   {card.generatedImageUrl && (
-                    <div className="rounded-lg overflow-hidden border border-green-500/30 bg-green-500/5">
-                      <div className="p-2 bg-green-500/10 flex items-center justify-between">
-                        <span className="text-sm font-medium text-green-400">Active Image</span>
+                    <div className="rounded-xl overflow-hidden border border-green-500/40 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent">
+                      <div className="p-3 flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-sm font-semibold text-green-400">Active Image</span>
                       </div>
                       <img 
                         src={card.generatedImageUrl} 
                         alt={card.title}
-                        className="w-full max-h-48 object-contain bg-black"
+                        className="w-full max-h-48 object-contain bg-black/50"
                       />
                     </div>
                   )}
@@ -3593,11 +3599,15 @@ export function IceCardEditor({
                             </Button>
                             
                             {showClipSuggestions && clipSuggestions.length > 0 && (
-                              <div className="space-y-2" data-testid="clip-suggestions-list">
+                              <div className="space-y-2 p-3 rounded-xl bg-gradient-to-br from-purple-500/10 via-cyan-500/5 to-transparent border border-purple-500/20" data-testid="clip-suggestions-list">
+                                <div className="flex items-center gap-2 pb-2 border-b border-slate-700/50">
+                                  <Sparkles className="w-4 h-4 text-purple-400" />
+                                  <span className="text-xs font-medium text-purple-300">AI Suggestions</span>
+                                </div>
                                 {clipSuggestions.map((suggestion) => (
                                   <div 
                                     key={suggestion.id}
-                                    className="p-2 rounded-lg bg-slate-800/70 border border-slate-700 space-y-1.5"
+                                    className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 space-y-2 hover:border-cyan-500/30 transition-colors"
                                     data-testid={`suggestion-card-${suggestion.id}`}
                                   >
                                     <div className="flex items-start justify-between gap-2">
@@ -3973,9 +3983,14 @@ export function IceCardEditor({
                   )}
                   
                   {card.narrationAudioUrl && (
-                    <div className="rounded-lg overflow-hidden border border-cyan-500/30 bg-cyan-500/5">
-                      <div className="p-2 bg-cyan-500/10 flex items-center justify-between">
-                        <span className="text-sm font-medium text-cyan-400">Generated Narration</span>
+                    <div className="rounded-xl overflow-hidden border border-cyan-500/40 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent">
+                      <div className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                            <Volume2 className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-cyan-400">Generated Narration</span>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -3986,7 +4001,7 @@ export function IceCardEditor({
                           Remove
                         </Button>
                       </div>
-                      <div className="p-3">
+                      <div className="p-3 pt-0">
                         <audio 
                           src={card.narrationAudioUrl} 
                           controls 
