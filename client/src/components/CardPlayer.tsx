@@ -110,6 +110,7 @@ export default function CardPlayer({
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [debugOverlay, setDebugOverlay] = useState(false);
   const [showContinuation, setShowContinuation] = useState(false); // Cinematic Continuation state
+  const [videoAspect, setVideoAspect] = useState<'portrait' | 'landscape' | 'square'>('portrait'); // Track video aspect ratio for smart scaling
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captionRegionRef = useRef<HTMLDivElement | null>(null);
@@ -249,6 +250,7 @@ export default function CardPlayer({
     setShowSwipeHint(false);
     setIsPlaying(autoplay);
     setShowContinuation(false); // Reset cinematic continuation state
+    setVideoAspect('portrait'); // Reset video aspect for new card
     
     // Stop any playing audio when card changes
     if (audioRef.current) {
@@ -264,6 +266,22 @@ export default function CardPlayer({
       videoRef.current.currentTime = 0;
     }
   }, [card.id, autoplay]);
+  
+  // Detect video aspect ratio when video metadata loads
+  const handleVideoLoadedMetadata = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    const { videoWidth, videoHeight } = video;
+    if (videoWidth && videoHeight) {
+      const ratio = videoWidth / videoHeight;
+      if (ratio > 1.2) {
+        setVideoAspect('landscape'); // Wide video (16:9, 4K landscape, etc.)
+      } else if (ratio < 0.8) {
+        setVideoAspect('portrait'); // Tall video (9:16)
+      } else {
+        setVideoAspect('square'); // Nearly square
+      }
+    }
+  }, []);
   
   // Separate effect for video display preference (can run when hasVideo changes)
   useEffect(() => {
@@ -709,15 +727,42 @@ export default function CardPlayer({
             >
               {showVideo && hasVideo ? (
                 <>
-                  {/* Video element - stays visible unless continuation is showing */}
-                  <video
-                    ref={setVideoRef}
-                    src={activeMedia.videoUrl!}
-                    muted
-                    playsInline
-                    className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
-                    data-testid="video-player"
-                  />
+                  {/* Video element with smart scaling based on aspect ratio */}
+                  {videoAspect === 'landscape' ? (
+                    <>
+                      {/* Blur-fill background for landscape videos - fills space attractively */}
+                      <video
+                        src={activeMedia.videoUrl!}
+                        muted
+                        playsInline
+                        autoPlay
+                        loop
+                        className={`absolute inset-0 w-full h-full object-cover scale-110 blur-lg opacity-60 transition-opacity duration-300 ${showContinuation ? 'opacity-0' : ''}`}
+                        aria-hidden="true"
+                      />
+                      {/* Main video - contained to show full frame without cropping */}
+                      <video
+                        ref={setVideoRef}
+                        src={activeMedia.videoUrl!}
+                        muted
+                        playsInline
+                        onLoadedMetadata={handleVideoLoadedMetadata}
+                        className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
+                        data-testid="video-player"
+                      />
+                    </>
+                  ) : (
+                    /* Portrait/square videos use object-cover for full-bleed effect */
+                    <video
+                      ref={setVideoRef}
+                      src={activeMedia.videoUrl!}
+                      muted
+                      playsInline
+                      onLoadedMetadata={handleVideoLoadedMetadata}
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation ? 'opacity-0' : 'opacity-100'}`}
+                      data-testid="video-player"
+                    />
+                  )}
                   {/* Cinematic Continuation: crossfade to still image when video ends */}
                   {showContinuation && hasContinuationImage && (
                     <motion.img
@@ -726,7 +771,7 @@ export default function CardPlayer({
                       transition={{ duration: 0.3 }}
                       src={card.continuationImageUrl!}
                       alt={`${card.title} continuation`}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover z-20"
                       data-testid="continuation-image"
                     />
                   )}
