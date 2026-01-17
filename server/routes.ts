@@ -8916,9 +8916,28 @@ Stay engaging, reference story details, and help the audience understand the nar
       }
       
       const cards = preview.cards as any[];
-      const card = cards.find(c => c.id === cardId);
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      const card = cards[cardIndex];
       if (!card) {
         return res.status(404).json({ message: "Card not found" });
+      }
+      
+      // Idempotency check: if already has continuation image, return it
+      if (card.continuationImageUrl) {
+        return res.json({
+          success: true,
+          cardId,
+          continuationImageUrl: card.continuationImageUrl,
+          alreadyExists: true,
+        });
+      }
+      
+      // Prevent concurrent generation: check status
+      if (card.continuationGenerationStatus === "pending") {
+        return res.status(409).json({ 
+          message: "Continuation still generation already in progress",
+          status: "pending",
+        });
       }
       
       // Check if card has video (continuation only makes sense for video cards)
@@ -8926,6 +8945,10 @@ Stay engaging, reference story details, and help the audience understand the nar
       if (!hasVideo) {
         return res.status(400).json({ message: "Card must have a video for continuation still generation" });
       }
+      
+      // Mark as pending before generating
+      cards[cardIndex] = { ...card, continuationGenerationStatus: "pending" };
+      await storage.updateIcePreview(previewId, { cards });
       
       // Check OpenAI configuration
       const { isOpenAIConfigured, getOpenAI } = await import("./ai");
@@ -9011,11 +9034,11 @@ Stay engaging, reference story details, and help the audience understand the nar
       }
       
       // Update the card with continuation image URL and metadata
-      const cardIndex = cards.findIndex(c => c.id === cardId);
       cards[cardIndex] = {
-        ...card,
+        ...cards[cardIndex],
         continuationImageUrl,
         cinematicContinuationEnabled: true, // Ensure it's enabled
+        continuationGenerationStatus: "completed",
       };
       await storage.updateIcePreview(previewId, { cards });
       
@@ -9030,16 +9053,33 @@ Stay engaging, reference story details, and help the audience understand the nar
     } catch (error: any) {
       console.error("Error generating continuation still:", error);
       
+      // Reset generation status on failure
+      try {
+        const latestPreview = await storage.getIcePreview(previewId);
+        if (latestPreview) {
+          const latestCards = latestPreview.cards as any[];
+          const cIdx = latestCards.findIndex(c => c.id === cardId);
+          if (cIdx !== -1) {
+            latestCards[cIdx] = { ...latestCards[cIdx], continuationGenerationStatus: "failed" };
+            await storage.updateIcePreview(previewId, { cards: latestCards });
+          }
+        }
+      } catch (cleanupErr) {
+        console.warn("Failed to reset continuation status:", cleanupErr);
+      }
+      
       if (error?.status === 400) {
         return res.status(400).json({
           message: "OpenAI rejected the prompt. It may contain prohibited content.",
           error: error.message,
+          status: "failed",
         });
       }
       
       res.status(500).json({
         message: "Error generating continuation still",
         error: error.message || "Unknown error",
+        status: "failed",
       });
     }
   });

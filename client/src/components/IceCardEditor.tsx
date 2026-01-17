@@ -80,6 +80,12 @@ interface PreviewCard {
   ctaButtonLabel?: string;
   ctaUrl?: string;
   ctaSubtext?: string;
+  // Cinematic Continuation fields
+  cinematicContinuationEnabled?: boolean;
+  continuationImageUrl?: string;
+  continuationGenerationStatus?: 'pending' | 'completed' | 'failed';
+  narrationDurationSec?: number;
+  videoDurationSec?: number;
   // Guest card fields
   guestCategory?: GuestCategory;
   guestName?: string;
@@ -141,12 +147,158 @@ function LockedOverlay({
       <p className="text-slate-400 text-sm text-center mb-4 max-w-xs">{description}</p>
       <Button
         onClick={onUpgrade}
-        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
+        className="gap-2"
         size="sm"
       >
         <Crown className="w-4 h-4" />
         Upgrade to Unlock
       </Button>
+    </div>
+  );
+}
+
+interface CinematicContinuationProps {
+  previewId: string;
+  card: PreviewCard;
+  onCardUpdate: (cardId: string, updates: Partial<PreviewCard>) => void;
+  onCardSave: (cardId: string, updates: Partial<PreviewCard>) => void;
+}
+
+function CinematicContinuationSection({ previewId, card, onCardUpdate, onCardSave }: CinematicContinuationProps) {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Check if continuation still is needed (narration longer than video)
+  const videoDuration = card.videoDurationSec || 5; // Default 5s video cap
+  const narrationDuration = card.narrationDurationSec || 0;
+  const needsContinuation = narrationDuration > videoDuration;
+  const hasContinuationImage = !!card.continuationImageUrl;
+  const isEnabled = card.cinematicContinuationEnabled !== false; // Default true
+  
+  const handleToggle = (enabled: boolean) => {
+    onCardUpdate(card.id, { cinematicContinuationEnabled: enabled });
+    onCardSave(card.id, { cinematicContinuationEnabled: enabled });
+  };
+  
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/generate-continuation-still`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to generate continuation still");
+      }
+      
+      const data = await res.json();
+      
+      const updates = { 
+        continuationImageUrl: data.continuationImageUrl,
+        continuationGenerationStatus: 'completed' as const,
+      };
+      onCardUpdate(card.id, updates);
+      onCardSave(card.id, updates);
+      
+      if (data.alreadyExists) {
+        toast({ title: "Already generated", description: "Continuation still already exists for this card." });
+      } else {
+        toast({ title: "Continuation still created!", description: "Smooth visual transition will now appear when narration extends beyond video." });
+      }
+    } catch (error: any) {
+      toast({ title: "Generation failed", description: error.message, variant: "destructive" });
+      const errorUpdate = { continuationGenerationStatus: 'failed' as const };
+      onCardUpdate(card.id, errorUpdate);
+      onCardSave(card.id, errorUpdate);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  // Don't show section if video/narration not present
+  if (!card.generatedVideoUrl || !card.narrationAudioUrl) return null;
+  
+  return (
+    <div className="mt-4 p-3 bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-lg border border-purple-500/20">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Image className="w-4 h-4 text-purple-400" />
+          <span className="text-sm font-medium text-white">Cinematic Continuation</span>
+        </div>
+        <Switch
+          checked={isEnabled}
+          onCheckedChange={handleToggle}
+          data-testid="switch-cinematic-continuation"
+        />
+      </div>
+      
+      <p className="text-xs text-slate-400 mb-3">
+        When narration extends beyond the 5-second video, show a smooth transition to a context-aware still image.
+      </p>
+      
+      {isEnabled && (
+        <>
+          {needsContinuation ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-purple-300">
+                <AlertCircle className="w-3 h-3" />
+                <span>Narration ({narrationDuration.toFixed(1)}s) exceeds video ({videoDuration}s)</span>
+              </div>
+              
+              {hasContinuationImage ? (
+                <div className="flex items-center gap-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <img 
+                    src={card.continuationImageUrl!} 
+                    alt="Continuation still" 
+                    className="w-12 h-20 object-cover rounded"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-green-400 font-medium">Continuation still ready</p>
+                    <p className="text-xs text-slate-400">Will transition smoothly after video ends</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    className="text-xs"
+                    data-testid="button-regenerate-continuation"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isGenerating ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  size="sm"
+                  className="w-full gap-2"
+                  data-testid="button-generate-continuation"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Generating (~$0.04)...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3" />
+                      Generate Continuation Still (~$0.04)
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              No continuation needed - narration fits within video duration.
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -1101,8 +1253,25 @@ export function IceCardEditor({
       }
       
       const data = await res.json();
-      onCardUpdate(card.id, { narrationAudioUrl: data.audioUrl });
-      toast({ title: "Narration generated!", description: "AI voiceover has been created." });
+      const updates: Record<string, any> = { narrationAudioUrl: data.audioUrl };
+      if (data.narrationDurationSec) {
+        updates.narrationDurationSec = data.narrationDurationSec;
+      }
+      if (data.videoDurationSec) {
+        updates.videoDurationSec = data.videoDurationSec;
+      }
+      onCardUpdate(card.id, updates);
+      onCardSave(card.id, updates);
+      
+      // Show continuation still prompt if narration exceeds video duration
+      if (data.needsContinuation && data.hasVideo) {
+        toast({ 
+          title: "Narration generated!", 
+          description: `AI voiceover created (${data.narrationDurationSec?.toFixed(1) || '?'}s). Your narration extends beyond the video - consider generating a continuation still for smooth visual transition.`,
+        });
+      } else {
+        toast({ title: "Narration generated!", description: "AI voiceover has been created." });
+      }
     } catch (error: any) {
       toast({ title: "Generation failed", description: error.message, variant: "destructive" });
     } finally {
@@ -2027,7 +2196,7 @@ export function IceCardEditor({
                         <Button
                           onClick={handleGenerateNarration}
                           disabled={narrationLoading || !narrationText.trim() || narrationText.length > 3000}
-                          className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
+                          className="flex-1 gap-2"
                           data-testid="button-generate-narration"
                         >
                           {narrationLoading ? (
@@ -2038,6 +2207,16 @@ export function IceCardEditor({
                           {narrationLoading ? "Generating..." : "Generate Narration"}
                         </Button>
                       </div>
+                      
+                      {/* Cinematic Continuation Section - shown when video exists with narration */}
+                      {card.generatedVideoUrl && card.narrationAudioUrl && (
+                        <CinematicContinuationSection
+                          previewId={previewId}
+                          card={card}
+                          onCardUpdate={onCardUpdate}
+                          onCardSave={onCardSave}
+                        />
+                      )}
                     </>
                   )}
                 </div>
@@ -2059,7 +2238,7 @@ export function IceCardEditor({
                         <Button
                           onClick={() => imageInputRef.current?.click()}
                           disabled={imageUploading}
-                          className="w-full bg-cyan-600 hover:bg-cyan-700 gap-2"
+                          className="w-full gap-2"
                           data-testid="button-upload-own-image"
                         >
                           {imageUploading ? (

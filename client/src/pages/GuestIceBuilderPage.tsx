@@ -91,6 +91,7 @@ interface PreviewCard {
   narrationAudioUrl?: string;
   videoGenerated?: boolean;
   videoGenerationStatus?: string;
+  mediaAssets?: Array<{ id: string; kind: 'image' | 'video'; source: 'upload' | 'ai'; url: string; thumbnailUrl?: string; createdAt: string; prompt?: string; status: 'ready' | 'generating' | 'failed' }>;
   cardType?: 'standard' | 'guest' | 'cta';
   // CTA card fields
   ctaHeadline?: string;
@@ -112,6 +113,12 @@ interface PreviewCard {
   guestStatus?: GuestStatus;
   guestError?: string;
   guestDurationSeconds?: number;
+  // Cinematic Continuation fields
+  cinematicContinuationEnabled?: boolean;
+  continuationImageUrl?: string;
+  continuationGenerationStatus?: 'pending' | 'completed' | 'failed';
+  narrationDurationSec?: number;
+  videoDurationSec?: number;
 }
 
 interface InsightOrigin {
