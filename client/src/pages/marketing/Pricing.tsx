@@ -140,7 +140,11 @@ const faqs = [
 
 export default function Pricing() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  
+  // Check if user came with upgrade intent (from UpgradeModal redirect)
+  const isUpgradeIntent = typeof window !== 'undefined' && 
+    new URLSearchParams(window.location.search).get('intent') === 'upgrade';
   
   // Determine the correct href for pricing buttons based on auth state
   const getPlanHref = (plan: typeof pricingPlans[0]) => {
@@ -155,6 +159,19 @@ export default function Pricing() {
     }
     // Not logged in - go to login, then redirect to launchpad
     return "/login?returnUrl=/launchpad";
+  };
+  
+  // Get button text based on upgrade intent
+  const getButtonText = (plan: typeof pricingPlans[0]) => {
+    // Contact Sales always stays the same
+    if (plan.cta === "Contact Sales") {
+      return plan.cta;
+    }
+    // If upgrade intent, show "Upgrade" for all other plans
+    if (isUpgradeIntent) {
+      return "Upgrade";
+    }
+    return plan.cta;
   };
   
   return (
@@ -272,7 +289,7 @@ export default function Pricing() {
                       size="lg"
                       data-testid={`button-pricing-${plan.name.toLowerCase()}`}
                     >
-                      {plan.cta}
+                      {getButtonText(plan)}
                     </Button>
                   </Link>
                 </motion.div>

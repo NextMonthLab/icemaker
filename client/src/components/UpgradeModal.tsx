@@ -22,7 +22,7 @@ export function UpgradeModal({ open, onOpenChange, feature, reason }: UpgradeMod
   
   const handleViewPricing = () => {
     onOpenChange(false);
-    setLocation("/pricing");
+    setLocation("/pricing?intent=upgrade");
   };
   
   return (
