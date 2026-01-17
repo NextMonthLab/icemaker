@@ -1867,8 +1867,8 @@ export function IceCardEditor({
                             )}
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="absolute bottom-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-red-500/80 hover:bg-red-600 text-white"
+                              size="icon"
+                              className="absolute bottom-1 right-1 h-6 w-6 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-red-500/80 hover:bg-red-600 text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteAsset(asset.id);
