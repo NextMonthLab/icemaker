@@ -2176,6 +2176,29 @@ export function IceCardEditor({
                                 )}
                               </div>
                               
+                              {/* Video scaling toggle for video blocks */}
+                              {block.type.includes('video') && block.status === 'ready' && block.assetId && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const asset = card.mediaAssets?.find(a => a.id === block.assetId);
+                                    if (asset) {
+                                      const newMode = asset.renderMode === 'fit' ? 'fill' : 'fit';
+                                      const updatedAssets = card.mediaAssets?.map(a => 
+                                        a.id === block.assetId ? { ...a, renderMode: newMode as RenderMode } : a
+                                      );
+                                      onCardUpdate(card.id, { mediaAssets: updatedAssets });
+                                      onCardSave(card.id, { mediaAssets: updatedAssets });
+                                    }
+                                  }}
+                                  className="px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+                                  title={card.mediaAssets?.find(a => a.id === block.assetId)?.renderMode === 'fit' ? 'Click to fill screen' : 'Click to fit to screen'}
+                                  data-testid={`button-toggle-scale-${block.id}`}
+                                >
+                                  {card.mediaAssets?.find(a => a.id === block.assetId)?.renderMode === 'fit' ? 'Fit' : 'Fill'}
+                                </button>
+                              )}
+                              
                               {/* Status indicator */}
                               <div className="flex-shrink-0">
                                 {block.status === 'generating' && (

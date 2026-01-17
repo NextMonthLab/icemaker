@@ -48,6 +48,7 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const search = async () => {
     if (!query.trim()) return;
@@ -168,8 +169,15 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
             {mediaType === "photos" && photos.map((photo) => (
               <button
                 key={photo.id}
-                onClick={() => onSelectImage(photo.src.large, photo.photographer)}
-                className="relative aspect-video rounded-md overflow-hidden group hover:ring-2 hover:ring-cyan-500 transition-all"
+                onClick={() => {
+                  setSelectedId(photo.id);
+                  onSelectImage(photo.src.large, photo.photographer);
+                }}
+                className={`relative aspect-video rounded-md overflow-hidden group transition-all ${
+                  selectedId === photo.id 
+                    ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900" 
+                    : "hover:ring-2 hover:ring-cyan-500"
+                }`}
                 data-testid={`pexels-photo-${photo.id}`}
               >
                 <img
@@ -191,8 +199,15 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
               return (
                 <button
                   key={video.id}
-                  onClick={() => onSelectVideo?.(hdFile?.link || "", video.image, video.user.name)}
-                  className="relative aspect-video rounded-md overflow-hidden group hover:ring-2 hover:ring-cyan-500 transition-all"
+                  onClick={() => {
+                    setSelectedId(video.id);
+                    onSelectVideo?.(hdFile?.link || "", video.image, video.user.name);
+                  }}
+                  className={`relative aspect-video rounded-md overflow-hidden group transition-all ${
+                    selectedId === video.id 
+                      ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900" 
+                      : "hover:ring-2 hover:ring-cyan-500"
+                  }`}
                   data-testid={`pexels-video-${video.id}`}
                 >
                   <img
