@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Music, Mic, Image, Upload, Wand2, Video, Download, Loader2, Globe, Lock, Share2, Lightbulb, BookOpen, X, Play, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Music, Mic, Image, Upload, Wand2, Video, Download, Loader2, Globe, Lock, Share2, Lightbulb, BookOpen, X, Play, Sparkles, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { CaptionStylePicker } from "@/components/ice-maker/CaptionStylePicker";
@@ -59,6 +59,7 @@ interface BuilderActionsSidebarProps {
   showBiblePanel: boolean;
   setShowBiblePanel: (show: boolean) => void;
   projectBible: any;
+  onShowPreviewPrompt?: (feature: string) => void;
 }
 
 export function BuilderActionsSidebar({
@@ -108,6 +109,7 @@ export function BuilderActionsSidebar({
   showBiblePanel,
   setShowBiblePanel,
   projectBible,
+  onShowPreviewPrompt,
 }: BuilderActionsSidebarProps) {
   if (isCollapsed) {
     return (
@@ -328,6 +330,12 @@ export function BuilderActionsSidebar({
         <div className="flex items-center gap-2 mb-3">
           <Music className="w-4 h-4 text-blue-400" />
           <h4 className="text-sm font-medium text-white">Background Music</h4>
+          {musicTrackUrl && (
+            <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/20 px-2 py-0.5 rounded-full">
+              <CheckCircle className="w-3 h-3" />
+              Applied
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2 mb-2">
           <select
@@ -336,6 +344,10 @@ export function BuilderActionsSidebar({
               const track = musicTracks.find(t => (t.url || "none") === e.target.value);
               setMusicTrackUrl(track?.url || null);
               setMusicEnabled(!!track?.url);
+              // Show preview prompt when music is applied
+              if (track?.url && onShowPreviewPrompt) {
+                onShowPreviewPrompt("music");
+              }
             }}
             className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
             data-testid="sidebar-select-music"
@@ -509,10 +521,17 @@ export function BuilderActionsSidebar({
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-cyan-400" />
           <span className="text-sm font-medium text-white">Caption Settings</span>
+          {captionState.presetId && (
+            <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/20 px-2 py-0.5 rounded-full">
+              <CheckCircle className="w-3 h-3" />
+              Applied
+            </span>
+          )}
         </div>
         <CaptionStylePicker
           captionState={captionState}
           onStateChange={setCaptionState}
+          onShowPreviewPrompt={onShowPreviewPrompt}
         />
         <div className="mt-3 pt-2 border-t border-white/5">
           <EnterpriseBrandingUpsell context="captions" variant="compact" />

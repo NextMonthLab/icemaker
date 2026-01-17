@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -432,6 +432,8 @@ export default function GuestIceBuilderPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showExportComingSoon, setShowExportComingSoon] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
+  const [showPreviewPrompt, setShowPreviewPrompt] = useState(false);
+  const [previewPromptFeature, setPreviewPromptFeature] = useState<string>("");
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   
@@ -2206,7 +2208,15 @@ export default function GuestIceBuilderPage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Music Selector */}
                 <div className="flex-1">
-                  <label className="text-xs text-white/60 mb-1.5 block">Background Music</label>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <label className="text-xs text-white/60">Background Music</label>
+                    {musicTrackUrl && (
+                      <span className="flex items-center gap-1 text-[10px] text-green-400 bg-green-500/20 px-1.5 py-0.5 rounded-full">
+                        <CheckCircle className="w-2.5 h-2.5" />
+                        Applied
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
                     <Music className="w-4 h-4 text-blue-400 shrink-0" />
                     <select
@@ -2215,6 +2225,11 @@ export default function GuestIceBuilderPage() {
                         const track = MUSIC_TRACKS.find(t => (t.url || "none") === e.target.value);
                         setMusicTrackUrl(track?.url || null);
                         setMusicEnabled(!!track?.url);
+                        // Show preview prompt when music is applied
+                        if (track?.url) {
+                          setPreviewPromptFeature("music");
+                          setShowPreviewPrompt(true);
+                        }
                       }}
                       className="flex-1 bg-transparent text-sm text-white border-none outline-none cursor-pointer"
                       data-testid="select-music-track-editor"
@@ -2762,6 +2777,10 @@ export default function GuestIceBuilderPage() {
                 showBiblePanel={showBiblePanel}
                 setShowBiblePanel={setShowBiblePanel}
                 projectBible={projectBible}
+                onShowPreviewPrompt={(feature) => {
+                  setPreviewPromptFeature(feature);
+                  setShowPreviewPrompt(true);
+                }}
               />
             </div>
           </div>
@@ -3121,6 +3140,48 @@ export default function GuestIceBuilderPage() {
               Close
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Preview Prompt Dialog - encourages users to preview after applying music/captions */}
+      <Dialog open={showPreviewPrompt} onOpenChange={setShowPreviewPrompt}>
+        <DialogContent className="max-w-sm bg-slate-900 border-cyan-500/30">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Play className="w-5 h-5 text-green-400" />
+              {previewPromptFeature === "music" ? "Music Applied!" : "Captions Updated!"}
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              {previewPromptFeature === "music" 
+                ? "Your background music has been added to all cards." 
+                : "Your caption style has been updated."}
+              {" "}Preview your story to see and hear the changes!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              onClick={() => {
+                setShowPreviewPrompt(false);
+                // Open preview modal to show the story with the new music/captions
+                setPreviewCardIndex(0);
+                setShowPreviewModal(true);
+              }}
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+              data-testid="button-preview-now"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Preview Now
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowPreviewPrompt(false)} 
+              className="text-white/60 hover:text-white"
+              data-testid="button-continue-editing"
+            >
+              Continue Editing
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       

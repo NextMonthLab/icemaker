@@ -38,6 +38,7 @@ interface CaptionStylePickerProps {
   captionState: CaptionState;
   onStateChange: (state: CaptionState) => void;
   className?: string;
+  onShowPreviewPrompt?: (feature: string) => void;
 }
 
 const animationOptions: { id: AnimationId; name: string; icon: React.ReactNode }[] = [
@@ -166,11 +167,16 @@ export function CaptionStylePicker({
   captionState,
   onStateChange,
   className,
+  onShowPreviewPrompt,
 }: CaptionStylePickerProps) {
   const [activeTab, setActiveTab] = useState("styles");
   
   const updateState = (updates: Partial<CaptionState>) => {
     onStateChange({ ...captionState, ...updates });
+    // Show preview prompt when significant caption changes are made
+    if (updates.presetId || updates.karaokeEnabled !== undefined) {
+      onShowPreviewPrompt?.("captions");
+    }
   };
   
   return (
