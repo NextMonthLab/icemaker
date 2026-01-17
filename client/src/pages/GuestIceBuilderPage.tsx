@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
 import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon } from "lucide-react";
@@ -399,8 +399,18 @@ export default function GuestIceBuilderPage() {
   const [narrationMuted, setNarrationMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [musicTrackUrl, setMusicTrackUrl] = useState<string | null>(null);
-  const [musicVolume, setMusicVolume] = useState(50);
+  // iOS detection - volume controls don't work on iOS Safari
+  const isIOS = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }, []);
+  
+  // On iOS: fixed volumes (music 20%, narration 100%) since programmatic volume control doesn't work
+  const [musicVolume, setMusicVolume] = useState(() => isIOS ? 20 : 50);
   const [narrationVolume, setNarrationVolume] = useState(100);
+  const [isNarrationPlaying, setIsNarrationPlaying] = useState(false);
+  const musicFadeRef = useRef<number | null>(null); // For smooth fade animation
   const [isPreviewingMusic, setIsPreviewingMusic] = useState(false);
   const musicPreviewRef = useRef<HTMLAudioElement | null>(null);
   const [showBiblePanel, setShowBiblePanel] = useState(false);
@@ -530,22 +540,56 @@ export default function GuestIceBuilderPage() {
     }
   }, [musicVolume]);
   
-  // Continuously enforce music volume while playing (catches any browser resets)
+  // Music ducking: fade music based on narration state (desktop only)
+  // When narration plays: fade to user-set musicVolume
+  // When narration stops/no narration: fade to 100%
   useEffect(() => {
-    if (!showPreviewModal || !musicEnabled || !musicAudioRef.current) return;
+    if (isIOS || !showPreviewModal || !musicEnabled || !musicAudioRef.current) return;
     
-    const intervalId = setInterval(() => {
-      if (musicAudioRef.current && !musicAudioRef.current.paused) {
-        const targetVolume = musicVolume / 100;
-        if (Math.abs(musicAudioRef.current.volume - targetVolume) > 0.01) {
-          console.log('[Music] Volume drift detected, correcting from', musicAudioRef.current.volume, 'to', targetVolume);
-          musicAudioRef.current.volume = targetVolume;
-        }
+    // Cancel any existing fade
+    if (musicFadeRef.current) {
+      cancelAnimationFrame(musicFadeRef.current);
+      musicFadeRef.current = null;
+    }
+    
+    const audio = musicAudioRef.current;
+    const currentVolume = audio.volume;
+    // Target: user's set volume during narration, 100% when no narration
+    const targetVolume = isNarrationPlaying ? musicVolume / 100 : 1.0;
+    
+    if (Math.abs(currentVolume - targetVolume) < 0.01) return;
+    
+    const fadeDuration = 400; // 400ms fade
+    const startTime = performance.now();
+    const startVolume = currentVolume;
+    
+    const fade = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / fadeDuration, 1);
+      // Ease out for smooth fade
+      const eased = 1 - Math.pow(1 - progress, 2);
+      const newVolume = startVolume + (targetVolume - startVolume) * eased;
+      
+      if (musicAudioRef.current) {
+        musicAudioRef.current.volume = newVolume;
       }
-    }, 100); // Check every 100ms
+      
+      if (progress < 1) {
+        musicFadeRef.current = requestAnimationFrame(fade);
+      } else {
+        musicFadeRef.current = null;
+      }
+    };
     
-    return () => clearInterval(intervalId);
-  }, [showPreviewModal, musicEnabled, musicVolume]);
+    musicFadeRef.current = requestAnimationFrame(fade);
+    
+    return () => {
+      if (musicFadeRef.current) {
+        cancelAnimationFrame(musicFadeRef.current);
+        musicFadeRef.current = null;
+      }
+    };
+  }, [isIOS, showPreviewModal, musicEnabled, isNarrationPlaying, musicVolume]);
   
   // Cleanup music audio on component unmount
   useEffect(() => {
@@ -2134,8 +2178,8 @@ export default function GuestIceBuilderPage() {
                   </p>
                 </div>
 
-                {/* Music Volume (when music enabled) */}
-                {musicEnabled && (
+                {/* Music Volume (when music enabled) - hidden on iOS where volume control doesn't work */}
+                {musicEnabled && !isIOS && (
                   <div className="sm:w-28">
                     <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
                       <Music className="w-3 h-3" /> Music
@@ -2155,24 +2199,26 @@ export default function GuestIceBuilderPage() {
                   </div>
                 )}
                 
-                {/* Narration Volume */}
-                <div className="sm:w-28">
-                  <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
-                    <Mic className="w-3 h-3" /> Narration
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Slider
-                      value={[narrationVolume]}
-                      onValueChange={([v]) => setNarrationVolume(v)}
-                      min={0}
-                      max={100}
-                      step={5}
-                      className="flex-1"
-                      data-testid="slider-narration-volume-editor"
-                    />
-                    <span className="text-xs text-white/50 w-8">{narrationVolume}%</span>
+                {/* Narration Volume - hidden on iOS where volume control doesn't work */}
+                {!isIOS && (
+                  <div className="sm:w-28">
+                    <label className="text-xs text-white/60 mb-1.5 block flex items-center gap-1">
+                      <Mic className="w-3 h-3" /> Narration
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[narrationVolume]}
+                        onValueChange={([v]) => setNarrationVolume(v)}
+                        min={0}
+                        max={100}
+                        step={5}
+                        className="flex-1"
+                        data-testid="slider-narration-volume-editor"
+                      />
+                      <span className="text-xs text-white/50 w-8">{narrationVolume}%</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               <div className="mt-3 pt-3 border-t border-white/5">
                 <EnterpriseBrandingUpsell context="audio" variant="compact" />
@@ -2643,7 +2689,7 @@ export default function GuestIceBuilderPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setShowPreviewModal(false)}
+            onClick={() => { setShowPreviewModal(false); setIsNarrationPlaying(false); }}
             className="absolute top-4 right-4 z-[60] text-white/60 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur"
             data-testid="button-close-preview"
           >
@@ -2754,6 +2800,7 @@ export default function GuestIceBuilderPage() {
                       handleCardPhaseComplete();
                     }
                   }}
+                  onNarrationPlayingChange={setIsNarrationPlaying}
                 />
               </motion.div>
             )}
@@ -2793,61 +2840,63 @@ export default function GuestIceBuilderPage() {
             })()}
           </AnimatePresence>
           
-          {/* Top controls bar - mobile optimized (volume only during preview) */}
-          <div className="absolute top-4 left-4 right-14 z-[60] flex items-center gap-2">
-            {/* Volume controls - only show when music enabled or narration exists */}
-            {(musicEnabled || cards.some(c => c.narrationAudioUrl)) && (
-              <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">
-                {/* Music volume */}
-                {musicEnabled && (
-                  <div className="flex items-center gap-2">
-                    <Music className="w-3 h-3 text-blue-400" />
-                    <Slider
-                      value={[musicVolume]}
-                      onValueChange={([v]) => setMusicVolume(v)}
-                      min={0}
-                      max={100}
-                      step={5}
-                      className="w-16"
-                      data-testid="slider-music-volume"
-                    />
-                    <span className="text-[9px] text-white/40 w-6">{musicVolume}%</span>
-                  </div>
-                )}
-                
-                {/* Narration volume */}
-                {cards.some(c => c.narrationAudioUrl) && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setNarrationMuted(prev => !prev)}
-                      className={`transition-all ${narrationMuted ? "text-white/40" : "text-cyan-400"}`}
-                      title={narrationMuted ? "Unmute narration" : "Mute narration"}
-                      data-testid="button-toggle-narration"
-                    >
-                      {narrationMuted ? (
-                        <VolumeX className="w-3 h-3" />
-                      ) : (
-                        <Volume2 className="w-3 h-3" />
-                      )}
-                    </button>
-                    <Slider
-                      value={[narrationMuted ? 0 : narrationVolume]}
-                      onValueChange={([v]) => {
-                        setNarrationVolume(v);
-                        if (v > 0) setNarrationMuted(false);
-                      }}
-                      min={0}
-                      max={100}
-                      step={5}
-                      className="w-16"
-                      data-testid="slider-narration-volume"
-                    />
-                    <span className="text-[9px] text-white/40 w-6">{narrationMuted ? 0 : narrationVolume}%</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Top controls bar - mobile optimized (volume only during preview, hidden on iOS) */}
+          {!isIOS && (
+            <div className="absolute top-4 left-4 right-14 z-[60] flex items-center gap-2">
+              {/* Volume controls - only show when music enabled or narration exists */}
+              {(musicEnabled || cards.some(c => c.narrationAudioUrl)) && (
+                <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">
+                  {/* Music volume */}
+                  {musicEnabled && (
+                    <div className="flex items-center gap-2">
+                      <Music className="w-3 h-3 text-blue-400" />
+                      <Slider
+                        value={[musicVolume]}
+                        onValueChange={([v]) => setMusicVolume(v)}
+                        min={0}
+                        max={100}
+                        step={5}
+                        className="w-16"
+                        data-testid="slider-music-volume"
+                      />
+                      <span className="text-[9px] text-white/40 w-6">{musicVolume}%</span>
+                    </div>
+                  )}
+                  
+                  {/* Narration volume */}
+                  {cards.some(c => c.narrationAudioUrl) && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setNarrationMuted(prev => !prev)}
+                        className={`transition-all ${narrationMuted ? "text-white/40" : "text-cyan-400"}`}
+                        title={narrationMuted ? "Unmute narration" : "Mute narration"}
+                        data-testid="button-toggle-narration"
+                      >
+                        {narrationMuted ? (
+                          <VolumeX className="w-3 h-3" />
+                        ) : (
+                          <Volume2 className="w-3 h-3" />
+                        )}
+                      </button>
+                      <Slider
+                        value={[narrationMuted ? 0 : narrationVolume]}
+                        onValueChange={([v]) => {
+                          setNarrationVolume(v);
+                          if (v > 0) setNarrationMuted(false);
+                        }}
+                        min={0}
+                        max={100}
+                        step={5}
+                        className="w-16"
+                        data-testid="slider-narration-volume"
+                      />
+                      <span className="text-[9px] text-white/40 w-6">{narrationMuted ? 0 : narrationVolume}%</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       

@@ -74,6 +74,7 @@ interface CardPlayerProps {
   logoUrl?: string | null; // URL to the logo image
   logoPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right"; // Position of logo overlay
   adminCtaEnabled?: boolean; // Show "Powered by IceMaker" CTA instead of logo (admin feature)
+  onNarrationPlayingChange?: (isPlaying: boolean) => void; // Callback when narration starts/stops (for music ducking)
 }
 
 type Phase = "cinematic" | "context";
@@ -94,7 +95,8 @@ export default function CardPlayer({
   logoEnabled = false,
   logoUrl = null,
   logoPosition = "top-right",
-  adminCtaEnabled = false
+  adminCtaEnabled = false,
+  onNarrationPlayingChange
 }: CardPlayerProps) {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<Phase>("cinematic");
@@ -431,11 +433,13 @@ export default function CardPlayer({
   
   const handleAudioPlay = useCallback(() => {
     setIsAudioPlaying(true);
-  }, []);
+    onNarrationPlayingChange?.(true);
+  }, [onNarrationPlayingChange]);
   
   const handleAudioPause = useCallback(() => {
     setIsAudioPlaying(false);
-  }, []);
+    onNarrationPlayingChange?.(false);
+  }, [onNarrationPlayingChange]);
 
   const advanceToContext = useCallback(() => {
     setPhase("context");
@@ -453,11 +457,12 @@ export default function CardPlayer({
   const handleAudioEnded = useCallback(() => {
     setIsAudioPlaying(false);
     setAudioProgress(0);
+    onNarrationPlayingChange?.(false);
     // When narration ends, advance to context phase
     if (phase === "cinematic") {
       advanceToContext();
     }
-  }, [phase, advanceToContext]);
+  }, [phase, advanceToContext, onNarrationPlayingChange]);
   
   const seekAudio = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
