@@ -7,8 +7,8 @@ export default function Onboarding() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Skip legacy onboarding, go directly to launchpad
-    setLocation("/launchpad");
+    // Skip legacy onboarding, go directly to icemaker
+    setLocation("/app");
   }, [setLocation]);
 
   return (

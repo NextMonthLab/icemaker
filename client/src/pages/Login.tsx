@@ -34,16 +34,16 @@ export default function Login() {
           title: "Account created",
           description: "Welcome to IceMaker!",
         });
-        // Redirect to return URL if provided, otherwise go to launchpad
-        setLocation(returnUrl || "/launchpad");
+        // Redirect to return URL if provided, otherwise go to icemaker
+        setLocation(returnUrl || "/app");
       } else {
         await login(username, password);
         toast({
           title: "Welcome back!",
           description: "Logged in successfully.",
         });
-        // Redirect to return URL if provided, otherwise default to launchpad
-        setLocation(returnUrl || "/launchpad");
+        // Redirect to return URL if provided, otherwise default to icemaker
+        setLocation(returnUrl || "/app");
       }
     } catch (error: any) {
       toast({
