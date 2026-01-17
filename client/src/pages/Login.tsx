@@ -34,8 +34,8 @@ export default function Login() {
           title: "Account created",
           description: "Welcome to IceMaker!",
         });
-        // Redirect to return URL if provided, otherwise go to onboarding
-        setLocation(returnUrl || "/onboarding");
+        // Redirect to return URL if provided, otherwise go to launchpad
+        setLocation(returnUrl || "/launchpad");
       } else {
         await login(username, password);
         toast({
