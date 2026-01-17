@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
@@ -6,6 +6,9 @@ import {
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
   User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize
 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +51,7 @@ interface MediaSegment {
   id: string;
   assetId?: string;
   kind: 'image' | 'video';
+  source?: 'upload' | 'ai' | 'stock';
   url: string;
   thumbnailUrl?: string;
   durationSec: number;
@@ -55,6 +59,145 @@ interface MediaSegment {
   order: number;
   renderMode?: RenderMode;
   sourceAspectRatio?: number;
+}
+
+// Sortable media clip component for drag-and-drop timeline
+function SortableMediaClip({ 
+  segment, 
+  onRemove, 
+  onDurationChange,
+  isSelected,
+  onSelect 
+}: { 
+  segment: MediaSegment; 
+  onRemove: (id: string) => void;
+  onDurationChange?: (id: string, duration: number) => void;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: segment.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const sourceLabel = segment.source === 'ai' ? 'AI' : segment.source === 'stock' ? 'Stock' : 'Upload';
+  const sourceColor = segment.source === 'ai' ? 'bg-purple-500' : segment.source === 'stock' ? 'bg-blue-500' : 'bg-green-500';
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 p-2 rounded-lg border transition-colors cursor-pointer ${
+        isSelected 
+          ? 'bg-cyan-500/20 border-cyan-500/50' 
+          : 'bg-slate-800/70 border-slate-700 hover:border-slate-600'
+      } ${isDragging ? 'z-50 shadow-lg' : ''}`}
+      onClick={() => onSelect?.(segment.id)}
+      data-testid={`timeline-clip-${segment.id}`}
+    >
+      {/* Drag handle */}
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300 touch-none"
+        data-testid={`drag-handle-${segment.id}`}
+      >
+        <GripVertical className="w-4 h-4" />
+      </div>
+      
+      {/* Thumbnail */}
+      <div className="w-12 h-8 rounded overflow-hidden bg-slate-900 flex-shrink-0">
+        {segment.kind === 'video' ? (
+          <video 
+            src={segment.url} 
+            className="w-full h-full object-cover"
+            muted
+          />
+        ) : (
+          <img 
+            src={segment.thumbnailUrl || segment.url} 
+            alt="Media clip"
+            className="w-full h-full object-cover"
+          />
+        )}
+      </div>
+      
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          {segment.kind === 'video' ? (
+            <Video className="w-3 h-3 text-cyan-400" />
+          ) : (
+            <Image className="w-3 h-3 text-purple-400" />
+          )}
+          <span className="text-xs text-slate-300 truncate">
+            {segment.kind === 'video' ? 'Video' : 'Image'}
+          </span>
+          <span className={`text-[9px] px-1 py-0.5 rounded ${sourceColor} text-white`}>
+            {sourceLabel}
+          </span>
+        </div>
+        <div className="text-[10px] text-slate-500">
+          {segment.durationSec.toFixed(1)}s
+        </div>
+      </div>
+      
+      {/* Duration adjustment for images */}
+      {segment.kind === 'image' && onDurationChange && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDurationChange(segment.id, Math.max(1, segment.durationSec - 1));
+            }}
+            data-testid={`decrease-duration-${segment.id}`}
+          >
+            <span className="text-xs">-</span>
+          </Button>
+          <span className="text-xs text-slate-400 w-6 text-center">{segment.durationSec}s</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDurationChange(segment.id, Math.min(30, segment.durationSec + 1));
+            }}
+            data-testid={`increase-duration-${segment.id}`}
+          >
+            <span className="text-xs">+</span>
+          </Button>
+        </div>
+      )}
+      
+      {/* Remove button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(segment.id);
+        }}
+        data-testid={`remove-clip-${segment.id}`}
+      >
+        <X className="w-3 h-3" />
+      </Button>
+    </div>
+  );
 }
 
 interface ClipSuggestion {
@@ -3205,209 +3348,156 @@ export function IceCardEditor({
                           </div>
                         )}
                         
-                        {/* Segment list with navigation */}
-                        {segments.length > 0 && (
-                          <div className="space-y-2 pt-1">
-                            {/* Navigation header */}
-                            {segments.length > 1 && (
+                        {/* Unified drag-and-drop media timeline */}
+                        {(() => {
+                          // Build unified segments from all media assets if no segments exist
+                          const allAssets = card.mediaAssets?.filter(a => a.status === 'ready') || [];
+                          let displaySegments = segments.length > 0 ? [...segments] : [];
+                          
+                          // Auto-populate segments from assets if empty
+                          if (displaySegments.length === 0 && allAssets.length > 0) {
+                            displaySegments = allAssets
+                              .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+                              .map((asset, idx) => ({
+                                id: `seg-${asset.id}`,
+                                assetId: asset.id,
+                                kind: asset.kind,
+                                source: asset.source,
+                                url: asset.url,
+                                thumbnailUrl: asset.thumbnailUrl,
+                                durationSec: asset.durationSec || (asset.kind === 'video' ? 5 : 5),
+                                startTimeSec: 0,
+                                order: idx,
+                                renderMode: asset.renderMode,
+                              }));
+                          }
+                          
+                          if (displaySegments.length === 0) return null;
+                          
+                          const sensors = [
+                            { sensor: PointerSensor, options: { activationConstraint: { distance: 8 } } },
+                            { sensor: TouchSensor, options: { activationConstraint: { delay: 200, tolerance: 5 } } },
+                          ];
+                          
+                          const handleDragEnd = (event: DragEndEvent) => {
+                            const { active, over } = event;
+                            if (!over || active.id === over.id) return;
+                            
+                            const oldIndex = displaySegments.findIndex(s => s.id === active.id);
+                            const newIndex = displaySegments.findIndex(s => s.id === over.id);
+                            
+                            if (oldIndex !== -1 && newIndex !== -1) {
+                              const reordered = arrayMove(displaySegments, oldIndex, newIndex);
+                              // Recalculate order and start times
+                              let time = 0;
+                              const updatedSegments = reordered.map((s, i) => {
+                                const updated = { ...s, order: i, startTimeSec: time };
+                                time += s.durationSec;
+                                return updated;
+                              });
+                              onCardUpdate(card.id, { mediaSegments: updatedSegments });
+                              onCardSave(card.id, { mediaSegments: updatedSegments });
+                            }
+                          };
+                          
+                          const handleRemoveSegment = (segId: string) => {
+                            const updatedSegments = displaySegments
+                              .filter(s => s.id !== segId)
+                              .map((s, i) => ({ ...s, order: i }));
+                            let time = 0;
+                            for (const s of updatedSegments) {
+                              s.startTimeSec = time;
+                              time += s.durationSec;
+                            }
+                            onCardUpdate(card.id, { mediaSegments: updatedSegments });
+                            onCardSave(card.id, { mediaSegments: updatedSegments });
+                          };
+                          
+                          const handleDurationChange = (segId: string, duration: number) => {
+                            const updatedSegments = displaySegments.map(s => 
+                              s.id === segId ? { ...s, durationSec: duration } : s
+                            );
+                            let time = 0;
+                            for (const s of updatedSegments) {
+                              s.startTimeSec = time;
+                              time += s.durationSec;
+                            }
+                            onCardUpdate(card.id, { mediaSegments: updatedSegments });
+                            onCardSave(card.id, { mediaSegments: updatedSegments });
+                          };
+                          
+                          return (
+                            <div className="space-y-2 pt-1">
                               <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
-                                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Segments ({segments.length})</span>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setSelectedSegmentIndex(prev => 
-                                      prev === null || prev <= 0 ? segments.length - 1 : prev - 1
-                                    )}
-                                    data-testid="button-prev-segment"
-                                  >
-                                    ← Prev
-                                  </Button>
-                                  <span className="text-xs text-slate-400 min-w-[3ch] text-center">
-                                    {selectedSegmentIndex !== null ? selectedSegmentIndex + 1 : '-'}/{segments.length}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setSelectedSegmentIndex(prev => 
-                                      prev === null || prev >= segments.length - 1 ? 0 : prev + 1
-                                    )}
-                                    data-testid="button-next-segment"
-                                  >
-                                    Next →
-                                  </Button>
-                                </div>
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                  <GripVertical className="w-3 h-3" />
+                                  Clips ({displaySegments.length}) - Drag to reorder
+                                </span>
                               </div>
-                            )}
-                            
-                            {/* Segment items */}
-                            <div className="space-y-1">
-                              {segments.sort((a, b) => a.order - b.order).map((seg, idx) => (
-                                <div 
-                                  key={seg.id}
-                                  className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
-                                    selectedSegmentIndex === idx 
-                                      ? 'bg-cyan-500/20 border border-cyan-500/40' 
-                                      : 'bg-slate-800/50'
-                                  }`}
-                                  onClick={() => setSelectedSegmentIndex(selectedSegmentIndex === idx ? null : idx)}
-                                  data-testid={`segment-item-${idx}`}
+                              
+                              <DndContext
+                                sensors={useSensors(
+                                  useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+                                  useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+                                  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+                                )}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                              >
+                                <SortableContext
+                                  items={displaySegments.map(s => s.id)}
+                                  strategy={verticalListSortingStrategy}
                                 >
-                                  <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-medium ${
-                                    selectedSegmentIndex === idx
-                                      ? 'bg-cyan-500 text-white'
-                                      : 'bg-cyan-500/20 text-cyan-400'
-                                  }`}>
-                                    {idx + 1}
-                                  </span>
-                                  <span className="text-slate-300 flex-1 truncate">
-                                    {seg.kind === 'video' ? 'Video' : 'Image'}: {seg.durationSec}s
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const updatedSegments = segments.filter(s => s.id !== seg.id)
-                                        .map((s, i) => ({ ...s, order: i, startTimeSec: 0 }));
-                                      // Recalculate start times
-                                      let time = 0;
-                                      for (const s of updatedSegments) {
-                                        s.startTimeSec = time;
-                                        time += s.durationSec;
-                                      }
-                                      if (selectedSegmentIndex !== null && selectedSegmentIndex >= updatedSegments.length) {
-                                        setSelectedSegmentIndex(updatedSegments.length > 0 ? updatedSegments.length - 1 : null);
-                                      }
-                                      onCardUpdate(card.id, { mediaSegments: updatedSegments });
-                                      onCardSave(card.id, { mediaSegments: updatedSegments });
-                                    }}
-                                    data-testid={`button-remove-segment-${idx}`}
-                                  >
-                                    <X className="w-3 h-3 text-slate-500" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* Selected segment preview */}
-                            {selectedSegmentIndex !== null && segments[selectedSegmentIndex] && (
-                              <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
-                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Preview: Segment {selectedSegmentIndex + 1}</div>
-                                <div className="aspect-video rounded overflow-hidden bg-slate-900">
-                                  {segments[selectedSegmentIndex].kind === 'video' ? (
-                                    <video 
-                                      src={segments[selectedSegmentIndex].url} 
-                                      className="w-full h-full object-cover"
-                                      controls
-                                      data-testid="video-segment-preview"
-                                    />
-                                  ) : (
-                                    <img 
-                                      src={segments[selectedSegmentIndex].url} 
-                                      alt={`Segment ${selectedSegmentIndex + 1}`}
-                                      className="w-full h-full object-cover"
-                                      data-testid="image-segment-preview"
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Video Assets list - show when no segments but multiple videos */}
-                        {segments.length === 0 && videoAssets.length > 0 && (
-                          <div className="space-y-2 pt-1">
-                            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700">
-                              <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-                                Videos ({videoAssets.length})
-                              </span>
-                            </div>
-                            <div className="space-y-1">
-                              {videoAssets.map((asset, idx) => {
-                                const isSelected = asset.id === card.selectedMediaAssetId || 
-                                  asset.url === card.generatedVideoUrl;
-                                return (
-                                  <div 
-                                    key={asset.id}
-                                    className={`group flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
-                                      isSelected 
-                                        ? 'bg-cyan-500/20 border border-cyan-500/40' 
-                                        : 'bg-slate-800/50'
-                                    }`}
-                                    onClick={() => {
-                                      onCardUpdate(card.id, { 
-                                        selectedMediaAssetId: asset.id,
-                                        generatedVideoUrl: asset.url 
-                                      });
-                                      onCardSave(card.id, { 
-                                        selectedMediaAssetId: asset.id,
-                                        generatedVideoUrl: asset.url 
-                                      });
-                                    }}
-                                    data-testid={`video-asset-item-${idx}`}
-                                  >
-                                    <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-medium ${
-                                      isSelected
-                                        ? 'bg-cyan-500 text-white'
-                                        : 'bg-cyan-500/20 text-cyan-400'
-                                    }`}>
-                                      {idx + 1}
-                                    </span>
-                                    <Video className="w-3 h-3 text-slate-400" />
-                                    <span className="text-slate-300 flex-1 truncate">
-                                      {asset.durationSec ? `${asset.durationSec}s` : '5s'}
-                                      {isSelected && ' (active)'}
-                                    </span>
-                                    {/* Action buttons for video assets */}
-                                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                                      {asset.source === 'ai' && (
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-5 w-5 bg-cyan-500/80 hover:bg-cyan-600 text-white"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRegenerateAsset(asset.id);
-                                          }}
-                                          disabled={regeneratingAsset === asset.id}
-                                          data-testid={`regenerate-video-${asset.id}`}
-                                        >
-                                          {regeneratingAsset === asset.id ? (
-                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                          ) : (
-                                            <RefreshCw className="w-2.5 h-2.5" />
-                                          )}
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5 bg-red-500/80 hover:bg-red-600 text-white"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteAsset(asset.id);
+                                  <div className="space-y-1.5" data-testid="timeline-clips-container">
+                                    {displaySegments.sort((a, b) => a.order - b.order).map((seg) => (
+                                      <SortableMediaClip
+                                        key={seg.id}
+                                        segment={seg}
+                                        onRemove={handleRemoveSegment}
+                                        onDurationChange={seg.kind === 'image' ? handleDurationChange : undefined}
+                                        isSelected={selectedSegmentIndex !== null && displaySegments[selectedSegmentIndex]?.id === seg.id}
+                                        onSelect={(id) => {
+                                          const idx = displaySegments.findIndex(s => s.id === id);
+                                          setSelectedSegmentIndex(idx >= 0 ? idx : null);
                                         }}
-                                        disabled={deletingAsset === asset.id}
-                                        data-testid={`delete-video-${asset.id}`}
-                                      >
-                                        {deletingAsset === asset.id ? (
-                                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                        ) : (
-                                          <Trash2 className="w-2.5 h-2.5" />
-                                        )}
-                                      </Button>
-                                    </div>
+                                      />
+                                    ))}
                                   </div>
-                                );
-                              })}
+                                </SortableContext>
+                              </DndContext>
+                              
+                              <p className="text-[10px] text-slate-500">
+                                Drag clips to reorder. Images: adjust duration with +/- buttons.
+                              </p>
+                              
+                              {/* Selected segment preview */}
+                              {selectedSegmentIndex !== null && displaySegments[selectedSegmentIndex] && (
+                                <div className="mt-2 p-2 rounded-lg bg-slate-800/70 border border-slate-700">
+                                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">
+                                    Preview: Clip {selectedSegmentIndex + 1}
+                                  </div>
+                                  <div className="aspect-video rounded overflow-hidden bg-slate-900">
+                                    {displaySegments[selectedSegmentIndex].kind === 'video' ? (
+                                      <video 
+                                        src={displaySegments[selectedSegmentIndex].url} 
+                                        className="w-full h-full object-cover"
+                                        controls
+                                        data-testid="video-segment-preview"
+                                      />
+                                    ) : (
+                                      <img 
+                                        src={displaySegments[selectedSegmentIndex].url} 
+                                        alt={`Clip ${selectedSegmentIndex + 1}`}
+                                        className="w-full h-full object-cover"
+                                        data-testid="image-segment-preview"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <p className="text-[10px] text-slate-500">
-                              Click a video to set it as active. Only one video plays at a time.
-                            </p>
-                          </div>
-                        )}
+                          );
+                        })()}
                         
                         {/* AI Clip Suggestions - show when remaining time allows at least 1 segment (5s+) */}
                         {remainingTime >= 5 && (
