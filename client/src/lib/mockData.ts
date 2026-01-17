@@ -20,6 +20,21 @@ export interface MediaAsset {
   sourceWidth?: number;
   sourceHeight?: number;
   sourceAspectRatio?: number;
+  durationSec?: number; // Video duration in seconds (for timeline calculations)
+}
+
+// Media segment for multi-clip timeline per card
+export interface MediaSegment {
+  id: string;
+  assetId?: string; // Reference to mediaAssets[] entry
+  kind: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  durationSec: number; // How long this segment plays
+  startTimeSec: number; // When segment starts in card timeline
+  order: number; // Sequence order (0, 1, 2...)
+  renderMode?: VideoRenderMode; // For video segments
+  sourceAspectRatio?: number;
 }
 
 // Caption timing for forced alignment (Phase 2)
@@ -68,6 +83,9 @@ export interface Card {
   continuationImageStatus?: 'none' | 'pending' | 'generating' | 'ready' | 'failed';
   videoDurationSec?: number; // Video duration in seconds
   narrationDurationSec?: number; // Narration audio duration in seconds
+  
+  // Multi-segment media timeline - fill card duration with sequential clips
+  mediaSegments?: MediaSegment[];
 }
 
 export interface Character {

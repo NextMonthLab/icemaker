@@ -4,7 +4,7 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User, ExternalLink, Link as LinkIcon
+  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle
 } from "lucide-react";
 import { PexelsMediaPicker } from "@/components/PexelsMediaPicker";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,20 @@ interface MediaAsset {
   renderMode?: RenderMode;
   sourceWidth?: number;
   sourceHeight?: number;
+  sourceAspectRatio?: number;
+  durationSec?: number; // Video duration in seconds
+}
+
+interface MediaSegment {
+  id: string;
+  assetId?: string;
+  kind: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  durationSec: number;
+  startTimeSec: number;
+  order: number;
+  renderMode?: RenderMode;
   sourceAspectRatio?: number;
 }
 
@@ -93,6 +107,8 @@ interface PreviewCard {
   continuationGenerationStatus?: 'pending' | 'completed' | 'failed';
   narrationDurationSec?: number;
   videoDurationSec?: number;
+  // Multi-segment timeline
+  mediaSegments?: MediaSegment[];
   // Guest card fields
   guestCategory?: GuestCategory;
   guestName?: string;
@@ -1335,23 +1351,84 @@ export function IceCardEditor({
       const mediaUrl = objectPath;
       
       if (type === "image") {
-        onCardUpdate(card.id, { generatedImageUrl: mediaUrl });
-        onCardSave(card.id, { generatedImageUrl: mediaUrl });
+        const newAsset: MediaAsset = {
+          id: `upload-img-${Date.now()}`,
+          kind: 'image',
+          source: 'upload',
+          url: mediaUrl,
+          status: 'ready',
+          createdAt: new Date().toISOString(),
+          prompt: 'Uploaded image',
+        };
+        const updatedAssets = [...(card.mediaAssets || []), newAsset];
+        onCardUpdate(card.id, { 
+          generatedImageUrl: mediaUrl,
+          mediaAssets: updatedAssets,
+          selectedMediaAssetId: newAsset.id,
+        });
+        onCardSave(card.id, { 
+          generatedImageUrl: mediaUrl,
+          mediaAssets: updatedAssets,
+          selectedMediaAssetId: newAsset.id,
+        });
         toast({ title: "Image uploaded!", description: "Your image has been added to the card." });
       } else {
+        // Get video duration from the file before creating asset
+        let videoDuration: number | undefined;
+        try {
+          const videoUrl = URL.createObjectURL(file);
+          const tempVideo = document.createElement('video');
+          tempVideo.preload = 'metadata';
+          videoDuration = await new Promise<number>((resolve) => {
+            tempVideo.onloadedmetadata = () => {
+              URL.revokeObjectURL(videoUrl);
+              resolve(tempVideo.duration);
+            };
+            tempVideo.onerror = () => {
+              URL.revokeObjectURL(videoUrl);
+              resolve(5); // Default fallback
+            };
+            tempVideo.src = videoUrl;
+          });
+        } catch {
+          videoDuration = undefined;
+        }
+        
+        const newAsset: MediaAsset = {
+          id: `upload-vid-${Date.now()}`,
+          kind: 'video',
+          source: 'upload',
+          url: mediaUrl,
+          status: 'ready',
+          createdAt: new Date().toISOString(),
+          prompt: 'Uploaded video',
+          durationSec: videoDuration,
+        };
+        const updatedAssets = [...(card.mediaAssets || []), newAsset];
         onCardUpdate(card.id, { 
           generatedVideoUrl: mediaUrl, 
           videoGenerationStatus: "completed",
           videoGenerated: true,
-          preferredMediaType: 'video'
+          preferredMediaType: 'video',
+          mediaAssets: updatedAssets,
+          selectedMediaAssetId: newAsset.id,
+          videoDurationSec: videoDuration,
         });
         onCardSave(card.id, { 
           generatedVideoUrl: mediaUrl, 
           videoGenerationStatus: "completed",
           videoGenerated: true,
-          preferredMediaType: 'video'
+          preferredMediaType: 'video',
+          mediaAssets: updatedAssets,
+          selectedMediaAssetId: newAsset.id,
+          videoDurationSec: videoDuration,
         });
-        toast({ title: "Video uploaded!", description: "Your video has been added to the card." });
+        toast({ 
+          title: "Video uploaded!", 
+          description: videoDuration 
+            ? `Your video (${videoDuration.toFixed(1)}s) has been added to the card.` 
+            : "Your video has been added to the card." 
+        });
       }
     } catch (error: any) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
@@ -1944,6 +2021,114 @@ export function IceCardEditor({
                     />
                   )}
                   
+                  {/* Media Timeline - shows filled vs remaining time */}
+                  {(() => {
+                    const narrationDuration = card.narrationDurationSec || 0;
+                    const segments = card.mediaSegments || [];
+                    
+                    // Calculate filled time from segments first
+                    let totalFilledTime = segments.reduce((sum, s) => sum + s.durationSec, 0);
+                    
+                    // If no segments exist, fall back to current video asset duration
+                    // This handles uploaded videos that may be longer than narration
+                    if (segments.length === 0) {
+                      const selectedVideoAsset = card.mediaAssets?.find(a => 
+                        a.kind === 'video' && (a.id === card.selectedMediaAssetId || a.url === card.generatedVideoUrl)
+                      );
+                      // Use asset duration, or videoDurationSec from card, or default 5s for AI video
+                      const videoDuration = selectedVideoAsset?.durationSec || card.videoDurationSec || 
+                        (card.generatedVideoUrl ? 5 : 0);
+                      totalFilledTime = videoDuration;
+                    }
+                    
+                    const remainingTime = Math.max(0, narrationDuration - totalFilledTime);
+                    const percentFilled = narrationDuration > 0 ? Math.min(100, (totalFilledTime / narrationDuration) * 100) : 0;
+                    
+                    if (narrationDuration <= 0) return null;
+                    
+                    return (
+                      <div className="p-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-cyan-400 font-medium flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" />
+                            Media Timeline
+                          </span>
+                          <span className="text-slate-400">
+                            {totalFilledTime.toFixed(1)}s / {narrationDuration.toFixed(1)}s
+                          </span>
+                        </div>
+                        
+                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all ${
+                              percentFilled >= 100 
+                                ? 'bg-green-500' 
+                                : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                            }`}
+                            style={{ width: `${percentFilled}%` }}
+                          />
+                        </div>
+                        
+                        {remainingTime > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-amber-400">
+                              {remainingTime.toFixed(1)}s remaining to fill
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              Add more media below
+                            </span>
+                          </div>
+                        )}
+                        
+                        {percentFilled >= 100 && (
+                          <div className="flex items-center gap-1.5 text-xs text-green-400">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Timeline filled - no gaps during playback
+                          </div>
+                        )}
+                        
+                        {/* Segment list */}
+                        {segments.length > 0 && (
+                          <div className="space-y-1 pt-1">
+                            {segments.sort((a, b) => a.order - b.order).map((seg, idx) => (
+                              <div 
+                                key={seg.id}
+                                className="flex items-center gap-2 p-1.5 bg-slate-800/50 rounded text-xs"
+                              >
+                                <span className="w-4 h-4 rounded bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-medium">
+                                  {idx + 1}
+                                </span>
+                                <span className="text-slate-300 flex-1 truncate">
+                                  {seg.kind === 'video' ? 'Video' : 'Image'}: {seg.durationSec}s
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 w-5 p-0"
+                                  onClick={() => {
+                                    const updatedSegments = segments.filter(s => s.id !== seg.id)
+                                      .map((s, i) => ({ ...s, order: i, startTimeSec: 0 }));
+                                    // Recalculate start times
+                                    let time = 0;
+                                    for (const s of updatedSegments) {
+                                      s.startTimeSec = time;
+                                      time += s.durationSec;
+                                    }
+                                    onCardUpdate(card.id, { mediaSegments: updatedSegments });
+                                    onCardSave(card.id, { mediaSegments: updatedSegments });
+                                  }}
+                                  data-testid={`button-remove-segment-${idx}`}
+                                >
+                                  <X className="w-3 h-3 text-slate-500" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  
                   {/* Current Video Display - shows selected video asset or generatedVideoUrl */}
                   {(() => {
                     // Find the currently selected video asset (by selectedMediaAssetId or matching generatedVideoUrl)
@@ -2418,27 +2603,46 @@ export function IceCardEditor({
                           generatedImageUrl: url 
                         });
                       }}
-                      onSelectVideo={(url, thumbnailUrl, photographer) => {
+                      onSelectVideo={async (url, thumbnailUrl, photographer) => {
+                        // Detect video duration
+                        let videoDuration: number | undefined;
+                        try {
+                          const tempVideo = document.createElement('video');
+                          tempVideo.preload = 'metadata';
+                          tempVideo.crossOrigin = 'anonymous';
+                          videoDuration = await new Promise<number>((resolve) => {
+                            tempVideo.onloadedmetadata = () => resolve(tempVideo.duration);
+                            tempVideo.onerror = () => resolve(5); // Default fallback
+                            setTimeout(() => resolve(5), 5000); // Timeout fallback
+                            tempVideo.src = url;
+                          });
+                        } catch {
+                          videoDuration = undefined;
+                        }
+                        
                         const newAsset: MediaAsset = {
                           id: `stock-video-${Date.now()}`,
                           kind: 'video',
-                          source: 'upload',
+                          source: 'stock',
                           url,
                           thumbnailUrl,
                           status: 'ready',
                           createdAt: new Date().toISOString(),
                           prompt: photographer ? `Stock video by ${photographer}` : 'Stock video from Pexels',
+                          durationSec: videoDuration,
                         };
                         const updatedAssets = [...(card.mediaAssets || []), newAsset];
                         onCardUpdate(card.id, { 
                           mediaAssets: updatedAssets,
                           selectedMediaAssetId: newAsset.id,
-                          generatedVideoUrl: url 
+                          generatedVideoUrl: url,
+                          videoDurationSec: videoDuration,
                         });
                         onCardSave(card.id, { 
                           mediaAssets: updatedAssets,
                           selectedMediaAssetId: newAsset.id,
-                          generatedVideoUrl: url 
+                          generatedVideoUrl: url,
+                          videoDurationSec: videoDuration,
                         });
                       }}
                       showVideos={true}
