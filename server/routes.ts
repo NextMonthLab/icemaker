@@ -9606,6 +9606,171 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
     }
   });
 
+  // Regenerate an AI media asset in-place (keeps position, replaces content)
+  app.post("/api/ice/preview/:previewId/cards/:cardId/regenerate-asset", requireAuth, async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      const { assetId, prompt, kind } = req.body;
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check write permission
+      const user = req.user as schema.User;
+      const policy = canWriteIcePreview(user, preview);
+      if (!policy.allowed) {
+        return res.status(policy.statusCode).json({ message: policy.reason || "Not authorized" });
+      }
+      
+      // Find the card and asset
+      const cards = preview.cards as any[];
+      const cardIndex = cards.findIndex(c => c.id === cardId);
+      if (cardIndex === -1) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      const card = cards[cardIndex];
+      
+      const assets = card.mediaAssets || [];
+      const assetIndex = assets.findIndex((a: any) => a.id === assetId);
+      if (assetIndex === -1) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+      
+      const existingAsset = assets[assetIndex];
+      if (existingAsset.source !== 'ai') {
+        return res.status(400).json({ message: "Only AI-generated assets can be regenerated" });
+      }
+      
+      // Check entitlements based on kind
+      const entitlements = await getFullEntitlements(user.id);
+      
+      if (kind === 'image') {
+        if (!entitlements.canGenerateImages) {
+          return res.status(403).json({ message: "Image generation requires a paid subscription", upgradeRequired: true });
+        }
+        
+        console.log(`[ICE] Regenerating image for asset ${assetId} in card ${cardId}`);
+        
+        const imagePrompt = prompt || existingAsset.prompt || `${card.title}. ${card.content}`;
+        
+        // Generate new image
+        const response = await getOpenAI().images.generate({
+          model: "gpt-image-1",
+          prompt: imagePrompt.substring(0, 3900),
+          n: 1,
+          size: "1024x1536",
+        });
+        
+        const imageData = response.data?.[0];
+        const base64Image = imageData?.b64_json;
+        const imageUrl = imageData?.url;
+        
+        let finalImageUrl: string;
+        
+        if (base64Image) {
+          const imageBuffer = Buffer.from(base64Image, "base64");
+          const filename = `ice-${previewId}-${cardId}-${Date.now()}.png`;
+          
+          const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
+          if (isObjectStorageConfigured()) {
+            const key = `uploads/ice-generated/${filename}`;
+            finalImageUrl = await putObject(key, imageBuffer, "image/png");
+          } else {
+            const uploadsDir = path.join(process.cwd(), "uploads", "ice-generated");
+            if (!fs.existsSync(uploadsDir)) {
+              fs.mkdirSync(uploadsDir, { recursive: true });
+            }
+            const filepath = path.join(uploadsDir, filename);
+            fs.writeFileSync(filepath, imageBuffer);
+            finalImageUrl = `/uploads/ice-generated/${filename}`;
+          }
+        } else if (imageUrl) {
+          finalImageUrl = imageUrl;
+        } else {
+          throw new Error("No image data returned");
+        }
+        
+        // Update asset in place
+        assets[assetIndex] = {
+          ...existingAsset,
+          url: finalImageUrl,
+          thumbnailUrl: finalImageUrl,
+          prompt: imagePrompt.substring(0, 500),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        // Update active image if this was the active one
+        let newGeneratedImageUrl = card.generatedImageUrl;
+        if (card.selectedMediaAssetId === assetId || card.generatedImageUrl === existingAsset.url) {
+          newGeneratedImageUrl = finalImageUrl;
+        }
+        
+        cards[cardIndex] = {
+          ...card,
+          mediaAssets: assets,
+          generatedImageUrl: newGeneratedImageUrl,
+        };
+        
+        await storage.updateIcePreview(previewId, { cards });
+        
+        return res.json({
+          success: true,
+          assetId,
+          newUrl: finalImageUrl,
+          prompt: imagePrompt.substring(0, 500),
+        });
+        
+      } else if (kind === 'video') {
+        if (!entitlements.canGenerateVideos) {
+          return res.status(403).json({ message: "Video generation requires a paid subscription", upgradeRequired: true });
+        }
+        
+        console.log(`[ICE] Starting video regeneration for asset ${assetId} in card ${cardId}`);
+        
+        const videoPrompt = prompt || existingAsset.prompt || `Cinematic scene: ${card.title}. ${card.content}`;
+        
+        // Start video generation (async process)
+        const { startReplicateVideoAsync } = await import("./video/replicate");
+        const prediction = await startReplicateVideoAsync(videoPrompt, {
+          duration: existingAsset.durationSec || 5,
+          aspectRatio: "9:16",
+        });
+        
+        // Mark asset as regenerating
+        assets[assetIndex] = {
+          ...existingAsset,
+          status: 'generating',
+          predictionId: prediction.id,
+          prompt: videoPrompt.substring(0, 500),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        cards[cardIndex] = {
+          ...card,
+          mediaAssets: assets,
+        };
+        
+        await storage.updateIcePreview(previewId, { cards });
+        
+        return res.json({
+          success: true,
+          assetId,
+          predictionId: prediction.id,
+          status: 'generating',
+          prompt: videoPrompt.substring(0, 500),
+        });
+      }
+      
+      return res.status(400).json({ message: "Invalid asset kind" });
+      
+    } catch (error: any) {
+      console.error("Error regenerating asset:", error);
+      res.status(500).json({ message: error.message || "Error regenerating asset" });
+    }
+  });
+
   // ============ PROJECT BIBLE (Continuity Guardrails) ============
   
   // Get project bible for a preview

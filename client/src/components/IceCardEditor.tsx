@@ -884,6 +884,7 @@ export function IceCardEditor({
   const [targetAudience, setTargetAudience] = useState<string>("general");
   const [selectingAsset, setSelectingAsset] = useState(false);
   const [deletingAsset, setDeletingAsset] = useState<string | null>(null);
+  const [regeneratingAsset, setRegeneratingAsset] = useState<string | null>(null);
   
   const [clipSuggestions, setClipSuggestions] = useState<ClipSuggestion[]>([]);
   const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
@@ -1143,6 +1144,70 @@ export function IceCardEditor({
       toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
     } finally {
       setDeletingAsset(null);
+    }
+  };
+
+  const handleRegenerateAsset = async (assetId: string) => {
+    const asset = card.mediaAssets?.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    setRegeneratingAsset(assetId);
+    try {
+      if (asset.kind === 'image') {
+        // Regenerate image using original prompt or current card content
+        const prompt = asset.prompt || `${card.title}. ${card.content}`;
+        const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/regenerate-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ assetId, prompt, kind: 'image' }),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'Failed to regenerate image');
+        }
+        
+        const data = await res.json();
+        // Update the asset in place
+        const updatedAssets = (card.mediaAssets || []).map(a => 
+          a.id === assetId ? { ...a, url: data.newUrl, prompt: data.prompt } : a
+        );
+        const updateData: Record<string, any> = { mediaAssets: updatedAssets };
+        if (card.selectedMediaAssetId === assetId || card.generatedImageUrl === asset.url) {
+          updateData.generatedImageUrl = data.newUrl;
+        }
+        onCardUpdate(card.id, updateData);
+        toast({ title: 'Image regenerated!' });
+      } else if (asset.kind === 'video') {
+        // Regenerate video using original prompt
+        const prompt = asset.prompt || `Cinematic scene: ${card.title}. ${card.content}`;
+        const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/regenerate-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ assetId, prompt, kind: 'video' }),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'Failed to start video regeneration');
+        }
+        
+        const data = await res.json();
+        // Mark asset as regenerating
+        const updatedAssets = (card.mediaAssets || []).map(a => 
+          a.id === assetId ? { ...a, status: 'generating', predictionId: data.predictionId } : a
+        );
+        onCardUpdate(card.id, { mediaAssets: updatedAssets });
+        toast({ title: 'Video regenerating...', description: 'This may take 1-3 minutes.' });
+        // Start polling for completion
+        setVideoStatus('processing');
+      }
+    } catch (error: any) {
+      toast({ title: 'Regeneration failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setRegeneratingAsset(null);
     }
   };
 
@@ -1871,23 +1936,45 @@ export function IceCardEditor({
                                 <Check className="w-3 h-3 text-white" />
                               </div>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute bottom-1 right-1 h-6 w-6 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-red-500/80 hover:bg-red-600 text-white"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAsset(asset.id);
-                              }}
-                              disabled={deletingAsset === asset.id}
-                              data-testid={`delete-asset-${asset.id}`}
-                            >
-                              {deletingAsset === asset.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3 h-3" />
+                            {/* Action buttons - visible on mobile, hover on desktop */}
+                            <div className="absolute bottom-1 right-1 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                              {asset.source === 'ai' && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 bg-cyan-500/80 hover:bg-cyan-600 text-white"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRegenerateAsset(asset.id);
+                                  }}
+                                  disabled={regeneratingAsset === asset.id}
+                                  data-testid={`regenerate-asset-${asset.id}`}
+                                >
+                                  {regeneratingAsset === asset.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3 h-3" />
+                                  )}
+                                </Button>
                               )}
-                            </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 bg-red-500/80 hover:bg-red-600 text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAsset(asset.id);
+                                }}
+                                disabled={deletingAsset === asset.id}
+                                data-testid={`delete-asset-${asset.id}`}
+                              >
+                                {deletingAsset === asset.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -2322,7 +2409,7 @@ export function IceCardEditor({
                                 return (
                                   <div 
                                     key={asset.id}
-                                    className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
+                                    className={`group flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer hover-elevate ${
                                       isSelected 
                                         ? 'bg-cyan-500/20 border border-cyan-500/40' 
                                         : 'bg-slate-800/50'
@@ -2351,6 +2438,45 @@ export function IceCardEditor({
                                       {asset.durationSec ? `${asset.durationSec}s` : '5s'}
                                       {isSelected && ' (active)'}
                                     </span>
+                                    {/* Action buttons for video assets */}
+                                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                                      {asset.source === 'ai' && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-5 w-5 bg-cyan-500/80 hover:bg-cyan-600 text-white"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRegenerateAsset(asset.id);
+                                          }}
+                                          disabled={regeneratingAsset === asset.id}
+                                          data-testid={`regenerate-video-${asset.id}`}
+                                        >
+                                          {regeneratingAsset === asset.id ? (
+                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                          ) : (
+                                            <RefreshCw className="w-2.5 h-2.5" />
+                                          )}
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5 bg-red-500/80 hover:bg-red-600 text-white"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteAsset(asset.id);
+                                        }}
+                                        disabled={deletingAsset === asset.id}
+                                        data-testid={`delete-video-${asset.id}`}
+                                      >
+                                        {deletingAsset === asset.id ? (
+                                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        )}
+                                      </Button>
+                                    </div>
                                   </div>
                                 );
                               })}
