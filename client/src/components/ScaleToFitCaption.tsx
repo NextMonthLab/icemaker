@@ -33,7 +33,9 @@ export function ScaleToFitCaption({
   const lineStyle: CSSProperties = {
     ...textStyle,
     fontSize: `${fittedFontSizePx}px`,
-    whiteSpace: "nowrap",
+    whiteSpace: "normal", // Allow word wrapping to prevent overflow
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
     margin: 0,
     display: "block",
     textAlign: "center",
@@ -62,7 +64,7 @@ export function ScaleToFitCaption({
           justifyContent: "center",
           marginLeft: "auto",
           marginRight: "auto",
-          overflow: "visible",
+          overflow: "hidden", // Prevent text from overflowing container bounds
         }}
         data-testid="caption-panel"
       >
