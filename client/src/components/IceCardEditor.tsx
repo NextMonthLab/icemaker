@@ -890,6 +890,29 @@ export function IceCardEditor({
   const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
   const [showClipSuggestions, setShowClipSuggestions] = useState(false);
   
+  // Clip tabs for multi-video sequence editing
+  interface ClipDraft {
+    id: string;
+    prompt: string;
+    status: 'draft' | 'generating' | 'ready' | 'failed';
+    assetId?: string;
+    videoUrl?: string;
+  }
+  const videoAssets = card.mediaAssets?.filter(a => a.kind === 'video') || [];
+  const initialClips: ClipDraft[] = videoAssets.map((asset, idx) => ({
+    id: asset.id,
+    prompt: asset.prompt || '',
+    status: asset.status === 'generating' ? 'generating' : 'ready',
+    assetId: asset.id,
+    videoUrl: asset.url,
+  }));
+  // Always have at least one draft clip to work with
+  if (initialClips.length === 0 || initialClips.every(c => c.status === 'ready')) {
+    initialClips.push({ id: `draft-${Date.now()}`, prompt: videoPrompt || '', status: 'draft' });
+  }
+  const [clipDrafts, setClipDrafts] = useState<ClipDraft[]>(initialClips);
+  const [activeClipIndex, setActiveClipIndex] = useState(initialClips.length > 0 ? initialClips.length - 1 : 0);
+  
   const { data: videoConfig } = useQuery({
     queryKey: ["video-config"],
     queryFn: async () => {
@@ -2563,19 +2586,30 @@ export function IceCardEditor({
                                         {suggestion.arcPhase}
                                       </span>
                                       <Button
-                                        variant="ghost"
+                                        variant="default"
                                         size="sm"
-                                        className="text-cyan-400"
+                                        className="bg-cyan-600 hover:bg-cyan-700 text-white gap-1"
                                         onClick={() => {
                                           setVideoPrompt(suggestion.prompt);
                                           toast({
-                                            title: "Prompt applied",
-                                            description: "The suggested prompt has been added to the video prompt field.",
+                                            title: videoAssets.length > 0 ? "New clip prompt ready" : "Prompt applied",
+                                            description: videoAssets.length > 0 
+                                              ? "Press 'Generate AI Video' to create this as your next clip."
+                                              : "The suggested prompt has been added. Press Generate to create.",
                                           });
+                                          // Scroll down to generate button
+                                          document.querySelector('[data-testid="button-generate-video"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         }}
                                         data-testid={`button-use-suggestion-${suggestion.id}`}
                                       >
-                                        Use
+                                        {videoAssets.length > 0 ? (
+                                          <>
+                                            <Plus className="w-3 h-3" />
+                                            Add as Clip {videoAssets.length + 1}
+                                          </>
+                                        ) : (
+                                          "Use"
+                                        )}
                                       </Button>
                                     </div>
                                     <p 
@@ -2758,6 +2792,58 @@ export function IceCardEditor({
                     </div>
                   ) : (
                     <>
+                      {/* Clip Tabs - shows sequence of video clips */}
+                      {videoAssets.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                            {videoAssets.map((asset, idx) => {
+                              const isGenerating = asset.status === 'generating';
+                              return (
+                                <button
+                                  key={asset.id}
+                                  onClick={() => {
+                                    // Select this video to preview
+                                    onCardUpdate(card.id, { 
+                                      selectedMediaAssetId: asset.id,
+                                      generatedVideoUrl: asset.url 
+                                    });
+                                  }}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                                    card.selectedMediaAssetId === asset.id || card.generatedVideoUrl === asset.url
+                                      ? 'bg-cyan-500 text-white'
+                                      : isGenerating
+                                        ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50'
+                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                  }`}
+                                  data-testid={`clip-tab-${idx}`}
+                                >
+                                  {isGenerating && <Loader2 className="w-3 h-3 animate-spin" />}
+                                  <span>Clip {idx + 1}</span>
+                                  {asset.durationSec && <span className="text-[10px] opacity-70">({asset.durationSec}s)</span>}
+                                </button>
+                              );
+                            })}
+                            {/* Add new clip button */}
+                            <button
+                              onClick={() => {
+                                // Clear the prompt to prepare for new clip
+                                setVideoPrompt('');
+                                // Scroll to suggestions if available
+                                setShowClipSuggestions(true);
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-800 text-cyan-400 border border-dashed border-cyan-500/50 hover:border-cyan-500 hover:bg-cyan-500/10 transition-colors whitespace-nowrap"
+                              data-testid="button-add-clip"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Add Clip</span>
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Click a clip tab to preview it. Clips play in sequence during playback.
+                          </p>
+                        </div>
+                      )}
+                      
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <Label className="text-slate-300">Mode</Label>
@@ -2848,18 +2934,21 @@ export function IceCardEditor({
                       </div>
                       
                       {videoStatus === "processing" && (
-                        <div className="p-3 bg-slate-800 rounded-lg space-y-2">
+                        <div className="p-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/40 rounded-lg space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                              Generating video...
+                            <span className="text-sm font-medium flex items-center gap-2 text-blue-300">
+                              <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                              🎬 Generating Clip {videoAssets.length + 1}...
                             </span>
-                            <span className="text-sm font-mono text-slate-400">
+                            <span className="text-lg font-mono text-cyan-400">
                               {Math.floor(videoGenElapsed / 60)}:{(videoGenElapsed % 60).toString().padStart(2, '0')}
                             </span>
                           </div>
-                          <Progress value={Math.min(95, (videoGenElapsed / 600) * 100)} className="h-2" />
-                          <p className="text-xs text-slate-500">Typically completes in 5-10 minutes</p>
+                          <Progress value={Math.min(95, (videoGenElapsed / 180) * 100)} className="h-3" />
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-blue-300">Your video is being created by AI</span>
+                            <span className="text-slate-400">Usually 1-3 minutes</span>
+                          </div>
                         </div>
                       )}
                       
@@ -2871,10 +2960,19 @@ export function IceCardEditor({
                       >
                         {videoLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : videoStatus === "processing" ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <Video className="w-4 h-4" />
                         )}
-                        {videoLoading ? "Starting..." : "Generate AI Video"}
+                        {videoLoading 
+                          ? "Starting generation..." 
+                          : videoStatus === "processing"
+                            ? `Generating Clip ${videoAssets.length + 1}...`
+                            : videoAssets.length > 0 
+                              ? `Generate Clip ${videoAssets.length + 1}`
+                              : "Generate AI Video"
+                        }
                       </Button>
                     </>
                   )}
