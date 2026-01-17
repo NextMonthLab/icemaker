@@ -541,8 +541,8 @@ export default function GuestIceBuilderPage() {
   }, [musicVolume]);
   
   // Music ducking: fade music based on narration state (desktop only)
-  // When narration plays: fade to user-set musicVolume
-  // When narration stops/no narration: fade to 100%
+  // When narration plays: duck music to 20% (low background level)
+  // When narration stops/no narration: return to user's set musicVolume
   useEffect(() => {
     if (isIOS || !showPreviewModal || !musicEnabled || !musicAudioRef.current) return;
     
@@ -554,8 +554,9 @@ export default function GuestIceBuilderPage() {
     
     const audio = musicAudioRef.current;
     const currentVolume = audio.volume;
-    // Target: user's set volume during narration, 100% when no narration
-    const targetVolume = isNarrationPlaying ? musicVolume / 100 : 1.0;
+    // Target: 20% during narration (ducked), user's set volume when no narration
+    const duckingLevel = 0.2; // 20% - low background level during narration
+    const targetVolume = isNarrationPlaying ? duckingLevel : musicVolume / 100;
     
     if (Math.abs(currentVolume - targetVolume) < 0.01) return;
     
