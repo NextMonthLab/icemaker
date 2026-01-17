@@ -393,9 +393,13 @@ export default function GuestIceBuilderPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showBulkImageConfirm, setShowBulkImageConfirm] = useState(false);
   const [showBulkVideoConfirm, setShowBulkVideoConfirm] = useState(false);
+  const [showBulkNarrationConfirm, setShowBulkNarrationConfirm] = useState(false);
   const [bulkGeneratingImages, setBulkGeneratingImages] = useState(false);
   const [bulkGeneratingVideos, setBulkGeneratingVideos] = useState(false);
+  const [bulkGeneratingNarration, setBulkGeneratingNarration] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const [bulkNarrationVoice, setBulkNarrationVoice] = useState("alloy");
+  const [bulkNarrationSpeed, setBulkNarrationSpeed] = useState(1.0);
   const [narrationMuted, setNarrationMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [musicTrackUrl, setMusicTrackUrl] = useState<string | null>(null);
@@ -1474,6 +1478,9 @@ export default function GuestIceBuilderPage() {
   // Get cards that need videos (have image but no video)
   const cardsNeedingVideos = cards.filter(card => card.generatedImageUrl && !card.generatedVideoUrl);
   
+  // Get cards that need narration (have text but no audio)
+  const cardsNeedingNarration = cards.filter(card => card.narrationText && !card.narrationAudioUrl);
+  
   // Bulk generate all images
   const handleBulkGenerateImages = async () => {
     if (!preview || !entitlements?.canGenerateImages) return;
@@ -1568,6 +1575,61 @@ export default function GuestIceBuilderPage() {
     toast({
       title: "Video generation started",
       description: `Started generating ${successCount} videos. Check back in a few minutes.`,
+    });
+  };
+
+  // Bulk generate all narration
+  const handleBulkGenerateNarration = async () => {
+    if (!preview || !entitlements?.canGenerateVoiceover) return;
+    
+    // Capture the list of cards needing narration at the start
+    const cardsToProcess = [...cardsNeedingNarration];
+    const totalCards = cardsToProcess.length;
+    
+    if (totalCards === 0) return;
+    
+    setShowBulkNarrationConfirm(false);
+    setBulkGeneratingNarration(true);
+    setBulkProgress({ current: 0, total: totalCards });
+    
+    let successCount = 0;
+    for (let i = 0; i < cardsToProcess.length; i++) {
+      const card = cardsToProcess[i];
+      setBulkProgress({ current: i + 1, total: totalCards });
+      
+      try {
+        const res = await fetch(`/api/ice/preview/${preview.id}/cards/${card.id}/narration/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            text: card.narrationText,
+            voice: bulkNarrationVoice,
+            speed: bulkNarrationSpeed,
+          }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.audioUrl) {
+            saveCardsWithUpdates(card.id, { 
+              narrationAudioUrl: data.audioUrl,
+              narrationVoice: bulkNarrationVoice,
+              narrationSpeed: bulkNarrationSpeed,
+              narrationDurationSec: data.narrationDurationSec,
+            });
+            successCount++;
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to generate narration for card ${card.id}:`, error);
+      }
+    }
+    
+    setBulkGeneratingNarration(false);
+    toast({
+      title: "Narration generation complete",
+      description: `Generated ${successCount} of ${totalCards} narrations.`,
     });
   };
 
@@ -2096,6 +2158,42 @@ export default function GuestIceBuilderPage() {
                       <>
                         <Wand2 className="w-3.5 h-3.5" />
                         Generate {cardsNeedingVideos.length} Videos
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Bulk AI Narration Generation - clearly separated section */}
+            {isProfessionalMode && entitlements && cardsNeedingNarration.length > 0 && entitlements.canGenerateVoiceover && (
+              <div className="lg:hidden bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                      <Mic className="w-4 h-4 text-green-400" />
+                      Generate All Narration
+                    </h3>
+                    <p className="text-xs text-white/50 mt-0.5">
+                      {cardsNeedingNarration.length} cards have text ready
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowBulkNarrationConfirm(true)}
+                    disabled={bulkGeneratingNarration}
+                    size="sm"
+                    className="gap-1.5 bg-green-600 hover:bg-green-500 text-white"
+                    data-testid="button-bulk-generate-narration"
+                  >
+                    {bulkGeneratingNarration ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Generating {bulkProgress.current}/{bulkProgress.total}
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Generate {cardsNeedingNarration.length} Narrations
                       </>
                     )}
                   </Button>
@@ -2646,12 +2744,15 @@ export default function GuestIceBuilderPage() {
                 setCaptionState={setCaptionState}
                 cardsNeedingImages={cardsNeedingImages}
                 cardsNeedingVideos={cardsNeedingVideos}
+                cardsNeedingNarration={cardsNeedingNarration}
                 entitlements={entitlements}
                 bulkGeneratingImages={bulkGeneratingImages}
                 bulkGeneratingVideos={bulkGeneratingVideos}
+                bulkGeneratingNarration={bulkGeneratingNarration}
                 bulkProgress={bulkProgress}
                 setShowBulkImageConfirm={setShowBulkImageConfirm}
                 setShowBulkVideoConfirm={setShowBulkVideoConfirm}
+                setShowBulkNarrationConfirm={setShowBulkNarrationConfirm}
                 exportStatus={exportStatus}
                 exportMutation={exportMutation}
                 cardsLength={cards.length}
@@ -3128,6 +3229,90 @@ export default function GuestIceBuilderPage() {
             >
               <Video className="w-4 h-4 mr-2" />
               Generate {cardsNeedingVideos.length} Videos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Bulk Narration Generation Confirmation Dialog */}
+      <Dialog open={showBulkNarrationConfirm} onOpenChange={setShowBulkNarrationConfirm}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-slate-900 border-green-500/30">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Mic className="w-5 h-5 text-green-400" />
+              Generate All Narration
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              {cardsNeedingNarration.length} cards have text ready for voice narration. Choose your voice settings:
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Voice Settings */}
+          <div className="bg-slate-800/50 rounded-lg p-4 space-y-4 border border-slate-700">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Voice</label>
+                <select
+                  value={bulkNarrationVoice}
+                  onChange={(e) => setBulkNarrationVoice(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
+                  data-testid="select-bulk-narration-voice"
+                >
+                  <option value="alloy">Alloy (Neutral)</option>
+                  <option value="echo">Echo (Male)</option>
+                  <option value="fable">Fable (British)</option>
+                  <option value="onyx">Onyx (Deep Male)</option>
+                  <option value="nova">Nova (Female)</option>
+                  <option value="shimmer">Shimmer (Soft Female)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Speed: {bulkNarrationSpeed.toFixed(1)}x</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={bulkNarrationSpeed}
+                  onChange={(e) => setBulkNarrationSpeed(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                  data-testid="slider-bulk-narration-speed"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-white/50">
+              Tip: Generate one card first to test the voice, then use this to apply to all cards.
+            </p>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto space-y-3 py-4">
+            {cardsNeedingNarration.map((card, index) => (
+              <div key={card.id} className="border border-slate-700 rounded-lg p-3 bg-slate-800/50">
+                <div className="flex items-start gap-3">
+                  <span className="text-xs font-mono text-slate-400 bg-slate-700 px-2 py-1 rounded shrink-0">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-white truncate">{card.title}</p>
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                      {card.narrationText?.substring(0, 100)}...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="border-t border-slate-700 pt-4">
+            <Button variant="ghost" onClick={() => setShowBulkNarrationConfirm(false)} className="text-white/70">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleBulkGenerateNarration}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              data-testid="button-confirm-bulk-narration"
+            >
+              <Mic className="w-4 h-4 mr-2" />
+              Generate {cardsNeedingNarration.length} Narrations
             </Button>
           </DialogFooter>
         </DialogContent>

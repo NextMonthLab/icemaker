@@ -41,12 +41,15 @@ interface BuilderActionsSidebarProps {
   setCaptionState: (state: CaptionState) => void;
   cardsNeedingImages: any[];
   cardsNeedingVideos: any[];
+  cardsNeedingNarration: any[];
   entitlements: any;
   bulkGeneratingImages: boolean;
   bulkGeneratingVideos: boolean;
+  bulkGeneratingNarration: boolean;
   bulkProgress: { current: number; total: number };
   setShowBulkImageConfirm: (show: boolean) => void;
   setShowBulkVideoConfirm: (show: boolean) => void;
+  setShowBulkNarrationConfirm: (show: boolean) => void;
   exportStatus: any;
   exportMutation: any;
   cardsLength: number;
@@ -87,12 +90,15 @@ export function BuilderActionsSidebar({
   setCaptionState,
   cardsNeedingImages,
   cardsNeedingVideos,
+  cardsNeedingNarration,
   entitlements,
   bulkGeneratingImages,
   bulkGeneratingVideos,
+  bulkGeneratingNarration,
   bulkProgress,
   setShowBulkImageConfirm,
   setShowBulkVideoConfirm,
+  setShowBulkNarrationConfirm,
   exportStatus,
   exportMutation,
   cardsLength,
@@ -192,6 +198,38 @@ export function BuilderActionsSidebar({
                   <>
                     <Wand2 className="w-3.5 h-3.5" />
                     Generate {cardsNeedingVideos.length} Videos
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+          
+          {/* Bulk Narration Generation - distinct section */}
+          {cardsNeedingNarration.length > 0 && entitlements?.canGenerateVoiceover && (
+            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="w-4 h-4 text-green-400" />
+                <h4 className="text-sm font-medium text-white">Generate All Narration</h4>
+              </div>
+              <p className="text-xs text-white/50 mb-2">
+                {cardsNeedingNarration.length} cards have text ready
+              </p>
+              <Button
+                onClick={() => setShowBulkNarrationConfirm(true)}
+                disabled={bulkGeneratingNarration}
+                size="sm"
+                className="w-full gap-1.5 bg-green-600 hover:bg-green-500 text-white"
+                data-testid="sidebar-bulk-generate-narration"
+              >
+                {bulkGeneratingNarration ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating {bulkProgress.current}/{bulkProgress.total}
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Generate {cardsNeedingNarration.length} Narrations
                   </>
                 )}
               </Button>
