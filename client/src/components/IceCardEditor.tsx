@@ -1042,6 +1042,22 @@ export function IceCardEditor({
   const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
   const [showClipSuggestions, setShowClipSuggestions] = useState(false);
   
+  // Fetch all user media assets across all ICEs for reuse (lazy load when upload tab opens)
+  interface UserMediaAsset {
+    id: number;
+    iceId: string | null;
+    url: string;
+    fileKey: string;
+    category: 'image' | 'video' | 'audio' | 'document' | 'other';
+    sizeBytes: number;
+    createdAt: string;
+  }
+  
+  const { data: allUserMedia, isLoading: allMediaLoading } = useQuery<{ assets: UserMediaAsset[]; total: number }>({
+    queryKey: ["/api/me/media"],
+    enabled: activeTab === "upload", // Only fetch when viewing the upload tab
+  });
+  
   // Clip tabs for multi-video sequence editing
   // Draft clips are clips being created but not yet generated
   interface ClipDraft {
@@ -3890,38 +3906,198 @@ export function IceCardEditor({
                     </div>
                   </div>
                   
-                  {/* Show current media */}
-                  {(card.generatedImageUrl || card.generatedVideoUrl) && (
+                  {/* Show current card media - handle both modern mediaAssets and legacy generatedImageUrl/generatedVideoUrl */}
+                  {(card.generatedImageUrl || card.generatedVideoUrl || (card.mediaAssets?.length || 0) > 0) && (
                     <div className="space-y-2">
                       <Label className="text-slate-300">Current Card Media</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {card.generatedImageUrl && (
-                          <div className="relative rounded-lg overflow-hidden border border-slate-700 aspect-video">
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Modern: render from mediaAssets array */}
+                        {card.mediaAssets?.map((asset) => (
+                          <div 
+                            key={asset.id}
+                            className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                              card.selectedMediaAssetId === asset.id 
+                                ? 'border-green-500 ring-2 ring-green-500/30' 
+                                : 'border-slate-700 hover:border-slate-500'
+                            }`}
+                            onClick={() => handleSelectAsset(asset.id)}
+                            data-testid={`current-media-${asset.id}`}
+                          >
+                            {asset.kind === 'image' ? (
+                              <img 
+                                src={asset.url} 
+                                alt="Card media"
+                                className="w-full h-16 object-cover"
+                              />
+                            ) : (
+                              <video 
+                                src={asset.url} 
+                                className="w-full h-16 object-cover"
+                                muted
+                              />
+                            )}
+                            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-slate-900/80 rounded text-[10px] text-white">
+                              {asset.kind === 'image' ? 'IMG' : 'VID'}
+                            </div>
+                            {card.selectedMediaAssetId === asset.id && (
+                              <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
+                                <Check className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {/* Legacy fallback: show generatedImageUrl if no mediaAssets with that URL */}
+                        {card.generatedImageUrl && !card.mediaAssets?.some(a => a.url === card.generatedImageUrl) && (
+                          <div className="relative rounded-lg overflow-hidden border-2 border-green-500 ring-2 ring-green-500/30">
                             <img 
                               src={card.generatedImageUrl} 
-                              alt="Card image" 
-                              className="w-full h-full object-cover"
+                              alt="Card image"
+                              className="w-full h-16 object-cover"
                             />
-                            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-cyan-600/90 rounded text-xs text-white">
-                              Image
+                            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-slate-900/80 rounded text-[10px] text-white">
+                              IMG
+                            </div>
+                            <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
+                              <Check className="w-2.5 h-2.5 text-white" />
                             </div>
                           </div>
                         )}
-                        {card.generatedVideoUrl && (
-                          <div className="relative rounded-lg overflow-hidden border border-slate-700 aspect-video">
+                        {/* Legacy fallback: show generatedVideoUrl if no mediaAssets with that URL */}
+                        {card.generatedVideoUrl && !card.mediaAssets?.some(a => a.url === card.generatedVideoUrl) && (
+                          <div className="relative rounded-lg overflow-hidden border-2 border-green-500 ring-2 ring-green-500/30">
                             <video 
                               src={card.generatedVideoUrl} 
-                              className="w-full h-full object-cover"
+                              className="w-full h-16 object-cover"
                               muted
                             />
-                            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-blue-600/90 rounded text-xs text-white">
-                              Video
+                            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-slate-900/80 rounded text-[10px] text-white">
+                              VID
+                            </div>
+                            <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
+                              <Check className="w-2.5 h-2.5 text-white" />
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
+                  
+                  {/* All Media Library - media from all ICEs */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-2">
+                      All My Media
+                      {allMediaLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {allUserMedia?.total ? (
+                        <span className="text-xs text-slate-500">({allUserMedia.total} items)</span>
+                      ) : null}
+                    </Label>
+                    
+                    {allMediaLoading ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
+                      </div>
+                    ) : allUserMedia?.assets && allUserMedia.assets.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                          {allUserMedia.assets
+                            .filter(asset => asset.category === 'image' || asset.category === 'video')
+                            .map((asset) => {
+                              const isCurrentIce = asset.iceId === previewId;
+                              const isInCurrentCard = card.mediaAssets?.some(a => a.url === asset.url);
+                              
+                              return (
+                                <div 
+                                  key={asset.id}
+                                  className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer group ${
+                                    isInCurrentCard 
+                                      ? 'border-cyan-500/50 opacity-60' 
+                                      : 'border-slate-700 hover:border-cyan-400'
+                                  }`}
+                                  onClick={() => {
+                                    if (isInCurrentCard) return;
+                                    
+                                    const newAsset: MediaAsset = {
+                                      id: `reused-${asset.id}-${Date.now()}`,
+                                      kind: asset.category as 'image' | 'video',
+                                      source: 'upload',
+                                      url: asset.url,
+                                      status: 'ready',
+                                      createdAt: new Date().toISOString(),
+                                      prompt: 'Reused from media library',
+                                    };
+                                    
+                                    const updatedAssets = [...(card.mediaAssets || []), newAsset];
+                                    const updateData: Record<string, unknown> = { 
+                                      mediaAssets: updatedAssets,
+                                      selectedMediaAssetId: newAsset.id,
+                                    };
+                                    
+                                    if (asset.category === 'image') {
+                                      updateData.generatedImageUrl = asset.url;
+                                    } else {
+                                      updateData.generatedVideoUrl = asset.url;
+                                    }
+                                    
+                                    onCardUpdate(card.id, updateData);
+                                    onCardSave(card.id, updateData);
+                                    setEditorMode("lanes");
+                                    setActiveTab("content");
+                                    toast({
+                                      title: "Media added",
+                                      description: `${asset.category === 'image' ? 'Image' : 'Video'} added to this card`,
+                                    });
+                                  }}
+                                  data-testid={`all-media-${asset.id}`}
+                                >
+                                  {asset.category === 'image' ? (
+                                    <img 
+                                      src={asset.url} 
+                                      alt="Library media"
+                                      className="w-full h-16 object-cover"
+                                    />
+                                  ) : (
+                                    <video 
+                                      src={asset.url} 
+                                      className="w-full h-16 object-cover"
+                                      muted
+                                    />
+                                  )}
+                                  <div className="absolute bottom-1 left-1 flex gap-1">
+                                    <span className="px-1.5 py-0.5 bg-slate-900/80 rounded text-[10px] text-white">
+                                      {asset.category === 'image' ? 'IMG' : 'VID'}
+                                    </span>
+                                    {!isCurrentIce && (
+                                      <span className="px-1.5 py-0.5 bg-purple-600/80 rounded text-[10px] text-white">
+                                        Other ICE
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isInCurrentCard && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                      <Check className="w-4 h-4 text-cyan-400" />
+                                    </div>
+                                  )}
+                                  {!isInCurrentCard && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100">
+                                      <Plus className="w-5 h-5 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Click to add media from your other ICEs to this card.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="p-4 bg-slate-800/30 rounded-lg text-center">
+                        <p className="text-xs text-slate-500">
+                          No media in your library yet. Upload or generate media to see it here.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="p-3 bg-slate-800/50 rounded-lg">
                     <p className="text-xs text-slate-400">
