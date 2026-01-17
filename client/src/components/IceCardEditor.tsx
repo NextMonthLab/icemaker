@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoEngineSelector, type VideoEngineConfig, type VideoEngine, type VideoModel } from "@/components/ui/VideoEngineSelector";
@@ -3103,104 +3104,120 @@ export function IceCardEditor({
                     </div>
                   )}
                   
-                  {/* Enhance Prompt Toggle */}
-                  <div className="p-3 bg-slate-800/50 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-cyan-400" />
-                        <Label className="text-slate-300 cursor-pointer">Enhance Prompt</Label>
-                      </div>
-                      <Switch
-                        checked={enhancePromptEnabled}
-                        onCheckedChange={(checked) => {
-                          setEnhancePromptEnabled(checked);
-                          onCardUpdate(card.id, { enhancePromptEnabled: checked });
-                        }}
-                        data-testid="toggle-enhance-prompt"
-                      />
-                    </div>
-                    
-                    {enhancePromptEnabled && (
-                      <div className="space-y-3">
-                        {/* Target Audience Selector */}
-                        <div className="space-y-2">
-                          <Label className="text-xs text-slate-400">Target Audience</Label>
-                          <select
-                            value={targetAudience}
-                            onChange={(e) => setTargetAudience(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-3 py-2"
-                            data-testid="select-target-audience"
-                          >
-                            <option value="general">General Audience</option>
-                            <option value="children">Children (Family-Friendly)</option>
-                            <option value="technical">Technical / Professional</option>
-                            <option value="entertainment">Entertainment / Pop Culture</option>
-                            <option value="business">Business / Corporate</option>
-                            <option value="educational">Educational / Academic</option>
-                            <option value="luxury">Luxury / Premium</option>
-                            <option value="youth">Youth / Gen-Z</option>
-                          </select>
-                          <p className="text-[10px] text-slate-500">
-                            Tailors the visual style to resonate with your target viewers
-                          </p>
-                        </div>
-                        
+                  {/* Advanced Options - Collapsible */}
+                  <Collapsible defaultOpen={false}>
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800/70 border border-slate-700/50"
+                        data-testid="button-image-advanced"
+                      >
                         <div className="flex items-center gap-2">
-                          <Textarea
-                            value={enhancedPrompt}
-                            onChange={(e) => {
-                              setEnhancedPrompt(e.target.value);
-                              onCardUpdate(card.id, { enhancedPrompt: e.target.value });
+                          <Sparkles className="w-4 h-4 text-cyan-400" />
+                          <span className="text-sm text-slate-300">Advanced Options</span>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-3 space-y-4">
+                      {/* Enhance Prompt Toggle */}
+                      <div className="p-3 bg-slate-800/30 rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <Label className="text-slate-300 cursor-pointer">Enhance Prompt</Label>
+                          </div>
+                          <Switch
+                            checked={enhancePromptEnabled}
+                            onCheckedChange={(checked) => {
+                              setEnhancePromptEnabled(checked);
+                              onCardUpdate(card.id, { enhancePromptEnabled: checked });
                             }}
-                            placeholder="Enhanced prompt will appear here..."
-                            rows={3}
-                            className="bg-slate-900 border-slate-700 text-white text-sm flex-1"
-                            data-testid="input-enhanced-prompt"
+                            data-testid="toggle-enhance-prompt"
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEnhancePrompt('image')}
-                            disabled={enhanceLoading}
-                            className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                            data-testid="button-regenerate-enhanced"
-                          >
-                            {enhanceLoading ? (
-                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                            ) : (
-                              <RefreshCw className="w-3 h-3 mr-1" />
-                            )}
-                            {enhancedPrompt ? 'Regenerate' : 'Generate'} Enhanced Prompt
-                          </Button>
-                          <span className="text-xs text-slate-500">
-                            Creates a production-grade prompt for better results
-                          </span>
-                        </div>
+                        
+                        {enhancePromptEnabled && (
+                          <div className="space-y-3">
+                            {/* Target Audience Selector */}
+                            <div className="space-y-2">
+                              <Label className="text-xs text-slate-400">Target Audience</Label>
+                              <select
+                                value={targetAudience}
+                                onChange={(e) => setTargetAudience(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-3 py-2"
+                                data-testid="select-target-audience"
+                              >
+                                <option value="general">General Audience</option>
+                                <option value="children">Children (Family-Friendly)</option>
+                                <option value="technical">Technical / Professional</option>
+                                <option value="entertainment">Entertainment / Pop Culture</option>
+                                <option value="business">Business / Corporate</option>
+                                <option value="educational">Educational / Academic</option>
+                                <option value="luxury">Luxury / Premium</option>
+                                <option value="youth">Youth / Gen-Z</option>
+                              </select>
+                              <p className="text-[10px] text-slate-500">
+                                Tailors the visual style to resonate with your target viewers
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Textarea
+                                value={enhancedPrompt}
+                                onChange={(e) => {
+                                  setEnhancedPrompt(e.target.value);
+                                  onCardUpdate(card.id, { enhancedPrompt: e.target.value });
+                                }}
+                                placeholder="Enhanced prompt will appear here..."
+                                rows={3}
+                                className="bg-slate-900 border-slate-700 text-white text-sm flex-1"
+                                data-testid="input-enhanced-prompt"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEnhancePrompt('image')}
+                                disabled={enhanceLoading}
+                                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
+                                data-testid="button-regenerate-enhanced"
+                              >
+                                {enhanceLoading ? (
+                                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                ) : (
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                )}
+                                {enhancedPrompt ? 'Regenerate' : 'Generate'} Enhanced Prompt
+                              </Button>
+                              <span className="text-xs text-slate-500">
+                                Creates a production-grade prompt for better results
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!enhancePromptEnabled && (
+                          <p className="text-xs text-slate-500">
+                            Enable to get AI-optimized prompts with cinematic direction and style.
+                          </p>
+                        )}
                       </div>
-                    )}
-                    
-                    {!enhancePromptEnabled && (
-                      <p className="text-xs text-slate-500">
-                        Enable to get AI-optimized prompts with cinematic direction and style.
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Manual Prompt Override (when enhance is off) */}
-                  {!enhancePromptEnabled && (
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Image Prompt</Label>
-                      <Textarea
-                        placeholder={`Auto-generated from card content: "${card.title}. ${card.content?.slice(0, 100)}..."`}
-                        value={imagePrompt}
-                        onChange={(e) => setImagePrompt(e.target.value)}
-                        rows={3}
-                        className="bg-slate-800 border-slate-700 text-white"
-                        data-testid="input-image-prompt"
-                      />
-                      <p className="text-xs text-slate-500">
+                      
+                      {/* Manual Prompt Override (when enhance is off) */}
+                      {!enhancePromptEnabled && (
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Image Prompt</Label>
+                          <Textarea
+                            placeholder={`Auto-generated from card content: "${card.title}. ${card.content?.slice(0, 100)}..."`}
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            rows={3}
+                            className="bg-slate-800 border-slate-700 text-white"
+                            data-testid="input-image-prompt"
+                          />
+                          <p className="text-xs text-slate-500">
                         Leave empty to auto-generate from card content
                       </p>
                     </div>
@@ -3368,20 +3385,22 @@ export function IceCardEditor({
                       </div>
                     );
                   })()}
-                  
-                  <Button
-                    onClick={handleGenerateImage}
-                    disabled={imageLoading || imageUploading}
-                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
-                    data-testid="button-generate-image"
-                  >
-                    {imageLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Wand2 className="w-4 h-4" />
-                    )}
-                    {imageLoading ? "Generating..." : "Generate AI Image"}
-                  </Button>
+                      
+                      <Button
+                        onClick={handleGenerateImage}
+                        disabled={imageLoading || imageUploading}
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 gap-2"
+                        data-testid="button-generate-image"
+                      >
+                        {imageLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Wand2 className="w-4 h-4" />
+                        )}
+                        {imageLoading ? "Generating..." : "Generate AI Image"}
+                      </Button>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               )}
               
