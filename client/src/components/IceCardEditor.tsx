@@ -959,13 +959,46 @@ export function IceCardEditor({
         
         if (data.status === "completed" && data.videoUrl) {
           setVideoStatus("completed");
+          
+          // Create new MediaAsset for the video
+          const newAssetId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          const newAsset: MediaAsset = {
+            id: newAssetId,
+            kind: 'video',
+            source: 'ai',
+            url: data.videoUrl,
+            thumbnailUrl: data.videoUrl,
+            createdAt: new Date().toISOString(),
+            prompt: videoPrompt || '',
+            status: 'ready',
+            durationSec: videoDuration,
+          };
+          
+          // Calculate start time for new segment
+          const existingSegments = card.mediaSegments || [];
+          const totalFilledTime = existingSegments.reduce((sum, s) => sum + s.durationSec, 0);
+          
+          // Create new MediaSegment
+          const newSegment: MediaSegment = {
+            id: `seg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            assetId: newAssetId,
+            kind: 'video',
+            url: data.videoUrl,
+            durationSec: videoDuration,
+            startTimeSec: totalFilledTime,
+            order: existingSegments.length,
+          };
+          
           onCardUpdate(card.id, { 
-            generatedVideoUrl: data.videoUrl, 
+            generatedVideoUrl: data.videoUrl,
             videoGenerationStatus: "completed",
             videoGenerated: true,
-            preferredMediaType: 'video'
+            preferredMediaType: 'video',
+            mediaAssets: [...(card.mediaAssets || []), newAsset],
+            mediaSegments: [...existingSegments, newSegment],
+            selectedMediaAssetId: newAssetId,
           });
-          toast({ title: "Video ready!", description: "Your AI video has been generated." });
+          toast({ title: "Video ready!", description: "Your AI video has been generated and added to the timeline." });
         } else if (data.status === "failed") {
           setVideoStatus("failed");
           toast({ 
@@ -1193,13 +1226,46 @@ export function IceCardEditor({
       const data = await res.json();
       if (data.status === "completed") {
         setVideoStatus("completed");
+        
+        // Create new MediaAsset for the video
+        const newAssetId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const newAsset: MediaAsset = {
+          id: newAssetId,
+          kind: 'video',
+          source: 'ai',
+          url: data.videoUrl,
+          thumbnailUrl: data.videoUrl,
+          createdAt: new Date().toISOString(),
+          prompt: effectivePrompt,
+          status: 'ready',
+          durationSec: videoDuration,
+        };
+        
+        // Calculate start time for new segment
+        const existingSegments = card.mediaSegments || [];
+        const totalFilledTime = existingSegments.reduce((sum, s) => sum + s.durationSec, 0);
+        
+        // Create new MediaSegment
+        const newSegment: MediaSegment = {
+          id: `seg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          assetId: newAssetId,
+          kind: 'video',
+          url: data.videoUrl,
+          durationSec: videoDuration,
+          startTimeSec: totalFilledTime,
+          order: existingSegments.length,
+        };
+        
         onCardUpdate(card.id, { 
           generatedVideoUrl: data.videoUrl, 
           videoGenerationStatus: "completed",
           videoGenerated: true,
-          preferredMediaType: 'video'
+          preferredMediaType: 'video',
+          mediaAssets: [...(card.mediaAssets || []), newAsset],
+          mediaSegments: [...existingSegments, newSegment],
+          selectedMediaAssetId: newAssetId,
         });
-        toast({ title: "Video ready!", description: "AI video has been generated." });
+        toast({ title: "Video ready!", description: "AI video has been generated and added to timeline." });
       } else {
         setVideoStatus("processing");
         toast({ title: "Video generation started", description: "This may take 5-10 minutes." });
