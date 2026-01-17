@@ -1,4 +1,5 @@
 import type { TTSProvider, Voice, SynthesisResult } from "./provider";
+import { estimateSpeechDuration } from "./provider";
 
 const ELEVENLABS_VOICES: Voice[] = [
   { id: "eleven_rachel", name: "Rachel (ElevenLabs)", previewTextHint: "A warm, professional American female voice.", tags: ["female", "professional", "american", "elevenlabs"] },
@@ -75,10 +76,14 @@ export class ElevenLabsTTSProvider implements TTSProvider {
 
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = Buffer.from(arrayBuffer);
+    
+    // Estimate duration based on text length (ElevenLabs doesn't return duration)
+    const durationSeconds = estimateSpeechDuration(options.text, 1.0);
 
     return {
       audioBuffer,
       contentType: "audio/mpeg",
+      durationSeconds,
     };
   }
 }

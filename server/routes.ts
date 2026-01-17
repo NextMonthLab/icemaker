@@ -9163,8 +9163,12 @@ Stay engaging, reference story details, and help the audience understand the nar
       const fileName = `ice-narration/${previewId}/${cardId}/${Date.now()}.mp3`;
       const audioUrl = await putObject(fileName, result.audioBuffer, result.contentType);
       
-      // Update the card with the generated audio URL
-      let updatedCard = { ...card, narrationAudioUrl: audioUrl };
+      // Update the card with the generated audio URL and duration
+      let updatedCard = { 
+        ...card, 
+        narrationAudioUrl: audioUrl,
+        narrationDurationSec: result.durationSeconds || null, // Store narration duration for Cinematic Continuation
+      };
       
       // Phase 2: Forced Alignment - align captions to audio if enabled
       const { isAlignmentEnabled, alignCardCaptions } = await import("./services/whisperAlignment");
@@ -9232,10 +9236,18 @@ Stay engaging, reference story details, and help the audience understand the nar
         console.warn('Failed to log AI TTS usage:', aiLogError);
       }
       
+      // Check if Cinematic Continuation is needed (narration > video duration)
+      const hasVideo = !!updatedCard.generatedVideoUrl || (updatedCard.mediaAssets || []).some((a: any) => a.kind === 'video');
+      const narrationDuration = result.durationSeconds || 0;
+      const videoDuration = updatedCard.videoDurationSec || 5; // Default 5 sec for video cap
+      const needsContinuation = hasVideo && narrationDuration > videoDuration && !updatedCard.continuationImageUrl;
+      
       res.json({
         success: true,
         audioUrl,
         cardId,
+        narrationDurationSec: narrationDuration,
+        needsContinuation, // Signals frontend to offer continuation still generation
       });
     } catch (error) {
       console.error("Error generating ICE narration:", error);

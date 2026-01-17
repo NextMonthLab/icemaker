@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { TTSProvider, Voice, SynthesisResult } from "./provider";
+import { estimateSpeechDuration } from "./provider";
 
 const OPENAI_VOICES: Voice[] = [
   { id: "alloy", name: "Alloy", previewTextHint: "A balanced, neutral voice.", tags: ["neutral", "versatile"] },
@@ -49,10 +50,14 @@ export class OpenAITTSProvider implements TTSProvider {
 
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = Buffer.from(arrayBuffer);
+    
+    // Estimate duration based on text length and speed
+    const durationSeconds = estimateSpeechDuration(options.text, speed);
 
     return {
       audioBuffer,
       contentType: "audio/mpeg",
+      durationSeconds,
     };
   }
 }
