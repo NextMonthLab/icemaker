@@ -46,20 +46,32 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
   const [videos, setVideos] = useState<PexelsVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastQuery, setLastQuery] = useState("");
 
-  const search = async () => {
+  const search = async (isLoadMore = false) => {
     if (!query.trim()) return;
     
-    setIsLoading(true);
-    setHasSearched(true);
+    const currentPage = isLoadMore ? page + 1 : 1;
+    
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setHasSearched(true);
+      setPage(1);
+      setLastQuery(query);
+    }
     setError(null);
     
     try {
       const response = await fetch(
-        `/api/pexels/search?query=${encodeURIComponent(query)}&type=${mediaType}&per_page=15`,
+        `/api/pexels/search?query=${encodeURIComponent(query)}&type=${mediaType}&per_page=15&page=${currentPage}`,
         { credentials: 'include' }
       );
       
@@ -73,18 +85,31 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
       const data = await response.json();
       
       if (mediaType === "photos") {
-        setPhotos(data.photos || []);
+        const newPhotos = data.photos || [];
+        setPhotos(isLoadMore ? [...photos, ...newPhotos] : newPhotos);
         setVideos([]);
+        setHasMore(newPhotos.length >= 15);
       } else {
-        setVideos(data.videos || []);
+        const newVideos = data.videos || [];
+        setVideos(isLoadMore ? [...videos, ...newVideos] : newVideos);
         setPhotos([]);
+        setHasMore(newVideos.length >= 15);
+      }
+      
+      if (isLoadMore) {
+        setPage(currentPage);
       }
     } catch (err) {
       console.error("Pexels search error:", err);
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
+  };
+  
+  const loadMore = () => {
+    search(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -108,7 +133,7 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
           />
         </div>
         <Button
-          onClick={search}
+          onClick={() => search()}
           disabled={isLoading || !query.trim()}
           className="bg-cyan-600 hover:bg-cyan-700"
           data-testid="button-pexels-search"
@@ -140,7 +165,7 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
         <div className="text-center py-12 text-red-400">
           <p className="mb-2">{error}</p>
           <Button
-            onClick={() => { setError(null); search(); }}
+            onClick={() => { setError(null); void search(); }}
             variant="outline"
             size="sm"
             className="border-red-500/30 text-red-400 hover:bg-red-500/10"
@@ -225,6 +250,33 @@ export function PexelsMediaPicker({ onSelectImage, onSelectVideo, showVideos = f
               );
             })}
           </div>
+          
+          {/* Load More button */}
+          {hasMore && (photos.length > 0 || videos.length > 0) && (
+            <div className="flex justify-center pt-2">
+              <Button
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                variant="outline"
+                size="sm"
+                className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 gap-2"
+                data-testid="button-pexels-load-more"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>Load More</>
+                )}
+              </Button>
+            </div>
+          )}
+          
+          {!hasMore && (photos.length > 0 || videos.length > 0) && (
+            <p className="text-center text-xs text-white/40 pt-2">No more results</p>
+          )}
           
           <div className="flex items-center justify-center gap-1 text-[10px] text-white/30">
             <span>Free media from</span>
