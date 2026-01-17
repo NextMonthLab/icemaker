@@ -233,15 +233,42 @@ export default function CardPlayer({
       };
     }
     
-    // Fallback to standard asset selection
-    if (card.mediaAssets?.length && card.selectedMediaAssetId) {
-      const selected = card.mediaAssets.find(a => a.id === card.selectedMediaAssetId);
-      if (selected && selected.status === 'ready') {
+    // Fallback to standard asset selection with "video wins" logic
+    // When no segments exist, prefer any ready video over a selected image
+    // This fixes the edge case where image is generated first, then video
+    if (card.mediaAssets?.length) {
+      const selected = card.selectedMediaAssetId 
+        ? card.mediaAssets.find(a => a.id === card.selectedMediaAssetId)
+        : undefined;
+      
+      // Find ready videos and images, sorted by createdAt descending (most recent first)
+      const readyVideos = card.mediaAssets
+        .filter(a => a.kind === 'video' && a.status === 'ready')
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      const readyImages = card.mediaAssets
+        .filter(a => a.kind === 'image' && a.status === 'ready')
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      
+      const latestReadyVideo = readyVideos[0];
+      const latestReadyImage = readyImages[0];
+      
+      // "Video wins": prefer selected if it's a video, otherwise use latest video
+      const primaryAsset = (selected?.kind === 'video' && selected.status === 'ready')
+        ? selected
+        : (latestReadyVideo || selected);
+      
+      if (primaryAsset && primaryAsset.status === 'ready') {
+        // When video is primary, use image for background/continuation:
+        // Prefer selected image if available, then any ready image, finally card.image
+        const backgroundImage = primaryAsset.kind === 'video' 
+          ? (selected?.kind === 'image' ? selected.url : latestReadyImage?.url || card.image)
+          : primaryAsset.url;
+        
         return {
-          imageUrl: selected.kind === 'image' ? selected.url : card.image,
-          videoUrl: selected.kind === 'video' ? selected.url : card.generatedVideoUrl,
-          selectedIsVideo: selected.kind === 'video',
-          selectedAsset: selected as MediaAsset,
+          imageUrl: backgroundImage || card.image,
+          videoUrl: primaryAsset.kind === 'video' ? primaryAsset.url : card.generatedVideoUrl,
+          selectedIsVideo: primaryAsset.kind === 'video',
+          selectedAsset: primaryAsset as MediaAsset,
           segment: undefined as MediaSegment | undefined,
         };
       }
@@ -249,7 +276,7 @@ export default function CardPlayer({
     return {
       imageUrl: card.image,
       videoUrl: card.generatedVideoUrl,
-      selectedIsVideo: false,
+      selectedIsVideo: !!card.generatedVideoUrl,
       selectedAsset: undefined as MediaAsset | undefined,
       segment: undefined as MediaSegment | undefined,
     };

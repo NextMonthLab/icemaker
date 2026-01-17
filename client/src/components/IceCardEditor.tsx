@@ -2941,14 +2941,29 @@ export function IceCardEditor({
                     // Calculate filled time from segments first
                     let totalFilledTime = segments.reduce((sum, s) => sum + s.durationSec, 0);
                     
-                    // If no segments exist, fall back to current video asset duration
-                    // This handles uploaded videos that may be longer than narration
+                    // If no segments exist, use "video wins" logic:
+                    // Always prefer video duration over image when calculating timeline
+                    // This fixes the edge case where image is generated first, then video
                     if (segments.length === 0) {
-                      const selectedVideoAsset = card.mediaAssets?.find(a => 
-                        a.kind === 'video' && (a.id === card.selectedMediaAssetId || a.url === card.generatedVideoUrl)
+                      // Find video assets - prefer selectedMediaAssetId if it's a video,
+                      // otherwise use the most recently created ready video
+                      const selectedAsset = card.mediaAssets?.find(a => a.id === card.selectedMediaAssetId);
+                      const readyVideos = card.mediaAssets?.filter(a => 
+                        a.kind === 'video' && a.status === 'ready'
+                      ) || [];
+                      // Sort by createdAt descending to get most recent first
+                      const sortedVideos = [...readyVideos].sort((a, b) => 
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
                       );
-                      // Use asset duration, or videoDurationSec from card, or default 5s for AI video
-                      const videoDuration = selectedVideoAsset?.durationSec || card.videoDurationSec || 
+                      const latestReadyVideo = sortedVideos[0];
+                      
+                      // "Video wins": prefer selected if it's a video, otherwise use latest video
+                      const primaryVideoAsset = (selectedAsset?.kind === 'video' && selectedAsset.status === 'ready') 
+                        ? selectedAsset 
+                        : latestReadyVideo;
+                      
+                      // Use video asset duration, or videoDurationSec from card, or default 5s for AI video
+                      const videoDuration = primaryVideoAsset?.durationSec || card.videoDurationSec || 
                         (card.generatedVideoUrl ? 5 : 0);
                       totalFilledTime = videoDuration;
                     }
