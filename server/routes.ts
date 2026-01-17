@@ -8867,6 +8867,25 @@ Suggest 2-3 video prompts for the next clip that continue the visual narrative.`
         visualBibleStyle
       } = req.body;
       
+      // Validate preview exists and user has permission
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      const user = req.user as schema.User;
+      const policy = canReadIcePreview(user, preview);
+      if (!policy.allowed) {
+        return res.status(policy.statusCode).json({ message: policy.reason || "Not authorized" });
+      }
+      
+      // Validate card exists in preview
+      const cards = preview.cards as any[] || [];
+      const cardExists = cards.some((c: any) => c.id === cardId);
+      if (!cardExists) {
+        return res.status(404).json({ message: "Card not found in preview" });
+      }
+      
       // Validate required fields
       if (!cardTitle || !cardNarration) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -8894,7 +8913,7 @@ Your job is to suggest IMAGE prompts that:
 4. Work as a still image that will display while narration continues
 
 IMPORTANT: These are for STILL IMAGE generation - describe a single frozen moment, not motion.
-Do NOT include any text, titles, captions, or typography in your suggestions.
+IMPORTANT: Do not include any text, words, letters, titles, captions, watermarks, or typography in your suggestions.
 
 Respond with a JSON array of 2-3 suggestions, each with:
 - prompt: The image generation prompt (40-100 words, cinematographic and detailed)

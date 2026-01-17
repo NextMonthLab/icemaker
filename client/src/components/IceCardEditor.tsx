@@ -2927,18 +2927,44 @@ export function IceCardEditor({
                     const hasVideo = !!(card.generatedVideoUrl || videoAssets.length > 0);
                     const hasNarration = !!card.narrationAudioUrl;
                     
-                    // Calculate if there's remaining time after video
+                    // Calculate remaining time using same logic as timeline
                     let narrationDuration = card.narrationDurationSec || 0;
                     if (narrationDuration <= 0 && hasNarration && card.content) {
                       narrationDuration = Math.max(1, Math.round((card.content.length / 12.5) * 10) / 10);
                     }
-                    const videoDuration = videoAssets[0]?.durationSec || card.videoDurationSec || 5;
-                    const remainingTime = Math.max(0, narrationDuration - videoDuration);
                     
-                    // Show suggestions when video exists and there's remaining time to fill
-                    if (!hasVideo || remainingTime <= 0) return null;
+                    // Calculate filled time using segments or "video wins" logic
+                    const segments = card.mediaSegments || [];
+                    let totalFilledTime = segments.reduce((sum, s) => sum + s.durationSec, 0);
                     
-                    const existingVideoPrompt = videoAssets[0]?.prompt || '';
+                    if (segments.length === 0) {
+                      // "Video wins" logic: prefer selected if video, otherwise latest ready video
+                      const selectedAsset = card.mediaAssets?.find(a => a.id === card.selectedMediaAssetId);
+                      const sortedVideos = [...videoAssets].sort((a, b) => 
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                      );
+                      const latestReadyVideo = sortedVideos[0];
+                      const primaryVideoAsset = (selectedAsset?.kind === 'video' && selectedAsset.status === 'ready') 
+                        ? selectedAsset 
+                        : latestReadyVideo;
+                      totalFilledTime = primaryVideoAsset?.durationSec || card.videoDurationSec || 
+                        (card.generatedVideoUrl ? 5 : 0);
+                    }
+                    
+                    const remainingTime = narrationDuration > 0 ? Math.max(0, narrationDuration - totalFilledTime) : 0;
+                    
+                    // Show suggestions when video exists and there's remaining time to fill (at least 1s)
+                    if (!hasVideo || remainingTime < 1) return null;
+                    
+                    // Get prompt from selected/primary video for context
+                    const selectedAsset = card.mediaAssets?.find(a => a.id === card.selectedMediaAssetId);
+                    const sortedVideos = [...videoAssets].sort((a, b) => 
+                      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                    );
+                    const primaryVideoAsset = (selectedAsset?.kind === 'video' && selectedAsset.status === 'ready') 
+                      ? selectedAsset 
+                      : sortedVideos[0];
+                    const existingVideoPrompt = primaryVideoAsset?.prompt || '';
                     
                     return (
                       <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-500/5 space-y-3">
