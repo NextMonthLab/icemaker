@@ -993,13 +993,6 @@ export default function Admin() {
                         <span className="sm:hidden">Card</span>
                     </Button>
                 </Link>
-                <Link href="/admin/audio" className="contents">
-                    <Button className="gap-2 h-12 sm:h-10" variant="secondary" data-testid="button-audio-library">
-                        <Music className="w-4 h-4" /> 
-                        <span className="hidden sm:inline">Audio Library</span>
-                        <span className="sm:hidden">Audio</span>
-                    </Button>
-                </Link>
                 <Link href="/admin/api-providers" className="contents">
                     <Button className="gap-2 h-12 sm:h-10" variant="ghost" data-testid="button-api-providers">
                         <Settings className="w-4 h-4" /> 
