@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart, X } from "lucide-react";
+import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart, X, Sparkles, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
@@ -121,6 +121,8 @@ export default function PublishedIcePage() {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadCaptured, setLeadCaptured] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [showEndScreen, setShowEndScreen] = useState(false);
+  const [completedNodeId, setCompletedNodeId] = useState<string | null>(null);
 
   const handleCloseICE = () => {
     if (musicAudioRef.current) {
@@ -146,6 +148,19 @@ export default function PublishedIcePage() {
     },
     enabled: !!shareSlug,
   });
+
+  // Create a stable signature of interactivity nodes to detect changes
+  const nodesSignature = useMemo(() => {
+    const nodes = ice?.interactivityNodes || [];
+    return nodes.map((n: InteractivityNodeData) => `${n.id}:${n.afterCardIndex}`).join("|");
+  }, [ice?.interactivityNodes]);
+
+  // Reset end screen and node completion state when switching experiences or when nodes change
+  useEffect(() => {
+    setShowEndScreen(false);
+    setCompletedNodeId(null);
+    setActiveNodeIndex(null);
+  }, [shareSlug, ice?.id, nodesSignature]);
 
   const leadMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -292,21 +307,43 @@ export default function PublishedIcePage() {
 
   const handleNext = () => {
     if (pendingCardIndex !== null) return;
+    
+    // Don't allow advancing while interactivity node is active - user must use Continue button
+    if (activeNodeIndex !== null) return;
+    
+    const nodeAtCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
+    
     if (displayedCardIndex < cards.length - 1) {
-      const nodeAtCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
-      if (nodeAtCard && activeNodeIndex !== displayedCardIndex) {
+      if (nodeAtCard) {
         setActiveNodeIndex(displayedCardIndex);
       } else {
-        setActiveNodeIndex(null);
         navigateToCard(displayedCardIndex + 1);
+      }
+    } else if (displayedCardIndex === cards.length - 1 && !showEndScreen) {
+      // On the last card - check for interactivity node first
+      // Only bypass if this specific node was completed
+      if (nodeAtCard && completedNodeId !== nodeAtCard.id) {
+        // Show the creator's CTA/interactivity node first
+        setActiveNodeIndex(displayedCardIndex);
+      } else {
+        // No node or node already completed - show IceMaker end screen
+        setShowEndScreen(true);
       }
     }
   };
 
   const handlePrev = () => {
     if (pendingCardIndex !== null) return;
-    if (displayedCardIndex > 0) {
+    if (showEndScreen) {
+      // Go back from end screen to last card - reset completion so node shows again
+      setShowEndScreen(false);
+      setCompletedNodeId(null);
+    } else if (displayedCardIndex > 0) {
       setActiveNodeIndex(null);
+      // If leaving the last card, reset completion state
+      if (displayedCardIndex === cards.length - 1) {
+        setCompletedNodeId(null);
+      }
       navigateToCard(displayedCardIndex - 1);
     }
   };
@@ -314,10 +351,13 @@ export default function PublishedIcePage() {
   const handleCardComplete = () => {
     const nodeAtCard = interactivityNodes.find(n => n.afterCardIndex === displayedCardIndex);
     if (nodeAtCard) {
+      // Show interactivity node (creator's CTA)
       setActiveNodeIndex(displayedCardIndex);
     } else if (displayedCardIndex < cards.length - 1) {
       navigateToCard(displayedCardIndex + 1);
     }
+    // NOTE: End screen is NOT triggered here on last card - only via explicit user action
+    // (handleNext or Continue button) to ensure creator CTAs get proper time
   };
 
   if (isLoading) {
@@ -475,7 +515,7 @@ export default function PublishedIcePage() {
       
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md relative">
-          {nextCard && (
+          {nextCard && !showEndScreen && (
             <MediaPreloader
               card={nextCard}
               onReady={handleCardReady}
@@ -483,6 +523,81 @@ export default function PublishedIcePage() {
           )}
           
           <AnimatePresence mode="wait">
+            {showEndScreen ? (
+              <motion.div
+                key="end-screen"
+                variants={cardTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ 
+                  duration: TRANSITION_CONFIG.duration, 
+                  ease: TRANSITION_CONFIG.ease,
+                }}
+                className="will-change-transform"
+              >
+                {/* IceMaker End Screen CTA */}
+                <div className="aspect-[9/16] bg-gradient-to-b from-slate-900 via-slate-950 to-black rounded-xl overflow-hidden flex flex-col items-center justify-center p-8 text-center border border-cyan-500/20">
+                  {/* IceMaker Logo */}
+                  <div className="mb-8">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/30">
+                      <Sparkles className="w-10 h-10 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">IceMaker</h2>
+                    <p className="text-cyan-400 text-sm mt-1">Interactive Content Experiences</p>
+                  </div>
+                  
+                  {/* Messaging */}
+                  <div className="space-y-4 mb-8">
+                    <p className="text-white/80 text-lg leading-relaxed">
+                      Discover more cinematic experiences like this one
+                    </p>
+                    <p className="text-white/60 text-sm">
+                      Create your own interactive stories with AI-generated visuals, narration, and engaging characters
+                    </p>
+                  </div>
+                  
+                  {/* CTAs */}
+                  <div className="space-y-3 w-full max-w-xs">
+                    <Link href="/try">
+                      <Button 
+                        className="w-full gap-2" 
+                        variant="default"
+                        data-testid="button-create-your-own"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Create Your Own
+                      </Button>
+                    </Link>
+                    <Link href="/">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full gap-2"
+                        data-testid="button-explore-more"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Explore More
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  {/* Replay option */}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowEndScreen(false);
+                      setCompletedNodeId(null); // Reset so creator CTA shows again on replay
+                      navigateToCard(0);
+                    }}
+                    className="mt-8 gap-2"
+                    data-testid="button-replay"
+                  >
+                    <Play className="w-4 h-4" />
+                    Replay Experience
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
             <motion.div
               key={displayedCardIndex}
               variants={cardTransitionVariants}
@@ -504,6 +619,7 @@ export default function PublishedIcePage() {
                 captionState={ice?.captionSettings as CaptionState | undefined}
               />
             </motion.div>
+            )}
           </AnimatePresence>
 
           {activeNodeIndex !== null && nodeAtDisplayedCard && (
@@ -528,9 +644,13 @@ export default function PublishedIcePage() {
                     setActiveNodeIndex(null);
                     if (displayedCardIndex < cards.length - 1) {
                       navigateToCard(displayedCardIndex + 1);
+                    } else {
+                      // Last card interactivity completed - mark node id and show IceMaker end screen
+                      setCompletedNodeId(nodeAtDisplayedCard.id);
+                      setShowEndScreen(true);
                     }
                   }}
-                  className="bg-cyan-600 hover:bg-cyan-700"
+                  variant="default"
                   data-testid="button-continue"
                 >
                   Continue
@@ -574,7 +694,7 @@ export default function PublishedIcePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="text-sm text-white/60">
-                {displayedCardIndex + 1} / {cards.length}
+                {showEndScreen ? "End" : `${displayedCardIndex + 1} / ${cards.length}`}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -604,7 +724,7 @@ export default function PublishedIcePage() {
                 variant="ghost"
                 size="icon"
                 onClick={handlePrev}
-                disabled={displayedCardIndex === 0 || pendingCardIndex !== null}
+                disabled={(displayedCardIndex === 0 && !showEndScreen) || pendingCardIndex !== null}
                 className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-prev-card"
               >
@@ -614,7 +734,7 @@ export default function PublishedIcePage() {
                 variant="ghost"
                 size="icon"
                 onClick={handleNext}
-                disabled={(displayedCardIndex === cards.length - 1 && activeNodeIndex === null) || pendingCardIndex !== null}
+                disabled={showEndScreen || pendingCardIndex !== null}
                 className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-next-card"
               >
