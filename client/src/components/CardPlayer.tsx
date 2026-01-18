@@ -1465,7 +1465,7 @@ export default function CardPlayer({
                 className="absolute z-30 pointer-events-auto bottom-20 left-1/2 -translate-x-1/2"
                 data-testid="admin-cta-overlay"
               >
-                <div className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-blue-500 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2.5 shadow-lg shadow-cyan-500/25 border border-white/20 hover:shadow-cyan-400/40 hover:scale-[1.02] transition-all duration-200">
+                <div className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-blue-500 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2.5 shadow-lg shadow-cyan-500/25 border border-white/20 hover:shadow-cyan-400/40 hover:scale-[1.02] transition-all duration-200">
                   <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center backdrop-blur-sm">
                     <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />

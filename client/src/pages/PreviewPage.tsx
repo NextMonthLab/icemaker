@@ -132,7 +132,7 @@ function BrandHeader({
   const monogramLetter = (preview.sourceDomain || 'S')[0].toUpperCase();
   
   return (
-    <div className="p-4 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="p-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           {showMonogram ? (

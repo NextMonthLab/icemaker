@@ -435,7 +435,7 @@ export default function PublishedIcePage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center relative overflow-hidden">
         {/* Dramatic background with blur and gradient */}
         <div 
-          className="absolute inset-0 bg-cover bg-center scale-110 blur-sm"
+          className="absolute inset-0 bg-cover bg-center scale-105 blur-[2px]"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-zinc-950/70" />
@@ -496,7 +496,7 @@ export default function PublishedIcePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-zinc-900/80 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-6 max-w-sm mx-auto shadow-[0_0_60px_rgba(34,211,238,0.15)]"
+              className="bg-zinc-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-6 max-w-sm mx-auto shadow-[0_0_60px_rgba(34,211,238,0.15)]"
             >
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Mail className="w-5 h-5 text-cyan-400" />

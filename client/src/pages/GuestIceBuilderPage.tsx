@@ -295,7 +295,7 @@ function PreviewChatPanel({
               <div className={`inline-block px-4 py-3 rounded-2xl shadow-md ${
                 msg.role === "user" 
                   ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md" 
-                  : "bg-white/10 backdrop-blur-sm text-white/90 rounded-bl-md border border-white/5"
+                  : "bg-white/10 backdrop-blur-[2px] text-white/90 rounded-bl-md border border-white/5"
               }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
               </div>
@@ -308,7 +308,7 @@ function PreviewChatPanel({
               <Loader2 className="w-4 h-4 text-white animate-spin" />
             </div>
             <div className="flex-1">
-              <div className="inline-block px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 backdrop-blur-sm border border-white/5">
+              <div className="inline-block px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 backdrop-blur-[2px] border border-white/5">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -321,7 +321,7 @@ function PreviewChatPanel({
       </div>
       
       {/* Input area - fixed at bottom */}
-      <div className="flex-shrink-0 pt-3 border-t border-white/10 bg-black/20 backdrop-blur-sm -mx-4 px-4 pb-2">
+      <div className="flex-shrink-0 pt-3 border-t border-white/10 bg-black/20 backdrop-blur-[2px] -mx-4 px-4 pb-2">
         <div className="flex gap-2 items-center">
           <Input
             value={input}
@@ -2919,14 +2919,14 @@ export default function GuestIceBuilderPage() {
             variant="ghost"
             size="icon"
             onClick={() => { setShowPreviewModal(false); setIsNarrationPlaying(false); }}
-            className="absolute top-4 right-4 z-[60] text-white/60 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur"
+            className="absolute top-4 right-4 z-[60] text-white/60 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-[2px]"
             data-testid="button-close-preview"
           >
             <X className="w-5 h-5" />
           </Button>
           
           {/* Card navigation */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-black/50 backdrop-blur rounded-full px-4 py-2">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-black/50 backdrop-blur-[2px] rounded-full px-4 py-2">
             <Button
               variant="ghost"
               size="sm"
@@ -2949,7 +2949,7 @@ export default function GuestIceBuilderPage() {
               
               {/* Dropdown for jumping to any card */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block">
-                <div className="bg-black/90 backdrop-blur rounded-lg p-2 max-h-64 overflow-y-auto shadow-xl border border-white/10">
+                <div className="bg-black/90 backdrop-blur-[2px] rounded-lg p-2 max-h-64 overflow-y-auto shadow-xl border border-white/10">
                   <div className="grid gap-1" style={{ gridTemplateColumns: cards.length > 20 ? 'repeat(5, 1fr)' : cards.length > 10 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)' }}>
                     {cards.map((card, idx) => (
                       <button
@@ -3053,7 +3053,7 @@ export default function GuestIceBuilderPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-[65] bg-gradient-to-b from-black/95 via-black/90 to-slate-950/90 backdrop-blur-md flex flex-col"
+                  className="absolute inset-0 z-[65] bg-gradient-to-b from-black/95 via-black/90 to-slate-950/90 backdrop-blur-sm flex flex-col"
                 >
                   {/* Safe area padding for mobile */}
                   <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-12 pb-4 h-full overflow-hidden">
@@ -3074,7 +3074,7 @@ export default function GuestIceBuilderPage() {
             <div className="absolute top-4 left-4 right-14 z-[60] flex items-center gap-2">
               {/* Volume controls - only show when music enabled or narration exists */}
               {(musicEnabled || cards.some(c => c.narrationAudioUrl)) && (
-                <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">
+                <div className="bg-black/50 backdrop-blur-[2px] rounded-full px-3 py-1.5 flex items-center gap-3 w-fit">
                   {/* Music volume */}
                   {musicEnabled && (
                     <div className="flex items-center gap-2">

@@ -84,7 +84,7 @@ export default function GlobalNav({
         "sticky top-0 z-50 border-b",
         transparent 
           ? "bg-transparent border-transparent" 
-          : "bg-background/95 dark:bg-gradient-to-r dark:from-black dark:via-neutral-950 dark:to-black border-border backdrop-blur-md"
+          : "bg-background/95 dark:bg-gradient-to-r dark:from-black dark:via-neutral-950 dark:to-black border-border backdrop-blur-sm"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">

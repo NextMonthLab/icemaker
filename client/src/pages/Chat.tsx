@@ -283,7 +283,7 @@ export default function Chat() {
         
         <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
 
-        <div className="p-4 border-b border-white/10 bg-card/80 backdrop-blur-md flex items-center gap-4 sticky top-0 z-10">
+        <div className="p-4 border-b border-white/10 bg-card/80 backdrop-blur-sm flex items-center gap-4 sticky top-0 z-10">
           <Link href="/today">
             <Button variant="ghost" size="icon" className="mr-1">
               <ArrowLeft className="w-5 h-5" />
@@ -352,7 +352,7 @@ export default function Chat() {
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-white/10 bg-background/80 backdrop-blur-md">
+        <div className="p-4 border-t border-white/10 bg-background/80 backdrop-blur-sm">
           <div className="max-w-2xl mx-auto flex gap-2">
             <Input 
               value={input}

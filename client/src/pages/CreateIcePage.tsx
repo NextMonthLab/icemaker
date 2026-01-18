@@ -344,7 +344,7 @@ export default function CreateIcePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-card/50 backdrop-blur sticky top-0 z-10">
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <Button 

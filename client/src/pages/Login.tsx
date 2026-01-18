@@ -99,7 +99,7 @@ export default function Login() {
                 </p>
             </div>
 
-            <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-2xl">
+            <Card className="bg-card/50 backdrop-blur-sm border-white/10 shadow-2xl">
                 <CardHeader className="space-y-1 pb-2 md:pb-4">
                     <CardTitle className="text-xl md:text-2xl font-bold text-center">
                       {isRegister ? "Create Your Account" : "Sign In"}
