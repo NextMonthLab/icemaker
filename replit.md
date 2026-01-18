@@ -61,6 +61,7 @@ Key architectural decisions and features include:
 -   **Drag-and-Drop Media Timeline**: Unified timeline with draggable clip boxes for reordering, duration adjustment, and removal.
 -   **Quick Add UX System**: One-click media generation buttons at the top of editor tabs for AI Image, Video, and Narration.
 -   **ElevenLabs TTS Phase 1**: Enhanced TTS with delivery style controls, character voice binding, and audio caching.
+-   **ElevenLabs TTS Phase 2**: Voice preview feature for testing voice/style before generation, batch narration with delivery style selection, and audio cleanup on unmount.
 
 ## External Dependencies
 -   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS fallback).
