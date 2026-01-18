@@ -97,6 +97,9 @@ export interface Card {
   transitionStingerId?: string;
   transitionStingerUrl?: string;
   transitionStingerVolume?: number; // 0-100
+  
+  // Pacing preset for Experience Flow - controls default image durations
+  pacingPreset?: 'fast' | 'standard' | 'cinematic'; // fast=3s, standard=5s, cinematic=8s
 }
 
 // AI-powered video prompt suggestion for multi-segment timelines

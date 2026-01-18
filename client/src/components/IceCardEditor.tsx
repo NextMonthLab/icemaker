@@ -1071,6 +1071,8 @@ interface PreviewCard {
   transitionStingerId?: string;
   transitionStingerUrl?: string;
   transitionStingerVolume?: number;
+  // Pacing Preset
+  pacingPreset?: 'fast' | 'standard' | 'cinematic';
 }
 
 interface Entitlements {
@@ -3192,16 +3194,23 @@ export function IceCardEditor({
                   {/* VISUALS LANE */}
                   {activeLane === "visuals" && (
                     <div className="space-y-4">
-                      {/* Timeline Header */}
+                      {/* Experience Flow Header */}
                       <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-cyan-400" />
                             <span className="text-sm font-medium text-white">Experience Flow</span>
                           </div>
-                          <span className="text-sm text-slate-400">
-                            {totalVisualDuration.toFixed(1)}s / {narrationDuration.toFixed(1)}s
-                          </span>
+                          <select
+                            value={card.pacingPreset || 'standard'}
+                            onChange={(e) => onCardUpdate(card.id, { pacingPreset: e.target.value as 'fast' | 'standard' | 'cinematic' })}
+                            className="bg-slate-900 border border-slate-700 text-white text-xs rounded-md px-2 py-1"
+                            data-testid="select-pacing-preset-alt"
+                          >
+                            <option value="fast">Fast</option>
+                            <option value="standard">Standard</option>
+                            <option value="cinematic">Cinematic</option>
+                          </select>
                         </div>
                         <Progress 
                           value={narrationDuration > 0 ? Math.min(100, (totalVisualDuration / narrationDuration) * 100) : 100} 
@@ -3210,7 +3219,7 @@ export function IceCardEditor({
                         {needsMoreVisuals && (
                           <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
-                            {remainingDuration.toFixed(1)}s remaining to fill
+                            {Math.ceil(remainingDuration)}s more to add
                           </p>
                         )}
                       </div>
@@ -4459,17 +4468,21 @@ export function IceCardEditor({
                             </div>
                             <div>
                               <span className="text-sm font-semibold text-white">Experience Flow</span>
-                              <p className="text-[10px] text-slate-400">Drag to reorder media</p>
+                              <p className="text-[10px] text-slate-400">
+                                {percentFilled >= 100 ? 'Ready' : `${remainingTime.toFixed(0)}s to fill`}
+                              </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-lg font-bold text-cyan-400">
-                              {totalFilledTime.toFixed(1)}s
-                            </span>
-                            {narrationDuration > 0 && (
-                              <span className="text-slate-500 text-sm"> / {narrationDuration.toFixed(1)}s</span>
-                            )}
-                          </div>
+                          <select
+                            value={card.pacingPreset || 'standard'}
+                            onChange={(e) => onCardUpdate(card.id, { pacingPreset: e.target.value as 'fast' | 'standard' | 'cinematic' })}
+                            className="bg-slate-800 border border-slate-700 text-white text-xs rounded-md px-2 py-1"
+                            data-testid="select-pacing-preset"
+                          >
+                            <option value="fast">Fast (3s)</option>
+                            <option value="standard">Standard (5s)</option>
+                            <option value="cinematic">Cinematic (8s)</option>
+                          </select>
                         </div>
                         
                         <div className="h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
