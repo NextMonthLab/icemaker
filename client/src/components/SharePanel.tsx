@@ -87,23 +87,23 @@ export function SharePanel({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-slate-900 border-cyan-500/30">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md bg-slate-900 border-cyan-500/30 mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-cyan-400" />
+          <DialogTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
             Share Your ICE
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-400 text-sm">
             Share your interactive content experience with others
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm text-slate-300 truncate flex-1">{shareUrl}</span>
+          <div className="p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-white/10">
+            <div className="mb-3 overflow-hidden">
+              <span className="text-xs sm:text-sm text-slate-300 break-all line-clamp-2">{shareUrl}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 onClick={handleCopyLink}
                 variant="default"
