@@ -466,7 +466,7 @@ export default function GuestIceBuilderPage() {
   }, [projectBible]);
   const [bibleGenerating, setBibleGenerating] = useState(false);
   const [showBiblePromptModal, setShowBiblePromptModal] = useState(false);
-  const [hasShownBiblePrompt, setHasShownBiblePrompt] = useState(false);
+  const [biblePromptShownForIceId, setBiblePromptShownForIceId] = useState<string | null>(null);
   const [showBibleWarningOnGenerate, setShowBibleWarningOnGenerate] = useState(false);
   const [pendingGenerateAction, setPendingGenerateAction] = useState<(() => void) | null>(null);
   const [exportJobId, setExportJobId] = useState<string | null>(null);
@@ -803,11 +803,11 @@ export default function GuestIceBuilderPage() {
     }
     setShowWalkthrough(false);
     
-    // Show Bible prompt after walkthrough if Bible isn't set
-    if (!projectBible && !hasShownBiblePrompt) {
+    // Show Bible prompt after walkthrough if Bible isn't set for this ICE
+    if (!projectBible && preview?.id && biblePromptShownForIceId !== preview.id) {
       setTimeout(() => {
         setShowBiblePromptModal(true);
-        setHasShownBiblePrompt(true);
+        setBiblePromptShownForIceId(preview.id);
       }, 300);
     }
   };
@@ -911,16 +911,16 @@ export default function GuestIceBuilderPage() {
         setShowWalkthrough(true);
       }
       
-      // Show Bible prompt for new ICEs without a Bible set (skip if walkthrough will show)
-      if (!existingPreview.projectBible && !hasShownBiblePrompt && !isViewMode && hasSeenWalkthrough()) {
+      // Show Bible prompt for ICEs without a Bible set (skip if walkthrough will show)
+      if (!existingPreview.projectBible && existingPreview.id && biblePromptShownForIceId !== existingPreview.id && !isViewMode && hasSeenWalkthrough()) {
         // Small delay to let UI settle
         setTimeout(() => {
           setShowBiblePromptModal(true);
-          setHasShownBiblePrompt(true);
+          setBiblePromptShownForIceId(existingPreview.id);
         }, 300);
       }
     }
-  }, [existingPreview, isViewMode, hasShownBiblePrompt]);
+  }, [existingPreview, isViewMode, biblePromptShownForIceId]);
 
   // Resume video polling for any cards that have processing status
   // This handles the case where user navigated away and returned while videos were generating
