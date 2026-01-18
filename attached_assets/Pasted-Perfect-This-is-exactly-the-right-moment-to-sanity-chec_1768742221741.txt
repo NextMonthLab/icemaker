@@ -1,0 +1,59 @@
+Perfect. This is exactly the right moment to sanity-check it with Rappler rather than charging ahead half-cocked.
+
+Below is a clean, copy-paste Replit prompt you can give Rappler. It’s framed as a proposal + request for critique, not an instruction, so you’ll get proper engineering judgement back rather than blind agreement.
+
+⸻
+
+📌 Prompt for Rappler (IceMaker / iSmaker)
+
+Context
+We are already using OpenAI for text-based dialogue inside IceMaker AI characters. We are exploring whether to extend this with real-time voice conversation (speech-to-text + text-to-speech) specifically between ICE cards, rather than during video playback itself.
+
+The idea is to introduce a lightweight “Character Interlude” layer that can appear:
+	•	Between cards
+	•	At checkpoints
+	•	Or when a user explicitly taps something like “Ask Marco”
+
+This would reuse the existing dialogue engine and simply wrap it with voice input/output, rather than rebuilding character logic.
+
+⸻
+
+Proposed Concept (for your review, not instruction):
+	•	Interludes are short, goal-driven interactions (e.g. check understanding, troubleshoot, choose next path).
+	•	Each interlude has:
+	•	a trigger (end of card, user initiated, checkpoint)
+	•	a character ID
+	•	a small structured context window (ICE title, last 1–3 cards summary, user progress)
+	•	a clear goal (e.g. “diagnose issue”, “collect preference”, “confirm readiness”)
+	•	Voice is push-to-talk, optional, with instant fallback to text.
+
+⸻
+
+What we’d like your opinion on:
+	1.	Does this architectural approach make sense given the current IceMaker codebase?
+	2.	Is “Character Interlude” the right abstraction, or would you model this differently?
+	3.	What would you recommend as the first, lowest-risk implementation if we wanted to test this idea quickly?
+	4.	Are there any performance, cost, UX, or complexity concerns we should address before attempting voice?
+	5.	Would you recommend:
+	•	Phase 1: user-initiated voice only
+	•	Phase 1: text-first interludes, voice added later
+	•	Or a different starting point entirely?
+
+Please be candid. We’re explicitly looking for pushback, risks, or better alternatives, not blind agreement.
+
+If you agree the idea is viable, suggest a Phase 1 implementation plan that fits IceMaker’s existing structure with minimal disruption.
+
+⸻
+
+Why this prompt works (coach note)
+	•	You’re not telling Rappler what to do.
+	•	You’re inviting it to act like a senior engineer.
+	•	You’ve clearly scoped where voice lives (between cards, not everywhere).
+	•	You’ve made it safe for Rappler to say “no” or “not yet”.
+
+That’s how you avoid building a clever demo that becomes a maintenance nightmare.
+
+When Rappler replies, send it straight back to me and we’ll:
+	•	pressure-test the recommendation
+	•	lock Phase 1 tightly
+	•	and avoid boiling the ocean 🍳

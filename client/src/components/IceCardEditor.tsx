@@ -1869,6 +1869,11 @@ export function IceCardEditor({
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Voice preview state (test voice/style before generating)
+  const [voicePreviewLoading, setVoicePreviewLoading] = useState(false);
+  const [voicePreviewPlaying, setVoicePreviewPlaying] = useState(false);
+  const voicePreviewAudioRef = useRef<HTMLAudioElement | null>(null);
+  
   const [enhancePromptEnabled, setEnhancePromptEnabled] = useState(card.enhancePromptEnabled ?? false);
   const [enhancedPrompt, setEnhancedPrompt] = useState(card.enhancedPrompt || "");
   const [enhanceLoading, setEnhanceLoading] = useState(false);
@@ -2594,6 +2599,70 @@ export function IceCardEditor({
     } catch (error: any) {
       setPreviewPlaying(false);
       toast({ title: "Preview failed", description: error.message, variant: "destructive" });
+    }
+  };
+  
+  // Cleanup voice preview audio on unmount
+  useEffect(() => {
+    return () => {
+      if (voicePreviewAudioRef.current) {
+        voicePreviewAudioRef.current.pause();
+        voicePreviewAudioRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Voice preview - test voice/style before generating full narration
+  const handleVoicePreview = async () => {
+    // Stop any existing preview audio first
+    if (voicePreviewAudioRef.current) {
+      voicePreviewAudioRef.current.pause();
+      voicePreviewAudioRef.current = null;
+      setVoicePreviewPlaying(false);
+    }
+    
+    // If we were just stopping, don't start a new one
+    if (voicePreviewPlaying) {
+      return;
+    }
+    
+    setVoicePreviewLoading(true);
+    try {
+      const res = await fetch("/api/tts/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          voice: narrationVoice,
+          deliveryStyle,
+        }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Voice preview failed");
+      }
+      
+      const data = await res.json();
+      
+      // Play base64 audio directly
+      const audioSrc = `data:${data.contentType};base64,${data.audio}`;
+      const audio = new Audio(audioSrc);
+      voicePreviewAudioRef.current = audio;
+      
+      setVoicePreviewLoading(false);
+      setVoicePreviewPlaying(true);
+      
+      audio.onended = () => {
+        setVoicePreviewPlaying(false);
+        voicePreviewAudioRef.current = null;
+      };
+      
+      audio.play();
+    } catch (error: any) {
+      setVoicePreviewLoading(false);
+      setVoicePreviewPlaying(false);
+      toast({ title: "Voice preview failed", description: error.message, variant: "destructive" });
     }
   };
   
@@ -5133,6 +5202,30 @@ export function IceCardEditor({
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+                      
+                      {/* Voice Preview Button */}
+                      <div className="flex items-center gap-2 p-2 bg-cyan-900/20 rounded-lg border border-cyan-500/20">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleVoicePreview}
+                          disabled={voicePreviewLoading}
+                          className="gap-2 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30"
+                          data-testid="button-test-voice"
+                        >
+                          {voicePreviewLoading ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : voicePreviewPlaying ? (
+                            <Volume2 className="w-3 h-3" />
+                          ) : (
+                            <Volume2 className="w-3 h-3" />
+                          )}
+                          {voicePreviewLoading ? "Loading..." : "Test Voice"}
+                        </Button>
+                        <span className="text-xs text-slate-400">
+                          Hear a sample with {deliveryStyle} style
+                        </span>
                       </div>
                       
                       <div className="space-y-2">

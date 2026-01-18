@@ -404,6 +404,7 @@ export default function GuestIceBuilderPage() {
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [bulkNarrationVoice, setBulkNarrationVoice] = useState("alloy");
   const [bulkNarrationSpeed, setBulkNarrationSpeed] = useState(1.0);
+  const [bulkDeliveryStyle, setBulkDeliveryStyle] = useState<"neutral" | "confident" | "friendly" | "dramatic" | "calm">("neutral");
   const [narrationMuted, setNarrationMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [musicTrackUrl, setMusicTrackUrl] = useState<string | null>(null);
@@ -1684,6 +1685,7 @@ export default function GuestIceBuilderPage() {
             text: card.narrationText,
             voice: bulkNarrationVoice,
             speed: bulkNarrationSpeed,
+            deliveryStyle: bulkDeliveryStyle,
           }),
         });
         
@@ -1694,7 +1696,8 @@ export default function GuestIceBuilderPage() {
               narrationAudioUrl: data.audioUrl,
               narrationVoice: bulkNarrationVoice,
               narrationSpeed: bulkNarrationSpeed,
-              narrationDurationSec: data.narrationDurationSec,
+              deliveryStyle: data.deliveryStyle || bulkDeliveryStyle,
+              narrationDurationSec: data.durationSeconds || data.narrationDurationSec,
             });
             successCount++;
           }
@@ -3615,21 +3618,36 @@ export default function GuestIceBuilderPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Speed: {bulkNarrationSpeed.toFixed(1)}x</label>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="2.0"
-                  step="0.1"
-                  value={bulkNarrationSpeed}
-                  onChange={(e) => setBulkNarrationSpeed(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                  data-testid="slider-bulk-narration-speed"
-                />
+                <label className="text-sm font-medium text-white/80">Delivery Style</label>
+                <select
+                  value={bulkDeliveryStyle}
+                  onChange={(e) => setBulkDeliveryStyle(e.target.value as any)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
+                  data-testid="select-bulk-delivery-style"
+                >
+                  <option value="neutral">Neutral - Balanced</option>
+                  <option value="confident">Confident - Authoritative</option>
+                  <option value="friendly">Friendly - Warm</option>
+                  <option value="dramatic">Dramatic - Expressive</option>
+                  <option value="calm">Calm - Soothing</option>
+                </select>
               </div>
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/80">Speed: {bulkNarrationSpeed.toFixed(1)}x</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2.0"
+                step="0.1"
+                value={bulkNarrationSpeed}
+                onChange={(e) => setBulkNarrationSpeed(parseFloat(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                data-testid="slider-bulk-narration-speed"
+              />
+            </div>
             <p className="text-xs text-white/50">
-              Tip: Generate one card first to test the voice, then use this to apply to all cards.
+              Tip: Use the "Test Voice" button in a card to preview before applying to all cards.
             </p>
           </div>
           

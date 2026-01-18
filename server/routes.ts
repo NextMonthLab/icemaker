@@ -6003,6 +6003,55 @@ export async function registerRoutes(
     }
   });
   
+  // Voice preview - generate short sample audio for testing voice/style
+  app.post("/api/tts/preview", requireAuth, dailyCapMiddleware('tts'), async (req, res) => {
+    try {
+      const { voice, deliveryStyle, text } = req.body;
+      
+      // Validate delivery style to prevent malformed input
+      const validStyles = ['neutral', 'confident', 'friendly', 'dramatic', 'calm'];
+      if (deliveryStyle && !validStyles.includes(deliveryStyle)) {
+        return res.status(400).json({ message: "Invalid delivery style" });
+      }
+      
+      const { isTTSConfigured, synthesiseSpeech, listVoices } = await import("./tts");
+      
+      if (!isTTSConfigured()) {
+        return res.status(503).json({ message: "TTS not configured" });
+      }
+      
+      // Use custom text, voice previewTextHint, or default sample
+      let previewText = text;
+      if (!previewText) {
+        const voices = listVoices();
+        const voiceInfo = voices.find(v => v.id === voice);
+        previewText = voiceInfo?.previewTextHint || "Hello! This is a preview of how this voice sounds with your selected style.";
+      }
+      
+      // Limit preview text length to save costs
+      previewText = previewText.slice(0, 150);
+      
+      const result = await synthesiseSpeech({
+        text: previewText,
+        voice: voice || "alloy",
+        speed: 1.0,
+        deliveryStyle: deliveryStyle || "neutral",
+      });
+      
+      // Return audio as base64 for immediate playback (no storage needed)
+      const base64Audio = result.audioBuffer.toString('base64');
+      res.json({
+        audio: base64Audio,
+        contentType: result.contentType,
+        text: previewText,
+        durationSeconds: result.durationSeconds,
+      });
+    } catch (error) {
+      console.error("Error generating voice preview:", error);
+      res.status(500).json({ message: "Error generating voice preview" });
+    }
+  });
+  
   // Update card narration text and settings
   app.post("/api/cards/:id/narration/text", requireAuth, async (req, res) => {
     try {
