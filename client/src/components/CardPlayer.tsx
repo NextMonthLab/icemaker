@@ -930,10 +930,10 @@ export default function CardPlayer({
     || characters.find(c => (c as any).source === 'brief')
     || characters[0];
 
-  // Mobile: fill entire screen height with object-cover for media
+  // Mobile: maintain 9:16 aspect ratio but constrain to available height
   // Desktop: constrained 9:16 aspect ratio 
   const containerClass = fullScreen
-    ? "relative w-full h-full sm:w-auto sm:h-auto sm:aspect-[9/16] sm:max-h-screen sm:mx-auto overflow-hidden"
+    ? "relative w-full aspect-[9/16] max-h-full sm:w-auto sm:h-auto sm:max-h-screen sm:mx-auto overflow-hidden rounded-lg sm:rounded-2xl"
     : "relative w-full aspect-[9/16] overflow-hidden rounded-2xl shadow-2xl";
 
   return (
