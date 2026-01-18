@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
@@ -407,6 +407,164 @@ function SortableMediaClip({
   );
 }
 
+// Timeline Scrubber with playhead and time ruler
+function TimelineScrubber({
+  totalDuration,
+  playheadTime,
+  onPlayheadChange,
+  segments,
+}: {
+  totalDuration: number;
+  playheadTime: number;
+  onPlayheadChange: (time: number) => void;
+  segments: MediaSegment[];
+}) {
+  const rulerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 10);
+    return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}.${ms}` : `${secs}.${ms}s`;
+  };
+  
+  const playheadPercent = totalDuration > 0 ? (playheadTime / totalDuration) * 100 : 0;
+  
+  const handleScrub = useCallback((clientX: number) => {
+    if (!rulerRef.current || totalDuration <= 0) return;
+    const rect = rulerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const time = (percent / 100) * totalDuration;
+    onPlayheadChange(time);
+  }, [totalDuration, onPlayheadChange]);
+  
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    handleScrub(e.clientX);
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      handleScrub(moveEvent.clientX);
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    if (e.touches.length > 0) {
+      handleScrub(e.touches[0].clientX);
+    }
+    
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length > 0) {
+        handleScrub(moveEvent.touches[0].clientX);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+  
+  // Generate time ruler ticks
+  const ticks = useMemo(() => {
+    if (totalDuration <= 0) return [];
+    const tickInterval = totalDuration <= 10 ? 1 : totalDuration <= 30 ? 5 : 10;
+    const result = [];
+    for (let t = 0; t <= totalDuration; t += tickInterval) {
+      result.push({ time: t, percent: (t / totalDuration) * 100 });
+    }
+    return result;
+  }, [totalDuration]);
+  
+  // Segment boundaries for visual reference
+  const segmentBoundaries = useMemo(() => {
+    const sorted = [...segments].sort((a, b) => a.order - b.order);
+    let time = 0;
+    return sorted.map(seg => {
+      const start = time;
+      time += seg.durationSec;
+      return {
+        id: seg.id,
+        startPercent: totalDuration > 0 ? (start / totalDuration) * 100 : 0,
+        widthPercent: totalDuration > 0 ? (seg.durationSec / totalDuration) * 100 : 0,
+        kind: seg.kind,
+      };
+    });
+  }, [segments, totalDuration]);
+  
+  return (
+    <div className="space-y-1" data-testid="timeline-scrubber">
+      {/* Time display */}
+      <div className="flex items-center justify-between text-[10px] font-mono">
+        <span className="text-cyan-400">{formatTime(playheadTime)}</span>
+        <span className="text-slate-500">{formatTime(totalDuration)}</span>
+      </div>
+      
+      {/* Time ruler with ticks */}
+      <div 
+        ref={rulerRef}
+        className={`relative h-8 bg-slate-800/50 rounded-md border cursor-pointer select-none touch-none ${
+          isDragging ? 'border-cyan-400' : 'border-slate-700'
+        }`}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        data-testid="timeline-ruler"
+      >
+        {/* Segment visualization */}
+        <div className="absolute inset-0 flex rounded-md overflow-hidden">
+          {segmentBoundaries.map((seg, idx) => (
+            <div
+              key={seg.id}
+              className={`h-full ${seg.kind === 'video' ? 'bg-purple-600/40' : 'bg-cyan-600/40'} ${
+                idx > 0 ? 'border-l border-slate-600' : ''
+              }`}
+              style={{ width: `${seg.widthPercent}%` }}
+            />
+          ))}
+        </div>
+        
+        {/* Tick marks */}
+        {ticks.map(tick => (
+          <div
+            key={tick.time}
+            className="absolute top-0 h-2 border-l border-slate-500"
+            style={{ left: `${tick.percent}%` }}
+          >
+            <span className="absolute top-2 left-0.5 text-[8px] text-slate-500 whitespace-nowrap">
+              {tick.time > 0 ? `${tick.time}s` : ''}
+            </span>
+          </div>
+        ))}
+        
+        {/* Playhead */}
+        <div
+          className="absolute top-0 h-full w-0.5 bg-cyan-400 z-10 pointer-events-none"
+          style={{ left: `${playheadPercent}%`, transform: 'translateX(-50%)' }}
+        >
+          {/* Playhead handle */}
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Drag-and-drop timeline wrapper component (proper hooks usage)
 function DraggableMediaTimeline({
   segments,
@@ -431,6 +589,7 @@ function DraggableMediaTimeline({
 }) {
   const [history, setHistory] = useState<MediaSegment[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [playheadTime, setPlayheadTime] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
   const sensors = useSensors(
@@ -541,10 +700,43 @@ function DraggableMediaTimeline({
   
   const sortedSegments = [...segments].sort((a, b) => a.order - b.order);
   const selectedSegment = selectedIndex !== null ? sortedSegments[selectedIndex] : null;
-  const canSplit = selectedSegment?.kind === 'video' && (selectedSegment.originalDurationSec || selectedSegment.durationSec) > 2;
+  
+  // Calculate total duration for the scrubber
+  const totalDuration = useMemo(() => {
+    return sortedSegments.reduce((sum, seg) => sum + seg.durationSec, 0);
+  }, [sortedSegments]);
+  
+  // Find which segment the playhead is in
+  const playheadSegmentInfo = useMemo(() => {
+    let accumulatedTime = 0;
+    for (const seg of sortedSegments) {
+      if (playheadTime >= accumulatedTime && playheadTime < accumulatedTime + seg.durationSec) {
+        return {
+          segment: seg,
+          localTime: playheadTime - accumulatedTime, // time within this segment
+        };
+      }
+      accumulatedTime += seg.durationSec;
+    }
+    return null;
+  }, [sortedSegments, playheadTime]);
+  
+  const canSplitAtPlayhead = playheadSegmentInfo?.segment?.kind === 'video' && 
+    playheadSegmentInfo.localTime > 0.5 && 
+    (playheadSegmentInfo.segment.durationSec - playheadSegmentInfo.localTime) > 0.5;
   
   return (
     <div className="space-y-3" ref={containerRef} tabIndex={-1}>
+      {/* Timeline Scrubber */}
+      {sortedSegments.length > 0 && (
+        <TimelineScrubber
+          totalDuration={totalDuration}
+          playheadTime={playheadTime}
+          onPlayheadChange={setPlayheadTime}
+          segments={sortedSegments}
+        />
+      )}
+      
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -580,9 +772,9 @@ function DraggableMediaTimeline({
         </SortableContext>
       </DndContext>
       
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] text-slate-500">
-          Drag to reorder. Delete: remove. Arrows: navigate. Ctrl+Z: undo.
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] text-slate-500 flex-1">
+          Scrub to position playhead. Split at playhead on video clips.
         </p>
         <div className="flex items-center gap-1">
           <Button
@@ -591,6 +783,7 @@ function DraggableMediaTimeline({
             className="h-6 w-6"
             onClick={handleUndo}
             disabled={historyIndex <= 0}
+            title="Undo (Ctrl+Z)"
             data-testid="timeline-undo"
           >
             <Undo className="w-3 h-3" />
@@ -601,6 +794,7 @@ function DraggableMediaTimeline({
             className="h-6 w-6"
             onClick={handleRedo}
             disabled={historyIndex >= history.length - 1}
+            title="Redo (Ctrl+Shift+Z)"
             data-testid="timeline-redo"
           >
             <Redo className="w-3 h-3" />
@@ -614,21 +808,19 @@ function DraggableMediaTimeline({
             <div className="text-[10px] text-cyan-400 uppercase tracking-wider font-medium">
               Preview: Clip {selectedIndex + 1}
             </div>
-            {canSplit && onSplit && (
+            {canSplitAtPlayhead && onSplit && playheadSegmentInfo && (
               <Button
                 variant="outline"
                 size="sm"
                 className="h-6 text-[10px] border-cyan-500/30 text-cyan-400"
                 onClick={() => {
-                  const seg = sortedSegments[selectedIndex];
-                  const midpoint = (seg.originalDurationSec || seg.durationSec) / 2;
                   pushToHistory(segments);
-                  onSplit(seg.id, midpoint);
+                  onSplit(playheadSegmentInfo.segment.id, playheadSegmentInfo.localTime);
                 }}
                 data-testid="split-clip-button"
               >
                 <Scissors className="w-3 h-3 mr-1" />
-                Split
+                Split at {playheadSegmentInfo.localTime.toFixed(1)}s
               </Button>
             )}
           </div>
