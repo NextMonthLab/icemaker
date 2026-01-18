@@ -92,6 +92,11 @@ export interface Card {
   
   // Multi-segment media timeline - fill card duration with sequential clips
   mediaSegments?: MediaSegment[];
+  
+  // Transition stinger - audio effect played at start of card
+  transitionStingerId?: string;
+  transitionStingerUrl?: string;
+  transitionStingerVolume?: number; // 0-100
 }
 
 // AI-powered video prompt suggestion for multi-segment timelines

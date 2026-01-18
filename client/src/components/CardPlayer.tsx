@@ -114,6 +114,7 @@ export default function CardPlayer({
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0); // For multi-segment timeline playback
   const [segmentTransitioning, setSegmentTransitioning] = useState(false); // Crossfade between segments
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stingerAudioRef = useRef<HTMLAudioElement | null>(null); // Transition stinger audio
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const prevVideoRef = useRef<HTMLVideoElement | null>(null); // For segment crossfade
   const captionRegionRef = useRef<HTMLDivElement | null>(null);
@@ -420,6 +421,34 @@ export default function CardPlayer({
       audioRef.current.volume = narrationVolume / 100;
     }
   }, [card.id, narrationVolume]);
+  
+  // Play transition stinger when card starts
+  useEffect(() => {
+    if (card.transitionStingerUrl && autoplay) {
+      // Stop any previous stinger
+      if (stingerAudioRef.current) {
+        stingerAudioRef.current.pause();
+        stingerAudioRef.current = null;
+      }
+      
+      // Play the new stinger
+      const audio = new Audio(card.transitionStingerUrl);
+      audio.volume = (card.transitionStingerVolume || 50) / 100;
+      stingerAudioRef.current = audio;
+      
+      audio.play().catch((err) => {
+        console.warn('[CardPlayer] Stinger playback failed:', err);
+      });
+      
+      // Cleanup on unmount or card change
+      return () => {
+        if (stingerAudioRef.current) {
+          stingerAudioRef.current.pause();
+          stingerAudioRef.current = null;
+        }
+      };
+    }
+  }, [card.id, card.transitionStingerUrl, card.transitionStingerVolume, autoplay]);
   
   const toggleMediaType = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
