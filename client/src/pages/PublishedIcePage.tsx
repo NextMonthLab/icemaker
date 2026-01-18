@@ -526,19 +526,19 @@ export default function PublishedIcePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col relative">
+    <div className="h-screen bg-zinc-950 flex flex-col relative overflow-hidden">
       {/* Close button - top left */}
       <button
         onClick={handleCloseICE}
-        className="fixed top-4 left-4 z-50 p-2.5 bg-black/50 hover:bg-black/70 rounded-full backdrop-blur-sm transition-colors"
+        className="fixed top-2 sm:top-4 left-2 sm:left-4 z-50 p-2 sm:p-2.5 bg-black/50 hover:bg-black/70 rounded-full backdrop-blur-sm transition-colors"
         data-testid="button-close-ice"
         title={user ? "Return to editor" : "Go to homepage"}
       >
-        <X className="w-5 h-5 text-white" />
+        <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
       </button>
       
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md relative">
+      <div className="flex-1 flex items-center justify-center p-1 sm:p-4">
+        <div className="w-full h-full sm:h-auto sm:max-w-md relative flex items-center justify-center">
           {nextCard && !showEndScreen && (
             <MediaPreloader
               card={nextCard}
@@ -632,7 +632,7 @@ export default function PublishedIcePage() {
                 duration: TRANSITION_CONFIG.duration, 
                 ease: TRANSITION_CONFIG.ease,
               }}
-              className="will-change-transform"
+              className="will-change-transform w-full h-full sm:h-auto sm:max-w-md"
             >
               <VisibleCardPlayer
                 card={displayedCard}
