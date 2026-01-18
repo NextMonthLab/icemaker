@@ -9001,6 +9001,138 @@ Suggest 2-3 still image prompts that would work as a visual continuation after t
     }
   });
   
+  // AI-powered continuation still image prompt suggestions (for cinematic continuation feature)
+  const continuationSuggestionCache = new Map<string, { suggestions: any[]; timestamp: number }>();
+  
+  app.post("/api/ice/preview/:previewId/cards/:cardId/suggest-continuation-still", async (req, res) => {
+    try {
+      const { previewId, cardId } = req.params;
+      const { count = 3, offset = 0 } = req.body;
+      
+      // Get preview and card data
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Find the card
+      const cards = preview.cards as any[] || [];
+      const card = cards.find((c: any) => c.id === cardId);
+      if (!card) {
+        return res.status(404).json({ message: "Card not found" });
+      }
+      
+      const cardTitle = card.title || '';
+      const cardNarration = card.content || '';
+      const existingVideoPrompt = card.videoPrompt || card.visualPrompt || '';
+      
+      // Create cache key
+      const cacheKey = `cont-${previewId}-${cardId}-${offset}-${
+        Buffer.from(cardNarration.slice(0, 100)).toString('base64').slice(0, 20)
+      }`;
+      
+      // Check cache (only for initial requests, not load more)
+      if (offset === 0) {
+        const cached = continuationSuggestionCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < SUGGESTION_CACHE_TTL) {
+          console.log(`[ContinuationSuggestions] Cache hit for ${cacheKey}`);
+          return res.json({ suggestions: cached.suggestions.slice(0, count), cached: true });
+        }
+      }
+      
+      // Build prompt for OpenAI
+      const systemPrompt = `You are a creative director helping to design continuation still images for video storytelling.
+When a video clip ends but narration continues, a "continuation still" image appears to maintain visual engagement.
+
+Your job is to suggest ${count} different image prompts that:
+1. Visually complement the video content that just ended
+2. Match the mood and tone of the narration
+3. Work as a beautiful, cinematic still photograph
+4. Could hold viewer attention for 5-15 seconds
+
+IMPORTANT: These are for STILL IMAGE generation - describe a single frozen moment, not motion.
+IMPORTANT: Do not include any text, words, letters, titles, captions, or typography.
+IMPORTANT: Focus on atmosphere, lighting, composition, and emotional impact.
+
+Respond with a JSON array of ${count} suggestions, each with:
+- prompt: The image generation prompt (50-100 words, photographic and cinematic)
+- rationale: Brief 1-sentence explanation of why this works
+
+Example format:
+[
+  {
+    "prompt": "Extreme close-up of coffee steam rising in golden morning light, bokeh background, warm amber tones, shallow depth of field, peaceful cafe atmosphere",
+    "rationale": "Creates intimate focus moment that complements the broader scene"
+  }
+]`;
+
+      const userPrompt = `Card Title: "${cardTitle}"
+Narration: "${cardNarration}"
+${existingVideoPrompt ? `Video prompt: "${existingVideoPrompt}"` : ''}
+
+Generate ${count} different continuation still image prompt suggestions.${offset > 0 ? ` These should be different from the first ${offset} suggestions - try new angles, perspectives, and interpretations.` : ''}`;
+
+      // Call OpenAI
+      const completion = await getOpenAI().chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: offset > 0 ? 0.95 : 0.8, // Higher temp for "load more" to get variety
+        max_tokens: 800,
+      });
+      
+      const responseText = completion.choices[0]?.message?.content || '[]';
+      
+      // Parse suggestions from response
+      let suggestions: any[] = [];
+      try {
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } catch (parseError) {
+        console.warn('[ContinuationSuggestions] Failed to parse AI response:', parseError);
+        suggestions = [{
+          prompt: `Atmospheric still image related to "${cardTitle}". Cinematic lighting, professional photography, high quality.`,
+          rationale: 'Default suggestion based on card content',
+        }];
+      }
+      
+      // Format suggestions
+      suggestions = suggestions.slice(0, count).map((s: any, i: number) => ({
+        id: `cont-${Date.now()}-${offset + i}`,
+        prompt: s.prompt || '',
+        rationale: s.rationale || '',
+      }));
+      
+      // Cache the result (only for initial requests)
+      if (offset === 0) {
+        continuationSuggestionCache.set(cacheKey, { suggestions, timestamp: Date.now() });
+        
+        // Clean old cache entries periodically
+        if (continuationSuggestionCache.size > 100) {
+          const now = Date.now();
+          const keysToDelete: string[] = [];
+          continuationSuggestionCache.forEach((value, key) => {
+            if (now - value.timestamp > SUGGESTION_CACHE_TTL) {
+              keysToDelete.push(key);
+            }
+          });
+          keysToDelete.forEach(key => continuationSuggestionCache.delete(key));
+        }
+      }
+      
+      console.log(`[ContinuationSuggestions] Generated ${suggestions.length} suggestions for ${previewId}/${cardId} (offset: ${offset})`);
+      
+      res.json({ suggestions, cached: false });
+    } catch (error) {
+      console.error("Error generating continuation suggestions:", error);
+      res.status(500).json({ message: "Error generating suggestions" });
+    }
+  });
+  
   // Generate video for an ICE preview card (requires auth + entitlements + daily cap)
   app.post("/api/ice/preview/:previewId/cards/:cardId/generate-video", requireAuth, dailyCapMiddleware('video'), async (req, res) => {
     try {

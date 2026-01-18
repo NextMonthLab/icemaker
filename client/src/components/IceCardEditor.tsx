@@ -1222,6 +1222,9 @@ export function IceCardEditor({
   const [activeTab, setActiveTab] = useState<"content" | "image" | "video" | "narration" | "upload" | "stock">("content");
   const [editorMode, setEditorMode] = useState<"lanes" | "tabs">("lanes");
   const [showAddVisualModal, setShowAddVisualModal] = useState(false);
+  const [continuationSuggestMode, setContinuationSuggestMode] = useState(false);
+  const [continuationSuggestions, setContinuationSuggestions] = useState<{ prompt: string; rationale: string }[]>([]);
+  const [continuationSuggestLoading, setContinuationSuggestLoading] = useState(false);
   const [activeLane, setActiveLane] = useState<"visuals" | "audio">("visuals");
   const [editedTitle, setEditedTitle] = useState(card.title);
   const [editedContent, setEditedContent] = useState(card.content);
@@ -1619,6 +1622,59 @@ export function IceCardEditor({
     } finally {
       setSelectingAsset(false);
     }
+  };
+
+  const handleFetchContinuationSuggestions = async () => {
+    setContinuationSuggestLoading(true);
+    setContinuationSuggestMode(true);
+    try {
+      const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/suggest-continuation-still`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ count: 3 }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to get suggestions');
+      
+      const data = await res.json();
+      setContinuationSuggestions(data.suggestions || []);
+    } catch (error: any) {
+      toast({ title: 'Failed to get suggestions', description: error.message, variant: 'destructive' });
+      setContinuationSuggestMode(false);
+    } finally {
+      setContinuationSuggestLoading(false);
+    }
+  };
+
+  const handleLoadMoreSuggestions = async () => {
+    setContinuationSuggestLoading(true);
+    try {
+      const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/suggest-continuation-still`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ count: 3, offset: continuationSuggestions.length }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to get more suggestions');
+      
+      const data = await res.json();
+      setContinuationSuggestions(prev => [...prev, ...(data.suggestions || [])]);
+    } catch (error: any) {
+      toast({ title: 'Failed to load more', description: error.message, variant: 'destructive' });
+    } finally {
+      setContinuationSuggestLoading(false);
+    }
+  };
+
+  const handleSelectContinuationPrompt = async (prompt: string) => {
+    setShowAddVisualModal(false);
+    setContinuationSuggestMode(false);
+    setImagePrompt(prompt);
+    setActiveTab("image");
+    setEditorMode("tabs");
+    onCardUpdate(card.id, { cinematicContinuationEnabled: true });
   };
 
   const handleDeleteAsset = async (assetId: string) => {
@@ -2547,7 +2603,11 @@ export function IceCardEditor({
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => setShowAddVisualModal(false)}
+                                onClick={() => {
+                                  setShowAddVisualModal(false);
+                                  setContinuationSuggestMode(false);
+                                  setContinuationSuggestions([]);
+                                }}
                                 className="h-8 w-8"
                               >
                                 <X className="w-4 h-4" />
@@ -2610,24 +2670,96 @@ export function IceCardEditor({
                                 <p className="text-xs text-slate-400">Pexels library</p>
                               </button>
                               
-                              {needsMoreVisuals && (
+                              {needsMoreVisuals && !continuationSuggestMode && (
                                 <button
-                                  onClick={() => {
-                                    setShowAddVisualModal(false);
-                                    // Trigger continuation generation
-                                    onCardUpdate(card.id, { cinematicContinuationEnabled: true });
-                                  }}
-                                  className="col-span-2 p-4 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 hover:border-purple-500/50 transition-colors text-left"
+                                  onClick={handleFetchContinuationSuggestions}
+                                  disabled={continuationSuggestLoading}
+                                  className="col-span-2 p-4 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 hover:border-purple-500/50 transition-colors text-left disabled:opacity-50"
                                   data-testid="add-visual-continuation"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <Sparkles className="w-6 h-6 text-purple-400" />
+                                    {continuationSuggestLoading ? (
+                                      <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="w-6 h-6 text-purple-400" />
+                                    )}
                                     <div>
                                       <p className="text-sm font-medium text-white">Continuation Still</p>
-                                      <p className="text-xs text-slate-400">AI-generated cutaway (~$0.04)</p>
+                                      <p className="text-xs text-slate-400">Get AI image suggestions</p>
                                     </div>
                                   </div>
                                 </button>
+                              )}
+                              
+                              {/* Continuation Still Suggestions */}
+                              {continuationSuggestMode && (
+                                <div className="col-span-2 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Sparkles className="w-4 h-4 text-purple-400" />
+                                      <span className="text-sm font-medium text-white">Suggested Prompts</span>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setContinuationSuggestMode(false);
+                                        setContinuationSuggestions([]);
+                                      }}
+                                      className="h-7 text-slate-400"
+                                    >
+                                      <X className="w-3 h-3 mr-1" />
+                                      Back
+                                    </Button>
+                                  </div>
+                                  
+                                  {continuationSuggestLoading && continuationSuggestions.length === 0 ? (
+                                    <div className="flex items-center justify-center py-8">
+                                      <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {continuationSuggestions.map((suggestion, index) => (
+                                        <button
+                                          key={index}
+                                          onClick={() => handleSelectContinuationPrompt(suggestion.prompt)}
+                                          className="w-full p-3 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-purple-500/50 transition-colors text-left group"
+                                          data-testid={`continuation-suggestion-${index}`}
+                                        >
+                                          <p className="text-sm text-white mb-1">{suggestion.prompt}</p>
+                                          <p className="text-xs text-slate-400">{suggestion.rationale}</p>
+                                          <div className="flex items-center gap-1 mt-2 text-xs text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Image className="w-3 h-3" />
+                                            Use this prompt
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {continuationSuggestions.length > 0 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleLoadMoreSuggestions}
+                                      disabled={continuationSuggestLoading}
+                                      className="w-full border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                                      data-testid="button-load-more-suggestions"
+                                    >
+                                      {continuationSuggestLoading ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin mr-2" />
+                                          Loading...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Plus className="w-3 h-3 mr-2" />
+                                          Load More Suggestions
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </motion.div>
