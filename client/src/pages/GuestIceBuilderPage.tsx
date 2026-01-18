@@ -1754,7 +1754,7 @@ export default function GuestIceBuilderPage() {
               Turn material into a <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">thinking experience</span>
             </h1>
             <p className="text-white/50 text-sm max-w-xl mx-auto">
-              Upload your framework, model, or case study. IceMaker builds a guided experience that challenges, prompts, and remembers.
+              Upload your framework, model, or case study. The IceMaker Composer builds a guided experience that challenges, prompts, and remembers.
             </p>
           </div>
         )}
@@ -1965,7 +1965,7 @@ export default function GuestIceBuilderPage() {
                 </div>
                 <p className="text-xs sm:text-sm text-white/50 mt-1">
                   <Film className="w-3 h-3 inline mr-1" />
-                  {cards.length} story cards
+                  {cards.length} scenes
                   {preview.sourceType === "insight" && (() => {
                     try {
                       const origin: InsightOrigin = JSON.parse(preview.sourceValue);
@@ -1998,7 +1998,7 @@ export default function GuestIceBuilderPage() {
                   data-testid="button-jump-to-cards"
                 >
                   <Pencil className="w-4 h-4" />
-                  <span className="hidden xs:inline">Edit Cards</span>
+                  <span className="hidden xs:inline">Edit Scenes</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -2726,16 +2726,16 @@ export default function GuestIceBuilderPage() {
                 );
               })}
               
-              {/* Add New Card buttons */}
+              {/* Add New Scene buttons */}
               <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 <Button
                   variant="outline"
                   onClick={handleAddCard}
                   className="flex-1 border-dashed border-cyan-500/30 text-cyan-300"
-                  data-testid="button-add-new-card"
+                  data-testid="button-add-new-scene"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Card
+                  Add Scene
                 </Button>
                 <Button
                   variant="outline"
@@ -3679,7 +3679,7 @@ export default function GuestIceBuilderPage() {
               />
             </div>
             <p className="text-xs text-white/50">
-              Tip: Use the "Test Voice" button in a card to preview before applying to all cards.
+              Tip: Use the "Test Voice" button in a scene to preview before applying to all scenes.
             </p>
           </div>
           

@@ -10,18 +10,18 @@ interface GuidedWalkthroughProps {
 
 const WALKTHROUGH_STEPS = [
   {
-    id: "cards",
+    id: "scenes",
     icon: Film,
-    title: "Story Cards",
-    description: "Your content is organized into cinematic story cards. Each card is a moment in your narrative that your audience will experience one at a time.",
-    highlight: "Tap any card to edit its title and content.",
+    title: "Scenes",
+    description: "Your content is organized into cinematic scenes. Each scene is a moment in your narrative that your audience will experience one at a time.",
+    highlight: "Tap any scene to edit its title and content.",
   },
   {
-    id: "nodes",
+    id: "interludes",
     icon: MessageCircle,
-    title: "AI Interactions",
-    description: "Between cards, you can add AI interaction points. These are moments where your audience can pause and have a live conversation with an AI character.",
-    highlight: "Click the ➕ between cards to add one.",
+    title: "Interludes",
+    description: "Between scenes, you can add interlude points. These are narrative beats where your audience can pause and have a live conversation with an AI character.",
+    highlight: "Click the ➕ between scenes to add one.",
   },
   {
     id: "download-vs-publish",

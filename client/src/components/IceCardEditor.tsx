@@ -78,7 +78,8 @@ function SortableMediaClip({
   onTrimChange,
   onDurationDetected,
   isSelected,
-  onSelect 
+  onSelect,
+  showAdvancedTiming = false 
 }: { 
   segment: MediaSegment; 
   onRemove: (id: string) => void;
@@ -87,6 +88,7 @@ function SortableMediaClip({
   onDurationDetected?: (id: string, duration: number) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  showAdvancedTiming?: boolean;
 }) {
   const {
     attributes,
@@ -291,8 +293,8 @@ function SortableMediaClip({
           </div>
         </div>
         
-        {/* Duration adjustment for images */}
-        {segment.kind === 'image' && onDurationChange && (
+        {/* Duration adjustment for images - only when Advanced Timing is enabled */}
+        {segment.kind === 'image' && onDurationChange && showAdvancedTiming && (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -577,6 +579,7 @@ function DraggableMediaTimeline({
   onDurationDetected,
   onSplit,
   onSelect,
+  showAdvancedTiming = false,
 }: {
   segments: MediaSegment[];
   selectedIndex: number | null;
@@ -587,6 +590,7 @@ function DraggableMediaTimeline({
   onDurationDetected?: (id: string, duration: number) => void;
   onSplit?: (id: string, splitTime: number) => void;
   onSelect: (index: number | null) => void;
+  showAdvancedTiming?: boolean;
 }) {
   const [history, setHistory] = useState<MediaSegment[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -767,6 +771,7 @@ function DraggableMediaTimeline({
                 onDurationDetected={seg.kind === 'video' ? onDurationDetected : undefined}
                 isSelected={selectedIndex === idx}
                 onSelect={() => onSelect(idx)}
+                showAdvancedTiming={showAdvancedTiming}
               />
             ))}
           </div>
@@ -1866,6 +1871,7 @@ export function IceCardEditor({
   const [showVideoUpsell, setShowVideoUpsell] = useState(false);
   const [upsellTier, setUpsellTier] = useState("pro");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
+  const [showAdvancedTiming, setShowAdvancedTiming] = useState(false);
   
   const [narrationEnabled, setNarrationEnabled] = useState(false);
   const [narrationText, setNarrationText] = useState(card.content || "");
@@ -3149,7 +3155,7 @@ export function IceCardEditor({
                           onCardUpdate(card.id, { content: e.target.value });
                         }}
                         onBlur={() => onCardSave(card.id, { title: editedTitle, content: editedContent })}
-                        placeholder="Enter card content..."
+                        placeholder="Enter scene content..."
                         rows={3}
                         className="bg-slate-800 border-slate-700 text-white text-sm"
                         data-testid="input-card-content-lane"
@@ -3230,7 +3236,7 @@ export function IceCardEditor({
                           <div className="p-6 border-2 border-dashed border-slate-700 rounded-lg text-center">
                             <Video className="w-8 h-8 text-slate-500 mx-auto mb-2" />
                             <p className="text-sm text-slate-400">No visuals yet</p>
-                            <p className="text-xs text-slate-500">Add a visual to bring this card to life</p>
+                            <p className="text-xs text-slate-500">Add a visual to bring this scene to life</p>
                           </div>
                         ) : (
                           visualBlocks.map((block, index) => (
@@ -3757,7 +3763,7 @@ export function IceCardEditor({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Card Content</Label>
+                    <Label className="text-slate-300">Scene Content</Label>
                     <Textarea
                       value={editedContent}
                       onChange={(e) => {
@@ -3765,7 +3771,7 @@ export function IceCardEditor({
                         onCardUpdate(card.id, { content: e.target.value });
                       }}
                       onBlur={() => onCardSave(card.id, { title: editedTitle, content: editedContent })}
-                      placeholder="Enter card content..."
+                      placeholder="Enter scene content..."
                       rows={5}
                       className="bg-slate-800 border-slate-700 text-white"
                       data-testid="input-card-content"
@@ -3774,7 +3780,7 @@ export function IceCardEditor({
                   
                   <div className="p-3 bg-slate-800/50 rounded-lg">
                     <p className="text-xs text-slate-400">
-                      This content will be used to generate AI images, videos, and narration for this card.
+                      This content will be used to generate AI images, videos, and narration for this scene.
                     </p>
                   </div>
                 </div>
@@ -3785,7 +3791,7 @@ export function IceCardEditor({
                   {!canGenerateImages && (
                     <LockedOverlay
                       feature="AI Image Generation"
-                      description="Generate stunning AI images for your story cards with a Pro subscription."
+                      description="Generate stunning AI images for your scenes with a Pro subscription."
                       onUpgrade={onUpgradeClick}
                     />
                   )}
@@ -3817,7 +3823,7 @@ export function IceCardEditor({
                       )}
                       <div className="text-left">
                         <div className="text-sm font-medium">Generate AI Image</div>
-                        <div className="text-[10px] opacity-80">Auto-enhanced from card content</div>
+                        <div className="text-[10px] opacity-80">Auto-enhanced from scene content</div>
                       </div>
                     </Button>
                     <p className="text-[10px] text-slate-500 mt-2 text-center">
@@ -4337,7 +4343,7 @@ export function IceCardEditor({
                   {!canGenerateVideos && (
                     <LockedOverlay
                       feature="AI Video Generation"
-                      description="Create cinematic AI videos from your story cards with a Business subscription."
+                      description="Create cinematic AI videos from your scenes with a Business subscription."
                       onUpgrade={onUpgradeClick}
                     />
                   )}
@@ -4473,16 +4479,27 @@ export function IceCardEditor({
                               </p>
                             </div>
                           </div>
-                          <select
-                            value={card.pacingPreset || 'standard'}
-                            onChange={(e) => onCardUpdate(card.id, { pacingPreset: e.target.value as 'fast' | 'standard' | 'cinematic' })}
-                            className="bg-slate-800 border border-slate-700 text-white text-xs rounded-md px-2 py-1"
-                            data-testid="select-pacing-preset"
-                          >
-                            <option value="fast">Fast (3s)</option>
-                            <option value="standard">Standard (5s)</option>
-                            <option value="cinematic">Cinematic (8s)</option>
-                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={card.pacingPreset || 'standard'}
+                              onChange={(e) => onCardUpdate(card.id, { pacingPreset: e.target.value as 'fast' | 'standard' | 'cinematic' })}
+                              className="bg-slate-800 border border-slate-700 text-white text-xs rounded-md px-2 py-1"
+                              data-testid="select-pacing-preset"
+                            >
+                              <option value="fast">Fast (3s)</option>
+                              <option value="standard">Standard (5s)</option>
+                              <option value="cinematic">Cinematic (8s)</option>
+                            </select>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowAdvancedTiming(!showAdvancedTiming)}
+                              className={`h-7 px-2 text-[10px] ${showAdvancedTiming ? 'text-cyan-400' : 'text-slate-500'}`}
+                              data-testid="button-advanced-timing"
+                            >
+                              {showAdvancedTiming ? 'Hide' : 'Advanced'}
+                            </Button>
+                          </div>
                         </div>
                         
                         <div className="h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
@@ -4649,6 +4666,7 @@ export function IceCardEditor({
                                 onCardSave(card.id, { mediaSegments: updated });
                               }}
                               onSelect={setSelectedSegmentIndex}
+                              showAdvancedTiming={showAdvancedTiming}
                             />
                           );
                         })()}
