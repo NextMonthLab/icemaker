@@ -3,12 +3,21 @@ import type { TTSProvider, Voice, SynthesisResult } from "./provider";
 import { estimateSpeechDuration } from "./provider";
 
 const OPENAI_VOICES: Voice[] = [
-  { id: "alloy", name: "Alloy", previewTextHint: "A balanced, neutral voice.", tags: ["neutral", "versatile"] },
-  { id: "echo", name: "Echo", previewTextHint: "A warm, resonant voice.", tags: ["warm", "male"] },
-  { id: "fable", name: "Fable", previewTextHint: "A British-accented storytelling voice.", tags: ["british", "storytelling"] },
-  { id: "onyx", name: "Onyx", previewTextHint: "A deep, authoritative voice.", tags: ["deep", "male", "authoritative"] },
-  { id: "nova", name: "Nova", previewTextHint: "A friendly, energetic voice.", tags: ["female", "energetic", "friendly"] },
-  { id: "shimmer", name: "Shimmer", previewTextHint: "A soft, expressive voice.", tags: ["female", "soft", "expressive"] },
+  // Original 6 voices
+  { id: "alloy", name: "Alloy", previewTextHint: "Balanced, neutral voice - versatile for any content", tags: ["neutral", "versatile", "american"], description: "Neutral & Versatile" },
+  { id: "echo", name: "Echo", previewTextHint: "Warm, resonant male voice - great for podcasts", tags: ["warm", "male", "american"], description: "Warm Male" },
+  { id: "fable", name: "Fable", previewTextHint: "British storyteller voice - perfect for narratives", tags: ["british", "storytelling", "male"], description: "British Storyteller" },
+  { id: "onyx", name: "Onyx", previewTextHint: "Deep, authoritative male - ideal for serious content", tags: ["deep", "male", "authoritative", "american"], description: "Deep & Authoritative" },
+  { id: "nova", name: "Nova", previewTextHint: "Friendly, energetic female - upbeat and engaging", tags: ["female", "energetic", "friendly", "american"], description: "Energetic Female" },
+  { id: "shimmer", name: "Shimmer", previewTextHint: "Soft, expressive female - gentle and calming", tags: ["female", "soft", "expressive", "american"], description: "Soft & Expressive" },
+  // New voices added in 2024-2025
+  { id: "ash", name: "Ash", previewTextHint: "Clear, articulate voice - professional presentations", tags: ["clear", "professional", "american"], description: "Clear & Professional" },
+  { id: "ballad", name: "Ballad", previewTextHint: "Melodic, emotional voice - dramatic storytelling", tags: ["melodic", "emotional", "dramatic"], description: "Melodic & Emotional" },
+  { id: "coral", name: "Coral", previewTextHint: "Bright, friendly female - conversational tone", tags: ["female", "bright", "friendly", "conversational"], description: "Bright & Friendly" },
+  { id: "sage", name: "Sage", previewTextHint: "Wise, measured voice - educational content", tags: ["wise", "calm", "educational"], description: "Wise & Measured" },
+  { id: "verse", name: "Verse", previewTextHint: "Poetic, artistic voice - creative content", tags: ["poetic", "artistic", "creative"], description: "Poetic & Artistic" },
+  { id: "marin", name: "Marin", previewTextHint: "Modern, youthful voice - dynamic and fresh", tags: ["youthful", "modern", "dynamic"], description: "Modern & Youthful" },
+  { id: "cedar", name: "Cedar", previewTextHint: "Rich, grounded voice - trustworthy narrator", tags: ["rich", "grounded", "trustworthy", "male"], description: "Rich & Grounded" },
 ];
 
 export class OpenAITTSProvider implements TTSProvider {
@@ -38,7 +47,7 @@ export class OpenAITTSProvider implements TTSProvider {
     }
 
     const speed = Math.max(0.25, Math.min(4.0, options.speed || 1.0));
-    const voice = options.voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+    const voice = options.voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" | "ash" | "ballad" | "coral" | "sage" | "verse" | "marin" | "cedar";
 
     const response = await this.client.audio.speech.create({
       model: "tts-1",

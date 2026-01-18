@@ -3485,8 +3485,10 @@ export function IceCardEditor({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {(voicesData?.voices || []).map((v: { id: string; name: string }) => (
-                                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                                {(voicesData?.voices || []).map((v: { id: string; name: string; description?: string }) => (
+                                  <SelectItem key={v.id} value={v.id}>
+                                    {v.name}{v.description ? ` - ${v.description}` : ''}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>

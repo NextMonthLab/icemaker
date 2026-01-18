@@ -3,6 +3,7 @@ export interface Voice {
   name: string;
   previewTextHint: string;
   tags: string[];
+  description?: string; // Short style/accent description for UI display
 }
 
 export interface SynthesisResult {
