@@ -3197,7 +3197,7 @@ export function IceCardEditor({
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-cyan-400" />
-                            <span className="text-sm font-medium text-white">Media Timeline</span>
+                            <span className="text-sm font-medium text-white">Experience Flow</span>
                           </div>
                           <span className="text-sm text-slate-400">
                             {totalVisualDuration.toFixed(1)}s / {narrationDuration.toFixed(1)}s
@@ -3971,10 +3971,10 @@ export function IceCardEditor({
                       
                       <p className="text-xs text-amber-400/70">
                         {card.sceneMode === 'OVERRIDE_SCENE' 
-                          ? 'This card will use custom scene settings instead of the project scene lock.'
+                          ? 'This scene will use custom settings instead of the project continuity lock.'
                           : card.sceneMode === 'NO_SCENE'
-                          ? 'This card will have no scene constraints applied.'
-                          : 'AI will maintain the locked scene from Project Bible.'
+                          ? 'This scene will have no continuity constraints applied.'
+                          : 'AI will maintain the locked continuity from Project Bible.'
                         }
                       </p>
                       
@@ -4458,8 +4458,8 @@ export function IceCardEditor({
                               <Clock className="w-4 h-4 text-white" />
                             </div>
                             <div>
-                              <span className="text-sm font-semibold text-white">Media Timeline</span>
-                              <p className="text-[10px] text-slate-400">Drag to reorder clips</p>
+                              <span className="text-sm font-semibold text-white">Experience Flow</span>
+                              <p className="text-[10px] text-slate-400">Drag to reorder media</p>
                             </div>
                           </div>
                           <div className="text-right">

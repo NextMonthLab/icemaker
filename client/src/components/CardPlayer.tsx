@@ -1553,7 +1553,7 @@ export default function CardPlayer({
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-white">{primaryCharacter.name}</p>
-                      <p className="text-xs text-white/50">Available to chat</p>
+                      <p className="text-xs text-white/50">Ready for interlude</p>
                     </div>
                   </div>
 
@@ -1568,7 +1568,7 @@ export default function CardPlayer({
                     }}
                   >
                     <MessageSquare className="w-5 h-5" />
-                    Chat with {primaryCharacter.name}
+                    Interlude with {primaryCharacter.name}
                   </Button>
                 </div>
               ) : null}

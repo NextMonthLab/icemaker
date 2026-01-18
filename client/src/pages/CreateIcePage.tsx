@@ -33,7 +33,7 @@ const SAMPLE_BRIEF_TEMPLATE = `# Experience Overview
 Ice Title: My Interactive Experience
 Format: 3-stage tutorial with AI guide
 
-## Scene Lock
+## Continuity Lock
 Scene Name: Modern Learning Studio
 Set Description: Clean, minimalist workspace with natural light, plants, and warm wood accents
 Camera Angle: Eye level, slightly angled
@@ -740,7 +740,7 @@ Personality: Warm, encouraging
                     <li>• Use card tables with Card | Content | Visual Prompt columns</li>
                     <li>• Card IDs like "1.1", "2.3" auto-group into stages</li>
                     <li>• Use "IMAGE:" or "VIDEO:" prefix in Visual Prompt for media type</li>
-                    <li>• Add "Scene Lock" section for consistent visuals across cards</li>
+                    <li>• Add "Continuity Lock" section for consistent visuals across scenes</li>
                     <li>• Include "AI Character" section for auto-character creation</li>
                     <li>• Mark "AI Checkpoint" for interactivity at stage ends</li>
                   </ul>

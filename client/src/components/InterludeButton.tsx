@@ -17,7 +17,7 @@ export function InterludeButton({ characterName, onClick, className = '' }: Inte
       data-testid="button-ask-character"
     >
       <MessageCircle className="w-4 h-4" />
-      <span className="text-sm">Ask {characterName || 'Character'}</span>
+      <span className="text-sm">Interlude with {characterName || 'Character'}</span>
     </Button>
   );
 }

@@ -785,18 +785,18 @@ function SceneEditor({ scene, onUpdate }: SceneEditorProps) {
   
   return (
     <div className="space-y-4" data-testid="scene-editor">
-      {/* Enable/Disable Scene Lock */}
+      {/* Enable/Disable Continuity Lock */}
       <Card className="bg-cyan-900/20 border-cyan-800/50">
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <label className="text-sm font-medium text-white flex items-center gap-2">
                 <Camera className="w-4 h-4 text-cyan-400" />
-                Scene Lock
+                Continuity Lock
                 <Badge variant="outline" className="text-[10px] border-cyan-700 text-cyan-400">Optional</Badge>
               </label>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Lock a physical setup for visual continuity across cards. AI will not deviate unless overridden per card.
+                Lock a physical setup for visual continuity across scenes. AI will not deviate unless overridden per scene.
               </p>
             </div>
             <Switch 
