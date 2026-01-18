@@ -21,6 +21,7 @@ export interface MediaAsset {
   sourceHeight?: number;
   sourceAspectRatio?: number;
   durationSec?: number; // Video duration in seconds (for timeline calculations)
+  muteAudio?: boolean; // Whether to mute video's original audio (default true)
 }
 
 // Media segment for multi-clip timeline per card
@@ -35,6 +36,7 @@ export interface MediaSegment {
   order: number; // Sequence order (0, 1, 2...)
   renderMode?: VideoRenderMode; // For video segments
   sourceAspectRatio?: number;
+  muteAudio?: boolean; // Whether to mute video's original audio (default true)
 }
 
 // Caption timing for forced alignment (Phase 2)

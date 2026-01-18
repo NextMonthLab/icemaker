@@ -1116,6 +1116,8 @@ export const iceMediaAssetSchema = z.object({
   sourceWidth: z.number().optional(), // Original video width in pixels
   sourceHeight: z.number().optional(), // Original video height in pixels
   sourceAspectRatio: z.number().optional(), // Derived: sourceWidth / sourceHeight
+  // Audio control for uploaded videos (AI videos have no audio)
+  muteAudio: z.boolean().default(true), // Whether to mute video's original audio (default true for backwards compatibility)
 });
 
 export type IceMediaAsset = z.infer<typeof iceMediaAssetSchema>;

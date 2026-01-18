@@ -289,6 +289,18 @@ export default function CardPlayer({
   
   const activeMedia = getActiveMedia();
   
+  // Determine if video audio should be muted
+  // Default is true (muted) for backwards compatibility and because narration is separate
+  // Users can set muteAudio=false on uploaded videos to hear original audio
+  const shouldMuteVideoAudio = useMemo(() => {
+    // Check segment first (multi-clip timeline)
+    if (activeMedia.segment?.muteAudio === false) return false;
+    // Check selected asset (single asset selection)
+    if (activeMedia.selectedAsset?.muteAudio === false) return false;
+    // Default: mute video audio (narration is separate)
+    return true;
+  }, [activeMedia.segment, activeMedia.selectedAsset]);
+  
   // Compute effective render mode - use asset metadata if available, fallback to runtime-detected videoAspect
   const effectiveVideoRenderMode: EffectiveRenderMode = useMemo(() => {
     // If we have a selected video asset with explicit renderMode (not auto), use it directly
@@ -951,7 +963,7 @@ export default function CardPlayer({
                       <video
                         ref={setVideoRef}
                         src={activeMedia.videoUrl!}
-                        muted
+                        muted={shouldMuteVideoAudio}
                         playsInline
                         onLoadedMetadata={handleVideoLoadedMetadata}
                         className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${showContinuation || segmentTransitioning ? 'opacity-0' : 'opacity-100'}`}
@@ -963,7 +975,7 @@ export default function CardPlayer({
                     <video
                       ref={setVideoRef}
                       src={activeMedia.videoUrl!}
-                      muted
+                      muted={shouldMuteVideoAudio}
                       playsInline
                       onLoadedMetadata={handleVideoLoadedMetadata}
                       className={`w-full h-full object-cover transition-opacity duration-300 ${showContinuation || segmentTransitioning ? 'opacity-0' : 'opacity-100'}`}

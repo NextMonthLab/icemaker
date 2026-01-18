@@ -60,6 +60,7 @@ interface MediaSegment {
   order: number;
   renderMode?: RenderMode;
   sourceAspectRatio?: number;
+  muteAudio?: boolean; // Whether to mute video's original audio (default true)
 }
 
 // Sortable media clip component for drag-and-drop timeline
@@ -1299,6 +1300,7 @@ export function IceCardEditor({
   const [videoLoading, setVideoLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
+  const [muteUploadedVideo, setMuteUploadedVideo] = useState(true); // Default to mute for uploaded videos
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [videoStatus, setVideoStatus] = useState<string | null>(null);
@@ -2198,6 +2200,7 @@ export function IceCardEditor({
           createdAt: new Date().toISOString(),
           prompt: 'Uploaded video',
           durationSec: videoDuration,
+          muteAudio: muteUploadedVideo, // Apply user's mute preference
         };
         const updatedAssets = [...(card.mediaAssets || []), newAsset];
         onCardUpdate(card.id, { 
@@ -4513,6 +4516,16 @@ export function IceCardEditor({
                           {videoUploading ? "Uploading..." : "Upload Video"}
                         </Button>
                         <p className="text-xs text-slate-500 text-center">MP4, WebM, MOV</p>
+                        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer mt-1">
+                          <input
+                            type="checkbox"
+                            checked={muteUploadedVideo}
+                            onChange={(e) => setMuteUploadedVideo(e.target.checked)}
+                            className="rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/50"
+                            data-testid="checkbox-mute-video-audio"
+                          />
+                          Mute video audio
+                        </label>
                       </div>
                     </div>
                   </div>
