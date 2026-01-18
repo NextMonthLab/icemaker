@@ -68,11 +68,19 @@ function VisibleCardPlayer({
   narrationVolume, 
   icePreviewId,
   captionState,
-}: Omit<ReadyCardPlayerProps, 'onReady'>) {
+  onCardComplete,
+}: Omit<ReadyCardPlayerProps, 'onReady'> & { onCardComplete?: () => void }) {
   // Use pre-parsed captions if available, otherwise split content into sentences
   const captions = card.captions && card.captions.length > 0 
     ? card.captions 
     : card.content.split('. ').filter(s => s.trim()).map(s => s.endsWith('.') ? s : s + '.');
+  
+  // When phase changes to context, auto-advance to next card (showcase mode)
+  const handlePhaseChange = useCallback((phase: "cinematic" | "context") => {
+    if (phase === "context" && onCardComplete) {
+      onCardComplete();
+    }
+  }, [onCardComplete]);
   
   return (
     <CardPlayer
@@ -100,6 +108,8 @@ function VisibleCardPlayer({
       narrationVolume={narrationVolume}
       icePreviewId={icePreviewId}
       captionState={captionState}
+      onPhaseChange={handlePhaseChange}
+      fullScreen={true}
     />
   );
 }
@@ -641,6 +651,7 @@ export default function PublishedIcePage() {
                 narrationVolume={ice?.narrationVolume || 100}
                 icePreviewId={ice?.id}
                 captionState={ice?.captionSettings as CaptionState | undefined}
+                onCardComplete={handleCardComplete}
               />
             </motion.div>
             )}
