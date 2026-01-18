@@ -393,6 +393,39 @@ function deriveVisualBlocks(
     });
   });
   
+  // Legacy fallback: Include generatedVideoUrl if not already in mediaAssets
+  if (card.generatedVideoUrl) {
+    const videoAlreadyInAssets = allAssets.some(a => a.kind === 'video' && a.url === card.generatedVideoUrl);
+    if (!videoAlreadyInAssets) {
+      blocks.push({
+        id: 'legacy-video',
+        type: 'ai-video',
+        url: card.generatedVideoUrl,
+        thumbnailUrl: card.generatedVideoUrl,
+        durationSec: 10, // Default for legacy videos
+        status: 'ready',
+        order: 0, // Put at start
+      });
+    }
+  }
+  
+  // Legacy fallback: Include generatedImageUrl if not already in mediaAssets
+  if (card.generatedImageUrl) {
+    const imageAlreadyInAssets = allAssets.some(a => a.kind === 'image' && a.url === card.generatedImageUrl);
+    if (!imageAlreadyInAssets && blocks.length === 0) {
+      // Only add legacy image if no other assets exist (to avoid duplicates)
+      blocks.push({
+        id: 'legacy-image',
+        type: 'ai-image',
+        url: card.generatedImageUrl,
+        thumbnailUrl: card.generatedImageUrl,
+        durationSec: card.narrationDurationSec || 10,
+        status: 'ready',
+        order: 0,
+      });
+    }
+  }
+  
   // Add continuation as virtual block if enabled and generated
   if (card.cinematicContinuationEnabled && card.continuationImageUrl) {
     const narrationDur = card.narrationDurationSec || 0;
