@@ -1257,6 +1257,27 @@ export async function registerRoutes(
       // Get all ICE previews owned by this user
       const userPreviews = await storage.getIcePreviewsByUser(userId);
       
+      // Import helper to convert relative paths to public URLs
+      const { getPublicUrlFromKey, isObjectStorageConfigured } = await import("./storage/objectStore");
+      const hasObjectStorage = isObjectStorageConfigured();
+      
+      // Helper to ensure URL is fully qualified
+      const ensureFullUrl = (url: string): string => {
+        if (!url) return url;
+        // Already a full URL
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url;
+        }
+        // Relative path starting with /uploads/ - convert to public URL
+        if (url.startsWith('/uploads/') && hasObjectStorage) {
+          // Strip leading slash for the key
+          const key = url.startsWith('/') ? url.slice(1) : url;
+          return getPublicUrlFromKey(key);
+        }
+        // Other relative paths - return as-is (will work with same-origin)
+        return url;
+      };
+      
       // Extract media from all cards across all previews
       const allMedia: Array<{
         id: number;
@@ -1296,8 +1317,8 @@ export async function registerRoutes(
               allMedia.push({
                 id: assetIdCounter++,
                 iceId: preview.previewId,
-                url: asset.url,
-                fileKey: asset.url, // Use URL as key since we don't track separately
+                url: ensureFullUrl(asset.url),
+                fileKey: asset.url, // Original key
                 category: asset.kind,
                 sizeBytes: 0, // Unknown since not tracked
                 createdAt: asset.createdAt ? new Date(asset.createdAt) : new Date(),
@@ -1312,7 +1333,7 @@ export async function registerRoutes(
             allMedia.push({
               id: assetIdCounter++,
               iceId: preview.previewId,
-              url: card.generatedImageUrl,
+              url: ensureFullUrl(card.generatedImageUrl),
               fileKey: card.generatedImageUrl,
               category: 'image',
               sizeBytes: 0,
@@ -1326,7 +1347,7 @@ export async function registerRoutes(
             allMedia.push({
               id: assetIdCounter++,
               iceId: preview.previewId,
-              url: card.generatedVideoUrl,
+              url: ensureFullUrl(card.generatedVideoUrl),
               fileKey: card.generatedVideoUrl,
               category: 'video',
               sizeBytes: 0,
