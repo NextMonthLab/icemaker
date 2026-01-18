@@ -32,8 +32,21 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ContentVisibility } from "@shared/schema";
+import type { ContentVisibility, IceCategory } from "@shared/schema";
+import { ICE_CATEGORIES } from "@shared/schema";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import QRCode from "qrcode";
+import { ICE_CATEGORY_LABELS } from "@/lib/categoryLabels";
+
+// Media asset from cards for thumbnail selection
+interface MediaOption {
+  id: string;
+  url: string;
+  cardIndex: number;
+  cardTitle: string;
+}
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -45,12 +58,22 @@ interface PublishModalProps {
   leadGatePrompt?: string | null;
   totalCards?: number;
   cardsWithMedia?: number;
+  // New publishing metadata
+  currentTitle?: string;
+  currentDescription?: string | null;
+  currentThumbnailUrl?: string | null;
+  currentCategory?: IceCategory | null;
+  availableMedia?: MediaOption[];
   onPublishComplete?: (data: {
     visibility: ContentVisibility;
     shareSlug: string | null;
     shareUrl: string | null;
     leadGateEnabled?: boolean;
     leadGatePrompt?: string | null;
+    title?: string;
+    description?: string | null;
+    thumbnailUrl?: string | null;
+    category?: IceCategory | null;
   }) => void;
 }
 
@@ -96,6 +119,11 @@ export function PublishModal({
   leadGatePrompt: initialLeadGatePrompt = null,
   totalCards = 0,
   cardsWithMedia = 0,
+  currentTitle = "",
+  currentDescription = null,
+  currentThumbnailUrl = null,
+  currentCategory = null,
+  availableMedia = [],
   onPublishComplete,
 }: PublishModalProps) {
   const { toast } = useToast();
@@ -110,6 +138,12 @@ export function PublishModal({
   const [showQrCode, setShowQrCode] = useState(false);
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
+  
+  // New publishing metadata state
+  const [title, setTitle] = useState(currentTitle);
+  const [description, setDescription] = useState(currentDescription || "");
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(currentThumbnailUrl);
+  const [category, setCategory] = useState<IceCategory | null>(currentCategory);
   
   const embedCode = shareUrl 
     ? `<iframe src="${shareUrl}?embed=true" width="360" height="640" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="border-radius: 16px; overflow: hidden;"></iframe>`
@@ -138,6 +172,10 @@ export function PublishModal({
         visibility,
         leadGateEnabled,
         leadGatePrompt: leadGatePrompt || null,
+        title: title.trim() || undefined,
+        description: description.trim() || null,
+        thumbnailUrl: thumbnailUrl || null,
+        category: category || null,
       });
       return response.json();
     },
@@ -158,6 +196,10 @@ export function PublishModal({
         shareUrl: newShareUrl,
         leadGateEnabled,
         leadGatePrompt: leadGatePrompt || null,
+        title: title.trim() || undefined,
+        description: description.trim() || null,
+        thumbnailUrl,
+        category,
       });
     },
     onError: (error: Error) => {
@@ -347,8 +389,105 @@ export function PublishModal({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
+                {/* Publishing Metadata Section */}
+                <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 space-y-4">
+                  <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-cyan-400" />
+                    Listing Details
+                  </h3>
+                  
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ice-title" className="text-xs text-slate-400">Title</Label>
+                    <Input
+                      id="ice-title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Give your ICE a catchy title"
+                      className="bg-slate-900 border-slate-600 text-white placeholder:text-slate-500"
+                      data-testid="input-publish-title"
+                    />
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ice-description" className="text-xs text-slate-400">Description</Label>
+                    <Textarea
+                      id="ice-description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="What's this ICE about? Help others discover it..."
+                      className="bg-slate-900 border-slate-600 text-white placeholder:text-slate-500 resize-none"
+                      rows={2}
+                      data-testid="input-publish-description"
+                    />
+                  </div>
+                  
+                  {/* Category */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ice-category" className="text-xs text-slate-400">Category</Label>
+                    <Select value={category || ""} onValueChange={(v) => setCategory(v as IceCategory || null)}>
+                      <SelectTrigger 
+                        className="bg-slate-900 border-slate-600 text-white"
+                        data-testid="select-publish-category"
+                      >
+                        <SelectValue placeholder="Choose a category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {ICE_CATEGORIES.map((cat) => (
+                          <SelectItem 
+                            key={cat} 
+                            value={cat}
+                            className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                          >
+                            {ICE_CATEGORY_LABELS[cat]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Thumbnail Picker */}
+                  {availableMedia.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-slate-400">Thumbnail</Label>
+                      <ScrollArea className="w-full whitespace-nowrap pb-2">
+                        <div className="flex gap-2">
+                          {availableMedia.map((media) => (
+                            <button
+                              key={media.id}
+                              onClick={() => setThumbnailUrl(media.url)}
+                              className={`relative shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                                thumbnailUrl === media.url
+                                  ? "border-cyan-400 ring-2 ring-cyan-400/30"
+                                  : "border-slate-600 hover:border-slate-500"
+                              }`}
+                              data-testid={`button-thumbnail-${media.id}`}
+                            >
+                              <img
+                                src={media.url}
+                                alt={`Card ${media.cardIndex + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              {thumbnailUrl === media.url && (
+                                <div className="absolute inset-0 bg-cyan-400/20 flex items-center justify-center">
+                                  <Check className="w-4 h-4 text-cyan-400" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <p className="text-xs text-slate-500">
+                        Select an image to use as the cover thumbnail
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Lead Gate Section */}
                 <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

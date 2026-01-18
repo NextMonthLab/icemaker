@@ -132,6 +132,9 @@ interface InsightOrigin {
 interface PreviewData {
   id: string;
   title: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
+  category?: import("@shared/schema").IceCategory | null;
   cards: PreviewCard[];
   characters?: StoryCharacter[];
   interactivityNodes?: InteractivityNodeData[];
@@ -3450,6 +3453,26 @@ export default function GuestIceBuilderPage() {
           shareSlug={shareSlug}
           totalCards={cards.length}
           cardsWithMedia={cards.filter(c => c.generatedImageUrl || c.generatedVideoUrl || (c.mediaAssets && c.mediaAssets.length > 0)).length}
+          currentTitle={preview.title}
+          currentDescription={preview.description}
+          currentThumbnailUrl={preview.thumbnailUrl}
+          currentCategory={preview.category}
+          availableMedia={cards.flatMap((card, idx) => {
+            const media: Array<{ id: string; url: string; cardIndex: number; cardTitle: string }> = [];
+            // Add generated images
+            if (card.generatedImageUrl) {
+              media.push({ id: `${card.id}-generated`, url: card.generatedImageUrl, cardIndex: idx, cardTitle: card.title });
+            }
+            // Add media assets (images only for thumbnails)
+            if (card.mediaAssets) {
+              card.mediaAssets.forEach((asset, assetIdx) => {
+                if (asset.kind === 'image' && asset.url) {
+                  media.push({ id: `${card.id}-asset-${assetIdx}`, url: asset.url, cardIndex: idx, cardTitle: card.title });
+                }
+              });
+            }
+            return media;
+          })}
           onPublishComplete={(data) => {
             setIceVisibility(data.visibility);
             setShareSlug(data.shareSlug);

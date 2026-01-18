@@ -7771,18 +7771,32 @@ Stay engaging, reference story details, and help the audience understand the nar
     try {
       const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 50));
       const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+      const categoryFilter = req.query.category as string | undefined;
       
-      const publicIces = await storage.getPublicIcePreviews(limit, offset);
+      // Validate category filter if provided
+      const validCategory = categoryFilter && schema.ICE_CATEGORIES.includes(categoryFilter as any)
+        ? categoryFilter as schema.IceCategory
+        : undefined;
+      
+      const publicIces = await storage.getPublicIcePreviews(limit, offset, validCategory);
       
       res.json({
-        ices: publicIces.map(ice => ({
-          id: ice.id,
-          title: ice.title,
-          shareSlug: ice.shareSlug,
-          thumbnailUrl: (ice.cards as any[])?.[0]?.imageUrl || null,
-          cardCount: (ice.cards as any[])?.length || 0,
-          publishedAt: ice.publishedAt?.toISOString() || ice.createdAt.toISOString(),
-        })),
+        ices: publicIces.map(ice => {
+          // Use explicit thumbnailUrl if set, otherwise fall back to first card image
+          const cards = ice.cards as any[] | null;
+          const fallbackThumbnail = cards?.[0]?.imageUrl || null;
+          
+          return {
+            id: ice.id,
+            title: ice.title,
+            description: ice.description || null,
+            shareSlug: ice.shareSlug,
+            thumbnailUrl: ice.thumbnailUrl || fallbackThumbnail,
+            category: ice.category || null,
+            cardCount: cards?.length || 0,
+            publishedAt: ice.publishedAt?.toISOString() || ice.createdAt.toISOString(),
+          };
+        }),
         hasMore: publicIces.length === limit,
       });
     } catch (error) {
@@ -10494,7 +10508,7 @@ Generate ${count} different continuation still image prompt suggestions.${offset
   app.put("/api/ice/preview/:previewId/publish", requireAuth, async (req, res) => {
     try {
       const { previewId } = req.params;
-      const { visibility, leadGateEnabled, leadGatePrompt } = req.body;
+      const { visibility, leadGateEnabled, leadGatePrompt, title, description, thumbnailUrl, category } = req.body;
       const user = req.user as schema.User;
       
       // Validate visibility
@@ -10523,6 +10537,22 @@ Generate ${count} different continuation still image prompt suggestions.${offset
       }
       if (typeof leadGatePrompt === 'string') {
         updateData.leadGatePrompt = leadGatePrompt || null;
+      }
+      
+      // Update publishing metadata if provided
+      if (typeof title === 'string' && title.trim()) {
+        updateData.title = title.trim();
+      }
+      if (typeof description === 'string') {
+        updateData.description = description.trim() || null;
+      }
+      if (typeof thumbnailUrl === 'string') {
+        updateData.thumbnailUrl = thumbnailUrl || null;
+      }
+      if (typeof category === 'string' && schema.ICE_CATEGORIES.includes(category as any)) {
+        updateData.category = category as schema.IceCategory;
+      } else if (category === null) {
+        updateData.category = null;
       }
       
       // When reverting to private, invalidate share slug and lead gate to prevent continued access

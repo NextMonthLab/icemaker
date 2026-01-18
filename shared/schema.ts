@@ -1045,6 +1045,22 @@ export interface CaptionTiming {
 export type IcePreviewTier = 'short' | 'medium' | 'long';
 export type IceContentType = 'script' | 'article' | 'document' | 'unknown';
 export type IceFidelityMode = 'script_exact' | 'interpretive';
+
+// ICE Categories for Discovery filtering
+export const ICE_CATEGORIES = [
+  'education',
+  'marketing',
+  'entertainment', 
+  'how-to',
+  'storytelling',
+  'business',
+  'lifestyle',
+  'technology',
+  'food',
+  'travel',
+  'other',
+] as const;
+export type IceCategory = typeof ICE_CATEGORIES[number];
 export type IceContentContext = 'story' | 'article' | 'business' | 'auto';
 
 // Scene map for structural ingest (scripts only)
@@ -1395,6 +1411,11 @@ export const icePreviews = pgTable("ice_previews", {
   captionTimingMode: text("caption_timing_mode").$type<CaptionTimingMode>().default("aligned"),
   alignmentTranscript: jsonb("alignment_transcript").$type<AlignmentTranscript>(),
   alignmentStatus: text("alignment_status").$type<CaptionAlignmentStatus>(),
+  
+  // Publishing metadata (editable when publishing)
+  description: text("description"), // Optional description for Discover page
+  thumbnailUrl: text("thumbnail_url"), // Custom thumbnail selected from generated media
+  category: text("category").$type<IceCategory>(), // Category for discovery filtering
   
   // Access control
   visibility: text("visibility").$type<ContentVisibility>().default("unlisted").notNull(), // Guest previews default to unlisted
