@@ -46,6 +46,7 @@ interface MediaAsset {
   sourceHeight?: number;
   sourceAspectRatio?: number;
   durationSec?: number; // Video duration in seconds
+  muteAudio?: boolean; // Whether to mute video's original audio (default true)
 }
 
 interface MediaSegment {
