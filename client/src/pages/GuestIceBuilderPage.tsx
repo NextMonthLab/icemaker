@@ -1738,7 +1738,7 @@ export default function GuestIceBuilderPage() {
         </div>
       )}
       
-      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
+      <div className={`container mx-auto px-4 py-8 flex-1 ${preview ? 'max-w-6xl' : 'max-w-4xl'}`}>
         {/* Compact header - only show for creation mode */}
         {!preview && (
           <div className="text-center mb-8">
