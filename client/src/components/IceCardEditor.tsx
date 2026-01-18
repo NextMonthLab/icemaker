@@ -68,17 +68,19 @@ interface MediaSegment {
   originalDurationSec?: number; // Full video duration before trimming
 }
 
-// Sortable media clip component for drag-and-drop timeline
+// Sortable media clip component for drag-and-drop timeline with trim handles
 function SortableMediaClip({ 
   segment, 
   onRemove, 
   onDurationChange,
+  onTrimChange,
   isSelected,
   onSelect 
 }: { 
   segment: MediaSegment; 
   onRemove: (id: string) => void;
   onDurationChange?: (id: string, duration: number) => void;
+  onTrimChange?: (id: string, trimStart: number, trimEnd: number) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }) {
@@ -90,6 +92,21 @@ function SortableMediaClip({
     transition,
     isDragging,
   } = useSortable({ id: segment.id });
+  
+  const [isTrimming, setIsTrimming] = useState(false);
+  const [trimDragSide, setTrimDragSide] = useState<'start' | 'end' | null>(null);
+  const trimBarRef = useRef<HTMLDivElement>(null);
+  const trimCleanupRef = useRef<(() => void) | null>(null);
+  
+  // Cleanup trim event listeners on unmount
+  useEffect(() => {
+    return () => {
+      if (trimCleanupRef.current) {
+        trimCleanupRef.current();
+        trimCleanupRef.current = null;
+      }
+    };
+  }, []);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -99,12 +116,66 @@ function SortableMediaClip({
 
   const sourceLabel = segment.source === 'ai' ? 'AI' : segment.source === 'stock' ? 'Stock' : 'Upload';
   const sourceColor = segment.source === 'ai' ? 'bg-purple-500' : segment.source === 'stock' ? 'bg-blue-500' : 'bg-green-500';
+  
+  const isVideo = segment.kind === 'video';
+  const canTrim = isVideo && segment.originalDurationSec && segment.originalDurationSec > 1;
+  const trimStart = segment.trimStartSec || 0;
+  const trimEnd = segment.trimEndSec || 0;
+  const originalDuration = segment.originalDurationSec || segment.durationSec;
+  const effectiveDuration = originalDuration - trimStart - trimEnd;
+  
+  const trimStartPercent = (trimStart / originalDuration) * 100;
+  const trimEndPercent = (trimEnd / originalDuration) * 100;
+  const activePercent = 100 - trimStartPercent - trimEndPercent;
+  
+  const handleTrimMouseDown = (side: 'start' | 'end', e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!canTrim || !onTrimChange) return;
+    
+    setIsTrimming(true);
+    setTrimDragSide(side);
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!trimBarRef.current) return;
+      
+      const rect = trimBarRef.current.getBoundingClientRect();
+      const x = moveEvent.clientX - rect.left;
+      const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      const timeAtPosition = (percent / 100) * originalDuration;
+      
+      if (side === 'start') {
+        const maxTrimStart = originalDuration - trimEnd - 0.5;
+        const newTrimStart = Math.max(0, Math.min(maxTrimStart, timeAtPosition));
+        onTrimChange(segment.id, newTrimStart, trimEnd);
+      } else {
+        const timeFromEnd = originalDuration - timeAtPosition;
+        const maxTrimEnd = originalDuration - trimStart - 0.5;
+        const newTrimEnd = Math.max(0, Math.min(maxTrimEnd, timeFromEnd));
+        onTrimChange(segment.id, trimStart, newTrimEnd);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsTrimming(false);
+      setTrimDragSide(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      trimCleanupRef.current = null;
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    // Store cleanup for unmount
+    trimCleanupRef.current = handleMouseUp;
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 p-2 rounded-lg border transition-colors cursor-pointer ${
+      className={`flex flex-col gap-1.5 p-2 rounded-lg border transition-colors cursor-pointer ${
         isSelected 
           ? 'bg-cyan-500/20 border-cyan-500/50' 
           : 'bg-slate-800/70 border-slate-700 hover:border-slate-600'
@@ -112,97 +183,170 @@ function SortableMediaClip({
       onClick={() => onSelect?.(segment.id)}
       data-testid={`timeline-clip-${segment.id}`}
     >
-      {/* Drag handle */}
-      <div 
-        {...attributes} 
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300 touch-none"
-        data-testid={`drag-handle-${segment.id}`}
-      >
-        <GripVertical className="w-4 h-4" />
-      </div>
-      
-      {/* Thumbnail */}
-      <div className="w-12 h-8 rounded overflow-hidden bg-slate-900 flex-shrink-0">
-        {segment.kind === 'video' ? (
-          <video 
-            src={segment.url} 
-            className="w-full h-full object-cover"
-            muted
-          />
-        ) : (
-          <img 
-            src={segment.thumbnailUrl || segment.url} 
-            alt="Media clip"
-            className="w-full h-full object-cover"
-          />
-        )}
-      </div>
-      
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
+        {/* Drag handle */}
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-300 touch-none"
+          data-testid={`drag-handle-${segment.id}`}
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+        
+        {/* Thumbnail */}
+        <div className="w-12 h-8 rounded overflow-hidden bg-slate-900 flex-shrink-0">
           {segment.kind === 'video' ? (
-            <Video className="w-3 h-3 text-cyan-400" />
+            <video 
+              src={segment.url} 
+              className="w-full h-full object-cover"
+              muted
+            />
           ) : (
-            <Image className="w-3 h-3 text-purple-400" />
+            <img 
+              src={segment.thumbnailUrl || segment.url} 
+              alt="Media clip"
+              className="w-full h-full object-cover"
+            />
           )}
-          <span className="text-xs text-slate-300 truncate">
-            {segment.kind === 'video' ? 'Video' : 'Image'}
-          </span>
-          <span className={`text-[9px] px-1 py-0.5 rounded ${sourceColor} text-white`}>
-            {sourceLabel}
-          </span>
         </div>
-        <div className="text-[10px] text-slate-500">
-          {segment.durationSec.toFixed(1)}s
+        
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            {segment.kind === 'video' ? (
+              <Video className="w-3 h-3 text-cyan-400" />
+            ) : (
+              <Image className="w-3 h-3 text-purple-400" />
+            )}
+            <span className="text-xs text-slate-300 truncate">
+              {segment.kind === 'video' ? 'Video' : 'Image'}
+            </span>
+            <span className={`text-[9px] px-1 py-0.5 rounded ${sourceColor} text-white`}>
+              {sourceLabel}
+            </span>
+          </div>
+          <div className="text-[10px] text-slate-500">
+            {effectiveDuration.toFixed(1)}s
+            {canTrim && (trimStart > 0 || trimEnd > 0) && (
+              <span className="text-cyan-400 ml-1">
+                (trimmed from {originalDuration.toFixed(1)}s)
+              </span>
+            )}
+          </div>
         </div>
+        
+        {/* Duration adjustment for images */}
+        {segment.kind === 'image' && onDurationChange && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDurationChange(segment.id, Math.max(1, segment.durationSec - 1));
+              }}
+              data-testid={`decrease-duration-${segment.id}`}
+            >
+              <span className="text-xs">-</span>
+            </Button>
+            <span className="text-xs text-slate-400 w-6 text-center">{segment.durationSec}s</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDurationChange(segment.id, Math.min(30, segment.durationSec + 1));
+              }}
+              data-testid={`increase-duration-${segment.id}`}
+            >
+              <span className="text-xs">+</span>
+            </Button>
+          </div>
+        )}
+        
+        {/* Remove button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(segment.id);
+          }}
+          data-testid={`remove-clip-${segment.id}`}
+        >
+          <X className="w-3 h-3" />
+        </Button>
       </div>
       
-      {/* Duration adjustment for images */}
-      {segment.kind === 'image' && onDurationChange && (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDurationChange(segment.id, Math.max(1, segment.durationSec - 1));
+      {/* Video Trim Bar - Only for videos with known duration */}
+      {canTrim && isSelected && (
+        <div 
+          ref={trimBarRef}
+          className="relative h-6 bg-slate-900 rounded overflow-visible mx-1"
+          data-testid={`trim-bar-${segment.id}`}
+        >
+          {/* Trimmed start region (grayed out) */}
+          {trimStartPercent > 0 && (
+            <div 
+              className="absolute top-0 left-0 h-full bg-slate-700/80 z-10"
+              style={{ width: `${trimStartPercent}%` }}
+            />
+          )}
+          
+          {/* Trimmed end region (grayed out) */}
+          {trimEndPercent > 0 && (
+            <div 
+              className="absolute top-0 right-0 h-full bg-slate-700/80 z-10"
+              style={{ width: `${trimEndPercent}%` }}
+            />
+          )}
+          
+          {/* Active region */}
+          <div 
+            className="absolute top-0 h-full bg-gradient-to-r from-cyan-600/40 to-cyan-400/40 border-y border-cyan-500/50"
+            style={{ 
+              left: `${trimStartPercent}%`, 
+              width: `${activePercent}%` 
             }}
-            data-testid={`decrease-duration-${segment.id}`}
+          />
+          
+          {/* Left trim handle */}
+          <div
+            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors ${
+              trimDragSide === 'start' ? 'bg-cyan-500' : 'bg-cyan-600 hover:bg-cyan-500'
+            }`}
+            style={{ left: `calc(${trimStartPercent}% - 6px)` }}
+            onMouseDown={(e) => handleTrimMouseDown('start', e)}
+            data-testid={`trim-handle-start-${segment.id}`}
           >
-            <span className="text-xs">-</span>
-          </Button>
-          <span className="text-xs text-slate-400 w-6 text-center">{segment.durationSec}s</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDurationChange(segment.id, Math.min(30, segment.durationSec + 1));
-            }}
-            data-testid={`increase-duration-${segment.id}`}
+            <div className="w-0.5 h-3 bg-white/70 rounded-full" />
+          </div>
+          
+          {/* Right trim handle */}
+          <div
+            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors ${
+              trimDragSide === 'end' ? 'bg-cyan-500' : 'bg-cyan-600 hover:bg-cyan-500'
+            }`}
+            style={{ right: `calc(${trimEndPercent}% - 6px)` }}
+            onMouseDown={(e) => handleTrimMouseDown('end', e)}
+            data-testid={`trim-handle-end-${segment.id}`}
           >
-            <span className="text-xs">+</span>
-          </Button>
+            <div className="w-0.5 h-3 bg-white/70 rounded-full" />
+          </div>
+          
+          {/* Time markers */}
+          <div className="absolute bottom-0 left-1 text-[8px] text-slate-400 z-30">
+            {trimStart.toFixed(1)}s
+          </div>
+          <div className="absolute bottom-0 right-1 text-[8px] text-slate-400 z-30">
+            {(originalDuration - trimEnd).toFixed(1)}s
+          </div>
         </div>
       )}
-      
-      {/* Remove button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(segment.id);
-        }}
-        data-testid={`remove-clip-${segment.id}`}
-      >
-        <X className="w-3 h-3" />
-      </Button>
     </div>
   );
 }
@@ -214,6 +358,7 @@ function DraggableMediaTimeline({
   onReorder,
   onRemove,
   onDurationChange,
+  onTrimChange,
   onSelect,
 }: {
   segments: MediaSegment[];
@@ -221,6 +366,7 @@ function DraggableMediaTimeline({
   onReorder: (reordered: MediaSegment[]) => void;
   onRemove: (id: string) => void;
   onDurationChange: (id: string, duration: number) => void;
+  onTrimChange?: (id: string, trimStart: number, trimEnd: number) => void;
   onSelect: (index: number | null) => void;
 }) {
   const sensors = useSensors(
@@ -268,6 +414,7 @@ function DraggableMediaTimeline({
                 segment={seg}
                 onRemove={onRemove}
                 onDurationChange={seg.kind === 'image' ? onDurationChange : undefined}
+                onTrimChange={seg.kind === 'video' ? onTrimChange : undefined}
                 isSelected={selectedIndex === idx}
                 onSelect={() => onSelect(idx)}
               />
@@ -3834,6 +3981,7 @@ export function IceCardEditor({
                                 startTimeSec: 0,
                                 order: idx,
                                 renderMode: asset.renderMode,
+                                originalDurationSec: asset.kind === 'video' ? (asset.durationSec || 5) : undefined,
                               }));
                           }
                           
@@ -3866,6 +4014,26 @@ export function IceCardEditor({
                                 const updated = displaySegments.map(s => 
                                   s.id === segId ? { ...s, durationSec: duration } : s
                                 );
+                                let time = 0;
+                                for (const s of updated) {
+                                  s.startTimeSec = time;
+                                  time += s.durationSec;
+                                }
+                                onCardUpdate(card.id, { mediaSegments: updated });
+                                onCardSave(card.id, { mediaSegments: updated });
+                              }}
+                              onTrimChange={(segId, trimStart, trimEnd) => {
+                                const updated = displaySegments.map(s => {
+                                  if (s.id !== segId) return s;
+                                  const originalDur = s.originalDurationSec || s.durationSec;
+                                  const newDuration = Math.max(0.5, originalDur - trimStart - trimEnd);
+                                  return { 
+                                    ...s, 
+                                    trimStartSec: trimStart, 
+                                    trimEndSec: trimEnd,
+                                    durationSec: newDuration,
+                                  };
+                                });
                                 let time = 0;
                                 for (const s of updated) {
                                   s.startTimeSec = time;

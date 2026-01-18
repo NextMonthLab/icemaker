@@ -590,16 +590,47 @@ export default function CardPlayer({
   // This is done by updating the callback dependency below
   
   // Restart video playback when segment changes (for video segments)
+  // Respects trim values: start at trimStartSec, end at (originalDuration - trimEndSec)
   useEffect(() => {
     if (!hasSegments || !currentSegment || currentSegment.kind !== 'video') return;
     if (!videoRef.current || !isPlaying) return;
     
-    // Reset video to start and play
-    videoRef.current.currentTime = 0;
+    // Start at trim start position (default 0)
+    const trimStart = currentSegment.trimStartSec || 0;
+    videoRef.current.currentTime = trimStart;
+    
     if (showVideo) {
       videoRef.current.play().catch(() => {});
     }
   }, [currentSegmentIndex, hasSegments, currentSegment?.kind, isPlaying, showVideo, activeMedia.videoUrl]);
+  
+  // Monitor video time for trim end - advance to next segment when reaching trim end
+  useEffect(() => {
+    if (!hasSegments || !currentSegment || currentSegment.kind !== 'video') return;
+    if (!videoRef.current) return;
+    
+    const trimEnd = currentSegment.trimEndSec || 0;
+    if (trimEnd <= 0) return; // No trim end set, rely on normal video ended event
+    
+    const originalDuration = currentSegment.originalDurationSec || currentSegment.durationSec;
+    const endTime = originalDuration - trimEnd;
+    
+    const handleTimeUpdate = () => {
+      if (!videoRef.current) return;
+      if (videoRef.current.currentTime >= endTime) {
+        console.log('[CardPlayer] Trim end reached at', videoRef.current.currentTime, 'endTime:', endTime);
+        videoRef.current.pause();
+        advanceToNextSegment();
+      }
+    };
+    
+    const video = videoRef.current;
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [hasSegments, currentSegment, currentSegmentIndex, advanceToNextSegment]);
   
   // Clamp currentSegmentIndex if segments array changes
   useEffect(() => {
