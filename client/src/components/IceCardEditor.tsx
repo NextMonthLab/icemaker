@@ -1060,6 +1060,12 @@ interface PreviewCard {
   guestStatus?: GuestStatus;
   guestError?: string;
   guestDurationSeconds?: number;
+  // ElevenLabs Expansion - Delivery Style & Voice
+  deliveryStyle?: 'neutral' | 'confident' | 'friendly' | 'dramatic' | 'calm';
+  narrationVoiceId?: string;
+  narrationSpeed?: number;
+  narrationCacheKey?: string;
+  speakingCharacterId?: string;
 }
 
 interface Entitlements {
@@ -1858,6 +1864,7 @@ export function IceCardEditor({
   const [narrationText, setNarrationText] = useState(card.content || "");
   const [narrationVoice, setNarrationVoice] = useState("alloy");
   const [narrationSpeed, setNarrationSpeed] = useState(1.0);
+  const [deliveryStyle, setDeliveryStyle] = useState<"neutral" | "confident" | "friendly" | "dramatic" | "calm">(card.deliveryStyle || "neutral");
   const [narrationLoading, setNarrationLoading] = useState(false);
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -2606,6 +2613,7 @@ export function IceCardEditor({
           text: narrationText,
           voice: narrationVoice,
           speed: narrationSpeed,
+          deliveryStyle,
         }),
       });
       
@@ -2620,11 +2628,21 @@ export function IceCardEditor({
       
       const data = await res.json();
       const updates: Record<string, any> = { narrationAudioUrl: data.audioUrl };
-      if (data.narrationDurationSec) {
-        updates.narrationDurationSec = data.narrationDurationSec;
+      if (data.durationSeconds) {
+        updates.narrationDurationSec = data.durationSeconds;
       }
       if (data.videoDurationSec) {
         updates.videoDurationSec = data.videoDurationSec;
+      }
+      // Persist voice settings from response (includes character defaults if used)
+      if (data.voice) {
+        updates.narrationVoiceId = data.voice;
+      }
+      if (data.speed) {
+        updates.narrationSpeed = data.speed;
+      }
+      if (data.deliveryStyle) {
+        updates.deliveryStyle = data.deliveryStyle;
       }
       onCardUpdate(card.id, updates);
       onCardSave(card.id, updates);
@@ -5101,16 +5119,32 @@ export function IceCardEditor({
                         </div>
                         
                         <div className="space-y-2">
-                          <Label className="text-slate-300">Speed: {narrationSpeed.toFixed(1)}x</Label>
-                          <Slider
-                            value={[narrationSpeed]}
-                            onValueChange={([v]) => setNarrationSpeed(v)}
-                            min={0.5}
-                            max={2.0}
-                            step={0.1}
-                            className="mt-3"
-                          />
+                          <Label className="text-slate-300">Delivery Style</Label>
+                          <Select value={deliveryStyle} onValueChange={(v: any) => setDeliveryStyle(v)}>
+                            <SelectTrigger className="bg-slate-800 border-slate-700" data-testid="select-delivery-style">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="neutral">Neutral - Balanced, clear delivery</SelectItem>
+                              <SelectItem value="confident">Confident - Strong, authoritative</SelectItem>
+                              <SelectItem value="friendly">Friendly - Warm, conversational</SelectItem>
+                              <SelectItem value="dramatic">Dramatic - Expressive, theatrical</SelectItem>
+                              <SelectItem value="calm">Calm - Soothing, relaxed</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-slate-300">Speed: {narrationSpeed.toFixed(1)}x</Label>
+                        <Slider
+                          value={[narrationSpeed]}
+                          onValueChange={([v]) => setNarrationSpeed(v)}
+                          min={0.5}
+                          max={2.0}
+                          step={0.1}
+                          className="mt-3"
+                        />
                       </div>
                       
                       <div className="flex gap-2">

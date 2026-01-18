@@ -9797,7 +9797,7 @@ Generate ${count} different continuation still image prompt suggestions.${offset
   app.post("/api/ice/preview/:previewId/cards/:cardId/narration/generate", requireAuth, dailyCapMiddleware('tts'), async (req, res) => {
     try {
       const { previewId, cardId } = req.params;
-      const { text, voice, speed } = req.body;
+      const { text, voice, speed, deliveryStyle } = req.body;
       
       const preview = await storage.getIcePreview(previewId);
       if (!preview) {
@@ -9853,7 +9853,7 @@ Generate ${count} different continuation still image prompt suggestions.${offset
         return res.status(400).json({ message: "Narration text is empty" });
       }
       
-      const { isTTSConfigured, synthesiseSpeech, validateNarrationText } = await import("./tts");
+      const { isTTSConfigured, synthesiseSpeech, validateNarrationText, generateNarrationCacheKey } = await import("./tts");
       const { isObjectStorageConfigured, putObject } = await import("./storage/objectStore");
       
       if (!isTTSConfigured()) {
@@ -9869,23 +9869,63 @@ Generate ${count} different continuation still image prompt suggestions.${offset
         return res.status(400).json({ message: validation.error });
       }
       
-      console.log(`[ICE] Generating narration for preview ${previewId}, card ${cardId}`);
+      // Look up speaking character's voice settings from Project Bible if available
+      let characterVoice: string | undefined;
+      let characterDeliveryStyle: string | undefined;
+      if (card.speakingCharacterId && preview.projectBible?.characters) {
+        const speakingCharacter = (preview.projectBible.characters as any[]).find(
+          (c: any) => c.id === card.speakingCharacterId
+        );
+        if (speakingCharacter) {
+          characterVoice = speakingCharacter.voiceId;
+          characterDeliveryStyle = speakingCharacter.deliveryStyleDefault;
+          console.log(`[ICE] Using voice settings from character "${speakingCharacter.name}": voice=${characterVoice}, style=${characterDeliveryStyle}`);
+        }
+      }
+      
+      // Generate cache key for deduplication
+      // Priority: request params > character settings > defaults
+      const effectiveVoice = voice || characterVoice || "alloy";
+      const effectiveSpeed = speed || 1.0;
+      const effectiveDeliveryStyle = deliveryStyle || characterDeliveryStyle || "neutral";
+      const cacheKey = generateNarrationCacheKey(narrationText, effectiveVoice, effectiveDeliveryStyle, effectiveSpeed);
+      
+      // Check if this card already has cached audio with matching cache key
+      if (card.narrationCacheKey === cacheKey && card.narrationAudioUrl) {
+        console.log(`[ICE] Cache hit for narration: ${cacheKey}`);
+        return res.json({
+          audioUrl: card.narrationAudioUrl,
+          durationSeconds: card.narrationDurationSec || null,
+          fromCache: true,
+          // Include effective values so frontend can persist them
+          voice: effectiveVoice,
+          speed: effectiveSpeed,
+          deliveryStyle: effectiveDeliveryStyle,
+        });
+      }
+      
+      console.log(`[ICE] Generating narration for preview ${previewId}, card ${cardId} (cache key: ${cacheKey})`);
       
       const result = await synthesiseSpeech({
         text: narrationText,
-        voice: voice || "alloy",
-        speed: speed || 1.0,
+        voice: effectiveVoice,
+        speed: effectiveSpeed,
+        deliveryStyle: effectiveDeliveryStyle,
       });
       
       // Save to R2 object storage
       const fileName = `ice-narration/${previewId}/${cardId}/${Date.now()}.mp3`;
       const audioUrl = await putObject(fileName, result.audioBuffer, result.contentType);
       
-      // Update the card with the generated audio URL and duration
+      // Update the card with the generated audio URL, duration, cache key, and delivery style
       let updatedCard = { 
         ...card, 
         narrationAudioUrl: audioUrl,
         narrationDurationSec: result.durationSeconds || null, // Store narration duration for Cinematic Continuation
+        narrationCacheKey: cacheKey,
+        narrationVoiceId: effectiveVoice,
+        narrationSpeed: effectiveSpeed,
+        deliveryStyle: effectiveDeliveryStyle,
       };
       
       // Phase 2: Forced Alignment - align captions to audio if enabled
@@ -9965,10 +10005,15 @@ Generate ${count} different continuation still image prompt suggestions.${offset
         success: true,
         audioUrl,
         cardId,
-        narrationDurationSec: narrationDuration,
+        durationSeconds: narrationDuration,
+        narrationDurationSec: narrationDuration, // Legacy field
         needsContinuation: needsContinuation && cinematicEnabled, // Frontend can show continuation button
         hasVideo,
         videoDurationSec: videoDuration,
+        // Include effective voice settings for frontend persistence
+        voice: effectiveVoice,
+        speed: effectiveSpeed,
+        deliveryStyle: effectiveDeliveryStyle,
       });
     } catch (error) {
       console.error("Error generating ICE narration:", error);

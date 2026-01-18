@@ -23,6 +23,6 @@ export function estimateSpeechDuration(text: string, speed: number = 1.0): numbe
 
 export interface TTSProvider {
   listVoices(): Voice[];
-  synthesiseSpeech(options: { text: string; voice: string; speed?: number }): Promise<SynthesisResult>;
+  synthesiseSpeech(options: { text: string; voice: string; speed?: number; deliveryStyle?: string }): Promise<SynthesisResult>;
   isConfigured(): boolean;
 }

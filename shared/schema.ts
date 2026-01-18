@@ -1201,6 +1201,13 @@ export const icePreviewCardSchema = z.object({
   continuationImagePrompt: z.string().optional(), // Prompt used for continuation image
   videoDurationSec: z.number().optional(), // Duration of video in seconds
   narrationDurationSec: z.number().optional(), // Duration of narration audio in seconds
+  
+  // ElevenLabs Expansion - Delivery Style & Voice
+  deliveryStyle: z.enum(['neutral', 'confident', 'friendly', 'dramatic', 'calm']).default('neutral'),
+  narrationVoiceId: z.string().optional(), // Voice ID for this card's narration
+  narrationSpeed: z.number().default(1.0), // Speed multiplier (0.5 - 2.0)
+  narrationCacheKey: z.string().optional(), // Hash of text+voice+style for caching
+  speakingCharacterId: z.string().optional(), // Character whose voice is used (auto-populates narrationVoiceId)
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;
@@ -1240,6 +1247,11 @@ export const characterBibleEntrySchema = z.object({
   mannerisms: z.string().optional(), // e.g., "nervous energy, constantly fidgeting"
   lockedTraits: z.array(z.string()).default([]), // Traits that must never change
   referenceImages: z.array(z.string()).optional(), // URLs to reference/model sheet images
+  
+  // Voice settings for TTS narration
+  voiceId: z.string().optional(), // ElevenLabs or OpenAI voice ID (e.g., "eleven_adam", "nova")
+  deliveryStyleDefault: z.enum(['neutral', 'confident', 'friendly', 'dramatic', 'calm']).default('neutral'),
+  
   createdAt: z.string(),
   updatedAt: z.string(),
 });

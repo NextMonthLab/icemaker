@@ -45,6 +45,7 @@ export async function synthesiseSpeech(options: {
   text: string;
   voice: string;
   speed?: number;
+  deliveryStyle?: string;
 }): Promise<SynthesisResult> {
   if (isElevenLabsVoice(options.voice)) {
     const provider = getElevenLabsProvider();
@@ -59,6 +60,13 @@ export async function synthesiseSpeech(options: {
     throw new Error("OpenAI TTS not configured");
   }
   return provider.synthesiseSpeech(options);
+}
+
+// Generate a cache key for narration audio
+export function generateNarrationCacheKey(text: string, voiceId: string, deliveryStyle: string, speed: number): string {
+  const crypto = require('crypto');
+  const data = `${text}|${voiceId}|${deliveryStyle}|${speed}`;
+  return crypto.createHash('sha256').update(data).digest('hex').substring(0, 16);
 }
 
 export function isTTSConfigured(): boolean {

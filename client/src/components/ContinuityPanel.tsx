@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Users, 
   Globe, 
@@ -21,7 +23,8 @@ import {
   Sparkles,
   AlertTriangle,
   RefreshCw,
-  Camera
+  Camera,
+  Mic
 } from "lucide-react";
 import type { 
   ProjectBible, 
@@ -41,6 +44,13 @@ interface ContinuityPanelProps {
   isGenerating?: boolean;
 }
 
+interface Voice {
+  id: string;
+  name: string;
+  description?: string;
+  tags?: string[];
+}
+
 export function ContinuityPanel({ 
   previewId, 
   bible, 
@@ -50,6 +60,17 @@ export function ContinuityPanel({
 }: ContinuityPanelProps) {
   const [activeTab, setActiveTab] = useState("characters");
   const [expandedCharacter, setExpandedCharacter] = useState<string | null>(null);
+  
+  // Fetch voices once at panel level and pass to character cards
+  const { data: voicesData } = useQuery<{ voices: Voice[]; configured: boolean }>({
+    queryKey: ["tts-voices"],
+    queryFn: async () => {
+      const res = await fetch("/api/tts/voices");
+      if (!res.ok) return { voices: [], configured: false };
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+  });
   
   const handleCharacterUpdate = useCallback((characterId: string, updates: Partial<CharacterBibleEntry>) => {
     if (!bible) return;
@@ -67,6 +88,7 @@ export function ContinuityPanel({
       physicalTraits: {},
       wardrobeRules: { signatureItems: [], colorPalette: [] },
       lockedTraits: [],
+      deliveryStyleDefault: "neutral",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -209,6 +231,7 @@ export function ContinuityPanel({
                 onUpdate={(updates) => handleCharacterUpdate(char.id, updates)}
                 onDelete={() => handleDeleteCharacter(char.id)}
                 onToggleLock={(trait) => handleToggleLock(char.id, trait)}
+                voices={voicesData?.voices || []}
               />
             ))}
             
@@ -256,6 +279,7 @@ interface CharacterCardProps {
   onUpdate: (updates: Partial<CharacterBibleEntry>) => void;
   onDelete: () => void;
   onToggleLock: (trait: string) => void;
+  voices: Voice[];
 }
 
 function CharacterCard({ 
@@ -264,7 +288,8 @@ function CharacterCard({
   onToggleExpand, 
   onUpdate, 
   onDelete,
-  onToggleLock 
+  onToggleLock,
+  voices
 }: CharacterCardProps) {
   const lockedTraits = character.lockedTraits || [];
   
@@ -310,6 +335,56 @@ function CharacterCard({
               className="h-8 text-sm bg-zinc-800 border-zinc-700"
               data-testid="input-character-role"
             />
+          </div>
+          
+          {/* Voice Settings for TTS Narration */}
+          <div className="space-y-2 p-2 bg-cyan-900/20 rounded-lg border border-cyan-500/20">
+            <label className="text-xs text-cyan-400 mb-1 flex items-center gap-1">
+              <Mic className="w-3 h-3" />
+              Voice Settings
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-zinc-500">Voice</label>
+                <Select 
+                  value={character.voiceId || "none"} 
+                  onValueChange={(v) => onUpdate({ voiceId: v === "none" ? undefined : v })}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-zinc-800 border-zinc-700" data-testid="select-character-voice">
+                    <SelectValue placeholder="No voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No voice (use default)</SelectItem>
+                    {voices.map((voice) => (
+                      <SelectItem key={voice.id} value={voice.id}>
+                        {voice.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500">Default Style</label>
+                <Select 
+                  value={character.deliveryStyleDefault || "neutral"} 
+                  onValueChange={(v: any) => onUpdate({ deliveryStyleDefault: v })}
+                >
+                  <SelectTrigger className="h-7 text-xs bg-zinc-800 border-zinc-700" data-testid="select-character-delivery-style">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                    <SelectItem value="confident">Confident</SelectItem>
+                    <SelectItem value="friendly">Friendly</SelectItem>
+                    <SelectItem value="dramatic">Dramatic</SelectItem>
+                    <SelectItem value="calm">Calm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-[10px] text-zinc-500">
+              When this character speaks, cards will use their voice and style.
+            </p>
           </div>
           
           <div className="space-y-2">

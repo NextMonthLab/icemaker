@@ -1,68 +1,70 @@
 # NextMonth – Claude Code Operating Context
 
 ## Overview
-NextMonth is a Meaning-to-Experience Engine designed for brand storytelling, creative narratives, and knowledge transfer. It transforms diverse content into interactive, cinematic story cards using AI-generated visuals, guardrailed AI character interaction, a Visual Bible system, TTS narration, and a Daily Drop Engine. The platform aims to evolve from basic analytics to strategic advice driven by pattern intelligence and behavioral sequences, supporting role-based access and a tiered subscription model. Its core purpose is to deliver immersive and engaging narrative experiences, with a focus on business intelligence and user-centric content creation.
+NextMonth is a Meaning-to-Experience Engine for brand storytelling, creative narratives, and knowledge transfer. It transforms diverse content into interactive, cinematic story cards using AI-generated visuals, guardrailed AI character interaction, a Visual Bible system, TTS narration, and a Daily Drop Engine. The platform aims to provide immersive and engaging narrative experiences, evolving from basic analytics to strategic advice driven by pattern intelligence and behavioral sequences. It supports role-based access and a tiered subscription model, focusing on business intelligence and user-centric content creation.
 
 ## User Preferences
 I prefer simple language and clear, concise explanations. I value iterative development and prefer to be asked before major changes are made to the codebase. Please provide detailed explanations when new features or significant modifications are implemented. Do not make changes to the `shared/schema.ts` file without explicit approval, as it is the single source of truth for data models. Ensure that any AI-generated content adheres to the established visual bible system and character profiles for consistency.
 
 ## System Architecture
-NextMonth employs a multi-stage content pipeline: Input Normalization, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, and QA/Validation. The frontend uses React 18, Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is built with Node.js, Express, Drizzle ORM, Neon-backed PostgreSQL, and Passport.js for authentication.
+NextMonth employs a multi-stage content pipeline (Input Normalization, Theme Extraction, Character/Location Extraction, Card Planning, Card Content Drafting, QA/Validation). The frontend uses React 18, Vite, TailwindCSS (shadcn/ui), Wouter, and TanStack Query. The backend is built with Node.js, Express, Drizzle ORM, Neon-backed PostgreSQL, and Passport.js for authentication.
 
 Key architectural decisions and features include:
--   **Schema-First Development**: All data models are defined in `shared/schema.ts`.
--   **Storage Abstraction**: Database operations are managed via an `IStorage` interface.
--   **Three-Layer Chat Prompt Composition**: AI prompts are dynamically constructed from Universe Policy, Character Profile, and Card Overrides.
--   **Visual Bible System**: Ensures visual consistency through a Design Guide, Reference Assets, and Prompt Builder.
--   **Lens-Based User Experience**: Onboarding is customized by user-selected "lens" (Brand, Creative, Knowledge).
--   **Tiered Capability Model**: Features are gated by "Orbit" subscription tiers.
+-   **Schema-First Development**: Data models defined in `shared/schema.ts`.
+-   **Storage Abstraction**: Database operations managed via an `IStorage` interface.
+-   **Three-Layer Chat Prompt Composition**: Dynamic AI prompt construction from Universe Policy, Character Profile, and Card Overrides.
+-   **Visual Bible System**: Ensures visual consistency through Design Guide, Reference Assets, and Prompt Builder.
+-   **Lens-Based User Experience**: Onboarding customized by user-selected "lens" (Brand, Creative, Knowledge).
+-   **Tiered Capability Model**: Features gated by "Orbit" subscription tiers.
 -   **Pattern Intelligence**: Analytics focus on pattern recognition for session journeys, event ordering, object interaction, and outcome linkage.
--   **UI/UX**: Features a cinematic dark theme with an **icy blue/cyan branding palette**, utilizing a three-tier navigation system. The IceMaker product uses consistent cyan branding throughout the wizard, editor, checkout, and media generation interfaces.
+-   **UI/UX**: Cinematic dark theme with an icy blue/cyan branding palette, three-tier navigation system, and consistent cyan branding for the IceMaker product.
 -   **Data Sources Integration**: Supports ingestion of external read-only GET APIs with SSRF protection.
 -   **Orbit Device System**: Enables display on thin clients with kiosk mode and voice interaction.
 -   **Orbit Signal Schema**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems.
 -   **Guest ICE Builder**: Allows anonymous users to create time-limited ICE previews with server-persisted data and rate limiting.
 -   **Multi-Tenant Security**: Implemented with HMAC-SHA256 signed access tokens and per-IP rate limiting.
--   **Interactivity Nodes**: Supports conversational AI character interaction between cards in live previews.
--   **Story Fidelity Modes**: Content uploads trigger Script-Exact Mode for script parsing or Interpretive Mode for content summarization.
+-   **Interactivity Nodes**: Conversational AI character interaction between cards in live previews.
+-   **Story Fidelity Modes**: Script-Exact Mode for script parsing or Interpretive Mode for content summarization.
 -   **Guest-First Conversion Model**: Users experience value before identity or payment.
--   **Website Extraction System**: Automatically extracts product/menu data from business websites with specialized support for various business types and high-signal data extraction.
--   **Launchpad Hub**: A unified command center (`/launchpad`) combining Orbit metrics with IceMaker content creation.
--   **Video Export System**: Server-side FFmpeg-based video export for ICE previews, creating downloadable MP4 videos with caption overlays, TTS, and optional background music.
--   **AI-Powered Business Intelligence**: Includes Auto-Testimonial Capture, Business-Type-Aware Chat, Hero Posts analysis for pattern detection, Tone of Voice System from hero posts, and Knowledge Coach for proactive question generation.
--   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence for Orbit configurations.
+-   **Website Extraction System**: Automatically extracts product/menu data from business websites.
+-   **Launchpad Hub**: Unified command center (`/launchpad`) for Orbit metrics and IceMaker content creation.
+-   **Video Export System**: Server-side FFmpeg-based video export for ICE previews, creating downloadable MP4s with captions, TTS, and optional background music.
+-   **AI-Powered Business Intelligence**: Includes Auto-Testimonial Capture, Business-Type-Aware Chat, Hero Posts analysis, Tone of Voice System, and Knowledge Coach.
+-   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence.
 -   **Category Discovery Pages**: Educational category pages with SEO-friendly content and interactive audits.
--   **Orbit Type Doctrine**: Architectural distinction between 'industry' (pre-seeded, non-claimable) and 'standard' (user-claimable, owned) orbits.
--   **Orbit Seed Pack (CPAC)**: JSON format for seeding Industry Orbits with products, entities, communities, and tiles, managed via an admin panel.
--   **Orbit → ICE Flywheel**: Enables admins and influencers to convert Orbit insights into shareable ICE content drafts.
--   **Caption Engine**: Remotion-based caption system for ICE content with token-driven design, various presets, safe area profiles for social media, phrase grouping, karaoke highlighting, word-level timing, and a fit-to-box layout engine.
--   **Caption Forced Alignment**: Whisper API-based word-level timestamp extraction for precise caption sync. Features fuzzy word matching with contraction expansion, per-caption fallback on low confidence, and "hold previous caption" gap behavior. Enabled via `CAPTION_ALIGNMENT_ENABLED=true` and `captionTimingMode='aligned'` per ICE.
--   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring Orbit system health.
--   **Media Cost Guardrails**: Economic constraints on video and images to preserve profitability. Videos support 5 or 10 second durations in `server/video/replicate.ts`. Videos do NOT loop - when video ends before narration, the last frame holds or Cinematic Continuation kicks in. Images are 1024x1024 (~$0.04/image).
--   **Website Intelligence Integration**: URL ingestion integrated into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
--   **ICE Card Comments System**: Anonymous viewer comments on ICE cards with display name persistence, character limits, and reaction support.
--   **Conversation Insights System**: Business-tier exclusive AI-powered analysis of viewer chat conversations, aggregating `previewChatMessages` data, generating insights via OpenAI, and caching results.
--   **Custom Fields System**: Business-tier feature for structured data capture during AI character conversations, supporting 8 field types and featuring inline chat capture forms.
--   **Logo Branding System**: Allows users to upload custom logos (2MB max) via Object Storage and display them on every ICE card with configurable position.
--   **ICE Creation Wizard**: 4-step wizard at `/create` for designing ICEs from scratch without content injection, guiding users through template selection, length, structure, and style choices.
--   **Demo ICE Architecture**: Demo ICEs are real ICEs created via the standard IceMaker UI, not hard-coded, intended to prove IceMaker by being made with IceMaker.
--   **Render Deployment Architecture**: Single Node.js web service + PostgreSQL database deployment model with a health check endpoint at `/api/health`.
--   **Storage Quota & AI Usage Tracking System**: Comprehensive usage tracking for fair billing, including `media_assets` and `ai_usage_events` tables, with tiered storage limits.
--   **Producer Brief Mode**: Enables professional producers to upload structured specification documents (.docx, .txt, .md) that auto-create ICEs with exact specifications, including card counts, AI characters, interactivity checkpoints, and visual direction.
--   **Enterprise Custom Branding Page**: Sales and education page at `/enterprise/custom-branding` for enterprise custom branding services, featuring various branding options and an enquiry form.
--   **Scene Lock System**: Enables visual continuity across ICE cards through a locked scene configuration in Project Bible, with granular lock flags for environment, camera, lighting, and background elements, and card-level override options.
--   **Desktop Builder Layout**: Responsive 2-column layout for GuestIceBuilderPage with BuilderActionsSidebar (collapsible sidebar for actions like AI media, music, logo, captions, export, publish) visible on desktop (lg+), BuilderPreviewDrawer (slide-in preview with card media), and stacked panels hidden on desktop.
--   **Cinematic Continuation System**: Solves the video-narration duration mismatch problem. When narration continues beyond the 5-second video cap, CardPlayer transitions via crossfade to a context-aware still image. Uses `cinematicContinuationEnabled` (default true), `continuationImageUrl`, `videoDurationSec`, and `narrationDurationSec` fields. Video `ended` event triggers the transition. API endpoint at `/api/ice/preview/:previewId/cards/:cardId/generate-continuation-still` generates AI stills using scene context and Scene Lock config for visual continuity.
--   **Audio Volume & Ducking System**: Music and narration volumes with iOS-aware behavior. On iOS, volume sliders are hidden (iOS Safari doesn't support programmatic volume control) and volumes are fixed at 20% music, 100% narration. On desktop, volume sliders allow user control with automatic music ducking: when narration plays, music ducks to 20% (background level); when narration stops, music returns to user-set volume. Smooth 400ms fade transitions via requestAnimationFrame. CardPlayer notifies parent via `onNarrationPlayingChange` callback.
--   **Smart Video Scaling System**: CardPlayer detects video aspect ratio on load and applies appropriate scaling: portrait/square videos use `object-cover` for full-bleed display, while landscape videos (16:9, 4K) use a blur-fill technique with `object-contain` for the main video (preserving full frame without cropping) and a blurred, scaled background copy to fill the space attractively.
--   **Per-Clip Video Framing System**: Allows manual override of video display mode per media asset. MediaAsset type includes `renderMode` ('auto'|'fill'|'fit'), `sourceWidth`, `sourceHeight`, and `sourceAspectRatio` fields. Auto mode uses heuristics (<=1.2 ratio = fill, >1.5 ratio = fit) with runtime fallback via video metadata detection. Fill mode uses `object-cover` for full-bleed cropping, Fit mode uses `object-contain` with blur-fill background. UI toggle in IceCardEditor video tab persists to backend via mediaAssets array. Helper functions in `client/src/lib/videoFraming.ts`.
--   **Multi-Segment Media Timeline System**: Enables filling card duration with sequential video/image clips. `MediaSegment` interface includes id, assetId, kind, url, durationSec, startTimeSec, order, and renderMode. CardPlayer plays segments in sequence with crossfade transitions (150ms fade-out, 300ms fade-in). Video segments use 'ended' event; image segments use timer-based advancement. Timeline UI in IceCardEditor shows filled vs remaining time with progress bar. Video duration detection via HTMLVideoElement metadata on upload and stock video selection. Cinematic Continuation serves as fallback when timeline isn't fully filled.
--   **AI Clip Suggestion System**: When building multi-segment timelines, users can request AI-powered video prompt suggestions via the "Suggest Next Clip" button (appears when remaining time >= 5s). Uses story arc phases (setup/build/peak/resolve) based on segment position progress, considers card narrative + prior clip prompts + Scene Lock context. Endpoint at `/api/ice/preview/:previewId/cards/:cardId/suggest-next-clip` with 24-hour caching. Returns 2-3 suggestions with prompt, rationale, arc phase, and continuity hints. Uses gpt-4o-mini for generation.
--   **Drag-and-Drop Media Timeline**: Unified timeline showing all media assets (AI, stock, uploads - both video and image) as draggable clip boxes. Uses @dnd-kit for drag-and-drop with touch support (PointerSensor with 8px activation, TouchSensor with 200ms delay). Features include: clip reordering via drag, image duration adjustment (1-30s with +/- buttons), source badges (AI/Stock/Upload), clip removal, and selected clip preview. MediaSegment interface includes `source?: 'upload' | 'ai' | 'stock'` field. Auto-populates segments from mediaAssets when mediaSegments is empty, sorted by createdAt.
--   **Quick Add UX System**: One-click media generation buttons at the top of each editor tab (Image, Video, Narration). Quick Add buttons auto-populate prompts from card content with sensible defaults - 5s/10s video options (purple/cyan gradient), AI Image generation (cyan gradient), and Narration from card content (green gradient). Advanced options are collapsed by default using shadcn Collapsible component, keeping the interface clean while providing power users access to detailed controls (enhance prompt, target audience, manual prompts, etc.).
+-   **Orbit Type Doctrine**: Architectural distinction between 'industry' (pre-seeded) and 'standard' (user-claimable) orbits.
+-   **Orbit Seed Pack (CPAC)**: JSON format for seeding Industry Orbits, managed via an admin panel.
+-   **Orbit → ICE Flywheel**: Enables conversion of Orbit insights into shareable ICE content drafts.
+-   **Caption Engine**: Remotion-based caption system with token-driven design, presets, safe area profiles, phrase grouping, karaoke highlighting, word-level timing, and fit-to-box layout.
+-   **Caption Forced Alignment**: Whisper API-based word-level timestamp extraction for precise caption sync.
+-   **Orbit Behaviour Health Dashboard**: Admin-only dashboard at `/admin/orbits/health` for monitoring system health.
+-   **Media Cost Guardrails**: Economic constraints on video and images to preserve profitability.
+-   **Website Intelligence Integration**: URL ingestion into `/orbit/:slug/import` for crawling, topic tile generation, and caching.
+-   **ICE Card Comments System**: Anonymous viewer comments on ICE cards with display name persistence, character limits, and reactions.
+-   **Conversation Insights System**: Business-tier AI-powered analysis of viewer chat conversations.
+-   **Custom Fields System**: Business-tier feature for structured data capture during AI character conversations.
+-   **Logo Branding System**: Users can upload custom logos to display on every ICE card.
+-   **ICE Creation Wizard**: 4-step wizard at `/create` for designing ICEs from scratch.
+-   **Demo ICE Architecture**: Demo ICEs are real ICEs created via the standard IceMaker UI.
+-   **Render Deployment Architecture**: Single Node.js web service + PostgreSQL database deployment with a `/api/health` endpoint.
+-   **Storage Quota & AI Usage Tracking System**: Comprehensive usage tracking for billing and tiered storage limits.
+-   **Producer Brief Mode**: Enables producers to upload structured specification documents (.docx, .txt, .md) to auto-create ICEs.
+-   **Enterprise Custom Branding Page**: Sales and education page at `/enterprise/custom-branding`.
+-   **Scene Lock System**: Enables visual continuity across ICE cards through a locked scene configuration.
+-   **Desktop Builder Layout**: Responsive 2-column layout for GuestIceBuilderPage with BuilderActionsSidebar and BuilderPreviewDrawer.
+-   **Cinematic Continuation System**: Transitions to a context-aware still image when narration exceeds video duration.
+-   **Audio Volume & Ducking System**: Music and narration volume control with iOS-aware behavior and automatic music ducking.
+-   **Smart Video Scaling System**: CardPlayer detects video aspect ratio and applies appropriate scaling (object-cover or blur-fill).
+-   **Per-Clip Video Framing System**: Manual override of video display mode per media asset (`auto`|`fill`|`fit`).
+-   **Multi-Segment Media Timeline System**: Enables filling card duration with sequential video/image clips with crossfade transitions.
+-   **AI Clip Suggestion System**: AI-powered video prompt suggestions based on story arc, card narrative, and Scene Lock.
+-   **Drag-and-Drop Media Timeline**: Unified timeline with draggable clip boxes for reordering, duration adjustment, and removal.
+-   **Quick Add UX System**: One-click media generation buttons at the top of editor tabs for AI Image, Video, and Narration.
+-   **ElevenLabs TTS Phase 1**: Enhanced TTS with delivery style controls, character voice binding, and audio caching.
 
 ## External Dependencies
--   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS).
+-   **OpenAI API**: Used for chat completions (gpt-4o-mini) and Text-to-Speech (TTS fallback).
+-   **ElevenLabs API**: Primary TTS provider with delivery style controls and voice binding. Enabled via `ELEVENLABS_API_KEY` secret.
 -   **Kling AI API**: Utilized for video generation.
 -   **Replicate API**: Provides alternative models for video generation.
 -   **Stripe**: Integrated for subscription billing and payment processing.

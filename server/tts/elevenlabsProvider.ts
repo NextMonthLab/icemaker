@@ -78,7 +78,24 @@ export class ElevenLabsTTSProvider implements TTSProvider {
     return ELEVENLABS_VOICES;
   }
 
-  async synthesiseSpeech(options: { text: string; voice: string; speed?: number }): Promise<SynthesisResult> {
+  // Map delivery style to ElevenLabs voice_settings
+  private getVoiceSettings(deliveryStyle?: string): { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean } {
+    switch (deliveryStyle) {
+      case 'confident':
+        return { stability: 0.7, similarity_boost: 0.8, style: 0.6, use_speaker_boost: true };
+      case 'friendly':
+        return { stability: 0.4, similarity_boost: 0.7, style: 0.7, use_speaker_boost: true };
+      case 'dramatic':
+        return { stability: 0.3, similarity_boost: 0.9, style: 0.9, use_speaker_boost: true };
+      case 'calm':
+        return { stability: 0.8, similarity_boost: 0.6, style: 0.3, use_speaker_boost: false };
+      case 'neutral':
+      default:
+        return { stability: 0.5, similarity_boost: 0.75, style: 0.5, use_speaker_boost: true };
+    }
+  }
+
+  async synthesiseSpeech(options: { text: string; voice: string; speed?: number; deliveryStyle?: string }): Promise<SynthesisResult> {
     if (!this.apiKey) {
       throw new Error("ElevenLabs TTS not configured: ELEVENLABS_API_KEY is missing");
     }
@@ -87,6 +104,8 @@ export class ElevenLabsTTSProvider implements TTSProvider {
     if (!voiceId) {
       throw new Error(`Unknown ElevenLabs voice: ${options.voice}`);
     }
+
+    const voiceSettings = this.getVoiceSettings(options.deliveryStyle);
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
@@ -98,12 +117,7 @@ export class ElevenLabsTTSProvider implements TTSProvider {
       body: JSON.stringify({
         text: options.text,
         model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.5,
-          use_speaker_boost: true,
-        },
+        voice_settings: voiceSettings,
       }),
     });
 
