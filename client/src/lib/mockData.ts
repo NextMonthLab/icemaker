@@ -31,12 +31,16 @@ export interface MediaSegment {
   kind: 'image' | 'video';
   url: string;
   thumbnailUrl?: string;
-  durationSec: number; // How long this segment plays
+  durationSec: number; // How long this segment plays (after trimming)
   startTimeSec: number; // When segment starts in card timeline
   order: number; // Sequence order (0, 1, 2...)
   renderMode?: VideoRenderMode; // For video segments
   sourceAspectRatio?: number;
   muteAudio?: boolean; // Whether to mute video's original audio (default true)
+  // Trim controls (for video clips)
+  trimStartSec?: number; // Seconds trimmed from start (default 0)
+  trimEndSec?: number; // Seconds trimmed from end (default 0)
+  originalDurationSec?: number; // Full video duration before trimming
 }
 
 // Caption timing for forced alignment (Phase 2)

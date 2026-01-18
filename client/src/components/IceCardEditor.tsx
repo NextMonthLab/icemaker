@@ -62,6 +62,10 @@ interface MediaSegment {
   renderMode?: RenderMode;
   sourceAspectRatio?: number;
   muteAudio?: boolean; // Whether to mute video's original audio (default true)
+  // Trim controls (for video clips)
+  trimStartSec?: number; // Seconds trimmed from start (default 0)
+  trimEndSec?: number; // Seconds trimmed from end (default 0)
+  originalDurationSec?: number; // Full video duration before trimming
 }
 
 // Sortable media clip component for drag-and-drop timeline
