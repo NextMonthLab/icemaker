@@ -23,7 +23,7 @@ Key architectural decisions and features include:
 -   **Orbit Signal Schema**: Machine-readable JSON endpoint at `/.well-known/orbit.json` for AI systems.
 -   **Guest ICE Builder**: Allows anonymous users to create time-limited ICE previews with server-persisted data and rate limiting.
 -   **Multi-Tenant Security**: Implemented with HMAC-SHA256 signed access tokens and per-IP rate limiting.
--   **Interactivity Nodes**: Conversational AI character interaction between cards in live previews.
+-   **Interlude System**: Conversational AI character interaction between scenes in live previews (narrative beats positioned between content).
 -   **Story Fidelity Modes**: Script-Exact Mode for script parsing or Interpretive Mode for content summarization.
 -   **Guest-First Conversion Model**: Users experience value before identity or payment.
 -   **Website Extraction System**: Automatically extracts product/menu data from business websites.
@@ -50,15 +50,15 @@ Key architectural decisions and features include:
 -   **Storage Quota & AI Usage Tracking System**: Comprehensive usage tracking for billing and tiered storage limits.
 -   **Producer Brief Mode**: Enables producers to upload structured specification documents (.docx, .txt, .md) to auto-create ICEs.
 -   **Enterprise Custom Branding Page**: Sales and education page at `/enterprise/custom-branding`.
--   **Scene Lock System**: Enables visual continuity across ICE cards through a locked scene configuration.
+-   **Continuity Lock System**: Enables visual continuity across ICE scenes through a locked scene configuration (formerly "Scene Lock").
 -   **Desktop Builder Layout**: Responsive 2-column layout for GuestIceBuilderPage with BuilderActionsSidebar and BuilderPreviewDrawer.
 -   **Cinematic Continuation System**: Transitions to a context-aware still image when narration exceeds video duration.
 -   **Audio Volume & Ducking System**: Music and narration volume control with iOS-aware behavior and automatic music ducking.
 -   **Smart Video Scaling System**: CardPlayer detects video aspect ratio and applies appropriate scaling (object-cover or blur-fill).
 -   **Per-Clip Video Framing System**: Manual override of video display mode per media asset (`auto`|`fill`|`fit`).
--   **Multi-Segment Media Timeline System**: Enables filling card duration with sequential video/image clips with crossfade transitions.
--   **AI Clip Suggestion System**: AI-powered video prompt suggestions based on story arc, card narrative, and Scene Lock.
--   **Drag-and-Drop Media Timeline**: Unified timeline with draggable clip boxes for reordering, duration adjustment, and removal.
+-   **Experience Flow System**: Enables filling scene duration with sequential video/image clips with crossfade transitions (formerly "Media Timeline").
+-   **AI Clip Suggestion System**: AI-powered video prompt suggestions based on story arc, scene narrative, and Continuity Lock.
+-   **Drag-and-Drop Experience Flow**: Unified flow with draggable media blocks for reordering, duration adjustment, and removal.
 -   **Quick Add UX System**: One-click media generation buttons at the top of editor tabs for AI Image, Video, and Narration.
 -   **ElevenLabs TTS Phase 1**: Enhanced TTS with delivery style controls, character voice binding, and audio caching.
 -   **ElevenLabs TTS Phase 2**: Voice preview feature for testing voice/style before generation, batch narration with delivery style selection, and audio cleanup on unmount.
