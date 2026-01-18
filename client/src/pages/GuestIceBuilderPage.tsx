@@ -1973,7 +1973,7 @@ export default function GuestIceBuilderPage() {
                         <span className="ml-2">
                           <span className="text-white/30">•</span>
                           <button
-                            onClick={() => navigate(`/launchpad?orbit=${origin.businessSlug}&insight=${origin.insightId}`)}
+                            onClick={() => navigate(`/library?orbit=${origin.businessSlug}&insight=${origin.insightId}`)}
                             className="ml-2 text-blue-400 hover:text-blue-300 hover:underline transition-colors"
                             data-testid="link-origin-insight"
                           >

@@ -152,13 +152,13 @@ export default function Pricing() {
     if (plan.ctaHref === "/book-demo") {
       return plan.ctaHref;
     }
-    // If logged in, go to launchpad to start creating
+    // If logged in, go to library to start creating
     // (Subscription billing happens during ICE checkout flow)
     if (user) {
-      return "/launchpad";
+      return "/library";
     }
-    // Not logged in - go to login, then redirect to launchpad
-    return "/login?returnUrl=/launchpad";
+    // Not logged in - go to login, then redirect to library
+    return "/login?returnUrl=/library";
   };
   
   // Get button text based on upgrade intent

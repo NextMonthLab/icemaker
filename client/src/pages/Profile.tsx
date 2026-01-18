@@ -104,7 +104,7 @@ export default function Profile() {
       <div className="p-4 pt-8 md:p-8 max-w-lg mx-auto space-y-6 animate-in fade-in duration-500">
         
         <div className="flex items-center gap-3">
-          <Link href="/launchpad">
+          <Link href="/library">
             <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10" data-testid="button-back">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -199,8 +199,8 @@ export default function Profile() {
                       Create New ICE
                     </Button>
                   </Link>
-                  <Link href="/launchpad">
-                    <Button variant="outline" size="icon" className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white" data-testid="button-launchpad">
+                  <Link href="/library">
+                    <Button variant="outline" size="icon" className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white" data-testid="button-library">
                       <BarChart3 className="w-4 h-4" />
                     </Button>
                   </Link>

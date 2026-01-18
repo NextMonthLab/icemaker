@@ -27,7 +27,7 @@ Key architectural decisions and features include:
 -   **Story Fidelity Modes**: Script-Exact Mode for script parsing or Interpretive Mode for content summarization.
 -   **Guest-First Conversion Model**: Users experience value before identity or payment.
 -   **Website Extraction System**: Automatically extracts product/menu data from business websites.
--   **Launchpad Hub**: Unified command center (`/launchpad`) for Orbit metrics and IceMaker content creation.
+-   **Library Hub**: Unified command center (`/library`) for Orbit metrics and IceMaker content creation.
 -   **Video Export System**: Server-side FFmpeg-based video export for ICE previews, creating downloadable MP4s with captions, TTS, and optional background music.
 -   **AI-Powered Business Intelligence**: Includes Auto-Testimonial Capture, Business-Type-Aware Chat, Hero Posts analysis, Tone of Voice System, and Knowledge Coach.
 -   **Orbit Settings System**: Full settings page at `/orbit/:slug/settings` with database persistence.

@@ -150,9 +150,9 @@ export default function SiteNav({ variant: explicitVariant, onStartTour }: SiteN
                     )}
                   </div>
                   <DropdownMenuItem asChild>
-                    <Link href="/launchpad" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-launchpad">
+                    <Link href="/library" className="cursor-pointer text-white/80 hover:text-white" data-testid="nav-menu-library">
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Launchpad
+                      Library
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

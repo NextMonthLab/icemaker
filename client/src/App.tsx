@@ -149,7 +149,7 @@ function Router() {
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel">{() => { window.location.href = "/icemaker"; return null; }}</Route>
       <Route path="/app" component={ProtectedLibrary} />
-      <Route path="/launchpad" component={ProtectedLibrary} />
+      <Route path="/library" component={ProtectedLibrary} />
       <Route path="/stories" component={ProtectedLibrary} />
       <Route path="/onboarding" component={ProtectedOnboarding} />
       <Route path="/login" component={Login} />
