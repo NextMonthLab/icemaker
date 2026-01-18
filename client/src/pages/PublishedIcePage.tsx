@@ -389,9 +389,10 @@ export default function PublishedIcePage() {
       setActiveNodeIndex(displayedCardIndex);
     } else if (displayedCardIndex < cards.length - 1) {
       navigateToCard(displayedCardIndex + 1);
+    } else {
+      // Last card completed - auto-show IceMaker end screen
+      setShowEndScreen(true);
     }
-    // NOTE: End screen is NOT triggered here on last card - only via explicit user action
-    // (handleNext or Continue button) to ensure creator CTAs get proper time
   };
 
   if (isLoading) {
@@ -697,70 +698,61 @@ export default function PublishedIcePage() {
         </div>
       </div>
 
-      <div className="p-4 bg-zinc-900/50 border-t border-zinc-800">
-        <div className="max-w-md mx-auto space-y-3">
-          {ice?.creator && (
-            <div className="flex items-center justify-between">
-              <Link href={ice.creator.slug ? `/creator/${ice.creator.slug}` : "#"}>
-                <div className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-creator">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={ice.creator.avatarUrl || undefined} />
-                    <AvatarFallback className="text-xs bg-gradient-to-br from-cyan-500 to-blue-600">
-                      {ice.creator.displayName?.slice(0, 2).toUpperCase() || "??"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-white/80">{ice.creator.displayName}</span>
-                </div>
-              </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggleLike}
-                disabled={likeMutation.isPending || unlikeMutation.isPending}
-                className={`gap-1.5 ${likeStatus?.liked ? "text-red-400 hover:text-red-300" : "text-white/60 hover:text-white"}`}
-                data-testid="button-like"
-              >
-                <Heart className={`w-4 h-4 ${likeStatus?.liked ? "fill-current" : ""}`} />
-                <span className="text-xs">{likeStatus?.likeCount ?? ice?.likeCount ?? 0}</span>
-              </Button>
-            </div>
-          )}
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-white/60">
-                {showEndScreen ? "End" : `${displayedCardIndex + 1} / ${cards.length}`}
+      <div className="shrink-0 p-2 sm:p-4 bg-zinc-900/80 backdrop-blur-sm border-t border-zinc-800 safe-area-bottom">
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center justify-between gap-2">
+            {/* Card counter + controls */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-xs sm:text-sm text-white/60 font-medium">
+                {showEndScreen ? "End" : `${displayedCardIndex + 1}/${cards.length}`}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setNarrationMuted(!narrationMuted)}
-                  className="h-8 w-8 text-white/60 hover:text-white"
+                  className="h-7 w-7 sm:h-8 sm:w-8 text-white/60 hover:text-white"
                   data-testid="button-toggle-narration"
                 >
-                  {narrationMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  {narrationMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 </Button>
                 {ice?.musicTrackUrl && (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setMusicEnabled(!musicEnabled)}
-                    className={`h-8 w-8 ${musicEnabled ? "text-cyan-400" : "text-white/60 hover:text-white"}`}
+                    className={`h-7 w-7 sm:h-8 sm:w-8 ${musicEnabled ? "text-cyan-400" : "text-white/60 hover:text-white"}`}
                     data-testid="button-toggle-music"
                   >
-                    <Music className="w-4 h-4" />
+                    <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Creator attribution (compact on mobile) */}
+            {ice?.creator && (
+              <Link href={ice.creator.slug ? `/creator/${ice.creator.slug}` : "#"} className="hidden sm:block">
+                <div className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-creator">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={ice.creator.avatarUrl || undefined} />
+                    <AvatarFallback className="text-[10px] bg-gradient-to-br from-cyan-500 to-blue-600">
+                      {ice.creator.displayName?.slice(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-white/60">{ice.creator.displayName}</span>
+                </div>
+              </Link>
+            )}
+            
+            {/* Navigation arrows */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handlePrev}
                 disabled={(displayedCardIndex === 0 && !showEndScreen) || pendingCardIndex !== null}
-                className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
+                className="h-7 w-7 sm:h-8 sm:w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-prev-card"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -770,7 +762,7 @@ export default function PublishedIcePage() {
                 size="icon"
                 onClick={handleNext}
                 disabled={showEndScreen || pendingCardIndex !== null}
-                className="h-8 w-8 text-white/60 hover:text-white disabled:opacity-30"
+                className="h-7 w-7 sm:h-8 sm:w-8 text-white/60 hover:text-white disabled:opacity-30"
                 data-testid="button-next-card"
               >
                 <ChevronRight className="w-4 h-4" />
