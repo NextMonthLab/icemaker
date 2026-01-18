@@ -118,6 +118,12 @@ export default function CardPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const prevVideoRef = useRef<HTMLVideoElement | null>(null); // For segment crossfade
   const captionRegionRef = useRef<HTMLDivElement | null>(null);
+  
+  // Keep volume in a ref so callbacks always have the latest value
+  const narrationVolumeRef = useRef(narrationVolume);
+  useEffect(() => {
+    narrationVolumeRef.current = narrationVolume;
+  }, [narrationVolume]);
   const [containerWidthPx, setContainerWidthPx] = useState(375);
   const isTabletLandscape = useIsTabletLandscape();
 
@@ -387,9 +393,13 @@ export default function CardPlayer({
   // Update narration volume - use regular effect with more frequent checks
   // This ensures volume changes take effect even while audio is playing
   useEffect(() => {
+    console.log('[CardPlayer] Volume effect triggered, narrationVolume:', narrationVolume, 'audioRef.current exists:', !!audioRef.current);
     if (audioRef.current) {
+      const previousVolume = audioRef.current.volume;
       audioRef.current.volume = narrationVolume / 100;
-      console.log('[Narration] Volume updated to:', narrationVolume / 100);
+      console.log('[CardPlayer] Narration volume changed:', previousVolume, '->', audioRef.current.volume);
+    } else {
+      console.log('[CardPlayer] audioRef.current is NULL - cannot set volume');
     }
   }, [narrationVolume]);
   
@@ -626,18 +636,26 @@ export default function CardPlayer({
   const handleAudioLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
       setAudioDuration(audioRef.current.duration);
-      // Always apply current volume when audio loads
-      audioRef.current.volume = narrationVolume / 100;
+      // Always apply current volume when audio loads (use ref for latest value)
+      audioRef.current.volume = narrationVolumeRef.current / 100;
+      console.log('[CardPlayer] Audio loadedmetadata - volume applied:', narrationVolumeRef.current / 100);
     }
-  }, [narrationVolume]);
+  }, []);
   
   // Ref callback to apply volume immediately when audio element is assigned
   const setAudioRef = useCallback((el: HTMLAudioElement | null) => {
     audioRef.current = el;
     if (el) {
-      el.volume = narrationVolume / 100;
+      // Use ref for latest volume value (callback might be stale)
+      el.volume = narrationVolumeRef.current / 100;
+      console.log('[CardPlayer] Audio ref assigned - volume applied:', narrationVolumeRef.current / 100);
+      // Also listen for canplay as backup
+      el.addEventListener('canplay', () => {
+        el.volume = narrationVolumeRef.current / 100;
+        console.log('[CardPlayer] Audio canplay - volume applied:', narrationVolumeRef.current / 100);
+      }, { once: true });
     }
-  }, [narrationVolume]);
+  }, []);
   
   const handleAudioPlay = useCallback(() => {
     setIsAudioPlaying(true);

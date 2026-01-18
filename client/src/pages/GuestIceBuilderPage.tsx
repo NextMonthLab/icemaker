@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
 import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon, CheckCircle, Trash2 } from "lucide-react";
@@ -415,10 +415,39 @@ export default function GuestIceBuilderPage() {
   // Default music volume is quiet (15%) so narration is clearly audible
   const [musicVolume, setMusicVolume] = useState(() => isIOS ? 15 : 15);
   const [narrationVolume, setNarrationVolume] = useState(100);
+  
+  // Debug: Log whenever narration volume changes
+  useEffect(() => {
+    console.log('[GuestBuilder] Narration volume state changed to:', narrationVolume);
+  }, [narrationVolume]);
   const [isNarrationPlaying, setIsNarrationPlaying] = useState(false);
   const musicFadeRef = useRef<number | null>(null); // For smooth fade animation
   const [isPreviewingMusic, setIsPreviewingMusic] = useState(false);
   const musicPreviewRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Refs to always have current volume available (for applying on audio element creation)
+  const musicVolumeRef = useRef(musicVolume);
+  const narrationVolumeRef = useRef(narrationVolume);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    musicVolumeRef.current = musicVolume;
+  }, [musicVolume]);
+  useEffect(() => {
+    narrationVolumeRef.current = narrationVolume;
+  }, [narrationVolume]);
+  
+  // Centralized helper to apply music volume to all music audio elements
+  const applyMusicVolume = useCallback((vol: number) => {
+    const normalizedVol = vol / 100;
+    console.log('[Audio] Applying music volume:', normalizedVol);
+    if (musicAudioRef.current) {
+      musicAudioRef.current.volume = normalizedVol;
+    }
+    if (musicPreviewRef.current) {
+      musicPreviewRef.current.volume = normalizedVol;
+    }
+  }, []);
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [projectBible, setProjectBible] = useState<ProjectBible | null>(null);
   // Check if project bible has any meaningful configuration
@@ -516,11 +545,20 @@ export default function GuestIceBuilderPage() {
     if (showPreviewModal && !musicAudioRef.current) {
       musicAudioRef.current = new Audio();
       musicAudioRef.current.loop = true;
-      musicAudioRef.current.volume = musicVolume / 100;
+      // Apply volume immediately from ref (always has current value)
+      musicAudioRef.current.volume = musicVolumeRef.current / 100;
+      console.log('[Audio] Music element created with volume:', musicVolumeRef.current / 100);
       // Re-apply volume after audio loads (browser may reset on load)
       musicAudioRef.current.oncanplaythrough = () => {
         if (musicAudioRef.current) {
-          musicAudioRef.current.volume = musicVolume / 100;
+          musicAudioRef.current.volume = musicVolumeRef.current / 100;
+          console.log('[Audio] Music canplaythrough - volume applied:', musicVolumeRef.current / 100);
+        }
+      };
+      musicAudioRef.current.onloadedmetadata = () => {
+        if (musicAudioRef.current) {
+          musicAudioRef.current.volume = musicVolumeRef.current / 100;
+          console.log('[Audio] Music loadedmetadata - volume applied:', musicVolumeRef.current / 100);
         }
       };
     }
@@ -529,7 +567,7 @@ export default function GuestIceBuilderPage() {
       musicAudioRef.current.pause();
       musicAudioRef.current = null;
     }
-  }, [showPreviewModal, musicVolume]);
+  }, [showPreviewModal]);
   
   // Handle track changes - reuse same audio element, just update src
   useEffect(() => {
@@ -558,13 +596,11 @@ export default function GuestIceBuilderPage() {
     }
   }, [showPreviewModal, musicEnabled, musicTrackUrl, musicVolume]);
   
-  // Separate effect for volume - always apply volume immediately (backup)
+  // Apply music volume whenever state changes - use centralized helper
   useEffect(() => {
-    if (musicAudioRef.current) {
-      musicAudioRef.current.volume = musicVolume / 100;
-      console.log('[Music] Volume updated to:', musicVolume / 100);
-    }
-  }, [musicVolume]);
+    console.log('[Audio] Music volume state changed to:', musicVolume, 'Applying to all audio elements...');
+    applyMusicVolume(musicVolume);
+  }, [musicVolume, applyMusicVolume]);
   
   // Music ducking: fade music based on narration state (desktop only)
   // When narration plays: duck music to 10% (very low background level)
