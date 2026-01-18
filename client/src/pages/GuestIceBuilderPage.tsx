@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useParams, Link } from "wouter";
-import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon, CheckCircle } from "lucide-react";
+import { Sparkles, Globe, FileText, ArrowRight, Loader2, GripVertical, Lock, Play, Image, Mic, Upload, Check, Circle, Eye, Pencil, Film, X, ChevronLeft, ChevronRight, MessageCircle, Wand2, Video, Volume2, VolumeX, Music, Download, Send, GraduationCap, ScrollText, Lightbulb, Plus, User, ExternalLink, Link as LinkIcon, CheckCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -449,6 +449,8 @@ export default function GuestIceBuilderPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showExportComingSoon, setShowExportComingSoon] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
+  const [showDeleteIceConfirm, setShowDeleteIceConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showPreviewPrompt, setShowPreviewPrompt] = useState(false);
   const [previewPromptFeature, setPreviewPromptFeature] = useState<string>("");
   const [iceVisibility, setIceVisibility] = useState<ContentVisibility>("unlisted");
@@ -1987,6 +1989,18 @@ export default function GuestIceBuilderPage() {
                 >
                   Start Over
                 </Button>
+                {preview?.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteIceConfirm(true)}
+                    className="flex-1 sm:flex-none border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    data-testid="button-delete-ice"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -3102,26 +3116,96 @@ export default function GuestIceBuilderPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Start Over?</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              This will clear all your story cards, generated media, and edits. This action cannot be undone.
+              This will clear your story cards and text, but your generated images and videos will be kept in Your Media for reuse.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="bg-transparent border-white/20 text-white">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                setPreview(null);
                 setCards([]);
                 setUrlValue("");
                 setTextValue("");
                 setSelectedFile(null);
                 setShowStartOverConfirm(false);
               }}
-              className="bg-red-600 hover:bg-red-700 text-white border-0"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white border-0"
               data-testid="button-confirm-start-over"
             >
               Yes, Start Over
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Delete ICE Confirmation Dialog */}
+      <AlertDialog open={showDeleteIceConfirm} onOpenChange={setShowDeleteIceConfirm}>
+        <AlertDialogContent className="bg-slate-900 border-red-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-400" />
+              Delete ICE?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Are you sure you want to permanently delete this ICE? This will remove all cards, generated media, and settings. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="bg-transparent border-white/20 text-white" disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!preview?.id) return;
+                setIsDeleting(true);
+                try {
+                  const res = await fetch(`/api/ice/preview/${preview.id}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                  });
+                  if (res.ok) {
+                    setPreview(null);
+                    setCards([]);
+                    setUrlValue("");
+                    setTextValue("");
+                    setSelectedFile(null);
+                    toast({
+                      title: "ICE deleted",
+                      description: "Your ICE has been permanently deleted.",
+                    });
+                  } else {
+                    const data = await res.json();
+                    toast({
+                      title: "Error",
+                      description: data.message || "Failed to delete ICE",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to delete ICE",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsDeleting(false);
+                  setShowDeleteIceConfirm(false);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white border-0"
+              disabled={isDeleting}
+              data-testid="button-confirm-delete-ice"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Yes, Delete Permanently"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
