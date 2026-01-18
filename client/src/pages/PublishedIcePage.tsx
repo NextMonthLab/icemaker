@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Play, Home, AlertCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, Mail, ArrowRight, Heart, X, Sparkles, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import icemakerLogo from "@assets/icemaker-logo.png";
 import CardPlayer from "@/components/CardPlayer";
 import { InteractivityNode, StoryCharacter } from "@/components/InteractivityNode";
 import type { CaptionState } from "@/caption-engine/schemas";
@@ -432,23 +433,70 @@ export default function PublishedIcePage() {
 
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center relative overflow-hidden">
+        {/* Dramatic background with blur and gradient */}
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-30"
+          className="absolute inset-0 bg-cover bg-center scale-110 blur-sm"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-zinc-950/70" />
+        
+        {/* Animated glow effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan-500/10 blur-3xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
         
         <div className="relative z-10 text-center max-w-lg px-4">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">{ice?.title || "Untitled Experience"}</h1>
-          <p className="text-white/60 mb-8">
+          {/* IceMaker Logo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block"
+              data-testid="link-icemaker-logo"
+            >
+              <img 
+                src={icemakerLogo} 
+                alt="IceMaker" 
+                className="h-12 sm:h-16 mx-auto drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+              />
+            </a>
+          </motion.div>
+          
+          {/* Title with dramatic styling */}
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight"
+          >
+            {ice?.title || "Untitled Experience"}
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-cyan-300/80 mb-10 text-lg"
+          >
             {cards.length} cards • Interactive experience
-          </p>
+          </motion.p>
           
           {requiresLeadGate ? (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 max-w-sm mx-auto"
+              transition={{ delay: 0.4 }}
+              className="bg-zinc-900/80 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-6 max-w-sm mx-auto shadow-[0_0_60px_rgba(34,211,238,0.15)]"
             >
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Mail className="w-5 h-5 text-cyan-400" />
@@ -462,7 +510,7 @@ export default function PublishedIcePage() {
                   placeholder="your@email.com"
                   value={leadEmail}
                   onChange={(e) => setLeadEmail(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  className="bg-zinc-800/80 border-zinc-700 text-white placeholder:text-zinc-500"
                   data-testid="input-lead-email"
                 />
                 {leadError && (
@@ -471,7 +519,7 @@ export default function PublishedIcePage() {
                 <Button 
                   type="submit"
                   disabled={leadMutation.isPending}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25"
                   data-testid="button-submit-lead"
                 >
                   {leadMutation.isPending ? (
@@ -489,38 +537,31 @@ export default function PublishedIcePage() {
               </form>
             </motion.div>
           ) : (
-            <Button 
-              onClick={() => setIsPlaying(true)}
-              size="lg"
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-6 text-lg"
-              data-testid="button-start-experience"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
             >
-              <Play className="w-6 h-6 mr-2" />
-              Start Experience
-            </Button>
+              <Button 
+                onClick={() => setIsPlaying(true)}
+                size="lg"
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-10 py-7 text-xl font-semibold rounded-2xl shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-105"
+                data-testid="button-start-experience"
+              >
+                <Play className="w-7 h-7 mr-3 fill-current" />
+                Start Experience
+              </Button>
+            </motion.div>
           )}
           
-          {/* Made with IceMaker branding */}
+          {/* Powered by IceMaker footer */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-12"
+            transition={{ delay: 0.8 }}
+            className="mt-16 text-white/40 text-sm"
           >
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
-              data-testid="link-made-with-icemaker"
-            >
-              <div className="w-5 h-5 rounded bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="text-white/80 text-sm font-medium">Made with IceMaker</span>
-            </a>
+            Powered by IceMaker
           </motion.div>
         </div>
       </div>
