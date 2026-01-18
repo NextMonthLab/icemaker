@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { getEffectiveRenderMode, computeAspectRatio, type EffectiveRenderMode } from "@/lib/videoFraming";
 import { MessageSquare, ChevronUp, Share2, BookOpen, RotateCcw, Volume2, VolumeX, Film, Image, Play, Pause, Music, Mic, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import MessageBoard from "@/components/MessageBoard";
 import type { CaptionState } from "@/caption-engine/schemas";
 import { resolveStyles } from "@/caption-engine/render/resolveStyles";
 import { ScaleToFitCaption } from "@/components/ScaleToFitCaption";
@@ -1500,8 +1499,6 @@ export default function CardPlayer({
                   </Button>
                 </div>
               ) : null}
-              
-              <MessageBoard cardId={card.id} icePreviewId={icePreviewId} compact={true} />
             </div>
           </motion.div>
         )}
