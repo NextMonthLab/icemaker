@@ -467,7 +467,7 @@ export default function PublishedIcePage() {
               <img 
                 src={icemakerLogo} 
                 alt="IceMaker" 
-                className="h-12 sm:h-16 mx-auto drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+                className="h-24 sm:h-32 mx-auto drop-shadow-[0_0_40px_rgba(34,211,238,0.5)]"
               />
             </a>
           </motion.div>
