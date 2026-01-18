@@ -1249,33 +1249,100 @@ export async function registerRoutes(
   });
 
   // Get all user's media assets across all ICEs for cross-ICE reuse
+  // Scans the user's ICE previews and extracts media from card mediaAssets arrays
   app.get("/api/me/media", requireAuth, async (req, res) => {
     try {
-      const profile = await storage.getCreatorProfile(req.user!.id);
-      if (!profile) {
-        return res.status(404).json({ message: "Creator profile not found" });
-      }
+      const userId = req.user!.id;
 
-      // Get all active media assets for this user
-      const mediaAssets = await storage.getMediaAssetsByProfile(profile.id, 'active');
+      // Get all ICE previews owned by this user
+      const userPreviews = await storage.getIcePreviewsByUser(userId);
       
-      // Import the helper to construct public URLs from file keys
-      const { getPublicUrlFromKey } = await import("./storage/objectStore");
+      // Extract media from all cards across all previews
+      const allMedia: Array<{
+        id: number;
+        iceId: string;
+        url: string;
+        fileKey: string;
+        category: 'image' | 'video' | 'audio' | 'document' | 'other';
+        sizeBytes: number;
+        createdAt: Date;
+        source?: string;
+      }> = [];
       
-      // Transform to client-friendly format with URLs
-      const formattedAssets = mediaAssets.map(asset => ({
-        id: asset.id,
-        iceId: asset.iceId,
-        url: getPublicUrlFromKey(asset.fileKey),
-        fileKey: asset.fileKey,
-        category: asset.category, // 'image' | 'video' | 'audio' | 'document' | 'other'
-        sizeBytes: asset.sizeBytes,
-        createdAt: asset.createdAt,
-      }));
+      let assetIdCounter = 1;
+      const seenUrls = new Set<string>();
+      
+      for (const preview of userPreviews) {
+        const cards = (preview.cards as any[]) || [];
+        
+        for (const card of cards) {
+          const mediaAssets = card.mediaAssets as Array<{
+            id: string;
+            kind: 'image' | 'video';
+            url: string;
+            source?: string;
+            createdAt?: string;
+          }> | undefined;
+          
+          if (mediaAssets && Array.isArray(mediaAssets)) {
+            for (const asset of mediaAssets) {
+              // Skip duplicates (same URL)
+              if (seenUrls.has(asset.url)) continue;
+              seenUrls.add(asset.url);
+              
+              // Only include images and videos
+              if (asset.kind !== 'image' && asset.kind !== 'video') continue;
+              
+              allMedia.push({
+                id: assetIdCounter++,
+                iceId: preview.previewId,
+                url: asset.url,
+                fileKey: asset.url, // Use URL as key since we don't track separately
+                category: asset.kind,
+                sizeBytes: 0, // Unknown since not tracked
+                createdAt: asset.createdAt ? new Date(asset.createdAt) : new Date(),
+                source: asset.source,
+              });
+            }
+          }
+          
+          // Also include legacy generatedImageUrl/generatedVideoUrl if not already in mediaAssets
+          if (card.generatedImageUrl && !seenUrls.has(card.generatedImageUrl)) {
+            seenUrls.add(card.generatedImageUrl);
+            allMedia.push({
+              id: assetIdCounter++,
+              iceId: preview.previewId,
+              url: card.generatedImageUrl,
+              fileKey: card.generatedImageUrl,
+              category: 'image',
+              sizeBytes: 0,
+              createdAt: new Date(),
+              source: 'ai',
+            });
+          }
+          
+          if (card.generatedVideoUrl && !seenUrls.has(card.generatedVideoUrl)) {
+            seenUrls.add(card.generatedVideoUrl);
+            allMedia.push({
+              id: assetIdCounter++,
+              iceId: preview.previewId,
+              url: card.generatedVideoUrl,
+              fileKey: card.generatedVideoUrl,
+              category: 'video',
+              sizeBytes: 0,
+              createdAt: new Date(),
+              source: 'ai',
+            });
+          }
+        }
+      }
+      
+      // Sort by most recent first
+      allMedia.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       res.json({
-        assets: formattedAssets,
-        total: formattedAssets.length,
+        assets: allMedia,
+        total: allMedia.length,
       });
     } catch (error) {
       console.error("Error fetching user media:", error);
