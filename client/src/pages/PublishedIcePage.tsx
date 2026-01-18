@@ -29,12 +29,23 @@ function MediaPreloader({
   card, 
   onReady 
 }: { card: PreviewCard; onReady: () => void }) {
-  const hasMedia = !!(card.generatedImageUrl || card.generatedVideoUrl);
-  const preferVideo = !!card.generatedVideoUrl;
+  // Determine active media: check mediaAssets/selectedMediaAssetId first, then fall back to legacy fields
+  const selectedAsset = card.mediaAssets?.find(a => a.id === card.selectedMediaAssetId);
+  const videoAsset = card.mediaAssets?.find(a => a.kind === 'video' && a.status === 'ready');
+  const imageAsset = card.mediaAssets?.find(a => a.kind === 'image' && a.status === 'ready');
+  
+  // Active media priority: selected asset > video asset > image asset > legacy fields
+  const activeVideoUrl = selectedAsset?.kind === 'video' ? selectedAsset.url : 
+    (videoAsset?.url || card.generatedVideoUrl);
+  const activeImageUrl = selectedAsset?.kind === 'image' ? selectedAsset.url : 
+    (imageAsset?.url || card.generatedImageUrl);
+  
+  const hasMedia = !!(activeImageUrl || activeVideoUrl);
+  const preferVideo = !!activeVideoUrl;
   
   const { markMounted } = useCardReadiness({
-    imageUrl: card.generatedImageUrl,
-    videoUrl: card.generatedVideoUrl,
+    imageUrl: activeImageUrl,
+    videoUrl: activeVideoUrl,
     preferVideo,
     onReady,
   });
@@ -77,6 +88,13 @@ function VisibleCardPlayer({
         narrationAudioUrl: card.narrationAudioUrl,
         generatedVideoUrl: card.generatedVideoUrl,
         captionTimings: card.captionTimings,
+        mediaAssets: card.mediaAssets,
+        selectedMediaAssetId: card.selectedMediaAssetId,
+        mediaSegments: card.mediaSegments,
+        cinematicContinuationEnabled: card.cinematicContinuationEnabled,
+        continuationImageUrl: card.continuationImageUrl,
+        videoDurationSec: card.videoDurationSec,
+        narrationDurationSec: card.narrationDurationSec,
       }}
       narrationMuted={narrationMuted}
       narrationVolume={narrationVolume}
@@ -96,8 +114,13 @@ interface PreviewCard {
   narrationAudioUrl?: string;
   mediaAssets?: any[];
   selectedMediaAssetId?: string;
+  mediaSegments?: any[];
   captions?: string[]; // Pre-parsed captions if available
   captionTimings?: any[]; // Timing data for captions
+  cinematicContinuationEnabled?: boolean;
+  continuationImageUrl?: string;
+  videoDurationSec?: number;
+  narrationDurationSec?: number;
 }
 
 interface InteractivityNodeData {
