@@ -1,0 +1,121 @@
+
+Do you still want to push changes?
+[x] All changes were aborted
+render@srv-d5j6jeq4d50c73a7h8mg-fbdd96f45-rj5xp:~/project/src$ -- Add new columns to ice_previews (safe - all ADD COLUMN)
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS content_context text DEFAULT 'auto';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_settings jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_timing_mode text DEFAULT 'aligned';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_transcript jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_status text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS thumbnail_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS category text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS share_slug text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_prompt text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_position text DEFAULT 'top-right';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS brand_accent_color text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS admin_cta_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS published_at timestamp;
+
+-- Add unique constraint on share_slug
+ALTER TABLE ice_previews ADD CONSTRAINT ice_previews_share_slug_unique UNIQUE (share_slug);
+
+-- Add storage columns to creator_profiles
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS used_storage_bytes bigint DEFAULT 0 NOT NULL;
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS storage_limit_bytes bigint DEFAULT 5368709120 NOT NULL;
+
+-- Add free pass column to users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS free_pass_expires_at timestamp;
+bash: syntax error near unexpected token `('
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: --: command not found
+bash: syntax error near unexpected token `('
+bash: --: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: --: command not found
+bash: ALTER: command not found
+render@srv-d5j6jeq4d50c73a7h8mg-fbdd96f45-rj5xp:~/project/src$ psql $DATABASE_URL
+psql (18.1 (Debian 18.1-1.pgdg12+2))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off, ALPN: postgresql)
+Type "help" for help.
+
+orbit_db_86la=> ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS content_context text DEFAULT 'auto';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_settings jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_timing_mode text DEFAULT 'aligned';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_transcript jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_status text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS thumbnail_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS category text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS share_slug text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_prompt text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_position text DEFAULT 'top-right';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS brand_accent_color text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS admin_cta_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS published_at timestamp;
+ALTER TABLE ice_previews ADD CONSTRAINT ice_previews_share_slug_unique UNIQUE (share_slug);
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS used_storage_bytes bigint DEFAULT 0 NOT NULL;
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS storage_limit_bytes bigint DEFAULT 5368709120 NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS free_pass_expires_at timestamp;
+NOTICE:  column "content_context" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "caption_settings" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "caption_timing_mode" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "alignment_transcript" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "alignment_status" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+NOTICE:  column "share_slug" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "lead_gate_enabled" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "lead_gate_prompt" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "logo_enabled" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "logo_url" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "logo_position" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "brand_accent_color" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "admin_cta_enabled" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+NOTICE:  column "published_at" of relation "ice_previews" already exists, skipping
+ALTER TABLE
+ERROR:  relation "ice_previews_share_slug_unique" already exists
+NOTICE:  column "used_storage_bytes" of relation "creator_profiles" already exists, skipping
+ALTER TABLE
+NOTICE:  column "storage_limit_bytes" of relation "creator_profiles" already exists, skipping
+ALTER TABLE
+NOTICE:  column "free_pass_expires_at" of relation "users" already exists, skipping
+ALTER TABLE
+orbit_db_86la=> 
