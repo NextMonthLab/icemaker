@@ -1871,6 +1871,8 @@ export function IceCardEditor({
   const [selectingAsset, setSelectingAsset] = useState(false);
   const [deletingAsset, setDeletingAsset] = useState<string | null>(null);
   const [regeneratingAsset, setRegeneratingAsset] = useState<string | null>(null);
+  const [deletingLibraryMedia, setDeletingLibraryMedia] = useState<string | null>(null);
+  const [bulkUploadProgress, setBulkUploadProgress] = useState<{ current: number; total: number } | null>(null);
   
   const [clipSuggestions, setClipSuggestions] = useState<ClipSuggestion[]>([]);
   const [clipSuggestionsLoading, setClipSuggestionsLoading] = useState(false);
@@ -2779,28 +2781,89 @@ export function IceCardEditor({
     }
   };
   
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
-        return;
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    // Filter to valid image files
+    const validFiles = files.filter(f => f.type.startsWith("image/"));
+    if (validFiles.length === 0) {
+      toast({ title: "Invalid files", description: "Please select image files.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+    
+    // Bulk upload
+    if (validFiles.length > 1) {
+      setBulkUploadProgress({ current: 0, total: validFiles.length });
+      for (let i = 0; i < validFiles.length; i++) {
+        setBulkUploadProgress({ current: i + 1, total: validFiles.length });
+        await handleUploadMedia(validFiles[i], "image");
       }
-      handleUploadMedia(file, "image");
+      setBulkUploadProgress(null);
+      toast({ title: "Bulk upload complete", description: `${validFiles.length} images uploaded successfully.` });
+    } else {
+      await handleUploadMedia(validFiles[0], "image");
     }
     e.target.value = "";
   };
   
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("video/")) {
-        toast({ title: "Invalid file", description: "Please select a video file.", variant: "destructive" });
-        return;
+  const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    // Filter to valid video files
+    const validFiles = files.filter(f => f.type.startsWith("video/"));
+    if (validFiles.length === 0) {
+      toast({ title: "Invalid files", description: "Please select video files.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+    
+    // Bulk upload
+    if (validFiles.length > 1) {
+      setBulkUploadProgress({ current: 0, total: validFiles.length });
+      for (let i = 0; i < validFiles.length; i++) {
+        setBulkUploadProgress({ current: i + 1, total: validFiles.length });
+        await handleUploadMedia(validFiles[i], "video");
       }
-      handleUploadMedia(file, "video");
+      setBulkUploadProgress(null);
+      toast({ title: "Bulk upload complete", description: `${validFiles.length} videos uploaded successfully.` });
+    } else {
+      await handleUploadMedia(validFiles[0], "video");
     }
     e.target.value = "";
+  };
+  
+  // Delete media from user's library (removes from all cards)
+  const handleDeleteLibraryMedia = async (url: string, iceId: string | null) => {
+    setDeletingLibraryMedia(url);
+    try {
+      const res = await fetch("/api/me/media", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ url, iceId }),
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete media");
+      }
+      
+      const data = await res.json();
+      
+      // Invalidate the media query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["/api/me/media"] });
+      
+      toast({ 
+        title: "Media deleted", 
+        description: data.message || "Media has been removed from your library.",
+      });
+    } catch (error: any) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    } finally {
+      setDeletingLibraryMedia(null);
+    }
   };
   
   const isGuestCard = card.cardType === 'guest';
@@ -5089,14 +5152,32 @@ export function IceCardEditor({
                       Upload Your Own Media
                     </h4>
                     <p className="text-xs text-slate-400 mb-4">
-                      Add your own images or videos to this card instead of using AI-generated content.
+                      Add your own images or videos to this card. Select multiple files for bulk upload.
                     </p>
+                    
+                    {/* Bulk upload progress indicator */}
+                    {bulkUploadProgress && (
+                      <div className="mb-4 p-3 bg-cyan-900/40 rounded-lg border border-cyan-500/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                          <span className="text-sm text-cyan-300">
+                            Uploading {bulkUploadProgress.current} of {bulkUploadProgress.total}...
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-1.5">
+                          <div 
+                            className="bg-cyan-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${(bulkUploadProgress.current / bulkUploadProgress.total) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Button
                           onClick={() => imageInputRef.current?.click()}
-                          disabled={imageUploading}
+                          disabled={imageUploading || !!bulkUploadProgress}
                           className="w-full gap-2"
                           data-testid="button-upload-own-image"
                         >
@@ -5105,7 +5186,7 @@ export function IceCardEditor({
                           ) : (
                             <Image className="w-4 h-4" />
                           )}
-                          {imageUploading ? "Uploading..." : "Upload Image"}
+                          {imageUploading ? "Uploading..." : "Upload Images"}
                         </Button>
                         <p className="text-xs text-slate-500 text-center">JPG, PNG, WebP</p>
                       </div>
@@ -5113,7 +5194,7 @@ export function IceCardEditor({
                       <div className="space-y-2">
                         <Button
                           onClick={() => videoInputRef.current?.click()}
-                          disabled={videoUploading}
+                          disabled={videoUploading || !!bulkUploadProgress}
                           className="w-full bg-blue-600 hover:bg-blue-700 gap-2"
                           data-testid="button-upload-own-video"
                         >
@@ -5122,7 +5203,7 @@ export function IceCardEditor({
                           ) : (
                             <Video className="w-4 h-4" />
                           )}
-                          {videoUploading ? "Uploading..." : "Upload Video"}
+                          {videoUploading ? "Uploading..." : "Upload Videos"}
                         </Button>
                         <p className="text-xs text-slate-500 text-center">MP4, WebM, MOV</p>
                         <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer mt-1">
@@ -5305,13 +5386,29 @@ export function IceCardEditor({
                                       </span>
                                     )}
                                   </div>
+                                  {/* Delete button */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteLibraryMedia(asset.url, asset.iceId);
+                                    }}
+                                    disabled={deletingLibraryMedia === asset.url}
+                                    className="absolute top-1 right-1 p-1 bg-red-600/90 hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                                    data-testid={`delete-media-${asset.id}`}
+                                  >
+                                    {deletingLibraryMedia === asset.url ? (
+                                      <Loader2 className="w-3 h-3 animate-spin text-white" />
+                                    ) : (
+                                      <X className="w-3 h-3 text-white" />
+                                    )}
+                                  </button>
                                   {isInCurrentCard && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                       <Check className="w-4 h-4 text-cyan-400" />
                                     </div>
                                   )}
                                   {!isInCurrentCard && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100 pointer-events-none">
                                       <Plus className="w-5 h-5 text-white" />
                                     </div>
                                   )}
@@ -5442,6 +5539,7 @@ export function IceCardEditor({
                 ref={imageInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={handleImageFileChange}
                 data-testid="input-upload-image"
@@ -5450,6 +5548,7 @@ export function IceCardEditor({
                 ref={videoInputRef}
                 type="file"
                 accept="video/*"
+                multiple
                 className="hidden"
                 onChange={handleVideoFileChange}
                 data-testid="input-upload-video"

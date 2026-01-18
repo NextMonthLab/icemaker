@@ -1371,6 +1371,81 @@ export async function registerRoutes(
     }
   });
   
+  // Delete a media asset from user's library (removes from all cards referencing it)
+  app.delete("/api/me/media", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { url, iceId } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
+      }
+
+      // Get the specific ICE preview or all user's previews
+      let previews: any[];
+      if (iceId) {
+        const preview = await storage.getIcePreviewById(iceId);
+        if (!preview || preview.ownerId !== userId) {
+          return res.status(404).json({ message: "ICE not found" });
+        }
+        previews = [preview];
+      } else {
+        previews = await storage.getIcePreviewsByUser(userId);
+      }
+
+      let deletedCount = 0;
+
+      for (const preview of previews) {
+        const cards = (preview.cards as any[]) || [];
+        let modified = false;
+        
+        for (const card of cards) {
+          // Remove from mediaAssets array
+          if (card.mediaAssets && Array.isArray(card.mediaAssets)) {
+            const originalLength = card.mediaAssets.length;
+            card.mediaAssets = card.mediaAssets.filter((a: any) => a.url !== url);
+            if (card.mediaAssets.length < originalLength) {
+              modified = true;
+              deletedCount++;
+              
+              // If deleted asset was selected, clear selection
+              const deletedAsset = card.mediaAssets.find((a: any) => a.url === url);
+              if (deletedAsset && card.selectedMediaAssetId === deletedAsset.id) {
+                card.selectedMediaAssetId = null;
+              }
+            }
+          }
+          
+          // Clear legacy URL fields if they match
+          if (card.generatedImageUrl === url) {
+            card.generatedImageUrl = null;
+            modified = true;
+          }
+          if (card.generatedVideoUrl === url) {
+            card.generatedVideoUrl = null;
+            modified = true;
+          }
+        }
+        
+        // Save the updated preview
+        if (modified) {
+          await storage.updateIcePreview(preview.previewId, { cards });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        deletedCount,
+        message: deletedCount > 0 
+          ? `Removed media from ${deletedCount} card(s)` 
+          : "Media not found in any cards"
+      });
+    } catch (error) {
+      console.error("Error deleting media:", error);
+      res.status(500).json({ message: "Error deleting media" });
+    }
+  });
+  
   // Get engagement metrics for universes (creators/admins only)
   app.get("/api/engagement", requireAuth, async (req, res) => {
     try {
