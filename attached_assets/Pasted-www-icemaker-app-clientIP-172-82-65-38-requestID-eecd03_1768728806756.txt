@@ -1,0 +1,210 @@
+www.icemaker.app/ clientIP="172.82.65.38" requestID="eecd0301-108e-486e" responseTimeMS=4 responseBytes=1113 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+[GET]
+icemaker.app/ clientIP="172.82.65.38" requestID="" responseTimeMS=0 responseBytes=137 userAgent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+[GET]
+www.icemaker.app/assets/index-CMdJ7pbn.css clientIP="17.246.23.119" requestID="3a64887a-d1d5-4d54" responseTimeMS=10 responseBytes=31041 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"
+[GET]
+www.icemaker.app/assets/index-CRW7CSv0.js clientIP="17.246.19.217" requestID="929e4bee-7334-4386" responseTimeMS=291 responseBytes=518948 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"
+[GET]
+www.icemaker.app/api/universes clientIP="17.246.19.14" requestID="23eae30c-46c8-4af8" responseTimeMS=21 responseBytes=276 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"
+9:20:05 AM [express] GET /api/universes 200 in 18ms :: []
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Deploying...
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Running 'npm run start'
+> icemaker@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+========================================
+  Security Startup Checks (Phase 1.1)
+========================================
+Environment: production
+Platform: Standard (Render/other)
+[Token System]
+  - PUBLIC_TOKEN_SECRET: SET (stable)
+  - Token version: 1
+  - Token expiry: 3600 seconds (1 hour)
+  - Resource types: story, preview
+  - Audiences: analytics, chat
+[Stripe Configuration]
+  - Mode: Standard environment variables
+  - STRIPE_SECRET_KEY: SET
+  - STRIPE_WEBHOOK_SECRET: SET
+[Email Configuration]
+  - Mode: Standard environment variable
+  - RESEND_API_KEY: SET
+  - EMAIL_FROM_ADDRESS: hello@icemaker.app
+[Rate Limiting]
+  - Analytics: 100 requests/minute per IP
+  - Activation/Pause: 10 requests/minute per IP
+  - Chat: 30 requests/minute per user/IP
+✅ Security checks passed - system is ready
+========================================
+[stripe] Running in standard mode (Render/other)
+[stripe] Webhook URL must be configured in Stripe Dashboard
+[stripe] Required: POST /api/stripe/webhook
+[stripe] Stripe initialized with environment variables
+[session-config] NODE_ENV: production
+[session-config] isProduction: true
+[session-config] DATABASE_URL exists: true
+[session-config] SSL config: ENABLED
+[Pipeline] Checking for stale jobs...
+9:26:56 AM [archive-job] Started archive expired previews job (runs every 1 hour)
+9:26:56 AM [orphan-cleanup] Started orphan cleanup job (runs every 6 hours)
+9:26:56 AM [storage-reconcile] Started storage reconciliation job (runs every 24 hours)
+9:26:56 AM [export-cleanup] Started export cleanup job (runs every 15 minutes)
+9:26:56 AM [express] serving on port 10000
+[session-store] Successfully connected to database
+[session-store] Session table verified/created successfully
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://www.icemaker.app + 2 more domains
+==> 
+==> ///////////////////////////////////////////////////////////
+[GET]
+icemaker.onrender.com/ clientIP="34.82.80.145" requestID="ae1c5c44-1e91-4bc3" responseTimeMS=6 responseBytes=1113 userAgent="Go-http-client/2.0"
+[GET]
+www.icemaker.app/ice/preview/ice_1768722171616_sfymx4 clientIP="31.94.66.234" requestID="71f9ce7c-2898-4f6e" responseTimeMS=37 responseBytes=1113 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/index-BNpM4HlM.css clientIP="31.94.66.234" requestID="affb09e0-0099-4977" responseTimeMS=13 responseBytes=31217 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/index-C73inmBI.js clientIP="31.94.66.234" requestID="3c2ad768-dfc4-439b" responseTimeMS=105 responseBytes=551594 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/universes clientIP="31.94.66.234" requestID="272b6047-f1b5-4006" responseTimeMS=158 responseBytes=178 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+9:29:13 AM [express] GET /api/universes 304 in 154ms :: []
+9:29:13 AM [express] GET /api/auth/me 200 in 447ms :: {"user":{"id":3,"email":null,"username":"Rob","createdAt":"2026-01-15T12:43:15.478Z","isAdmin":true,"role":"admin","freePassExpiresAt":null}}
+9:29:13 AM [express] GET /api/universes 304 in 441ms :: []
+9:29:14 AM [express] GET /api/auth/me 200 in 547ms :: {"user":{"id":3,"email":null,"username":"Rob","createdAt":"2026-01-15T12:43:15.478Z","isAdmin":true,"role":"admin","freePassExpiresAt":null}}
+9:29:14 AM [express] GET /api/me/entitlements 200 in 6ms :: {"canCreateStory":true,"canCreateCharacter":true,"canUploadAudio":true,"canGenerateImages":true,"canGenerateVideos":true,"canExport":true,"canUseCharacterChat":true,"canUseCloudLlm":true,"canViewAnalytics":true,"canViewEngagement":true,"canViewConversationInsights":true,"canConfigureStructuredCapture":true,"maxUniverses":-1,"maxCardsPerStory":-1,"monthlyVideoCredits":-1,"monthlyVoiceCredits":-1,"planName":"Admin","isAdmin":true,"isCreator":true,"activeIceLimit":-1,"analyticsEnabled":true,"chatEnabled":true}
+Error fetching ICE preview: error: column "description" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38135
+    at async FI.getIcePreview (/opt/render/project/src/dist/index.cjs:70:217505)
+    at async /opt/render/project/src/dist/index.cjs:722:2438 {
+[GET]
+www.icemaker.app/api/universes clientIP="31.94.66.234" requestID="72662301-d2fd-4335" responseTimeMS=444 responseBytes=178 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/auth/me clientIP="31.94.66.234" requestID="de56236c-1660-45b5" responseTimeMS=449 responseBytes=390 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/auth/me clientIP="31.94.66.234" requestID="7d43c791-ab59-489b" responseTimeMS=552 responseBytes=390 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/preview/ice_1768722171616_sfymx4 clientIP="31.94.66.234" requestID="b6bab36e-b3c9-4591" responseTimeMS=12 responseBytes=311 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/me/entitlements clientIP="31.94.66.234" requestID="b0f0de71-9d73-47fe" responseTimeMS=8 responseBytes=525 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="31.94.66.234" requestID="7dbb9317-1c52-40d8" responseTimeMS=29 responseBytes=2253116 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+  length: 112,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '438',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3822',
+  routine: 'errorMissingColumn'
+}
+9:29:14 AM [express] GET /api/ice/preview/ice_1768722171616_sfymx4 500 in 9ms :: {"message":"Error fetching preview"}
+Error fetching user previews: error: column "description" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38135
+    at async FI.getIcePreviewsByUser (/opt/render/project/src/dist/index.cjs:70:217598)
+    at async /opt/render/project/src/dist/index.cjs:705:908 {
+  length: 112,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '438',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3822',
+  routine: 'errorMissingColumn'
+}
+9:29:18 AM [express] GET /api/ice/my-previews 500 in 7ms :: {"message":"Error fetching previews"}
+[GET]
+www.icemaker.app/api/ice/my-previews clientIP="31.94.66.234" requestID="d8d6b6d9-e898-4f78" responseTimeMS=14 responseBytes=312 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/library clientIP="31.94.66.234" requestID="f469084d-2867-4b05" responseTimeMS=54 responseBytes=1113 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/index-C73inmBI.js clientIP="31.94.66.234" requestID="3ba27682-5877-4a90" responseTimeMS=5 responseBytes=269 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/index-BNpM4HlM.css clientIP="31.94.66.234" requestID="fb504994-9375-42a1" responseTimeMS=8 responseBytes=268 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/universes clientIP="31.94.66.234" requestID="30ebc519-6e5d-400c" responseTimeMS=18 responseBytes=178 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/universes clientIP="31.94.66.234" requestID="097364ef-40cc-4d46" responseTimeMS=8 responseBytes=178 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/auth/me clientIP="31.94.66.234" requestID="ee14611b-35af-449c" responseTimeMS=4 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/auth/me clientIP="31.94.66.234" requestID="0be69e15-d2f4-471c" responseTimeMS=12 responseBytes=179 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/api/ice/my-previews clientIP="31.94.66.234" requestID="76b68006-026a-4118" responseTimeMS=8 responseBytes=312 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="31.94.66.234" requestID="8da26039-c4b5-412e" responseTimeMS=13 responseBytes=269 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/wp-admin/setup-config.php clientIP="104.23.221.29" requestID="7e052847-d3e3-4f81" responseTimeMS=4 responseBytes=1113 userAgent="https://icemaker.app/wp-admin/setup-config.php"
+[GET]
+icemaker.app/wp-admin/setup-config.php clientIP="104.23.221.125" requestID="" responseTimeMS=0 responseBytes=187 userAgent="https://icemaker.app/wp-admin/setup-config.php"
+[GET]
+www.icemaker.app/wp-admin/setup-config.php clientIP="104.23.221.28" requestID="caadfb81-8da5-4546" responseTimeMS=4 responseBytes=1113 userAgent="http://icemaker.app/wp-admin/setup-config.php"
+[GET]
+icemaker.app/wp-admin/setup-config.php clientIP="104.23.221.124" requestID="" responseTimeMS=0 responseBytes=187 userAgent="http://icemaker.app/wp-admin/setup-config.php"
+[GET]
+icemaker.app/wordpress/wp-admin/setup-config.php clientIP="104.23.221.125" requestID="" responseTimeMS=0 responseBytes=207 userAgent="https://icemaker.app/wordpress/wp-admin/setup-config.php"
+[GET]
+www.icemaker.app/wordpress/wp-admin/setup-config.php clientIP="104.23.221.28" requestID="ae7be0ff-f3f1-4ae6" responseTimeMS=7 responseBytes=1113 userAgent="https://icemaker.app/wordpress/wp-admin/setup-config.php"
+[GET]
+www.icemaker.app/api/me/entitlements clientIP="31.94.66.234" requestID="2fa60d06-7360-454a" responseTimeMS=145 responseBytes=180 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+[GET]
+www.icemaker.app/assets/icemaker-logo-Bt_-Uqbj.png clientIP="31.94.66.234" requestID="041350e3-f11f-44fd" responseTimeMS=60 responseBytes=269 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[POST]
+www.icemaker.app/api/ice/preview/brief clientIP="31.94.66.234" requestID="8f174fd6-d59b-4ffb" responseTimeMS=112 responseBytes=313 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.85 Mobile/15E148 Safari/604.1"
+## Scene Lock
+Scene Name: Precision Manufacturing Facility
+Set Description: Modern, clean manufacturing facility – not dark and grimy, but bright, well-organised, and safety-conscious. Think auto
+Error creating ICE from producer brief: error: column "description" of relation "ice_previews" does not exist
+    at /opt/render/project/src/dist/index.cjs:64:13356
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /opt/render/project/src/dist/index.cjs:70:38135
+    at async FI.createIcePreview (/opt/render/project/src/dist/index.cjs:70:217975)
+    at async /opt/render/project/src/dist/index.cjs:593:1498 {
+  length: 137,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '459',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1068',
+  routine: 'checkInsertTargets'
+}
+9:32:08 AM [express] POST /api/ice/preview/brief 500 in 108ms :: {"message":"Error processing producer brief"}
