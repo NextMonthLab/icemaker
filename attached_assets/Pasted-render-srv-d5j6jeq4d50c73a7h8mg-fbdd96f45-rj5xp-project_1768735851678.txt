@@ -1,0 +1,66 @@
+render@srv-d5j6jeq4d50c73a7h8mg-fbdd96f45-rj5xp:~/project/src$ npx drizzle-kit push
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/opt/render/project/src/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+ Warning  Found data-loss statements:
+· You're about to delete session table with 7 items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+[x] All changes were aborted
+render@srv-d5j6jeq4d50c73a7h8mg-fbdd96f45-rj5xp:~/project/src$ -- Add new columns to ice_previews (safe - all ADD COLUMN)
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS content_context text DEFAULT 'auto';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_settings jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS caption_timing_mode text DEFAULT 'aligned';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_transcript jsonb;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS alignment_status text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS thumbnail_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS category text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS share_slug text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS lead_gate_prompt text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_url text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS logo_position text DEFAULT 'top-right';
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS brand_accent_color text;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS admin_cta_enabled boolean DEFAULT false;
+ALTER TABLE ice_previews ADD COLUMN IF NOT EXISTS published_at timestamp;
+
+-- Add unique constraint on share_slug
+ALTER TABLE ice_previews ADD CONSTRAINT ice_previews_share_slug_unique UNIQUE (share_slug);
+
+-- Add storage columns to creator_profiles
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS used_storage_bytes bigint DEFAULT 0 NOT NULL;
+ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS storage_limit_bytes bigint DEFAULT 5368709120 NOT NULL;
+
+-- Add free pass column to users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS free_pass_expires_at timestamp;
+bash: syntax error near unexpected token `('
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: --: command not found
+bash: syntax error near unexpected token `('
+bash: --: command not found
+bash: ALTER: command not found
+bash: ALTER: command not found
+bash: --: command not found
+bash: ALTER: command not found
+render@srv-d5j6jeq4d50c73a7h8mg-fbdd96f45-rj5xp:~/project/src$ 
