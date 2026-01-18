@@ -1,0 +1,60 @@
+## iSmaker + ElevenLabs Expansion Plan (Phased Integration) — Implementation Prompt
+
+You are working inside the iSmaker codebase (Interactive Cinematic Experience builder). ElevenLabs is already available as a paid subscription and the API is already plugged in for narration. We want to expand ElevenLabs usage beyond basic narration, but we must avoid scope creep and keep the product shippable.
+
+### Your task
+1) Audit the current ElevenLabs integration and identify:
+   - Where the API client lives (file paths)
+   - How narration audio is generated today (server route / client call / job queue)
+   - Where audio files are stored (local temp, object storage, DB refs)
+   - How audio is linked to an ICE card/timeline
+   - Any existing concepts for “characters”, “voices”, “styles”, “tracks”, “languages”
+
+2) Propose HOW you would integrate expanded ElevenLabs capabilities into the existing UI and data model:
+   - Which existing sections/pages/modals should gain the new controls
+   - Whether to introduce a new “Audio” or “Voices” panel
+   - Where “Character voice” belongs (character editor vs card editor vs global ICE settings)
+   - Where “Delivery style / emotion” belongs (per line, per card, per scene, per ICE)
+   - Where “micro-reactions” belong (transition editor, SFX/stingers library, per-card hooks)
+   - Whether multilingual should be per-ICE setting or per-export variant
+
+3) Recommend a 3-phase rollout plan with minimal risk:
+   - Phase 1: High impact, low complexity, minimal UI changes, safe defaults
+   - Phase 2: Adds differentiation, more UI controls, introduces reuse/caching
+   - Phase 3: Advanced/enterprise (multi-language tracks, voice cloning workflows, etc.)
+
+4) For each phase, specify:
+   - Exact features included
+   - What data model changes are required (schemas/types)
+   - What UI changes are required (components/pages)
+   - What backend changes are required (routes/services/jobs)
+   - How you will store and reference audio (naming conventions, caching keys)
+   - Error handling + fallbacks (rate limits, timeouts, missing voice IDs)
+   - Performance considerations (batching, caching, avoiding regeneration)
+   - Security considerations (API key handling, abuse prevention)
+
+### Expanded ElevenLabs features we want to consider
+A) Character voices (persistent voice per character across ICE)
+B) Delivery style / emotion controls (simple dropdown is fine)
+C) Micro-reactions / transitions (short reusable audio stingers)
+D) Voice cloning (only if safe + consent-driven, likely later)
+E) Audio-first mode (optional export / playback mode)
+F) Multilingual tracks (future expansion)
+
+### Constraints
+- Do NOT break existing narration flows.
+- Keep defaults simple: most users should not need to configure anything.
+- Avoid adding more than 1 new “major” UI surface in Phase 1.
+- Prefer reusable caching: if the same text + voice + style repeats, do not regenerate.
+- Keep everything compatible with Render deployment and current storage approach.
+- Provide changes as incremental commits with clear file diffs.
+
+### Output format
+Return:
+1) A quick audit summary (current integration + file map)
+2) Proposed UI placement (what goes where)
+3) Phase 1 / Phase 2 / Phase 3 plan (bullet list with deliverables)
+4) A “First Implementation Step” checklist (exact tasks in priority order)
+5) Any key questions you must answer by inspecting the repo (but only after you’ve searched the codebase)
+
+Start by scanning the repo for “eleven”, “11labs”, “voice”, “tts”, “audio”, “narration”, and show the paths you find.
