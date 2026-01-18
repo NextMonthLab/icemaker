@@ -27,6 +27,8 @@ import { MediaGenerationPanel } from "@/components/MediaGenerationPanel";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { IceCardEditor } from "@/components/IceCardEditor";
 import { ContinuityPanel } from "@/components/ContinuityPanel";
+import { InterludeModal } from "@/components/InterludeModal";
+import { InterludeButton } from "@/components/InterludeButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen } from "lucide-react";
 import type { ProjectBible } from "@shared/schema";
@@ -143,6 +145,8 @@ interface PreviewData {
   status?: string;
   createdAt: string;
   previewAccessToken?: string;
+  interludesEnabled?: boolean;
+  defaultInterludeCharacterId?: string | null;
 }
 
 interface InteractivityNodeData {
@@ -479,6 +483,7 @@ export default function GuestIceBuilderPage() {
   } | null>(null);
   const exportPollingRef = useRef<NodeJS.Timeout | null>(null);
   const [activePreviewNodeIndex, setActivePreviewNodeIndex] = useState<number | null>(null);
+  const [showInterludeModal, setShowInterludeModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showExportComingSoon, setShowExportComingSoon] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
@@ -3119,9 +3124,36 @@ export default function GuestIceBuilderPage() {
                   )}
                 </div>
               )}
+              
+              {/* Ask Character Button - for interludes (enabled when characters exist) */}
+              {preview?.characters && preview.characters.length > 0 && (
+                <InterludeButton
+                  characterName={
+                    preview.characters.find(c => c.id === preview.defaultInterludeCharacterId)?.name ||
+                    preview.characters.find(c => c.isPrimary)?.name ||
+                    preview.characters[0]?.name
+                  }
+                  onClick={() => setShowInterludeModal(true)}
+                  className="bg-black/50 backdrop-blur rounded-full"
+                />
+              )}
             </div>
           )}
         </div>
+      )}
+      
+      {/* Character Interlude Modal */}
+      {preview && (
+        <InterludeModal
+          open={showInterludeModal}
+          onClose={() => setShowInterludeModal(false)}
+          iceId={preview.id}
+          iceTitle={preview.title}
+          currentCardIndex={previewCardIndex}
+          characters={preview.characters || []}
+          defaultCharacterId={preview.defaultInterludeCharacterId || undefined}
+          goal="open_ended"
+        />
       )}
       
       {/* Guided first-run walkthrough */}

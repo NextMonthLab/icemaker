@@ -8651,6 +8651,164 @@ Stay engaging, reference story details, and help the audience understand the nar
     }
   });
   
+  // Character Interlude Chat - Goal-driven conversation between cards with context window
+  app.post("/api/ice/preview/:id/interlude/chat", chatRateLimiter, dailyCapMiddleware('chat'), async (req, res) => {
+    try {
+      const { message, characterId, currentCardIndex, goal, contextWindowSize = 3, conversationHistory = [] } = req.body;
+      const previewId = req.params.id;
+      
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      const preview = await storage.getIcePreview(previewId);
+      if (!preview) {
+        return res.status(404).json({ message: "Preview not found" });
+      }
+      
+      // Check expiry
+      if (preview.expiresAt < new Date() && preview.status !== "promoted") {
+        return res.json({
+          capped: true,
+          reason: "expired",
+          message: "This preview has expired.",
+        });
+      }
+      
+      // Verify access using standard policy helper
+      const user = req.user as schema.User | undefined;
+      const policy = canReadIcePreview(user, preview);
+      if (!policy.allowed) {
+        const { userIp, userAgent } = extractRequestInfo(req);
+        await logAuditEvent('permission.denied', 'ice_preview', preview.id, {
+          userId: user?.id,
+          userIp,
+          userAgent,
+          details: { action: 'interlude_chat', reason: policy.reason },
+          success: false,
+          errorCode: String(policy.statusCode),
+        });
+        return res.status(policy.statusCode).json({ message: policy.reason || "Access denied" });
+      }
+      
+      // Check if characters exist for interludes (auto-enabled when characters are present)
+      const characters = (preview.characters || []) as schema.IcePreviewCharacter[];
+      if (characters.length === 0) {
+        return res.status(400).json({ message: "No characters available for interlude" });
+      }
+      
+      // Find the character - prefer specified, then default, then first available
+      let character = characters.find(c => c.id === characterId);
+      if (!character && preview.defaultInterludeCharacterId) {
+        character = characters.find(c => c.id === preview.defaultInterludeCharacterId);
+      }
+      if (!character && characters.length > 0) {
+        character = characters.find(c => c.isPrimary) || characters[0];
+      }
+      
+      if (!character) {
+        return res.status(400).json({ message: "No character available for interlude" });
+      }
+      
+      // Build context window from recent cards
+      const cards = (preview.cards || []) as schema.IcePreviewCard[];
+      const startIdx = Math.max(0, (currentCardIndex || 0) - contextWindowSize + 1);
+      const endIdx = Math.min(cards.length, (currentCardIndex || 0) + 1);
+      const contextCards = cards.slice(startIdx, endIdx);
+      
+      const contextSummary = contextCards.map((c, i) => 
+        `Card ${startIdx + i + 1}: "${c.title}"\n${c.narrationText || c.content}`
+      ).join('\n\n');
+      
+      // Goal-specific system prompt additions
+      const goalPrompts: Record<string, string> = {
+        diagnose: `Your goal is to help diagnose what the viewer might be confused about or struggling with. Ask clarifying questions and offer helpful explanations.`,
+        collect_preference: `Your goal is to understand the viewer's preferences and interests. Ask what they'd like to explore or learn more about.`,
+        confirm_readiness: `Your goal is to check if the viewer is ready to continue. Briefly summarize key points and ask if they have questions before moving on.`,
+        open_ended: `Engage naturally with the viewer's questions about the content.`,
+      };
+      
+      const goalPrompt = goalPrompts[goal as string] || goalPrompts.open_ended;
+      
+      // Build enhanced system prompt with context
+      const systemPrompt = `${character.systemPrompt}
+
+CURRENT CONTEXT:
+You are speaking with a viewer who has just watched the following content from "${preview.title}":
+
+${contextSummary}
+
+${goalPrompt}
+
+Keep responses concise (2-3 sentences) and conversational. Reference specific content from the cards when relevant.`;
+
+      // Build conversation messages
+      const messages: Array<{ role: 'system' | 'user' | 'assistant', content: string }> = [
+        { role: 'system', content: systemPrompt },
+      ];
+      
+      // Add conversation history (limit to last 6 exchanges)
+      const recentHistory = conversationHistory.slice(-6);
+      for (const msg of recentHistory) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({ role: msg.role, content: msg.content });
+        }
+      }
+      
+      messages.push({ role: 'user', content: message });
+      
+      // Call LLM
+      const openai = getOpenAI();
+      const aiResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages,
+        max_tokens: 200,
+        temperature: 0.8,
+      });
+      
+      const reply = aiResponse.choices[0]?.message?.content || "...";
+      
+      // Optionally generate TTS audio for the response
+      let audioBase64: string | undefined;
+      let audioDurationSec: number | undefined;
+      
+      try {
+        const { isTTSConfigured, synthesiseSpeech } = await import("./tts");
+        if (isTTSConfigured()) {
+          const result = await synthesiseSpeech({
+            text: reply,
+            voice: "nova", // Use friendly voice for interludes
+            speed: 1.0,
+            deliveryStyle: "friendly",
+          });
+          
+          if (result.audioBuffer) {
+            audioBase64 = result.audioBuffer.toString('base64');
+            audioDurationSec = result.durationSeconds;
+          }
+        }
+      } catch (ttsError) {
+        console.error("TTS failed for interlude (continuing without audio):", ttsError);
+      }
+      
+      res.json({
+        reply,
+        character: {
+          id: character.id,
+          name: character.name,
+          role: character.role,
+          avatar: character.avatar,
+        },
+        audioBase64,
+        audioDurationSec,
+        goal,
+      });
+    } catch (error) {
+      console.error("Error in interlude chat:", error);
+      res.status(500).json({ message: "Error processing interlude chat" });
+    }
+  });
+  
   // Update cards and interactivity nodes for an ICE preview (reordering, editing)
   app.put("/api/ice/preview/:id/cards", async (req, res) => {
     try {

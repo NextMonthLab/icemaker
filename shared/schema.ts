@@ -1365,11 +1365,24 @@ export const icePreviewCharacterSchema = z.object({
 
 export type IcePreviewCharacter = z.infer<typeof icePreviewCharacterSchema>;
 
+// Interlude goal types - what the character interaction aims to achieve
+export const interludeGoalEnum = z.enum(['diagnose', 'collect_preference', 'confirm_readiness', 'open_ended']);
+export type InterludeGoal = z.infer<typeof interludeGoalEnum>;
+
+// Interlude trigger types - when the interlude can be activated
+export const interludeTriggerEnum = z.enum(['user_initiated', 'end_of_card', 'checkpoint']);
+export type InterludeTrigger = z.infer<typeof interludeTriggerEnum>;
+
 export const iceInteractivityNodeSchema = z.object({
   id: z.string(),
   afterCardIndex: z.number(),
   isActive: z.boolean().default(false),
   selectedCharacterId: z.string().optional(),
+  // Interlude-specific fields (Phase 1A)
+  goal: interludeGoalEnum.optional(), // What this interlude aims to achieve
+  trigger: interludeTriggerEnum.default('user_initiated'), // When this interlude activates
+  contextWindowSize: z.number().default(3), // How many previous cards to include in context
+  systemPromptOverride: z.string().optional(), // Optional goal-specific prompt addition
 });
 
 export type IceInteractivityNode = z.infer<typeof iceInteractivityNodeSchema>;
@@ -1447,6 +1460,10 @@ export const icePreviews = pgTable("ice_previews", {
   
   // Admin CTA settings (for admin-produced ICEs to show platform promotion)
   adminCtaEnabled: boolean("admin_cta_enabled").default(false), // Show "Powered by IceMaker" CTA instead of logo
+  
+  // Character Interlude settings (Phase 1A)
+  interludesEnabled: boolean("interludes_enabled").default(false), // Enable "Ask Character" between cards
+  defaultInterludeCharacterId: text("default_interlude_character_id"), // Default character for interludes (user-selectable)
   
   // Status
   status: text("status").$type<IcePreviewStatus>().default("active").notNull(),
