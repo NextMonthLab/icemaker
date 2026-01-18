@@ -4,7 +4,8 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize, FileText
+  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize, FileText,
+  Undo, Redo, Scissors
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -74,6 +75,7 @@ function SortableMediaClip({
   onRemove, 
   onDurationChange,
   onTrimChange,
+  onDurationDetected,
   isSelected,
   onSelect 
 }: { 
@@ -81,6 +83,7 @@ function SortableMediaClip({
   onRemove: (id: string) => void;
   onDurationChange?: (id: string, duration: number) => void;
   onTrimChange?: (id: string, trimStart: number, trimEnd: number) => void;
+  onDurationDetected?: (id: string, duration: number) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }) {
@@ -95,8 +98,30 @@ function SortableMediaClip({
   
   const [isTrimming, setIsTrimming] = useState(false);
   const [trimDragSide, setTrimDragSide] = useState<'start' | 'end' | null>(null);
+  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
   const trimBarRef = useRef<HTMLDivElement>(null);
   const trimCleanupRef = useRef<(() => void) | null>(null);
+  
+  // Auto-detect video duration if not set
+  useEffect(() => {
+    if (segment.kind !== 'video' || segment.originalDurationSec) return;
+    
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = segment.url;
+    
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      if (duration && duration > 0 && isFinite(duration)) {
+        setDetectedDuration(duration);
+        onDurationDetected?.(segment.id, duration);
+      }
+    };
+    
+    return () => {
+      video.src = '';
+    };
+  }, [segment.id, segment.kind, segment.url, segment.originalDurationSec, onDurationDetected]);
   
   // Cleanup trim event listeners on unmount
   useEffect(() => {
@@ -118,15 +143,36 @@ function SortableMediaClip({
   const sourceColor = segment.source === 'ai' ? 'bg-purple-500' : segment.source === 'stock' ? 'bg-blue-500' : 'bg-green-500';
   
   const isVideo = segment.kind === 'video';
-  const canTrim = isVideo && segment.originalDurationSec && segment.originalDurationSec > 1;
+  const effectiveOriginalDuration = segment.originalDurationSec || detectedDuration;
+  const canTrim = isVideo && effectiveOriginalDuration && effectiveOriginalDuration > 1;
   const trimStart = segment.trimStartSec || 0;
   const trimEnd = segment.trimEndSec || 0;
-  const originalDuration = segment.originalDurationSec || segment.durationSec;
+  const originalDuration = effectiveOriginalDuration || segment.durationSec;
   const effectiveDuration = originalDuration - trimStart - trimEnd;
   
   const trimStartPercent = (trimStart / originalDuration) * 100;
   const trimEndPercent = (trimEnd / originalDuration) * 100;
   const activePercent = 100 - trimStartPercent - trimEndPercent;
+  
+  const handleTrimDrag = (side: 'start' | 'end', clientX: number) => {
+    if (!trimBarRef.current || !onTrimChange) return;
+    
+    const rect = trimBarRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const timeAtPosition = (percent / 100) * originalDuration;
+    
+    if (side === 'start') {
+      const maxTrimStart = originalDuration - trimEnd - 0.5;
+      const newTrimStart = Math.max(0, Math.min(maxTrimStart, timeAtPosition));
+      onTrimChange(segment.id, newTrimStart, trimEnd);
+    } else {
+      const timeFromEnd = originalDuration - timeAtPosition;
+      const maxTrimEnd = originalDuration - trimStart - 0.5;
+      const newTrimEnd = Math.max(0, Math.min(maxTrimEnd, timeFromEnd));
+      onTrimChange(segment.id, trimStart, newTrimEnd);
+    }
+  };
   
   const handleTrimMouseDown = (side: 'start' | 'end', e: React.MouseEvent) => {
     e.stopPropagation();
@@ -137,23 +183,7 @@ function SortableMediaClip({
     setTrimDragSide(side);
     
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!trimBarRef.current) return;
-      
-      const rect = trimBarRef.current.getBoundingClientRect();
-      const x = moveEvent.clientX - rect.left;
-      const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      const timeAtPosition = (percent / 100) * originalDuration;
-      
-      if (side === 'start') {
-        const maxTrimStart = originalDuration - trimEnd - 0.5;
-        const newTrimStart = Math.max(0, Math.min(maxTrimStart, timeAtPosition));
-        onTrimChange(segment.id, newTrimStart, trimEnd);
-      } else {
-        const timeFromEnd = originalDuration - timeAtPosition;
-        const maxTrimEnd = originalDuration - trimStart - 0.5;
-        const newTrimEnd = Math.max(0, Math.min(maxTrimEnd, timeFromEnd));
-        onTrimChange(segment.id, trimStart, newTrimEnd);
-      }
+      handleTrimDrag(side, moveEvent.clientX);
     };
     
     const handleMouseUp = () => {
@@ -166,9 +196,33 @@ function SortableMediaClip({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    
-    // Store cleanup for unmount
     trimCleanupRef.current = handleMouseUp;
+  };
+  
+  const handleTrimTouchStart = (side: 'start' | 'end', e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (!canTrim || !onTrimChange) return;
+    
+    setIsTrimming(true);
+    setTrimDragSide(side);
+    
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length > 0) {
+        handleTrimDrag(side, moveEvent.touches[0].clientX);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      setIsTrimming(false);
+      setTrimDragSide(null);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      trimCleanupRef.current = null;
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+    trimCleanupRef.current = handleTouchEnd;
   };
 
   return (
@@ -316,11 +370,12 @@ function SortableMediaClip({
           
           {/* Left trim handle */}
           <div
-            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors ${
+            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors touch-none ${
               trimDragSide === 'start' ? 'bg-cyan-500' : 'bg-cyan-600 hover:bg-cyan-500'
             }`}
             style={{ left: `calc(${trimStartPercent}% - 6px)` }}
             onMouseDown={(e) => handleTrimMouseDown('start', e)}
+            onTouchStart={(e) => handleTrimTouchStart('start', e)}
             data-testid={`trim-handle-start-${segment.id}`}
           >
             <div className="w-0.5 h-3 bg-white/70 rounded-full" />
@@ -328,11 +383,12 @@ function SortableMediaClip({
           
           {/* Right trim handle */}
           <div
-            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors ${
+            className={`absolute top-0 h-full w-3 cursor-ew-resize z-20 flex items-center justify-center transition-colors touch-none ${
               trimDragSide === 'end' ? 'bg-cyan-500' : 'bg-cyan-600 hover:bg-cyan-500'
             }`}
             style={{ right: `calc(${trimEndPercent}% - 6px)` }}
             onMouseDown={(e) => handleTrimMouseDown('end', e)}
+            onTouchStart={(e) => handleTrimTouchStart('end', e)}
             data-testid={`trim-handle-end-${segment.id}`}
           >
             <div className="w-0.5 h-3 bg-white/70 rounded-full" />
@@ -359,6 +415,8 @@ function DraggableMediaTimeline({
   onRemove,
   onDurationChange,
   onTrimChange,
+  onDurationDetected,
+  onSplit,
   onSelect,
 }: {
   segments: MediaSegment[];
@@ -367,13 +425,99 @@ function DraggableMediaTimeline({
   onRemove: (id: string) => void;
   onDurationChange: (id: string, duration: number) => void;
   onTrimChange?: (id: string, trimStart: number, trimEnd: number) => void;
+  onDurationDetected?: (id: string, duration: number) => void;
+  onSplit?: (id: string, splitTime: number) => void;
   onSelect: (index: number | null) => void;
 }) {
+  const [history, setHistory] = useState<MediaSegment[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+  
+  // Track history for undo/redo
+  const pushToHistory = useCallback((newSegments: MediaSegment[]) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(JSON.parse(JSON.stringify(newSegments)));
+      if (newHistory.length > 20) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 19));
+  }, [historyIndex]);
+  
+  // Initialize history with current segments
+  useEffect(() => {
+    if (history.length === 0 && segments.length > 0) {
+      setHistory([JSON.parse(JSON.stringify(segments))]);
+      setHistoryIndex(0);
+    }
+  }, [segments, history.length]);
+  
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevState = history[historyIndex - 1];
+      setHistoryIndex(historyIndex - 1);
+      onReorder(prevState);
+    }
+  }, [history, historyIndex, onReorder]);
+  
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(historyIndex + 1);
+      onReorder(nextState);
+    }
+  }, [history, historyIndex, onReorder]);
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!containerRef.current?.contains(document.activeElement) && 
+          document.activeElement?.tagName !== 'BODY') return;
+      
+      const sortedSegs = [...segments].sort((a, b) => a.order - b.order);
+      
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIndex !== null && sortedSegs[selectedIndex]) {
+          e.preventDefault();
+          pushToHistory(segments);
+          onRemove(sortedSegs[selectedIndex].id);
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (selectedIndex === null) {
+          onSelect(sortedSegs.length - 1);
+        } else if (selectedIndex > 0) {
+          onSelect(selectedIndex - 1);
+        }
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (selectedIndex === null) {
+          onSelect(0);
+        } else if (selectedIndex < sortedSegs.length - 1) {
+          onSelect(selectedIndex + 1);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [segments, selectedIndex, onRemove, onSelect, handleUndo, handleRedo, pushToHistory]);
   
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -390,14 +534,17 @@ function DraggableMediaTimeline({
         time += s.durationSec;
         return seg;
       });
+      pushToHistory(updated);
       onReorder(updated);
     }
   };
   
   const sortedSegments = [...segments].sort((a, b) => a.order - b.order);
+  const selectedSegment = selectedIndex !== null ? sortedSegments[selectedIndex] : null;
+  const canSplit = selectedSegment?.kind === 'video' && (selectedSegment.originalDurationSec || selectedSegment.durationSec) > 2;
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" ref={containerRef} tabIndex={-1}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -412,9 +559,19 @@ function DraggableMediaTimeline({
               <SortableMediaClip
                 key={seg.id}
                 segment={seg}
-                onRemove={onRemove}
-                onDurationChange={seg.kind === 'image' ? onDurationChange : undefined}
-                onTrimChange={seg.kind === 'video' ? onTrimChange : undefined}
+                onRemove={(id) => {
+                  pushToHistory(segments);
+                  onRemove(id);
+                }}
+                onDurationChange={seg.kind === 'image' ? (id, dur) => {
+                  pushToHistory(segments);
+                  onDurationChange(id, dur);
+                } : undefined}
+                onTrimChange={seg.kind === 'video' ? (id, start, end) => {
+                  pushToHistory(segments);
+                  onTrimChange?.(id, start, end);
+                } : undefined}
+                onDurationDetected={seg.kind === 'video' ? onDurationDetected : undefined}
                 isSelected={selectedIndex === idx}
                 onSelect={() => onSelect(idx)}
               />
@@ -423,14 +580,57 @@ function DraggableMediaTimeline({
         </SortableContext>
       </DndContext>
       
-      <p className="text-[10px] text-slate-500">
-        Drag clips to reorder. Images: adjust duration with +/- buttons.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] text-slate-500">
+          Drag to reorder. Delete: remove. Arrows: navigate. Ctrl+Z: undo.
+        </p>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleUndo}
+            disabled={historyIndex <= 0}
+            data-testid="timeline-undo"
+          >
+            <Undo className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1}
+            data-testid="timeline-redo"
+          >
+            <Redo className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
       
       {selectedIndex !== null && sortedSegments[selectedIndex] && (
         <div className="p-2 rounded-lg bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-cyan-500/20">
-          <div className="text-[10px] text-cyan-400 uppercase tracking-wider mb-2 font-medium">
-            Preview: Clip {selectedIndex + 1}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] text-cyan-400 uppercase tracking-wider font-medium">
+              Preview: Clip {selectedIndex + 1}
+            </div>
+            {canSplit && onSplit && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] border-cyan-500/30 text-cyan-400"
+                onClick={() => {
+                  const seg = sortedSegments[selectedIndex];
+                  const midpoint = (seg.originalDurationSec || seg.durationSec) / 2;
+                  pushToHistory(segments);
+                  onSplit(seg.id, midpoint);
+                }}
+                data-testid="split-clip-button"
+              >
+                <Scissors className="w-3 h-3 mr-1" />
+                Split
+              </Button>
+            )}
           </div>
           <div className="aspect-video rounded-lg overflow-hidden bg-black shadow-lg shadow-cyan-500/10">
             {sortedSegments[selectedIndex].kind === 'video' ? (
@@ -4039,6 +4239,50 @@ export function IceCardEditor({
                                   s.startTimeSec = time;
                                   time += s.durationSec;
                                 }
+                                onCardUpdate(card.id, { mediaSegments: updated });
+                                onCardSave(card.id, { mediaSegments: updated });
+                              }}
+                              onDurationDetected={(segId, duration) => {
+                                const updated = displaySegments.map(s => 
+                                  s.id === segId ? { ...s, originalDurationSec: duration } : s
+                                );
+                                onCardUpdate(card.id, { mediaSegments: updated });
+                                onCardSave(card.id, { mediaSegments: updated });
+                              }}
+                              onSplit={(segId, splitTime) => {
+                                const segIndex = displaySegments.findIndex(s => s.id === segId);
+                                if (segIndex === -1) return;
+                                const seg = displaySegments[segIndex];
+                                const originalDur = seg.originalDurationSec || seg.durationSec;
+                                
+                                const firstHalf: MediaSegment = {
+                                  ...seg,
+                                  id: `${seg.id}-a`,
+                                  trimEndSec: originalDur - splitTime + (seg.trimStartSec || 0),
+                                  durationSec: splitTime - (seg.trimStartSec || 0),
+                                };
+                                
+                                const secondHalf: MediaSegment = {
+                                  ...seg,
+                                  id: `${seg.id}-b`,
+                                  trimStartSec: splitTime,
+                                  trimEndSec: seg.trimEndSec || 0,
+                                  durationSec: originalDur - splitTime - (seg.trimEndSec || 0),
+                                };
+                                
+                                const updated = [
+                                  ...displaySegments.slice(0, segIndex),
+                                  firstHalf,
+                                  secondHalf,
+                                  ...displaySegments.slice(segIndex + 1)
+                                ].map((s, i) => ({ ...s, order: i }));
+                                
+                                let time = 0;
+                                for (const s of updated) {
+                                  s.startTimeSec = time;
+                                  time += s.durationSec;
+                                }
+                                
                                 onCardUpdate(card.id, { mediaSegments: updated });
                                 onCardSave(card.id, { mediaSegments: updated });
                               }}
