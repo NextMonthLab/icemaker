@@ -1,6 +1,13 @@
 import type { TTSProvider, Voice, SynthesisResult } from "./provider";
 import { estimateSpeechDuration } from "./provider";
 
+// Sound Effects generation result
+export interface SoundEffectResult {
+  audioBuffer: Buffer;
+  contentType: string;
+  durationSeconds: number;
+}
+
 const ELEVENLABS_VOICES: Voice[] = [
   // Popular female voices
   { id: "eleven_rachel", name: "Rachel", previewTextHint: "Warm, professional American female - great for corporate", tags: ["female", "professional", "american", "elevenlabs"], description: "Professional Female (US)" },
@@ -136,6 +143,45 @@ export class ElevenLabsTTSProvider implements TTSProvider {
       audioBuffer,
       contentType: "audio/mpeg",
       durationSeconds,
+    };
+  }
+
+  // Generate sound effect using ElevenLabs Sound Effects API
+  async generateSoundEffect(options: { 
+    prompt: string; 
+    durationSeconds?: number;
+    promptInfluence?: number;
+  }): Promise<SoundEffectResult> {
+    if (!this.apiKey) {
+      throw new Error("ElevenLabs not configured: ELEVENLABS_API_KEY is missing");
+    }
+
+    const response = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
+      method: "POST",
+      headers: {
+        "xi-api-key": this.apiKey,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+      },
+      body: JSON.stringify({
+        text: options.prompt,
+        duration_seconds: options.durationSeconds || 2,
+        prompt_influence: options.promptInfluence || 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`ElevenLabs Sound Effects API error: ${response.status} - ${errorText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = Buffer.from(arrayBuffer);
+
+    return {
+      audioBuffer,
+      contentType: "audio/mpeg",
+      durationSeconds: options.durationSeconds || 2,
     };
   }
 }

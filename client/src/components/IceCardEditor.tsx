@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoEngineSelector, type VideoEngineConfig, type VideoEngine, type VideoModel } from "@/components/ui/VideoEngineSelector";
 import { VideoUpsellModal } from "@/components/ui/VideoUpsellModal";
+import { StingerSelector } from "@/components/StingerSelector";
 
 type RenderMode = 'auto' | 'fill' | 'fit';
 
@@ -1066,6 +1067,10 @@ interface PreviewCard {
   narrationSpeed?: number;
   narrationCacheKey?: string;
   speakingCharacterId?: string;
+  // Transition Stinger
+  transitionStingerId?: string;
+  transitionStingerUrl?: string;
+  transitionStingerVolume?: number;
 }
 
 interface Entitlements {
@@ -5267,6 +5272,25 @@ export function IceCardEditor({
                           )}
                           {narrationLoading ? "Generating..." : card.narrationAudioUrl ? "Regenerate" : "Generate Narration"}
                         </Button>
+                      </div>
+                      
+                      {/* Transition Stinger Section */}
+                      <div className="pt-4 mt-4 border-t border-slate-700/50">
+                        <StingerSelector
+                          selectedStingerId={card.transitionStingerId}
+                          stingerUrl={card.transitionStingerUrl}
+                          stingerVolume={card.transitionStingerVolume || 50}
+                          onStingerChange={(stingerId, stingerUrl) => {
+                            onCardUpdate(card.id, { 
+                              transitionStingerId: stingerId, 
+                              transitionStingerUrl: stingerUrl 
+                            });
+                          }}
+                          onVolumeChange={(volume) => {
+                            onCardUpdate(card.id, { transitionStingerVolume: volume });
+                          }}
+                          disabled={!canGenerateVoiceover}
+                        />
                       </div>
                     </>
                   )}

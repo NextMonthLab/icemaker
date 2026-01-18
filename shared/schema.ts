@@ -1132,6 +1132,70 @@ export const captionTimingSchema = z.object({
   alignmentMethod: z.enum(['word', 'segment']).optional(),
 });
 
+// Audio Stinger Library - pre-defined transition sound effects
+export const stingerLibrarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  prompt: z.string(), // ElevenLabs Sound Effects prompt
+  category: z.enum(['whoosh', 'impact', 'rise', 'notification', 'ambient', 'musical']),
+  durationSeconds: z.number().default(2),
+  previewUrl: z.string().optional(), // Cached preview URL
+});
+export type StingerLibraryItem = z.infer<typeof stingerLibrarySchema>;
+
+// Standard stinger library entries
+export const STINGER_LIBRARY: StingerLibraryItem[] = [
+  {
+    id: 'whoosh_smooth',
+    name: 'Smooth Whoosh',
+    description: 'Clean swoosh for subtle transitions',
+    prompt: 'smooth cinematic whoosh transition, clean air movement sound, professional video transition effect, 2 seconds',
+    category: 'whoosh',
+    durationSeconds: 2,
+  },
+  {
+    id: 'impact_dramatic',
+    name: 'Dramatic Impact',
+    description: 'Bold hit for powerful transitions',
+    prompt: 'dramatic cinematic impact hit with bass, orchestral stinger, movie trailer transition, deep resonant boom, 2 seconds',
+    category: 'impact',
+    durationSeconds: 2,
+  },
+  {
+    id: 'rise_tension',
+    name: 'Tension Rise',
+    description: 'Building anticipation riser',
+    prompt: 'cinematic tension riser sound effect, building suspense, upward sweep with subtle reverb, 3 seconds',
+    category: 'rise',
+    durationSeconds: 3,
+  },
+  {
+    id: 'notification_soft',
+    name: 'Soft Chime',
+    description: 'Gentle notification for friendly transitions',
+    prompt: 'soft pleasant notification chime, gentle bell tone with sparkle, friendly UI sound effect, 1.5 seconds',
+    category: 'notification',
+    durationSeconds: 1.5,
+  },
+  {
+    id: 'ambient_shimmer',
+    name: 'Shimmer Wash',
+    description: 'Ethereal ambient transition',
+    prompt: 'ethereal shimmer ambient wash, soft crystalline texture, dreamy transition effect with subtle sparkle, 2.5 seconds',
+    category: 'ambient',
+    durationSeconds: 2.5,
+  },
+  {
+    id: 'musical_brass',
+    name: 'Brass Stab',
+    description: 'Powerful orchestral accent',
+    prompt: 'short orchestral brass stab stinger, powerful horn section hit, cinematic accent, professional film score element, 2 seconds',
+    category: 'musical',
+    durationSeconds: 2,
+  },
+];
+
 export const icePreviewCardSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -1208,6 +1272,11 @@ export const icePreviewCardSchema = z.object({
   narrationSpeed: z.number().default(1.0), // Speed multiplier (0.5 - 2.0)
   narrationCacheKey: z.string().optional(), // Hash of text+voice+style for caching
   speakingCharacterId: z.string().optional(), // Character whose voice is used (auto-populates narrationVoiceId)
+  
+  // Transition Stinger - audio effect played at start of card transition
+  transitionStingerId: z.string().optional(), // ID from STINGER_LIBRARY
+  transitionStingerUrl: z.string().optional(), // Generated/cached audio URL
+  transitionStingerVolume: z.number().default(50), // 0-100 volume level
 });
 
 export type IcePreviewCard = z.infer<typeof icePreviewCardSchema>;

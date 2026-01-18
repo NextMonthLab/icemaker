@@ -6052,6 +6052,106 @@ export async function registerRoutes(
     }
   });
   
+  // ============ STINGER (AUDIO TRANSITIONS) ROUTES ============
+  
+  // Get stinger library - list all available stingers
+  app.get("/api/stingers/library", async (req, res) => {
+    try {
+      res.json({ stingers: schema.STINGER_LIBRARY });
+    } catch (error) {
+      console.error("Error fetching stinger library:", error);
+      res.status(500).json({ message: "Error fetching stinger library" });
+    }
+  });
+  
+  // Generate stinger audio from library item
+  app.post("/api/stingers/generate", requireAuth, dailyCapMiddleware('tts'), async (req, res) => {
+    try {
+      const { stingerId } = req.body;
+      
+      if (!stingerId) {
+        return res.status(400).json({ message: "Stinger ID is required" });
+      }
+      
+      // Find stinger in library
+      const stinger = schema.STINGER_LIBRARY.find(s => s.id === stingerId);
+      if (!stinger) {
+        return res.status(404).json({ message: "Stinger not found in library" });
+      }
+      
+      // Check if ElevenLabs is configured
+      const { ElevenLabsTTSProvider } = await import("./tts/elevenlabsProvider");
+      const elevenLabs = new ElevenLabsTTSProvider();
+      
+      if (!elevenLabs.isConfigured()) {
+        return res.status(503).json({ message: "ElevenLabs not configured for sound effects" });
+      }
+      
+      // Generate sound effect
+      const result = await elevenLabs.generateSoundEffect({
+        prompt: stinger.prompt,
+        durationSeconds: stinger.durationSeconds,
+        promptInfluence: 0.7,
+      });
+      
+      // Return audio as base64 for immediate playback
+      const base64Audio = result.audioBuffer.toString('base64');
+      res.json({
+        stingerId: stinger.id,
+        name: stinger.name,
+        audio: base64Audio,
+        contentType: result.contentType,
+        durationSeconds: result.durationSeconds,
+      });
+    } catch (error) {
+      console.error("Error generating stinger:", error);
+      res.status(500).json({ message: "Error generating stinger audio" });
+    }
+  });
+  
+  // Preview stinger - generate and return audio without saving
+  app.post("/api/stingers/preview", requireAuth, dailyCapMiddleware('tts'), async (req, res) => {
+    try {
+      const { stingerId } = req.body;
+      
+      if (!stingerId) {
+        return res.status(400).json({ message: "Stinger ID is required" });
+      }
+      
+      const stinger = schema.STINGER_LIBRARY.find(s => s.id === stingerId);
+      if (!stinger) {
+        return res.status(404).json({ message: "Stinger not found in library" });
+      }
+      
+      const { ElevenLabsTTSProvider } = await import("./tts/elevenlabsProvider");
+      const elevenLabs = new ElevenLabsTTSProvider();
+      
+      if (!elevenLabs.isConfigured()) {
+        return res.status(503).json({ message: "ElevenLabs not configured" });
+      }
+      
+      const result = await elevenLabs.generateSoundEffect({
+        prompt: stinger.prompt,
+        durationSeconds: stinger.durationSeconds,
+        promptInfluence: 0.7,
+      });
+      
+      const base64Audio = result.audioBuffer.toString('base64');
+      res.json({
+        stingerId: stinger.id,
+        name: stinger.name,
+        category: stinger.category,
+        description: stinger.description,
+        audio: base64Audio,
+        contentType: result.contentType,
+        durationSeconds: result.durationSeconds,
+      });
+    } catch (error) {
+      console.error("Error previewing stinger:", error);
+      res.status(500).json({ message: "Error previewing stinger" });
+    }
+  });
+  
   // Update card narration text and settings
   app.post("/api/cards/:id/narration/text", requireAuth, async (req, res) => {
     try {
