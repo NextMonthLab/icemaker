@@ -8,6 +8,13 @@
       "when": 1768032034001,
       "tag": "0000_happy_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768735027885,
+      "tag": "0001_daily_gorilla_man",
+      "breakpoints": true
     }
   ]
 }
