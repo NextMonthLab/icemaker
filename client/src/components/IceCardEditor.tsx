@@ -328,16 +328,32 @@ interface VisualBlock {
 }
 
 // Derive visual blocks from existing card data
-function deriveVisualBlocks(card: PreviewCard, draftClips: Array<{ id: string; prompt: string; status: 'draft' | 'generating' }>): VisualBlock[] {
+function deriveVisualBlocks(
+  card: PreviewCard, 
+  draftClips: Array<{ id: string; prompt: string; status: 'draft' | 'generating' }>,
+  draftImages: Array<{ id: string; prompt: string; status: 'generating' }> = []
+): VisualBlock[] {
   const blocks: VisualBlock[] = [];
-  const videoAssets = (card.mediaAssets || []).filter(a => a.kind === 'video' && a.status === 'ready');
+  const allAssets = (card.mediaAssets || []).filter(a => a.status === 'ready');
   
-  // Build from persisted video assets first
-  videoAssets.forEach((asset, index) => {
-    const source = asset.source;
-    let type: VisualBlockType = 'ai-video';
-    if (source === 'upload') type = 'upload-video';
-    else if (source === 'stock') type = 'stock-video';
+  // Sort assets by createdAt to maintain order
+  const sortedAssets = [...allAssets].sort((a, b) => 
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  
+  // Build from all persisted assets (videos and images)
+  sortedAssets.forEach((asset, index) => {
+    let type: VisualBlockType;
+    if (asset.kind === 'video') {
+      type = asset.source === 'upload' ? 'upload-video' : 
+             asset.source === 'stock' ? 'stock-video' : 'ai-video';
+    } else {
+      type = asset.source === 'upload' ? 'upload-image' : 
+             asset.source === 'stock' ? 'stock-image' : 'ai-image';
+    }
+    
+    // Default duration: videos use their duration, images default to 5s
+    const defaultDuration = asset.kind === 'video' ? (asset.durationSec || 5) : 5;
     
     blocks.push({
       id: asset.id,
@@ -345,7 +361,7 @@ function deriveVisualBlocks(card: PreviewCard, draftClips: Array<{ id: string; p
       assetId: asset.id,
       url: asset.url,
       thumbnailUrl: asset.thumbnailUrl || asset.url,
-      durationSec: asset.durationSec || 5,
+      durationSec: defaultDuration,
       status: 'ready',
       prompt: asset.prompt,
       order: index,
@@ -353,7 +369,7 @@ function deriveVisualBlocks(card: PreviewCard, draftClips: Array<{ id: string; p
     });
   });
   
-  // Add draft clips that are being generated
+  // Add draft video clips that are being generated
   draftClips.forEach((draft, index) => {
     blocks.push({
       id: draft.id,
@@ -365,26 +381,17 @@ function deriveVisualBlocks(card: PreviewCard, draftClips: Array<{ id: string; p
     });
   });
   
-  // If no video assets but has image, add image block
-  if (blocks.length === 0 && card.generatedImageUrl) {
-    const imageAsset = (card.mediaAssets || []).find(a => a.kind === 'image' && a.url === card.generatedImageUrl);
-    const source = imageAsset?.source || 'ai';
-    let type: VisualBlockType = 'ai-image';
-    if (source === 'upload') type = 'upload-image';
-    else if (source === 'stock') type = 'stock-image';
-    
+  // Add draft image clips that are being generated
+  draftImages.forEach((draft, index) => {
     blocks.push({
-      id: imageAsset?.id || 'img-legacy',
-      type,
-      assetId: imageAsset?.id,
-      url: card.generatedImageUrl,
-      thumbnailUrl: card.generatedImageUrl,
-      durationSec: card.narrationDurationSec || 10,
-      status: 'ready',
-      prompt: imageAsset?.prompt,
-      order: 0,
+      id: draft.id,
+      type: 'ai-image',
+      durationSec: 5,
+      status: 'generating',
+      prompt: draft.prompt,
+      order: blocks.length + index,
     });
-  }
+  });
   
   // Add continuation as virtual block if enabled and generated
   if (card.cinematicContinuationEnabled && card.continuationImageUrl) {
@@ -1328,6 +1335,14 @@ export function IceCardEditor({
   const [draftClips, setDraftClips] = useState<ClipDraft[]>([]);
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
   
+  // Draft images being generated (for timeline loading state)
+  interface ImageDraft {
+    id: string;
+    prompt: string;
+    status: 'generating';
+  }
+  const [draftImages, setDraftImages] = useState<ImageDraft[]>([]);
+  
   // Get persisted video assets
   const videoAssets = card.mediaAssets?.filter(a => a.kind === 'video') || [];
   
@@ -1391,7 +1406,7 @@ export function IceCardEditor({
   };
   
   // Derive visual blocks for the lane-based UI
-  const visualBlocks = deriveVisualBlocks(card, draftClips);
+  const visualBlocks = deriveVisualBlocks(card, draftClips, draftImages);
   const totalVisualDuration = visualBlocks.reduce((sum, b) => sum + b.durationSec, 0);
   const narrationDuration = card.narrationDurationSec || 0;
   const remainingDuration = Math.max(0, narrationDuration - totalVisualDuration);
@@ -1773,10 +1788,15 @@ export function IceCardEditor({
 
   const doGenerateImage = async () => {
     setImageLoading(true);
+    
+    // Create draft image for timeline loading state
+    const prompt = enhancePromptEnabled && enhancedPrompt 
+      ? enhancedPrompt 
+      : (imagePrompt || `${card.title}. ${card.content}`);
+    const draftId = `draft-img-${Date.now()}`;
+    setDraftImages(prev => [...prev, { id: draftId, prompt, status: 'generating' }]);
+    
     try {
-      const prompt = enhancePromptEnabled && enhancedPrompt 
-        ? enhancedPrompt 
-        : (imagePrompt || `${card.title}. ${card.content}`);
       const res = await fetch(`/api/ice/preview/${previewId}/cards/${card.id}/generate-image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1800,10 +1820,12 @@ export function IceCardEditor({
         mediaAssets: newAssets,
         selectedMediaAssetId: data.asset.id,
       });
-      toast({ title: "Image generated!", description: "AI image has been created for this card." });
+      toast({ title: "Image generated!", description: "AI image added to your timeline." });
     } catch (error: any) {
       toast({ title: "Generation failed", description: error.message, variant: "destructive" });
     } finally {
+      // Remove the draft image - the real asset will now show in timeline
+      setDraftImages(prev => prev.filter(d => d.id !== draftId));
       setImageLoading(false);
     }
   };
