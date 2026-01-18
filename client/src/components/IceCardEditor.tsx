@@ -4,7 +4,7 @@ import {
   Image, Video, Mic, Upload, Loader2, Play, Pause, RefreshCw, 
   Save, Trash2, Lock, Sparkles, Crown, Wand2, Volume2, X,
   ChevronDown, ChevronUp, Check, AlertCircle, ImagePlus, ArrowUp, ArrowDown, GripVertical,
-  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize
+  User, ExternalLink, Link as LinkIcon, Clock, CheckCircle, Plus, Maximize, Minimize, FileText
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -3056,6 +3056,34 @@ export function IceCardEditor({
                       Scroll down for advanced options or to browse your media library.
                     </p>
                   </div>
+                  
+                  {/* From Brief - Pre-prepared prompts from Producer Brief */}
+                  {card.visualPrompt && (
+                    <div className="p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                          <FileText className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <span className="text-sm font-semibold text-white">From Brief</span>
+                        <span className="text-xs text-purple-300/70">Pre-prepared prompt</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const promptText = extractPromptText(card.visualPrompt);
+                          setImagePrompt(promptText);
+                          toast({ title: "Prompt applied", description: "Brief prompt loaded - you can edit or generate directly." });
+                        }}
+                        className="w-full p-3 rounded-lg border border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/50 transition-colors text-left group"
+                        data-testid="button-apply-brief-prompt"
+                      >
+                        <p className="text-sm text-white/90 line-clamp-2">{extractPromptText(card.visualPrompt)}</p>
+                        <div className="flex items-center gap-1 mt-2 text-xs text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Wand2 className="w-3 h-3" />
+                          Click to use this prompt
+                        </div>
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Media Library - shows all assets */}
                   {(card.mediaAssets?.length || 0) > 0 && (
